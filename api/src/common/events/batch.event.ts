@@ -1,5 +1,4 @@
 import { OeeBatchMcState } from '../type/oee-status';
-import { OeeBatchPlannedDowntime } from '../entities/oee-batch-planned-downtime';
 
 export class BatchMcStateUpdateEvent {
   siteId: number;
@@ -14,14 +13,8 @@ export class BatchTimelineUpdateEvent {
   currentMcState: OeeBatchMcState;
 }
 
-export class BatchPlannedDowntimeUpdateEvent {
-  plannedDowntime: OeeBatchPlannedDowntime;
-  previousTotal: number;
-  currentTotal: number;
-  timestamp: Date;
-}
-
 export class BatchParamsUpdatedEvent {
   batchId: number;
+  totalOther: number;
   createLog: boolean;
 }

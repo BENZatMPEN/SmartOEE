@@ -153,6 +153,12 @@ export function getAnalyticChartSubTypeText(name: string) {
     case 'bar':
       return 'Bar';
 
+    case 'bar_min_max':
+      return 'Bar (Min-Max)';
+
+    case 'stack':
+      return 'Stack';
+
     default:
       return 'N/A';
   }

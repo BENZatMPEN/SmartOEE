@@ -6,6 +6,7 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle } from '../../../utils/formatText';
+import { fDate } from '../../../utils/formatTime';
 
 interface Props {
   criteria: AnalyticCriteria;
@@ -14,7 +15,7 @@ interface Props {
 export default function AnalyticChartTimeQ({ criteria }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [series, setSeries] = useState<any>([]);
+  const [barSeries, setBarSeries] = useState<any>([]);
 
   const [barOptions, setBarOptions] = useState<ApexOptions>({
     chart: {
@@ -30,6 +31,11 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
             },
           },
         },
+      },
+    },
+    grid: {
+      padding: {
+        bottom: 30,
       },
     },
     stroke: {
@@ -122,11 +128,28 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
 
   const [pieOptions, setPieOptions] = useState<ApexOptions[]>([]);
 
+  const [stackSeries, setStackSeries] = useState<any>([]);
+
+  const [stackOptions, setStackOptions] = useState<ApexOptions>({
+    chart: {
+      stacked: true,
+      stackType: '100%',
+    },
+    xaxis: {
+      show: false,
+      labels: { rotateAlways: true },
+    },
+  } as ApexOptions);
+
   const getCriteria = async () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.get<any>(`/analytics/oee`, {
+      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
+      const url =
+        criteria.chartSubType === 'pie' || criteria.chartSubType === 'stack' ? '/analytics/qParam' : '/analytics/oee';
+
+      const response = await axios.get<any>(url, {
         params: {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
           type: criteria.comparisonType,
@@ -153,25 +176,13 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
           },
         });
 
-        setSeries([
+        setBarSeries([
           {
             name: 'Q',
             data: sumRows.map((item: any) => item.qPercent),
           },
         ]);
       } else if (criteria.chartSubType === 'bar') {
-        // if (criteria.chartSubType === 'pareto') {
-        //   sumRows.sort((a: any, b: any) => {
-        //     if (a.oeePercent > b.oeePercent) {
-        //       return -1;
-        //     }
-        //     if (a.oeePercent < b.oeePercent) {
-        //       return 1;
-        //     }
-        //     return 0;
-        //   });
-        // }
-
         setBarOptions({
           ...barOptions,
           labels: sumRows.map((item: any) => new Date(item.key).getTime()),
@@ -181,17 +192,7 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
           },
         });
 
-        // const currentSeries = ;
-        //
-        // if (criteria.chartSubType === 'pareto') {
-        //   currentSeries.push({
-        //     name: 'Q',
-        //     type: 'line',
-        //     data: sumRows.map((item: any) => item.qPercent),
-        //   });
-        // }
-
-        setSeries([
+        setBarSeries([
           {
             name: 'Q',
             type: 'column',
@@ -199,30 +200,52 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
           },
         ]);
       } else if (criteria.chartSubType === 'pie') {
-        // setPieOptions(
-        //   sumRows.map((item: any) => {
-        //     return {
-        //       chart: {
-        //         width: 380,
-        //         type: 'pie',
-        //       },
-        //       labels: sumRows.map((item: any) => new Date(item.key).getTime()),
-        //       title: {
-        //         text: item.key,
-        //       },
-        //     } as ApexOptions;
-        //   }),
-        // );
-        //
-        // setPieSeries(
-        //   sumRows.map((item) => [
-        //     item.status.running,
-        //     item.status.planned,
-        //     item.status.breakdown,
-        //     item.status.mcSetup,
-        //     item.status.standby,
-        //   ]),
-        // );
+        setPieOptions(
+          sumRows.map((row: any) => {
+            return {
+              labels: row.data.labels || [],
+              title: {
+                text: fDate(row.key),
+              },
+            } as ApexOptions;
+          }),
+        );
+
+        setPieSeries(sumRows.map((row: any) => row.data.counts || []));
+      } else if (criteria.chartSubType === 'stack') {
+        setStackOptions({
+          ...stackOptions,
+          xaxis: {
+            ...stackOptions.xaxis,
+            categories: sumRows.map((row: any) => dayjs(row.key).format('DD/MM/YYYY HH:mm')),
+          },
+          title: {
+            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            align: 'center',
+          },
+        });
+
+        const names = sumRows
+          .map((row: any) => row.data.labels)
+          .flat()
+          .filter((val: string, idx: number, self: string) => self.indexOf(val) === idx);
+
+        // data example
+        // {name: 'Q1', data: [time1[0], time2[0], time3[0]]}
+        // {name: 'Q2', data: [time1[1], time2[1], time3[1]]}
+        // {name: 'Q3', data: [time1[2], time2[2], time3[2]]}
+
+        setStackSeries(
+          names.map((val: string) => {
+            return {
+              name: val,
+              data: sumRows.map((row: any) => {
+                const itemIndex = row.data.labels.indexOf(val);
+                return itemIndex >= 0 ? row.data.counts[itemIndex] : 0;
+              }),
+            };
+          }),
+        );
       }
 
       // console.log(data);
@@ -243,44 +266,20 @@ export default function AnalyticChartTimeQ({ criteria }: Props) {
   const getChart = () => {
     switch (criteria.chartSubType) {
       case 'bar':
-        return (
-          <ReactApexChart
-            key={`aBar${new Date().getTime()}`}
-            options={barOptions}
-            series={series}
-            type="bar"
-            height={600}
-          />
-        );
-
-      // case 'pareto':
-      //   return (
-      //     <ReactApexChart
-      //       key={`aPareto${new Date().getTime()}`}
-      //       options={barOptions}
-      //       series={series}
-      //       type="line"
-      //       height={600}
-      //     />
-      //   );
+        return <ReactApexChart key={`qBar`} options={barOptions} series={barSeries} type="bar" height={600} />;
 
       case 'line':
-        return (
-          <ReactApexChart
-            key={`aLine${new Date().getTime()}`}
-            options={lineOptions}
-            series={series}
-            type="line"
-            height={600}
-          />
-        );
+        return <ReactApexChart key={`qLine`} options={lineOptions} series={barSeries} type="line" height={600} />;
+
+      case 'stack':
+        return <ReactApexChart key={`qStack`} options={stackOptions} series={stackSeries} type="bar" height={600} />;
 
       case 'pie':
         return (
           <>
-            {/*{pieSeries.map((series: any, idx: number) => (*/}
-            {/*  <ReactApexChart key={idx} options={pieOptions[idx]} series={series} type="pie" width={380} />*/}
-            {/*))}*/}
+            {pieSeries.map((series: any, idx: number) => (
+              <ReactApexChart key={`qPie${idx}`} options={pieOptions[idx]} series={series} type="pie" width={500} />
+            ))}
           </>
         );
 

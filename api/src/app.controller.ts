@@ -161,11 +161,11 @@ export class AppController {
     private readonly entityManager: EntityManager,
   ) {}
 
-  @Get('cal')
-  async testCal(): Promise<string> {
-    await this.analyticService.recalculateAll();
-    return 'done';
-  }
+  // @Get('cal')
+  // async testCal(): Promise<string> {
+  //   await this.analyticService.recalculateAll();
+  //   return 'done';
+  // }
 
   @Get('hello')
   async getHello(): Promise<string> {

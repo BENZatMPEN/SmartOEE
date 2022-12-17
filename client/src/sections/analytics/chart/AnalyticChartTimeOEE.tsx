@@ -132,7 +132,7 @@ export default function AnalyticChartTimeOEE({ criteria }: Props) {
 
   return (
     <>
-      <ReactApexChart options={options} series={series} type="line" height={600} />
+      <ReactApexChart key={`oee${new Date().getTime()}`} options={options} series={series} type="line" height={600} />
     </>
   );
 }

@@ -35,6 +35,11 @@ import { Read } from '../type/read';
 import { OeeTagMCStatus } from '../type/oee-tag';
 import { OeeBatchMcState } from '../type/oee-status';
 import { OeeBatch } from '../entities/oee-batch';
+import {
+  AnalyticAParamUpdateEvent,
+  AnalyticPParamUpdateEvent,
+  AnalyticQParamUpdateEvent,
+} from '../events/analytic.event';
 
 @Injectable()
 export class BatchOeeCalculateListener {
@@ -342,6 +347,11 @@ export class BatchOeeCalculateListener {
       await this.oeeBatchService.createBatchLog(batch.id);
       // }
 
+      await this.eventEmitter.emitAsync('analytic-oee.update', {
+        batchId: batch.id,
+        oeeStats: currentStats,
+      });
+
       // send to socket
       this.socketService.socket.to(`site_${batch.siteId}`).emit(`stats_${batchId}.updated`, currentStats);
 
@@ -398,7 +408,7 @@ export class BatchOeeCalculateListener {
   ): Promise<void> {
     this.logger.log(`A - breakdown: ${previousMcState.stopSeconds}, (settings: ${batch.breakdownSeconds})`);
 
-    const { machines } = batch;
+    const { machines, siteId, oeeId, product } = batch;
     const mcParamAs = machines
       .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_A && param.tagId))
       .flat();
@@ -419,32 +429,49 @@ export class BatchOeeCalculateListener {
       return acc;
     }, []);
 
+    // this always happens once at a time
     if (updatingAs.length === 0) {
       updatingAs.push({
         oeeBatchId: batch.id,
+        tagId: null,
+        machineId: null,
+        machineParameterId: null,
         timestamp: readTimestamp,
         seconds: previousMcState.stopSeconds,
       });
     }
 
-    for (const updatingA of updatingAs) {
-      await Promise.all([
-        this.oeeBatchService.createBatchA(updatingA),
-        this.notificationService.notifyAParam(
-          batch.siteId,
-          batch.oeeId,
-          batch.id,
-          updatingA.tagId,
-          readTimestamp,
-          previousMcState.stopSeconds,
-        ),
-      ]);
-    }
+    const updatingA = updatingAs[0];
+    await Promise.all([
+      this.oeeBatchService.createBatchA(updatingA),
+      this.notificationService.notifyAParam(
+        batch.siteId,
+        batch.oeeId,
+        batch.id,
+        updatingA.tagId,
+        readTimestamp,
+        previousMcState.stopSeconds,
+      ),
+    ]);
 
     await this.eventEmitter.emitAsync('batch-a-params.updated', {
       batchId: batch.id,
       createLog: false,
     });
+
+    const analyticAParamsUpdateEvent: AnalyticAParamUpdateEvent = {
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+      param: {
+        tagId: updatingA.tagId,
+        seconds: updatingA.seconds,
+        machineId: updatingA.machineId,
+        machineParameterId: updatingA.machineParameterId,
+      },
+    };
+    await this.eventEmitter.emitAsync('analytic-a-params.update', analyticAParamsUpdateEvent);
   }
 
   private async processP(
@@ -457,7 +484,7 @@ export class BatchOeeCalculateListener {
       // minor stop
       this.logger.log(`P - minor stop: ${previousMcState.stopSeconds}, (settings: ${batch.minorStopSeconds})`);
 
-      const { machines } = batch;
+      const { machines, siteId, oeeId, product } = batch;
       const mcParamPs = machines
         .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_P && param.tagId))
         .flat();
@@ -479,33 +506,50 @@ export class BatchOeeCalculateListener {
         return acc;
       }, []);
 
+      // this always happens once at a time
       if (updatingPs.length === 0) {
         updatingPs.push({
           isSpeedLoss: false,
           oeeBatchId: batch.id,
+          tagId: null,
+          machineId: null,
+          machineParameterId: null,
           timestamp: readTimestamp,
           seconds: previousMcState.stopSeconds,
         });
       }
 
-      for (const updatingP of updatingPs) {
-        await Promise.all([
-          this.oeeBatchService.createBatchP(updatingP),
-          this.notificationService.notifyPParam(
-            batch.siteId,
-            batch.oeeId,
-            batch.id,
-            updatingP.tagId,
-            readTimestamp,
-            previousMcState.stopSeconds,
-          ),
-        ]);
-      }
+      const updatingP = updatingPs[0];
+      await Promise.all([
+        this.oeeBatchService.createBatchP(updatingP),
+        this.notificationService.notifyPParam(
+          batch.siteId,
+          batch.oeeId,
+          batch.id,
+          updatingP.tagId,
+          readTimestamp,
+          previousMcState.stopSeconds,
+        ),
+      ]);
 
       await this.eventEmitter.emitAsync('batch-p-params.updated', {
         batchId: batch.id,
         createLog: false,
       });
+
+      const analyticPParamsUpdateEvent: AnalyticPParamUpdateEvent = {
+        siteId,
+        oeeId,
+        productId: product.id,
+        oeeBatchId: batch.id,
+        param: {
+          tagId: updatingP.tagId,
+          seconds: updatingP.seconds,
+          machineId: updatingP.machineId,
+          machineParameterId: updatingP.machineParameterId,
+        },
+      };
+      await this.eventEmitter.emitAsync('analytic-p-params.update', analyticPParamsUpdateEvent);
     } else {
       // speed loss
       this.logger.log(`P - speed loss: ${previousMcState.stopSeconds}`);
@@ -520,44 +564,97 @@ export class BatchOeeCalculateListener {
   }
 
   private async processQ(batch: OeeBatch, tagRead: Read): Promise<void> {
-    const qParams = await this.oeeBatchService.findBatchQsById(batch.id);
-    const updatingQs = qParams.reduce((acc, param) => {
+    const { siteId, oeeId, product } = batch;
+    const currentParams = await this.oeeBatchService.findBatchQsById(batch.id);
+    const updatingParams = currentParams.reduce((acc, param) => {
       const idx = tagRead.reads.findIndex((read) => read.tagId === param.tagId && Number(read.read) > param.autoAmount);
       if (idx < 0) {
         return acc;
       }
 
-      acc.push({ param, currentRead: Number(tagRead.reads[idx].read) });
+      const newRead = Number(tagRead.reads[idx].read);
+      acc.push({
+        id: param.id,
+        autoAmount: newRead,
+      });
       return acc;
     }, []);
 
-    for (const updatingQ of updatingQs) {
-      const { param, currentRead } = updatingQ;
+    const updatingParam = updatingParams[0];
+    const currentParam = currentParams.filter((item) => item.id === updatingParam.id)[0];
+    const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+      param: {
+        autoAmount: updatingParam.autoAmount - currentParam.autoAmount,
+        manualAmount: 0,
+        tagId: currentParam.tagId,
+        machineId: currentParam.machineId,
+        machineParameterId: currentParam.machineParameterId,
+      },
+    };
+    await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
 
-      this.logger.log(`Q - Id: ${param.id} (${param.tagId}) - previous: ${param.autoAmount}, current: ${currentRead}`);
+    this.logger.log(
+      `Q - Id: ${currentParam.id} (${currentParam.tagId}) - previous: ${currentParam.autoAmount}, current: ${updatingParam.autoAmount}`,
+    );
 
-      await Promise.all([
-        this.oeeBatchService.updateBatchQ({
-          id: param.id,
-          tagId: param.tagId,
-          autoAmount: currentRead,
-          totalAmount: param.manualAmount + currentRead,
-        }),
-        this.notificationService.notifyQParam(
-          batch.siteId,
-          batch.oeeId,
-          batch.id,
-          param.tagId,
-          param.autoAmount,
-          currentRead,
-        ),
-      ]);
-    }
+    await Promise.all([
+      this.oeeBatchService.updateBatchQ(updatingParam),
+      this.notificationService.notifyQParam(
+        batch.siteId,
+        batch.oeeId,
+        batch.id,
+        currentParam.tagId,
+        currentParam.autoAmount,
+        updatingParam.autoAmount,
+      ),
+    ]);
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', {
       batchId: batch.id,
       createLog: false,
     });
+
+    // for (const updatingQ of updatingQs) {
+    //   const { param, currentRead } = updatingQ;
+    //
+    //   this.logger.log(`Q - Id: ${param.id} (${param.tagId}) - previous: ${param.autoAmount}, current: ${currentRead}`);
+    //
+    //   await Promise.all([
+    //     this.oeeBatchService.updateBatchQ({
+    //       id: param.id,
+    //       tagId: param.tagId,
+    //       autoAmount: currentRead,
+    //       totalAmount: param.manualAmount + currentRead,
+    //     }),
+    //     this.notificationService.notifyQParam(
+    //       batch.siteId,
+    //       batch.oeeId,
+    //       batch.id,
+    //       param.tagId,
+    //       param.autoAmount,
+    //       currentRead,
+    //     ),
+    //   ]);
+    //
+    //   const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
+    //     siteId,
+    //     oeeId,
+    //     productId: product.id,
+    //     oeeBatchId: batch.id,
+    //     param: {
+    //       autoAmount: currentRead,
+    //       manualAmount: currentRead,
+    //       tagId: updatingQ.tagId,
+    //       machineId: updatingQ.machineId,
+    //       machineParameterId: updatingQ.machineParameterId,
+    //     },
+    //   };
+    //   await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
+    // }
   }
 
   // async handleBatchOeeCalculate(event: BatchOeeCalculateEvent) {

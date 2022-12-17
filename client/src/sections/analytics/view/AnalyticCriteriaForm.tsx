@@ -77,22 +77,39 @@ const defaultValues: AnalyticCriteria = {
   duration: 'hourly',
 };
 
-const getChartSubType = (charType: AnalyticChartType): string[] => {
-  switch (charType) {
-    case 'oee':
-      return ['bar', 'pareto'];
+const getChartSubType = (charType: AnalyticChartType, viewType: AnalyticViewType): string[] => {
+  const key = `${charType}-${viewType}`;
+  switch (key) {
+    case 'oee-time':
+      return ['bar'];
 
-    case 'mc':
-      return ['bar', 'pie'];
+    case 'oee-object':
+      return ['bar', 'bar_min_max'];
 
-    case 'a':
-      return ['bar', 'pareto', 'pie', 'line'];
+    case 'mc-time':
+    case 'mc-object':
+      return ['stack', 'pie'];
 
-    case 'p':
-      return ['bar', 'pareto', 'pie', 'line'];
+    case 'a-time':
+      return ['bar', 'line', 'pie', 'stack'];
 
-    case 'q':
-      return ['bar', 'pareto', 'pie', 'line'];
+    case 'a-object':
+      return ['bar', 'bar_min_max', 'line', 'pareto'];
+
+    case 'p-time':
+      return ['bar', 'line', 'pie', 'stack'];
+
+    case 'p-object':
+      return ['bar', 'bar_min_max', 'line', 'pareto'];
+
+    case 'q-time':
+      return ['bar', 'line', 'pie', 'stack'];
+
+    case 'q-object':
+      return ['bar', 'bar_min_max', 'line', 'pareto'];
+
+    default:
+      return [];
   }
 };
 
@@ -155,7 +172,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
     // TODO: validate date range
   });
 
-  const methods = useForm({
+  const methods = useForm<AnalyticCriteria>({
     resolver: yupResolver(criteriaScheme),
     defaultValues,
   });
@@ -277,7 +294,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
 
   const handleChartTypeChanged = (type: AnalyticChartType): void => {
     setValue('chartType', type);
-    fillChartSubTypes(type, getValues('viewType'), true);
+    fillChartSubTypes(type, getValues('viewType'));
   };
 
   const handleOEEsSelected = (values: number[]): void => {
@@ -293,7 +310,11 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
   };
 
   const handleViewTypeChanged = (type: AnalyticViewType): void => {
+    setValue('oees', []);
+    setValue('products', []);
+    setValue('batches', []);
     setValue('viewType', type);
+
     if (type === 'object') {
       setValue('duration', 'hourly');
     }
@@ -315,39 +336,14 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
     }
   };
 
-  const fillChartSubTypes = (chartType: AnalyticChartType, viewType: AnalyticViewType, clear: boolean = false) => {
-    let types = getChartSubType(chartType);
-    if (viewType === 'time') {
-      types = types.filter((item) => item !== 'pareto');
-    }
-
-    if (viewType === 'object' && (chartType === 'a' || chartType === 'p' || chartType === 'q')) {
-      types = types.filter((item) => item !== 'pie');
-    }
-
+  const fillChartSubTypes = (chartType: AnalyticChartType, viewType: AnalyticViewType) => {
+    const types = getChartSubType(chartType, viewType);
     setChartSubTypes(types);
-    const settingValue = clear ? types[0] : getValues('chartSubType') === '' ? types[0] : getValues('chartSubType');
-    setValue('chartSubType', settingValue);
 
-    // if (viewType === 'time') {
-    //   setChartSubTypes(['bar']);
-    // }
-    // if (chartType === 'oee' && viewType === 'time') {
-    //   setChartSubTypes(['bar']);
-    //   setValue('chartSubType', 'bar');
-    // }
-    // if ((chartType === 'a' || chartType === 'p' || chartType === 'q') && viewType === 'time') {
-    //   setChartSubTypes(['bar', 'line']);
-    //   setValue('chartSubType', 'bar');
-    // } else {
-    //   const types = getChartSubType(chartType);
-    //   setChartSubTypes(types);
-    //   const settingValue = clear ? types[0] : getValues('chartSubType') === '' ? types[0] : getValues('chartSubType');
-    //   setValue('chartSubType', settingValue);
-    // }
+    setValue('chartSubType', types[0]);
   };
 
-  const [chartSubTypes, setChartSubTypes] = useState<string[]>(getChartSubType('oee'));
+  const [chartSubTypes, setChartSubTypes] = useState<string[]>(getChartSubType('oee', 'object'));
 
   const getToPicker = (duration: string) => {
     if (duration === 'hourly') {
@@ -378,9 +374,11 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
     chartType: AnalyticChartType,
     chartSubType: string,
   ): boolean => {
-    return (
-      viewType === 'object' // ||  (viewType === 'time' && chartSubType === 'bar' && ['a', 'p', 'q'].indexOf(chartType) >= 0)
-    );
+    if (viewType === 'object') {
+      return !(['a', 'p', 'q'].indexOf(chartType) >= 0 && chartSubType === 'pareto');
+    }
+
+    return false;
   };
 
   return (

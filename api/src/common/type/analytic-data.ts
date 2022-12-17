@@ -27,3 +27,25 @@ export class AnalyticData {
   readonly totalAutoDefects: number;
   readonly totalOtherDefects: number;
 }
+
+export type AnalyticAParam = {
+  seconds: number;
+  tagId: number;
+  machineId: number;
+  machineParameterId: number;
+};
+
+export type AnalyticPParam = {
+  seconds: number;
+  tagId: number;
+  machineId: number;
+  machineParameterId: number;
+};
+
+export type AnalyticQParam = {
+  autoAmount: number;
+  manualAmount: number;
+  tagId: number;
+  machineId: number;
+  machineParameterId: number;
+};

@@ -11,6 +11,10 @@ import { Product } from '../common/entities/product';
 import { OeeBatch } from '../common/entities/oee-batch';
 import { OeeBatchStats } from '../common/entities/oee-batch-stats';
 import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeline';
+import { OeeBatchA } from '../common/entities/oee-batch-a';
+import { OeeBatchP } from '../common/entities/oee-batch-p';
+import { OeeBatchQ } from '../common/entities/oee-batch-q';
+import { AnalyticStatsParam } from '../common/entities/analytic-stats-param';
 
 @Module({
   imports: [
@@ -24,6 +28,10 @@ import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeli
       OeeBatchStatsTimeline,
       Analytic,
       AnalyticStats,
+      AnalyticStatsParam,
+      OeeBatchA,
+      OeeBatchP,
+      OeeBatchQ,
     ]),
   ],
   controllers: [AnalyticController],

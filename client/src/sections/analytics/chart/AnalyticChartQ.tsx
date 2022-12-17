@@ -2,9 +2,11 @@ import { ApexOptions } from 'apexcharts';
 import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
+import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
-import { fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fNumber2, fPercent } from '../../../utils/formatNumber';
+import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
+import { convertToUnit } from '../../../utils/timeHelper';
 
 interface Props {
   criteria: AnalyticCriteria;
@@ -18,6 +20,11 @@ export default function AnalyticChartQ({ criteria }: Props) {
   const [barOptions, setBarOptions] = useState<ApexOptions>({
     chart: {
       type: 'bar',
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
     },
     stroke: {
       width: [0, 4],
@@ -87,11 +94,55 @@ export default function AnalyticChartQ({ criteria }: Props) {
     // },
   } as ApexOptions);
 
+  const [paretoOptions, setParetoOptions] = useState<ApexOptions>({
+    stroke: {
+      width: [0, 4],
+      // curve: 'smooth',
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
+    },
+    labels: [],
+    xaxis: {
+      show: false,
+      labels: { rotateAlways: true },
+    },
+    yaxis: [
+      {
+        // bar
+        min: 0,
+        labels: {
+          formatter(val: number, opts?: any): string | string[] {
+            return fNumber2(val);
+          },
+        },
+      },
+      {
+        // line
+        opposite: true,
+        max: 100,
+        labels: {
+          formatter(val: number, opts?: any): string | string[] {
+            return fPercent(val);
+          },
+        },
+      },
+    ],
+    legend: {
+      show: false,
+    },
+  } as ApexOptions);
+
   const getCriteria = async () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.get<any>(`/analytics/oee`, {
+      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
+      const url = criteria.chartSubType === 'pareto' ? '/analytics/qParam' : '/analytics/oee';
+
+      const response = await axios.get<any>(url, {
         params: {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
           type: criteria.comparisonType,
@@ -104,14 +155,6 @@ export default function AnalyticChartQ({ criteria }: Props) {
 
       const { data } = response;
       const { rows, sumRows } = data;
-
-      // const sumRows = getColumns().map((item) => ({
-      //   key: item.name,
-      //   oeePercent: faker.datatype.number({ min: 20, max: 100 }),
-      //   qPercent: faker.datatype.number({ min: 50, max: 100 }),
-      //   pPercent: faker.datatype.number({ min: 50, max: 100 }),
-      //   qPercent: faker.datatype.number({ min: 50, max: 100 }),
-      // }));
 
       if (criteria.chartSubType === 'line') {
         setLineOptions({
@@ -132,14 +175,14 @@ export default function AnalyticChartQ({ criteria }: Props) {
             data: sumRows.map((item: any) => item.qPercent),
           },
         ]);
-      } else {
-        if (criteria.chartSubType === 'pareto') {
+      } else if (criteria.chartSubType === 'bar' || criteria.chartSubType === 'bar_min_max') {
+        if (criteria.chartSubType === 'bar_min_max') {
           sumRows.sort((a: any, b: any) => {
-            if (a.oeePercent > b.oeePercent) {
-              return -1;
-            }
-            if (a.oeePercent < b.oeePercent) {
+            if (a.qPercent > b.qPercent) {
               return 1;
+            }
+            if (a.qPercent < b.qPercent) {
+              return -1;
             }
             return 0;
           });
@@ -162,15 +205,34 @@ export default function AnalyticChartQ({ criteria }: Props) {
           },
         ];
 
-        if (criteria.chartSubType === 'pareto') {
-          currentSeries.push({
-            name: 'Q',
-            type: 'line',
-            data: sumRows.map((item: any) => item.qPercent),
-          });
+        setSeries(currentSeries);
+      } else if (criteria.chartSubType === 'pareto') {
+        if (ids.length === 0) {
+          return;
         }
 
-        setSeries(currentSeries);
+        const { labels, counts, percents } = sumRows[ids[0]] || { labels: [], counts: [], percents: [] };
+        setParetoOptions({
+          ...paretoOptions,
+          labels: labels,
+          title: {
+            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            align: 'center',
+          },
+        });
+
+        setSeries([
+          {
+            name: getTimeUnitText(TIME_UNIT_MINUTE),
+            type: 'column',
+            data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),
+          },
+          {
+            name: '%',
+            type: 'line',
+            data: percents.map((item: any) => fNumber2(item)),
+          },
+        ]);
       }
 
       // console.log(data);
@@ -191,37 +253,14 @@ export default function AnalyticChartQ({ criteria }: Props) {
   const getChart = () => {
     switch (criteria.chartSubType) {
       case 'bar':
-        return (
-          <ReactApexChart
-            key={`aBar${new Date().getTime()}`}
-            options={barOptions}
-            series={series}
-            type="bar"
-            height={600}
-          />
-        );
-
-      case 'pareto':
-        return (
-          <ReactApexChart
-            key={`aPareto${new Date().getTime()}`}
-            options={barOptions}
-            series={series}
-            type="line"
-            height={600}
-          />
-        );
+      case 'bar_min_max':
+        return <ReactApexChart key={`qBar`} options={barOptions} series={series} type="bar" height={600} />;
 
       case 'line':
-        return (
-          <ReactApexChart
-            key={`aLine${new Date().getTime()}`}
-            options={lineOptions}
-            series={series}
-            type="line"
-            height={600}
-          />
-        );
+        return <ReactApexChart key={`qLine`} options={lineOptions} series={series} type="line" height={600} />;
+
+      case 'pareto':
+        return <ReactApexChart key={`qPareto}`} options={paretoOptions} series={series} type="line" height={600} />;
 
       default:
         return <></>;

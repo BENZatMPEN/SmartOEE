@@ -1,17 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import {
-  BatchMcStateUpdateEvent,
-  BatchParamsUpdatedEvent,
-  BatchPlannedDowntimeUpdateEvent,
-  BatchTimelineUpdateEvent,
-} from '../events/batch.event';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { BatchMcStateUpdateEvent, BatchParamsUpdatedEvent, BatchTimelineUpdateEvent } from '../events/batch.event';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { SocketService } from '../services/socket.service';
-import { PLANNED_DOWNTIME_TIMING_AUTO, PLANNED_DOWNTIME_TIMING_TIMER } from '../constant';
 import * as dayjs from 'dayjs';
 import { OeeStats } from '../type/oee-stats';
-import { AnalyticService } from '../../analytic/analytic.service';
 
 @Injectable()
 export class BatchEventsListener {
@@ -19,8 +12,8 @@ export class BatchEventsListener {
 
   constructor(
     private readonly oeeBatchService: OeeBatchService,
-    // private readonly analyticService: AnalyticService,
     private readonly socketService: SocketService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @OnEvent('batch-mc-state.update')
@@ -56,37 +49,6 @@ export class BatchEventsListener {
     this.socketService.socket.to(`site_${siteId}`).emit(`batch-timeline_${batchId}.updated`, timelines);
   }
 
-  // @OnEvent('batch-planned-downtime.update')
-  // async handleBatchPlannedDowntimeUpdateEvent(event: BatchPlannedDowntimeUpdateEvent) {
-  //   const { plannedDowntime: activePlannedDowntime, previousTotal, currentTotal, timestamp } = event;
-  //   this.logger.log(`planned downtime: ${activePlannedDowntime.type} timing: ${activePlannedDowntime.timing}`);
-  //
-  //   let expired = false;
-  //
-  //   if (activePlannedDowntime.toBeExpired) {
-  //     expired = true;
-  //   } else {
-  //     if (activePlannedDowntime.timing === PLANNED_DOWNTIME_TIMING_AUTO && currentTotal > previousTotal) {
-  //       this.logger.log('planned downtime expired - auto');
-  //       expired = true;
-  //     } else if (activePlannedDowntime.timing === PLANNED_DOWNTIME_TIMING_TIMER) {
-  //       const expirationDate = dayjs(activePlannedDowntime.createdAt).add(activePlannedDowntime.seconds, 's');
-  //       const timeCounter = expirationDate.diff(dayjs(), 's');
-  //       this.logger.log(`planned downtime - timer: ${timeCounter}`);
-  //
-  //       if (timeCounter <= 0) {
-  //         this.logger.log('planned downtime expired - timer');
-  //         expired = true;
-  //       }
-  //     }
-  //   }
-  //
-  //   if (expired) {
-  //     await this.oeeBatchService.expireActivePlannedDowntime(activePlannedDowntime);
-  //     activePlannedDowntime.expiredAt = new Date(timestamp);
-  //   }
-  // }
-
   @OnEvent('batch-a-params.updated')
   async handleAParamsUpdatedEvent(event: BatchParamsUpdatedEvent) {
     const { batchId } = event;
@@ -114,7 +76,7 @@ export class BatchEventsListener {
     this.logger.log('p params updated-------------------------');
 
     const batch = await this.oeeBatchService.findById(batchId);
-    const { siteId } = batch;
+    const { siteId, oeeId, product } = batch;
     const pParams = await this.oeeBatchService.findBatchPsByIdAndMinorStop(batchId);
 
     if (event.createLog) {
@@ -136,7 +98,7 @@ export class BatchEventsListener {
     const batch = await this.oeeBatchService.findById(batchId);
     const qParams = await this.oeeBatchService.findBatchQsById(batch.id);
 
-    const { siteId, oeeStats } = batch;
+    const { siteId, oeeId, product, oeeStats } = batch;
     const { aPercent, pPercent, totalCount, totalAutoDefects, totalManualDefects } = oeeStats;
 
     // calculate Q

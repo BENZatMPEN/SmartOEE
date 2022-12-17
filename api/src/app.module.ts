@@ -78,12 +78,13 @@ import { OeeBatchStats } from './common/entities/oee-batch-stats';
 import { OeeBatchLog } from './common/entities/oee-batch-logs';
 import { AnalyticStats } from './common/entities/analytic-stats';
 import { TagReadJob } from './common/jobs/tag-read.job';
-import { AnalyticJob } from './common/jobs/analytic.job';
 import { UserRole } from './common/entities/user-role';
 import { NotificationModule } from './common/services/notification.module';
 import { BatchEventsListener } from './common/listeners/batch-events.listener';
 import { BatchOeeCalculateListener } from './common/listeners/batch-oee-calculate.listener';
 import { AnalyticService } from './analytic/analytic.service';
+import { AnalyticEventsListener } from './common/listeners/analytic-events.listener';
+import { AnalyticStatsParam } from './common/entities/analytic-stats-param';
 
 @Module({
   imports: [
@@ -141,6 +142,7 @@ import { AnalyticService } from './analytic/analytic.service';
             HistoryLog,
             Analytic,
             AnalyticStats,
+            AnalyticStatsParam,
           ],
           synchronize: true,
           // logging: 'all',
@@ -186,6 +188,7 @@ import { AnalyticService } from './analytic/analytic.service';
       HistoryLog,
       Analytic,
       AnalyticStats,
+      AnalyticStatsParam,
     ]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
@@ -260,9 +263,9 @@ import { AnalyticService } from './analytic/analytic.service';
     AnalyticService,
     OeeStatsJob,
     TagReadJob,
-    AnalyticJob,
     BatchEventsListener,
     BatchOeeCalculateListener,
+    AnalyticEventsListener,
   ],
 })
 export class AppModule {}

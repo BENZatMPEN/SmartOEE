@@ -26,6 +26,11 @@ import { OeeBatchLog } from '../common/entities/oee-batch-logs';
 import { OeeBatchStats } from '../common/entities/oee-batch-stats';
 import { OptionItem } from '../common/type/option-item';
 import { fLotNumber } from '../common/utils/formatNumber';
+import {
+  AnalyticAParamUpdateEvent,
+  AnalyticPParamUpdateEvent,
+  AnalyticQParamUpdateEvent,
+} from '../common/events/analytic.event';
 
 export type ParetoData = {
   labels: string[];
@@ -311,14 +316,32 @@ export class OeeBatchService {
   }
 
   async updateBatchA(oeeBatchAId: number, updateDto: UpdateOeeBatchADto): Promise<OeeBatchA> {
-    const updating = await this.oeeBatchARepository.findOneBy({ id: oeeBatchAId });
-    const batchA = await this.oeeBatchARepository.save({
-      ...updating,
+    const current = await this.oeeBatchARepository.findOneBy({ id: oeeBatchAId });
+    const updating = {
+      ...current,
       ...updateDto,
       updatedAt: new Date(),
-    });
+    };
+    const batchA = await this.oeeBatchARepository.save(updating);
 
     await this.eventEmitter.emitAsync('batch-a-params.updated', { batchId: batchA.oeeBatchId, createLog: true });
+
+    const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
+    const { siteId, oeeId, product } = batch;
+    const analyticAParamsUpdateEvent: AnalyticAParamUpdateEvent = {
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+      param: {
+        tagId: updating.tagId,
+        seconds: updating.seconds,
+        machineId: updating.machineId,
+        machineParameterId: updating.machineParameterId,
+      },
+    };
+    await this.eventEmitter.emitAsync('analytic-a-params.update', analyticAParamsUpdateEvent);
+
     return batchA;
   }
 
@@ -339,14 +362,32 @@ export class OeeBatchService {
   }
 
   async updateBatchP(oeeBatchPId: number, updateDto: UpdateOeeBatchPDto): Promise<OeeBatchP> {
-    const updating = await this.oeeBatchPRepository.findOneBy({ id: oeeBatchPId });
-    const batchP = await this.oeeBatchPRepository.save({
-      ...updating,
+    const current = await this.oeeBatchPRepository.findOneBy({ id: oeeBatchPId });
+    const updating = {
+      ...current,
       ...updateDto,
       updatedAt: new Date(),
-    });
+    };
+    const batchP = await this.oeeBatchPRepository.save(updating);
 
     await this.eventEmitter.emitAsync('batch-p-params.updated', { batchId: batchP.oeeBatchId, createLog: true });
+
+    const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
+    const { siteId, oeeId, product } = batch;
+    const analyticPParamsUpdateEvent: AnalyticPParamUpdateEvent = {
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+      param: {
+        tagId: updating.tagId,
+        seconds: updating.seconds,
+        machineId: updating.machineId,
+        machineParameterId: updating.machineParameterId,
+      },
+    };
+    await this.eventEmitter.emitAsync('analytic-p-params.update', analyticPParamsUpdateEvent);
+
     return batchP;
   }
 
@@ -357,6 +398,62 @@ export class OeeBatchService {
   }
 
   async updateBatchQs(id: number, updateDto: any): Promise<void> {
+    // calculate for analytic first
+    const batch = await this.oeeBatchRepository.findOneBy({ id });
+    const { siteId, oeeId, product, oeeStats } = batch;
+
+    for (const updatingParam of updateDto.qParams) {
+      const currentParam = await this.oeeBatchQRepository.findOneBy({ id: updatingParam.id });
+      let manualAmount = 0;
+      if (currentParam.manualAmount === 0 && updatingParam.manualAmount > 0) {
+        manualAmount = updatingParam.manualAmount;
+      } else {
+        manualAmount = updatingParam.manualAmount - currentParam.manualAmount;
+      }
+
+      const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
+        siteId,
+        oeeId,
+        productId: product.id,
+        oeeBatchId: batch.id,
+        param: {
+          autoAmount: 0,
+          manualAmount: manualAmount,
+          tagId: currentParam.tagId,
+          machineId: currentParam.machineId,
+          machineParameterId: currentParam.machineParameterId,
+        },
+      };
+      await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
+    }
+
+    // calculate q other
+    const sumManual = updateDto.qParams.reduce((acc, x) => acc + x.manualAmount, 0);
+    const updatingOther = updateDto.totalManual - sumManual;
+    const currentOther = oeeStats.totalOtherDefects;
+    let otherAmount = 0;
+    if (currentOther === 0 && updatingOther > 0) {
+      otherAmount = updatingOther;
+    } else {
+      otherAmount = updatingOther - currentOther;
+    }
+
+    const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+      param: {
+        autoAmount: 0,
+        manualAmount: otherAmount,
+        tagId: null,
+        machineId: null,
+        machineParameterId: null,
+      },
+    };
+    await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
+
+    // then update the data
     await this.oeeBatchQRepository.save(
       updateDto.qParams.map((item) => {
         return {
@@ -377,6 +474,7 @@ export class OeeBatchService {
     //   totalCount: batch.oeeStats.totalCount,
     // };
     //
+
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });
     // await this.oeeCalculationQueue.add('calculate', calculateDto);
   }
@@ -597,10 +695,8 @@ export class OeeBatchService {
       .flat();
 
     const childrenResult = await Promise.all([
-      this.oeeBatchARepository.find({
-        where: {
-          oeeBatchId: batch.id,
-        },
+      this.oeeBatchARepository.findBy({
+        oeeBatchId: batch.id,
       }),
       this.oeeBatchPRepository.findBy({
         oeeBatchId: batch.id,
@@ -707,10 +803,8 @@ export class OeeBatchService {
   async calculateBatchParetoA(batchId: number): Promise<ParetoData> {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { machines } = batch;
-    const batchParamAs = await this.oeeBatchARepository.find({
-      where: {
-        oeeBatchId: batch.id,
-      },
+    const batchParamAs = await this.oeeBatchARepository.findBy({
+      oeeBatchId: batch.id,
     });
 
     const total = batchParamAs.reduce((acc, item) => acc + item.seconds, 0);
@@ -765,11 +859,9 @@ export class OeeBatchService {
   async calculateBatchParetoP(batchId: number): Promise<ParetoData> {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { machines } = batch;
-    const batchParamPs = await this.oeeBatchPRepository.find({
-      where: {
-        oeeBatchId: batch.id,
-        isSpeedLoss: false,
-      },
+    const batchParamPs = await this.oeeBatchPRepository.findBy({
+      oeeBatchId: batch.id,
+      isSpeedLoss: false,
     });
 
     const total = batchParamPs.reduce((acc, item) => acc + item.seconds, 0);
@@ -825,10 +917,8 @@ export class OeeBatchService {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { machines, oeeStats } = batch;
     const { totalAutoDefects, totalManualDefects, totalOtherDefects } = oeeStats;
-    const batchParamQs = await this.oeeBatchQRepository.find({
-      where: {
-        oeeBatchId: batch.id,
-      },
+    const batchParamQs = await this.oeeBatchQRepository.findBy({
+      oeeBatchId: batch.id,
     });
 
     const total = totalAutoDefects + totalManualDefects;

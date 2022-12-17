@@ -65,13 +65,13 @@ export default function AnalyticChartOEE({ criteria }: Props) {
       const { data } = response;
       const { rows, sumRows } = data;
 
-      if (criteria.chartSubType === 'pareto') {
+      if (criteria.chartSubType === 'bar_min_max') {
         sumRows.sort((a: any, b: any) => {
           if (a.oeePercent > b.oeePercent) {
-            return -1;
+            return 1;
           }
           if (a.oeePercent < b.oeePercent) {
-            return 1;
+            return -1;
           }
           return 0;
         });
