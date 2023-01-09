@@ -21,6 +21,14 @@ curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 
 ## 3. ตั้งค่า environment variables ใน docker-compose.yaml
 
+เข้า folder SmartOEE
+
+```
+cd SmartOEE
+```
+
+แล้วแก้ไข้ไฟล์ docker-compose.yaml
+
 ### ส่วน db
 
 #### environment
@@ -64,7 +72,7 @@ ports:
 
 #### ports
 
-เข้าถึง api ด้วยการระบุ port localhost:3020 หรือ IP:3020
+เข้าถึง api ด้วยการระบุ port localhost:3020 หรือ [ip]:3020
 
 ```
 ports:
@@ -82,11 +90,12 @@ ports:
 | READ_INTERVAL | "0/3 * * * * *" | รอบที่ต้องการติดต่อกับ PLC (ค่าตั้งต้น 3 วินาที - cron format)                                |
 | SYNC_INTERVAL | "0/3 * * * * *" | รอบที่ต้องการติดต่อ API เพื่อทำการตรวจสอบข้อมูลที่มีการเปลี่ยนแปลง (ค่าตั้งต้น 3 วินาที - cron format) |
 
-## 4. เตรียมไฟล์ .env สำหรับ build client
+## 4. เตรียมไฟล์ .env สำหรับ web
 
 เข้า folder client (อยู่ใน SmartOEE)
 
 ```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
 cd ./client
 touch .env
 ```
@@ -134,12 +143,28 @@ sudo docker compose up -d
 เปิด browser แล้วพิมพ์ URL ของ API
 
 ```
-http://localhost:3020/home/init-data
+http://localhost:3020/init-data
 
 หรือ
 
-http://ip:3020/home/init_data
+http://[ip]:3020/init_data
 ```
+
+## 8. เปิดเว็บ
+
+```
+http://localhost:3010
+
+หรือ
+
+http://[ip]:3010
+```
+
+**default user**
+
+**user**: admin@user.com
+
+**pass**: P@ssword1
 
 ## การอัพเดต code (ใช้ git หรือ copy file)
 
