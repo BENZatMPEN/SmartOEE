@@ -16,7 +16,7 @@ import { createDevice, updateDevice } from '../../../../redux/actions/deviceActi
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
-import DeviceTagDetails from './DeviceTagDetails';
+import DeviceTagList from './DeviceTagList';
 
 interface FormValuesProps extends Partial<Device> {
   selectedDeviceModelId: number;
@@ -270,7 +270,7 @@ export default function DeviceForm({ isEdit }: Props) {
 
         <Card>
           <CardContent>
-            <DeviceTagDetails />
+            <DeviceTagList />
           </CardContent>
         </Card>
       </Stack>

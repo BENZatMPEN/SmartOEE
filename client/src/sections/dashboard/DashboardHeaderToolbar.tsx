@@ -1,7 +1,7 @@
 import { Box, Card, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { setGanttView } from '../../redux/actions/siteAction';
+import { setGanttView } from '../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { fDate, fTime } from '../../utils/formatTime';
 import DashboardHeaderToolbarMoreMenu from './DashboardHeaderToolbarMoreMenu';
@@ -11,7 +11,7 @@ export default function DashboardHeaderToolbar() {
 
   const dispatch = useDispatch();
 
-  const { ganttView } = useSelector((state: RootState) => state.site);
+  const { ganttView } = useSelector((state: RootState) => state.userSite);
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
 

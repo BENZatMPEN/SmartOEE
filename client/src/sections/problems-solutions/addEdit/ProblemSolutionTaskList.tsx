@@ -1,31 +1,32 @@
-import { Box, Button, Divider, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Divider, Grid, MenuItem, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { DatePicker } from '@mui/x-date-pickers';
 import { ChangeEvent } from 'react';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-import { ProblemSolutionTask } from '../../../@types/problemSolution';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { User } from '../../../@types/user';
 import { RHFSelect, RHFTextField } from '../../../components/hook-form';
+import { RHFDatePicker } from '../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../components/Iconify';
 import Label from '../../../components/Label';
 import { PS_PROCESS_STATUS, PS_PROCESS_STATUS_ON_PROCESS } from '../../../constants';
 import { getPsProcessStatusText } from '../../../utils/formatText';
+import { ProblemSolutionFormValuesProps } from './ProblemSolutionForm';
 
-interface IProps {
+interface Props {
   users: User[];
+  onDeleteTask: (taskId?: number) => void;
 }
 
-export default function ProblemSolutionTaskList({ users }: IProps) {
+export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) {
   const theme = useTheme();
 
-  const { control, setValue, watch } = useFormContext();
+  const { control, getValues, watch } = useFormContext<ProblemSolutionFormValuesProps>();
 
   const { fields, append, remove, update } = useFieldArray({
     control,
     name: 'tasks',
   });
 
-  const values = watch('tasks') as ProblemSolutionTask[];
+  const values = watch('tasks');
 
   const handleAdd = () => {
     append({
@@ -43,6 +44,10 @@ export default function ProblemSolutionTaskList({ users }: IProps) {
   };
 
   const handleRemove = (index: number) => {
+    const tasks = getValues('tasks');
+    if (tasks[index].id) {
+      onDeleteTask(tasks[index].id);
+    }
     remove(index);
   };
 
@@ -51,32 +56,34 @@ export default function ProblemSolutionTaskList({ users }: IProps) {
       return;
     }
 
+    const tasks = getValues('tasks');
     for (let i = 0; i < event.target.files.length; i++) {
       const file = event.target.files[i];
-      if (values[index].addingFiles.filter((addingFile) => addingFile.name === file.name).length === 0) {
-        values[index].addingFiles.push(file);
-        values[index].files.push(file.name);
+      if (tasks[index].addingFiles.filter((addingFile) => addingFile.name === file.name).length === 0) {
+        tasks[index].addingFiles.push(file);
+        tasks[index].files.push(file.name);
       }
     }
 
-    update(index, values[index]);
+    update(index, tasks[index]);
   };
 
   const handleFileDeleted = (index: number, fileName: string) => {
+    const tasks = getValues('tasks');
     // filter deleting attachments
-    const deletingAttachments = values[index].attachments.filter((item) => item.attachment.name === fileName);
-    values[index].attachments = values[index].attachments.filter((item) => item.attachment.name !== fileName);
-    values[index].deletingFiles = [
-      ...values[index].deletingFiles,
+    const deletingAttachments = tasks[index].attachments.filter((item) => item.attachment.name === fileName);
+    tasks[index].attachments = tasks[index].attachments.filter((item) => item.attachment.name !== fileName);
+    tasks[index].deletingFiles = [
+      ...tasks[index].deletingFiles,
       ...deletingAttachments.map((item) => item.attachmentId),
     ];
 
     // remove adding files
-    values[index].addingFiles = values[index].addingFiles.filter((item) => item.name !== fileName);
+    tasks[index].addingFiles = tasks[index].addingFiles.filter((item) => item.name !== fileName);
 
     // remove displaying files
-    values[index].files = values[index].files.filter((item) => item !== fileName);
-    update(index, values[index]);
+    tasks[index].files = tasks[index].files.filter((item) => item !== fileName);
+    update(index, tasks[index]);
   };
 
   return (
@@ -157,41 +164,11 @@ export default function ProblemSolutionTaskList({ users }: IProps) {
               </Grid>
 
               <Grid item xs={2}>
-                <Controller
-                  name={`tasks[${index}].startDate`}
-                  control={control}
-                  render={({ field, fieldState: { error } }) => (
-                    <DatePicker
-                      label="Start Date"
-                      value={field.value}
-                      onChange={(newValue: any) => {
-                        field.onChange(newValue);
-                      }}
-                      renderInput={(params: any) => (
-                        <TextField {...params} size="small" fullWidth error={!!error} helperText={error?.message} />
-                      )}
-                    />
-                  )}
-                />
+                <RHFDatePicker name={`tasks[${index}].startDate`} label="Start Date" size="small" />
               </Grid>
 
               <Grid item xs={2}>
-                <Controller
-                  name={`tasks[${index}].endDate`}
-                  control={control}
-                  render={({ field, fieldState: { error } }) => (
-                    <DatePicker
-                      label="End Date"
-                      value={field.value}
-                      onChange={(newValue: any) => {
-                        field.onChange(newValue);
-                      }}
-                      renderInput={(params: any) => (
-                        <TextField {...params} size="small" fullWidth error={!!error} helperText={error?.message} />
-                      )}
-                    />
-                  )}
-                />
+                <RHFDatePicker name={`tasks[${index}].endDate`} label="End Date" size="small" />
               </Grid>
 
               <Grid item xs={10}>

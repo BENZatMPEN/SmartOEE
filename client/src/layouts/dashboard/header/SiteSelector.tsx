@@ -1,10 +1,10 @@
 import { Box, MenuItem, TextField } from '@mui/material';
 import useResponsive from '../../../hooks/useResponsive';
-import { selectSite } from '../../../redux/actions/siteAction';
+import { selectSite } from '../../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 
 export default function SiteSelector() {
-  const { sites, selectedSiteId } = useSelector((state: RootState) => state.site);
+  const { userSites, selectedSiteId } = useSelector((state: RootState) => state.userSite);
 
   const isDesktop = useResponsive('up', 'sm');
 
@@ -22,14 +22,14 @@ export default function SiteSelector() {
         fullWidth
         sx={{ width: isDesktop ? '400px' : '100%' }}
         defaultValue={''}
-        value={sites.length > 0 ? selectedSiteId : ''}
+        value={userSites.length > 0 ? selectedSiteId : ''}
         InputLabelProps={{ shrink: true }}
         SelectProps={{ native: false }}
         onChange={async (event) => {
           handleChange(Number(event.target.value));
         }}
       >
-        {sites.map((site) => (
+        {userSites.map((site) => (
           <MenuItem
             key={site.id}
             value={site.id}

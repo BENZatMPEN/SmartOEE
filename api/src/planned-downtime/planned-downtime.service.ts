@@ -5,17 +5,17 @@ import { UpdatePlannedDowntimeDto } from './dto/update-planned-downtime.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { PlannedDowntime } from '../common/entities/planned-downtime';
+import { PlannedDowntimeEntity } from '../common/entities/planned-downtime-entity';
 import * as _ from 'lodash';
 
 @Injectable()
 export class PlannedDowntimeService {
   constructor(
-    @InjectRepository(PlannedDowntime)
-    private plannedDowntimeRepository: Repository<PlannedDowntime>,
+    @InjectRepository(PlannedDowntimeEntity)
+    private plannedDowntimeRepository: Repository<PlannedDowntimeEntity>,
   ) {}
 
-  async findPagedList(filterDto: FilterPlannedDowntimeDto): Promise<PagedLisDto<PlannedDowntime>> {
+  async findPagedList(filterDto: FilterPlannedDowntimeDto): Promise<PagedLisDto<PlannedDowntimeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.plannedDowntimeRepository
       .createQueryBuilder()
@@ -30,15 +30,15 @@ export class PlannedDowntimeService {
     return { list: rows, count: count };
   }
 
-  async findAll(siteId: number): Promise<PlannedDowntime[]> {
+  async findAll(siteId: number): Promise<PlannedDowntimeEntity[]> {
     return this.plannedDowntimeRepository.findBy({ siteId, deleted: false });
   }
 
-  async findById(id: number, siteId: number): Promise<PlannedDowntime> {
+  async findById(id: number, siteId: number): Promise<PlannedDowntimeEntity> {
     return this.plannedDowntimeRepository.findOneBy({ id, siteId, deleted: false });
   }
 
-  create(createDto: CreatePlannedDowntimeDto): Promise<PlannedDowntime> {
+  create(createDto: CreatePlannedDowntimeDto): Promise<PlannedDowntimeEntity> {
     return this.plannedDowntimeRepository.save({
       ...createDto,
       createdAt: new Date(),
@@ -46,7 +46,7 @@ export class PlannedDowntimeService {
     });
   }
 
-  async update(id: number, updateDto: UpdatePlannedDowntimeDto): Promise<PlannedDowntime> {
+  async update(id: number, updateDto: UpdatePlannedDowntimeDto): Promise<PlannedDowntimeEntity> {
     const updatingPlannedDowntime = await this.plannedDowntimeRepository.findOneBy({ id });
     return this.plannedDowntimeRepository.save({
       ..._.assign(updatingPlannedDowntime, updateDto),

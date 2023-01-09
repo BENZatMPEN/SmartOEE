@@ -12,10 +12,10 @@ import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { HistoryLogService } from './history-log.service';
 import { FilterHistoryLogDto } from './dto/filter-history-log.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
-import { HistoryLog } from '../common/entities/history-log';
+import { ReqDec } from '../common/decorators/req-dec';
+import { SiteIdPipe } from '../common/pipe/site-id.pipe';
+import { SiteEntity } from '../common/entities/site-entity';
+import { HistoryLogEntity } from '../common/entities/history-log-entity';
 import { Response } from 'express';
 import * as XLSX from 'xlsx';
 import * as dayjs from 'dayjs';
@@ -31,7 +31,7 @@ export class HistoryLogController {
     @Query() filterDto: FilterHistoryLogDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<HistoryLog>> {
+  ): Promise<PagedLisDto<HistoryLogEntity>> {
     return this.historyLogService.findPagedList(filterDto);
   }
 

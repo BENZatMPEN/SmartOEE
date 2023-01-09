@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ContentModule } from '../common/content/content.module';
 import { MachineService } from './machine.service';
 import { MachineController } from './machine.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MachineParameter } from '../common/entities/machine-parameter';
-import { Machine } from '../common/entities/machine';
-import { Site } from '../common/entities/site';
-import { Widget } from '../common/entities/widget';
+import { MachineParameterEntity } from '../common/entities/machine-parameter-entity';
+import { MachineEntity } from '../common/entities/machine-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { WidgetEntity } from '../common/entities/widget-entity';
+import { FileService } from '../common/services/file.service';
 
 @Module({
-  imports: [ContentModule, TypeOrmModule.forFeature([Machine, MachineParameter, Widget, Site])],
+  imports: [TypeOrmModule.forFeature([MachineEntity, MachineParameterEntity, WidgetEntity, SiteEntity])],
   controllers: [MachineController],
-  providers: [MachineService],
+  providers: [MachineService, FileService],
 })
 export class MachineModule {}

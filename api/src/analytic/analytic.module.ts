@@ -2,36 +2,36 @@ import { Module } from '@nestjs/common';
 import { AnalyticService } from './analytic.service';
 import { AnalyticController } from './analytic.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Site } from '../common/entities/site';
-import { Analytic } from '../common/entities/analytic';
-import { AnalyticStats } from '../common/entities/analytic-stats';
-import { User } from '../common/entities/user';
-import { Oee } from '../common/entities/oee';
-import { Product } from '../common/entities/product';
-import { OeeBatch } from '../common/entities/oee-batch';
-import { OeeBatchStats } from '../common/entities/oee-batch-stats';
-import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeline';
-import { OeeBatchA } from '../common/entities/oee-batch-a';
-import { OeeBatchP } from '../common/entities/oee-batch-p';
-import { OeeBatchQ } from '../common/entities/oee-batch-q';
-import { AnalyticStatsParam } from '../common/entities/analytic-stats-param';
+import { SiteEntity } from '../common/entities/site-entity';
+import { AnalyticEntity } from '../common/entities/analytic-entity';
+import { AnalyticStatsEntity } from '../common/entities/analytic-stats-entity';
+import { UserEntity } from '../common/entities/user-entity';
+import { OeeEntity } from '../common/entities/oee-entity';
+import { ProductEntity } from '../common/entities/product-entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
+import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
+import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
+import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
+import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
+import { AnalyticStatsParamEntity } from '../common/entities/analytic-stats-param-entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Site,
-      User,
-      Oee,
-      Product,
-      OeeBatch,
-      OeeBatchStats,
-      OeeBatchStatsTimeline,
-      Analytic,
-      AnalyticStats,
-      AnalyticStatsParam,
-      OeeBatchA,
-      OeeBatchP,
-      OeeBatchQ,
+      SiteEntity,
+      UserEntity,
+      OeeEntity,
+      ProductEntity,
+      OeeBatchEntity,
+      OeeBatchStatsEntity,
+      OeeBatchStatsTimelineEntity,
+      AnalyticEntity,
+      AnalyticStatsEntity,
+      AnalyticStatsParamEntity,
+      OeeBatchAEntity,
+      OeeBatchPEntity,
+      OeeBatchQEntity,
     ]),
   ],
   controllers: [AnalyticController],

@@ -43,6 +43,8 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }: Props)
 
   const { groupAnalytics } = useSelector((state: RootState) => state.analytic);
 
+  const { allDashboard } = useSelector((state: RootState) => state.dashboard);
+
   const { pathname } = useLocation();
 
   const isDesktop = useResponsive('up', 'lg');
@@ -67,6 +69,22 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }: Props)
 
     setNavItems(temp);
   }, [groupAnalytics]);
+
+  useEffect(() => {
+    const temp = [...navConfig];
+    const idx = temp.findIndex((item) => item.subheader === 'Dashboard');
+    const item: any = temp[idx].items[0];
+    item.children.splice(1, item.children.length - 1);
+    item.children = [
+      ...item.children,
+      ...allDashboard.map((dashboard) => ({
+        title: dashboard.title,
+        path: dashboard.link,
+      })),
+    ];
+
+    setNavItems(temp);
+  }, [allDashboard]);
 
   useEffect(() => {
     if (isOpenSidebar) {

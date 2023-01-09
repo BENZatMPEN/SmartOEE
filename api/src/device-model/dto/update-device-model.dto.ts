@@ -1,11 +1,21 @@
 import { DeviceModelTagDto } from './device-model-tag.dto';
+import { IsArray, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateDeviceModelDto {
-  readonly id: number;
+  @IsString()
   readonly name: string;
+
+  @IsString()
   readonly remark: string;
+
+  @IsString()
   readonly modelType: string;
+
+  @IsString()
   readonly connectionType: string;
-  readonly siteId: number;
+
+  @IsArray()
+  @Type(() => DeviceModelTagDto)
   readonly tags: DeviceModelTagDto[];
 }

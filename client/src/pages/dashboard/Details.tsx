@@ -98,11 +98,11 @@ export default function Details() {
 
   const dispatch = useDispatch();
 
-  const { selectedOee, isLoading } = useSelector((state: RootState) => state.oee);
+  const { currentOee, isDetailsLoading } = useSelector((state: RootState) => state.oee);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { productionName } = selectedOee ?? {};
+  const { productionName } = currentOee ?? {};
 
   const { id: currentBatchId } = currentBatch || {};
 
@@ -230,12 +230,12 @@ export default function Details() {
     };
   }, [socket, currentBatchId, dispatch]);
 
-  const isNotFound = !isLoading && !selectedOee;
+  const isNotFound = !isDetailsLoading && !currentOee;
 
   return (
     <Page title={title}>
       <Container maxWidth={false}>
-        {isLoading ? (
+        {isDetailsLoading ? (
           <>Loading...</>
         ) : isNotFound ? (
           <>Not found</>

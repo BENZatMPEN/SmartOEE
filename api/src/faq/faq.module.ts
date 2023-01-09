@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ContentModule } from '../common/content/content.module';
 import { FaqService } from './faq.service';
 import { FaqController } from './faq.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Attachment } from '../common/entities/attachment';
-import { Faq } from '../common/entities/faq';
-import { FaqAttachment } from '../common/entities/faq-attachment';
-import { Site } from '../common/entities/site';
+import { AttachmentEntity } from '../common/entities/attachment-entity';
+import { FaqEntity } from '../common/entities/faq-entity';
+import { FaqAttachmentEntity } from '../common/entities/faq-attachment-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { FileService } from '../common/services/file.service';
 
 @Module({
-  imports: [ContentModule, TypeOrmModule.forFeature([Attachment, Faq, FaqAttachment, Site])],
+  imports: [TypeOrmModule.forFeature([AttachmentEntity, FaqEntity, FaqAttachmentEntity, SiteEntity])],
   controllers: [FaqController],
-  providers: [FaqService],
+  providers: [FaqService, FileService],
 })
 export class FaqModule {}

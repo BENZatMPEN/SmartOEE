@@ -11,15 +11,14 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { OeeProduct } from '../../../../@types/oee';
+import { EditOee, OeeProduct } from '../../../../@types/oee';
 import Iconify from '../../../../components/Iconify';
 import { TableNoData } from '../../../../components/table';
 import { getTimeUnitText } from '../../../../utils/formatText';
-import { OeeFormValuesProps } from './OeeForm';
 import OeeProductTableRow from './OeeProductTableRow';
 
 type Props = {
-  editingOee: OeeFormValuesProps;
+  editingOee: EditOee;
   oeeProducts: OeeProduct[];
   onAdd: VoidFunction;
   onEdit: (index: number) => void;

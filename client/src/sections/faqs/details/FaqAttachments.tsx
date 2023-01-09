@@ -3,6 +3,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import { Faq, FaqAttachment } from '../../../@types/faq';
 import Iconify from '../../../components/Iconify';
 import Label from '../../../components/Label';
+import { getFileUrl } from '../../../utils/imageHelper';
 
 const RootStyle = styled('div')(({ theme }) => ({
   // padding: theme.spacing(3),
@@ -39,7 +40,12 @@ export default function FaqAttachments({ faq, ...other }: Props) {
                     color={'default'}
                     sx={{ py: 1.8, fontSize: '0.85rem' }}
                   >
-                    <Link href={item.attachment.url} underline="none" target="_blank" rel="noopener noreferrer">
+                    <Link
+                      href={`${getFileUrl(item.attachment.fileName)}`}
+                      underline="none"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         <Iconify icon="eva:attach-fill" fontSize={'1rem'} />
                         {item.attachment.name}

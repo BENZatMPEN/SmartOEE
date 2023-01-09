@@ -1,22 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Site } from '../../@types/site';
+import { OptionItem } from '../../@types/option';
+import { Site, SitePagedList } from '../../@types/site';
 
 export type SiteState = {
   isLoading: boolean;
-  error: Error | string | null;
-  sites: Site[];
-  selectedSiteId: number | null;
-  selectedSite: Site | null;
-  ganttView: boolean;
+  siteOptions: OptionItem[];
+  pagedList: SitePagedList;
+  isDetailsLoading: boolean;
+  currentSite: Site | null;
 };
 
 const initialState: SiteState = {
   isLoading: false,
-  error: null,
-  sites: [],
-  selectedSiteId: null,
-  selectedSite: null,
-  ganttView: false,
+  siteOptions: [],
+  pagedList: {
+    list: [],
+    count: 0,
+  },
+  isDetailsLoading: false,
+  currentSite: null,
 };
 
 const siteSlice = createSlice({
@@ -26,24 +28,32 @@ const siteSlice = createSlice({
     startLoading(state) {
       state.isLoading = true;
     },
-    hasError(state, action) {
+    getSiteOptionsSuccess(state, action) {
       state.isLoading = false;
-      state.error = action.payload;
+      state.siteOptions = action.payload;
     },
-    selectSite(state, action) {
-      state.selectedSiteId = action.payload;
+    emptySiteOptions(state) {
+      state.siteOptions = [];
     },
-    getSitesSuccess(state, action) {
+    getSitePagedListSuccess(state, action) {
       state.isLoading = false;
-      state.sites = action.payload;
-
-      if (state.selectedSiteId) {
-        const idx = state.sites.findIndex((site) => site.id === state.selectedSiteId);
-        state.selectedSite = idx >= 0 ? state.sites[idx] : null;
-      }
+      state.pagedList = action.payload;
     },
-    setGanttView(state, action) {
-      state.ganttView = action.payload;
+    startDetailsLoading(state) {
+      state.isDetailsLoading = true;
+    },
+    emptyCurrentSite(state) {
+      state.currentSite = null;
+    },
+    getSiteSuccess(state, action) {
+      state.isDetailsLoading = false;
+      state.currentSite = action.payload;
+    },
+    createSiteSuccess(state) {
+      state.isDetailsLoading = false;
+    },
+    updateSiteSuccess(state) {
+      state.isDetailsLoading = false;
     },
   },
 });

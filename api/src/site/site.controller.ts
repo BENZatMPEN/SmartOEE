@@ -4,8 +4,8 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseArrayPipe,
   Post,
   Put,
   Query,
@@ -15,15 +15,16 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IdListDto } from '../common/dto/id-list.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { SiteService } from './site.service';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { FilterSiteDto } from './dto/filter-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
-import { Site } from '../common/entities/site';
+import { SiteEntity } from '../common/entities/site-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
+import { FileSavePipe } from '../common/pipe/file-save.pipe';
+import { OptionItem } from '../common/type/option-item';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -31,56 +32,59 @@ import { AuthUserDto } from '../auth/dto/auth-user.dto';
 export class SiteController {
   constructor(private readonly siteService: SiteService) {}
 
-  @Get()
-  findFilter(@Query() filterDto: FilterSiteDto): Promise<PagedLisDto<Site>> {
-    return this.siteService.findPagedList(filterDto);
-  }
-
-  @Get('all')
-  async findAll(@Request() req): Promise<Site[]> {
+  @Get('user-sites')
+  async findUserOptions(@Request() req): Promise<SiteEntity[]> {
     const authUser = req.user as AuthUserDto;
     if (!authUser) {
       return [];
     }
 
-    //
-    // const hasOwnerRole = authUser.roles.findIndex((role) => role.name === ROLE_OWNER) >= 0;
-    // if (hasOwnerRole) {
-    //   return this.siteService.findAll();
-    // }
+    if (authUser.isAdmin) {
+      return this.siteService.findAll();
+    }
 
-    return this.siteService.findByUserId(req.user.id);
+    return this.siteService.findUserSites(authUser.id);
+  }
+
+  // @Get('all')
+  // async findAllSites(): Promise<SiteEntity[]> {
+  //   return this.siteService.findAll();
+  // }
+
+  @Get('options')
+  findAllOee(): Promise<OptionItem[]> {
+    return this.siteService.findOptions();
+  }
+
+  @Get()
+  findFilter(@Query() filterDto: FilterSiteDto): Promise<PagedLisDto<SiteEntity>> {
+    return this.siteService.findPagedList(filterDto);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number): Promise<Site> {
-    const site = await this.siteService.findById(id);
-    if (!site) {
-      throw new NotFoundException();
-    }
-
-    return site;
+  findById(@Param('id') id: number): Promise<SiteEntity> {
+    return this.siteService.findById(id);
   }
 
   @Get(':id/devices')
-  findDevicesById(@Param('id') id: number): Promise<Site> {
+  findDevicesById(@Param('id') id: number): Promise<SiteEntity> {
     return this.siteService.findDevicesById(id);
   }
 
   @Post()
-  create(@Body() createDto: CreateSiteDto): Promise<Site> {
-    return this.siteService.create(createDto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(@Body() createDto: CreateSiteDto, @UploadedFile(FileSavePipe) image: string): Promise<any> {
+    return this.siteService.create(createDto, image);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateDto: UpdateSiteDto): Promise<Site> {
-    return this.siteService.update(id, updateDto);
-  }
-
-  @Post(':id/upload')
   @UseInterceptors(FileInterceptor('image'))
-  upload(@Param('id') id: number, @UploadedFile() image: Express.Multer.File): Promise<Site> {
-    return this.siteService.upload(id, image);
+  update(
+    @Param('id') id: number,
+    @Body() updateDto: UpdateSiteDto,
+    @UploadedFile(FileSavePipe) image: string,
+  ): Promise<SiteEntity> {
+    return this.siteService.update(id, updateDto, image);
   }
 
   @Delete(':id')
@@ -89,8 +93,8 @@ export class SiteController {
   }
 
   @Delete()
-  async deleteMany(@Query() dto: IdListDto): Promise<void> {
-    await this.siteService.deleteMany(dto.ids);
+  async deleteMany(@Query('ids', new ParseArrayPipe({ items: Number })) ids: number[]): Promise<void> {
+    await this.siteService.deleteMany(ids);
   }
 
   @Put(':id/synced')

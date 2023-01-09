@@ -1,5 +1,4 @@
 import { Box, Grid, Stack, TextField, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { PercentSetting } from '../../../../@types/percentSetting';
 
@@ -9,8 +8,6 @@ interface IProps {
 }
 
 export default function SitePercentSettings({ percentSetting, onEdit }: IProps) {
-  const theme = useTheme();
-
   const [setting, setSetting] = useState<PercentSetting>(percentSetting);
 
   useEffect(() => {
@@ -42,10 +39,10 @@ export default function SitePercentSettings({ percentSetting, onEdit }: IProps) 
   };
 
   return (
-    <Stack spacing={theme.spacing(2)}>
+    <Stack spacing={2}>
       <Typography variant="subtitle1">{getTypeName(setting.type)}</Typography>
       <Box>
-        <Grid container spacing={theme.spacing(3)}>
+        <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth

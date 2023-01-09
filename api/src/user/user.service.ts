@@ -1,38 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { User } from '../common/entities/user';
+import { UserEntity } from '../common/entities/user-entity';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
-import { ContentService } from '../common/content/content.service';
-import * as _ from 'lodash';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../common/entities/role';
-import { Site } from '../common/entities/site';
-import { UserRole } from '../common/entities/user-role';
+import { RoleEntity } from '../common/entities/role-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
+import { FileService } from '../common/services/file.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly contentService: ContentService,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    @InjectRepository(Site)
-    private siteRepository: Repository<Site>,
-    @InjectRepository(Role)
-    private roleRepository: Repository<Role>,
-    @InjectRepository(UserRole)
-    private userRoleRepository: Repository<UserRole>,
+    private readonly fileService: FileService,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
+    @InjectRepository(SiteEntity)
+    private siteRepository: Repository<SiteEntity>,
+    @InjectRepository(RoleEntity)
+    private roleRepository: Repository<RoleEntity>,
+    @InjectRepository(UserSiteRoleEntity)
+    private userRoleRepository: Repository<UserSiteRoleEntity>,
   ) {}
 
-  async findPagedList(filterDto: FilterUserDto): Promise<PagedLisDto<User>> {
+  async findPagedList(filterDto: FilterUserDto): Promise<PagedLisDto<UserEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.userRepository
       .createQueryBuilder()
-      .where('deleted = false')
-      .andWhere(':search is null or firstName like :search or lastName like :search or email like :search')
+      .where(':search is null or firstName like :search or lastName like :search or email like :search')
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
@@ -42,77 +40,65 @@ export class UserService {
     return { list: rows, count: count };
   }
 
-  findAll(): Promise<User[]> {
-    return this.userRepository.find({ where: { deleted: false } });
+  findAll(): Promise<UserEntity[]> {
+    return this.userRepository.find();
   }
 
-  async findById(id): Promise<User> {
-    return this.userRepository.findOne({ where: { id, deleted: false } });
+  async findById(id: number): Promise<UserEntity> {
+    return this.userRepository.findOneOrFail({ where: { id } });
   }
 
-  async findRolesByIdAndSiteId(id: number, siteId: number): Promise<Role> {
+  async findByEmail(email: string): Promise<UserEntity> {
+    return this.userRepository.findOneBy({ email });
+  }
+
+  async findRolesByIdAndSiteId(id: number, siteId: number): Promise<RoleEntity> {
     const userRole = await this.userRoleRepository.findOneBy({ userId: id, siteId });
     return userRole?.role;
   }
 
-  async create(createDto: CreateUserDto): Promise<User> {
-    const { password, siteId, roleIds, ...dto } = createDto;
+  async create(createDto: CreateUserDto, imageName: string): Promise<UserEntity> {
+    const { password, ...dto } = createDto;
     const saltOrRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltOrRounds);
 
     const user = await this.userRepository.save({
       ...dto,
       passwordHash,
+      imageName,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    // if (roleIds) {
-    //   user.roles = await this.roleRepository.findBy({ id: In(roleIds) });
+    // if (siteId) {
+    //   const site = await this.siteRepository.findOneBy({ id: siteId });
+    //   user.sites = [site];
     // }
-
-    if (siteId) {
-      const site = await this.siteRepository.findOneBy({ id: siteId });
-      user.sites = [site];
-    }
 
     return this.userRepository.save(user);
   }
 
-  async update(id: number, updateDto: UpdateUserDto): Promise<User> {
+  async update(id: number, updateDto: UpdateUserDto, imageName: string): Promise<UserEntity> {
     const updatingUser = await this.userRepository.findOneBy({ id });
+    const { imageName: existingImageName } = updatingUser;
+    if (imageName && existingImageName) {
+      await this.fileService.deleteFile(existingImageName);
+    }
+
     return this.userRepository.save({
-      ..._.assign(updatingUser, updateDto),
+      ...updatingUser,
+      ...updateDto,
+      imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
   }
 
-  async upload(id: number, image: Express.Multer.File): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (image) {
-      user.imageUrl = await this.contentService.saveUserImage(user.id.toString(), image.buffer, image.mimetype);
-      await this.userRepository.save(user);
-    }
-
-    return user;
-  }
-
   async delete(id: number): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id });
-    user.deleted = true;
-    user.updatedAt = new Date();
-    await this.userRepository.save(user);
+    await this.userRepository.delete(id);
   }
 
   async deleteMany(ids: number[]): Promise<void> {
-    const users = await this.userRepository.findBy({ id: In(ids) });
-    await this.userRepository.save(
-      users.map((user) => {
-        user.deleted = true;
-        user.updatedAt = new Date();
-        return user;
-      }),
-    );
+    await this.userRepository.delete(ids);
   }
 
   // async findAll(): Promise<User[]> {

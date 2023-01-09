@@ -1,36 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateDeviceModelDto } from './dto/create-device-model.dto';
 import { FilterDeviceModelDto } from './dto/filter-device-model.dto';
 import { UpdateDeviceModelDto } from './dto/update-device-model.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { DeviceModel } from '../common/entities/device-model';
-import { DeviceModelTag } from '../common/entities/device-model-tag';
-import { Site } from '../common/entities/site';
-import { Device } from '../common/entities/device';
-import { DeviceTag } from '../common/entities/device-tag';
+import { DeviceModelEntity } from '../common/entities/device-model-entity';
+import { DeviceModelTagEntity } from '../common/entities/device-model-tag-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { DeviceEntity } from '../common/entities/device-entity';
+import { DeviceTagEntity } from '../common/entities/device-tag-entity';
 
 @Injectable()
 export class DeviceModelService {
   constructor(
-    @InjectRepository(DeviceModel)
-    private deviceModelRepository: Repository<DeviceModel>,
-    @InjectRepository(DeviceModelTag)
-    private deviceModelTagRepository: Repository<DeviceModelTag>,
-    @InjectRepository(Device)
-    private deviceRepository: Repository<Device>,
-    @InjectRepository(DeviceTag)
-    private deviceTagRepository: Repository<DeviceTag>,
-    @InjectRepository(Site)
-    private siteRepository: Repository<Site>,
+    @InjectRepository(DeviceModelEntity)
+    private deviceModelRepository: Repository<DeviceModelEntity>,
+    @InjectRepository(DeviceModelTagEntity)
+    private deviceModelTagRepository: Repository<DeviceModelTagEntity>,
+    @InjectRepository(DeviceEntity)
+    private deviceRepository: Repository<DeviceEntity>,
+    @InjectRepository(DeviceTagEntity)
+    private deviceTagRepository: Repository<DeviceTagEntity>,
+    @InjectRepository(SiteEntity)
+    private siteRepository: Repository<SiteEntity>,
   ) {}
 
-  findAll(siteId: number): Promise<DeviceModel[]> {
+  findAll(siteId: number): Promise<DeviceModelEntity[]> {
     return this.deviceModelRepository.findBy({ siteId, deleted: false });
   }
 
-  async findFilter(filterDto: FilterDeviceModelDto): Promise<PagedLisDto<DeviceModel>> {
+  async findFilter(filterDto: FilterDeviceModelDto): Promise<PagedLisDto<DeviceModelEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.deviceModelRepository
       .createQueryBuilder()
@@ -47,7 +47,7 @@ export class DeviceModelService {
     return { list: rows, count: count };
   }
 
-  findById(id: number, siteId: number): Promise<DeviceModel> {
+  findById(id: number, siteId: number): Promise<DeviceModelEntity> {
     return this.deviceModelRepository.findOne({
       where: { id, siteId, deleted: false },
       relations: {
@@ -56,7 +56,7 @@ export class DeviceModelService {
     });
   }
 
-  async create(createDto: CreateDeviceModelDto): Promise<DeviceModel> {
+  async create(createDto: CreateDeviceModelDto): Promise<DeviceModelEntity> {
     const { tags, ...dto } = createDto;
     const createdModel = await this.deviceModelRepository.save({
       ...dto,
@@ -80,18 +80,18 @@ export class DeviceModelService {
     return createdModel;
   }
 
-  async update(id: number, updateDto: UpdateDeviceModelDto): Promise<DeviceModel> {
+  async update(id: number, updateDto: UpdateDeviceModelDto, siteId: number): Promise<DeviceModelEntity> {
     const { tags, ...dto } = updateDto;
-    const updatingDeviceModel = await this.deviceModelRepository.findOneBy({ id });
-    const { id: deviceModelId, siteId } = updatingDeviceModel;
-    await this.deviceModelTagRepository
-      .createQueryBuilder()
-      .delete()
-      .where('deviceModelId = :deviceModelId', { deviceModelId })
-      .andWhere('id not in (:ids)', {
-        ids: tags.filter((tag) => tag.id).map((tag) => tag.id),
-      })
-      .execute();
+    const updatingDeviceModel = await this.deviceModelRepository.findOneBy({ id, siteId });
+    const deletingTagIds = tags.filter((tag) => tag.id).map((tag) => tag.id);
+    if (deletingTagIds.length > 0) {
+      await this.deviceModelTagRepository
+        .createQueryBuilder()
+        .delete()
+        .where('deviceModelId = :deviceModelId', { deviceModelId: updatingDeviceModel.id })
+        .andWhere('id not in (:ids)', { ids: deletingTagIds })
+        .execute();
+    }
 
     // update tags
     await this.deviceModelTagRepository.save(
@@ -107,7 +107,7 @@ export class DeviceModelService {
           const { id: noId, deviceModelId: noDeviceModelId, ...tagDto } = tag;
           return {
             ...tagDto,
-            deviceModelId,
+            deviceModelId: updatingDeviceModel.id,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -121,7 +121,6 @@ export class DeviceModelService {
     for (const device of devices) {
       await this.deviceTagRepository.save(
         createdTags.map((tag) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { id: deviceModelTagId, name } = tag;
           return {
             name,
@@ -153,15 +152,15 @@ export class DeviceModelService {
     return updatedModel;
   }
 
-  async delete(id: number): Promise<void> {
-    const deviceModel = await this.deviceModelRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const deviceModel = await this.deviceModelRepository.findOneBy({ id, siteId });
     deviceModel.deleted = true;
     deviceModel.updatedAt = new Date();
     await this.deviceModelRepository.save(deviceModel);
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const deviceModels = await this.deviceModelRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const deviceModels = await this.deviceModelRepository.findBy({ id: In(ids), siteId });
     await this.deviceModelRepository.save(
       deviceModels.map((deviceModel) => {
         deviceModel.deleted = true;

@@ -1,7 +1,7 @@
-export type RoleSetting = {
+export class RoleSetting {
   subject: RoleSubject;
   actions: RoleAction[];
-};
+}
 
 export enum RoleAction {
   Manage = 'manage',

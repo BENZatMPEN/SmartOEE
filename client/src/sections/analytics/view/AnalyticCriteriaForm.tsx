@@ -124,7 +124,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
 
   const dispatch = useDispatch();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { isLoading, analytics, currentAnalytics, oeeOpts, productOpts, batchOpts } = useSelector(
     (state: RootState) => state.analytic,
@@ -554,7 +554,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                 {values.comparisonType === 'oee' &&
                   (isMultipleSelect(values.viewType, values.chartType, values.chartSubType) ? (
                     <Autocomplete
-                      key="oeeOpts_multi"
+                      key={`oeeOpts_multi_${values.viewType}`}
                       multiple
                       limitTags={3}
                       options={oeeOpts}
@@ -566,7 +566,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                     />
                   ) : (
                     <Autocomplete
-                      key="oeeOpts_single"
+                      key={`oeeOpts_single_${values.viewType}`}
                       options={oeeOpts}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Machines" />}
@@ -579,7 +579,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                 {values.comparisonType === 'product' &&
                   (isMultipleSelect(values.viewType, values.chartType, values.chartSubType) ? (
                     <Autocomplete
-                      key="productOpts_multi"
+                      key={`productOpts_multi_${values.viewType}`}
                       multiple
                       limitTags={3}
                       options={productOpts}
@@ -591,7 +591,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                     />
                   ) : (
                     <Autocomplete
-                      key="productOpts_single"
+                      key={`productOpts_single_${values.viewType}`}
                       options={productOpts}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Products" />}
@@ -604,7 +604,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                 {values.comparisonType === 'batch' &&
                   (isMultipleSelect(values.viewType, values.chartType, values.chartSubType) ? (
                     <Autocomplete
-                      key="batchOpts_multi"
+                      key={`batchOpts_multi_${values.viewType}`}
                       multiple
                       limitTags={3}
                       options={batchOpts}
@@ -616,7 +616,7 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
                     />
                   ) : (
                     <Autocomplete
-                      key="batchOpts_single"
+                      key={`batchOpts_single_${values.viewType}`}
                       options={batchOpts}
                       getOptionLabel={(option) => `${option.name}`}
                       renderInput={(params) => <TextField {...params} label="Lots" />}

@@ -5,10 +5,11 @@ import * as https from 'https';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
 import * as compression from 'compression';
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ServerOptions } from 'socket.io';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { createClient } from 'redis';
+import { ValidationPipe } from '@nestjs/common';
+import * as path from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { useContainer } from 'class-validator';
+import { EntityNotFoundExceptionFilter } from './common/filters/entity-not-found-exception.filter';
 
 async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
@@ -23,14 +24,16 @@ async function bootstrap() {
   const httpsOptions =
     sslKeyPath && sslKeyPath
       ? {
-          key: fs.readFileSync(sslKeyPath),
-          cert: fs.readFileSync(sslCrtPath),
+          httpsOptions: {
+            key: fs.readFileSync(sslKeyPath),
+            cert: fs.readFileSync(sslCrtPath),
+          },
         }
       : {};
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     cors: true,
-    httpsOptions,
+    ...httpsOptions,
   });
 
   const swaggerConfig = new DocumentBuilder()
@@ -42,25 +45,22 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
 
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb' }));
-  // const redisIoAdapter = new RedisIoAdapter(app);
-  // await redisIoAdapter.connectToRedis();
-  // app.useWebSocketAdapter(redisIoAdapter);
+  app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
   app.use(compression());
-
-  // redis
-  // const client = createClient();
-  // const subscriber = client.duplicate();
-  // await subscriber.connect();
-  //
-  // await subscriber.subscribe('tag-reads', async (message) => {
-  //   // const eventService = app.get<EventService>(EventService);
-  //   const processorService = app.get<ProcessorService>(ProcessorService);
-  //   const obj = JSON.parse(message) as TagReadDto[];
-  //   eventService.emit('tag-reads', obj);
-  //   await processorService.addTagReadQueue(obj);
-  // });
+  // app.useGlobalFilters(new EntityNotFoundExceptionFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      forbidUnknownValues: false,
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   await app.listen(port);
 }
@@ -72,22 +72,3 @@ bootstrap()
   .catch((reason) => {
     console.log(reason);
   });
-
-export class RedisIoAdapter extends IoAdapter {
-  private adapterConstructor: ReturnType<typeof createAdapter>;
-
-  async connectToRedis(): Promise<void> {
-    const pubClient = createClient({ url: `redis://localhost:6379` });
-    const subClient = pubClient.duplicate();
-
-    await Promise.all([pubClient.connect(), subClient.connect()]);
-
-    this.adapterConstructor = createAdapter(pubClient, subClient);
-  }
-
-  createIOServer(port: number, options?: ServerOptions): any {
-    const server = super.createIOServer(port, options);
-    server.adapter(this.adapterConstructor);
-    return server;
-  }
-}

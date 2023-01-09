@@ -30,6 +30,8 @@ export class BatchEventsListener {
       status: currentMcState.batchStatus,
       mcState: currentMcState,
     });
+
+    this.socketService.socket.to(``).emit(``, {});
   }
 
   @OnEvent('batch-timeline.update')
@@ -76,7 +78,7 @@ export class BatchEventsListener {
     this.logger.log('p params updated-------------------------');
 
     const batch = await this.oeeBatchService.findById(batchId);
-    const { siteId, oeeId, product } = batch;
+    const { siteId } = batch;
     const pParams = await this.oeeBatchService.findBatchPsByIdAndMinorStop(batchId);
 
     if (event.createLog) {
@@ -98,7 +100,7 @@ export class BatchEventsListener {
     const batch = await this.oeeBatchService.findById(batchId);
     const qParams = await this.oeeBatchService.findBatchQsById(batch.id);
 
-    const { siteId, oeeId, product, oeeStats } = batch;
+    const { siteId, oeeStats } = batch;
     const { aPercent, pPercent, totalCount, totalAutoDefects, totalManualDefects } = oeeStats;
 
     // calculate Q

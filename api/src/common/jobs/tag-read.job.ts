@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { OeeService } from '../../oee/oee.service';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TagRead } from '../entities/tag-read';
+import { TagReadEntity } from '../entities/tag-read-entity';
 import { Repository } from 'typeorm';
 import * as dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';
@@ -25,8 +25,8 @@ export class TagReadJob {
     private readonly socketService: SocketService,
     private readonly notificationService: NotificationService,
     private readonly eventEmitter: EventEmitter2,
-    @InjectRepository(TagRead)
-    private readonly tagReadRepository: Repository<TagRead>,
+    @InjectRepository(TagReadEntity)
+    private readonly tagReadRepository: Repository<TagReadEntity>,
   ) {}
 
   @Cron('0/1 * * * * *')
@@ -73,7 +73,7 @@ export class TagReadJob {
     });
   }
 
-  processBatches(batchIds: number[], tagRead: TagRead) {
+  processBatches(batchIds: number[], tagRead: TagReadEntity) {
     batchIds.forEach(async (batchId) => {
       this.eventEmitter.emit('batch-oee.calculate', {
         batchId,

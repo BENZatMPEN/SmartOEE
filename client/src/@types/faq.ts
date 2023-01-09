@@ -19,6 +19,22 @@ export type Faq = {
   attachments: FaqAttachment[];
 };
 
+export type EditFaq = {
+  topic: string;
+  description: string;
+  remark: string;
+  date: Date;
+  startDate: Date;
+  endDate: Date;
+  createdByUserId: number;
+  approvedByUserId: number | null;
+  siteId?: number;
+  status: string;
+  images: File[] | null;
+  files: File[] | null;
+  deletingAttachments: number[];
+};
+
 type FaqUser = {
   id: number;
   firstName: string;

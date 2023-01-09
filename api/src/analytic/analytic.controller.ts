@@ -13,9 +13,9 @@ import {
 import { AnalyticService } from './analytic.service';
 import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
-import { Analytic } from '../common/entities/analytic';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
+import { AnalyticEntity } from '../common/entities/analytic-entity';
+import { ReqDec } from '../common/decorators/req-dec';
+import { SiteIdPipe } from '../common/pipe/site-id.pipe';
 import { ChartFilterDto } from './dto/chart-filter-dto';
 
 // @UseGuards(JwtAuthGuard)
@@ -161,7 +161,7 @@ export class AnalyticController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<Analytic> {
+  findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<AnalyticEntity> {
     return this.analyticService.findById(id, siteId);
   }
 
@@ -170,7 +170,7 @@ export class AnalyticController {
     @Body() createDto: CreateAnalyticDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Analytic> {
+  ): Promise<AnalyticEntity> {
     return this.analyticService.create(createDto);
   }
 
@@ -180,7 +180,7 @@ export class AnalyticController {
     @Body() updateDto: UpdateAnalyticDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Analytic> {
+  ): Promise<AnalyticEntity> {
     return this.analyticService.update(id, updateDto);
   }
 
@@ -194,7 +194,7 @@ export class AnalyticController {
   }
 
   @Get()
-  findAll(@ReqDec(SiteIdPipe) siteId: number, @Query('group') group: string): Promise<Analytic[]> {
+  findAll(@ReqDec(SiteIdPipe) siteId: number, @Query('group') group: string): Promise<AnalyticEntity[]> {
     return this.analyticService.findAll(group === 'true', siteId);
   }
 }

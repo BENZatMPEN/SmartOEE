@@ -173,7 +173,12 @@ export default function ProblemSolutionSummary({ problemSolution, ...other }: Pr
                             color={'default'}
                             sx={{ py: 1.8, fontSize: '0.85rem' }}
                           >
-                            <Link href={item.attachment.url} underline="none" target="_blank" rel="noopener noreferrer">
+                            <Link
+                              href={item.attachment.fileName}
+                              underline="none"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <Iconify icon="eva:attach-fill" fontSize={'1rem'} />
                                 {item.attachment.name}

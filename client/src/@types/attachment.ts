@@ -1,6 +1,6 @@
 export type Attachment = {
   name: string;
-  url: string;
+  fileName: string;
   length: number;
   mime: string;
 };

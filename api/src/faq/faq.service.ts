@@ -2,29 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { FilterFaqDto } from './dto/filter-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
-import { ContentService } from '../common/content/content.service';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Attachment } from '../common/entities/attachment';
-import { Faq } from '../common/entities/faq';
-import { FaqAttachment } from '../common/entities/faq-attachment';
-import * as _ from 'lodash';
-import { v4 as uuid } from 'uuid';
+import { AttachmentEntity } from '../common/entities/attachment-entity';
+import { FaqEntity } from '../common/entities/faq-entity';
+import { FaqAttachmentEntity } from '../common/entities/faq-attachment-entity';
+import { FileService } from '../common/services/file.service';
+import { FileInfo } from '../common/type/file-info';
 
 @Injectable()
 export class FaqService {
   constructor(
-    @InjectRepository(Attachment)
-    private attachmentRepository: Repository<Attachment>,
-    @InjectRepository(Faq)
-    private faqRepository: Repository<Faq>,
-    @InjectRepository(FaqAttachment)
-    private faqAttachmentRepository: Repository<FaqAttachment>,
-    private readonly contentService: ContentService,
+    @InjectRepository(AttachmentEntity)
+    private attachmentRepository: Repository<AttachmentEntity>,
+    @InjectRepository(FaqEntity)
+    private faqRepository: Repository<FaqEntity>,
+    @InjectRepository(FaqAttachmentEntity)
+    private faqAttachmentRepository: Repository<FaqAttachmentEntity>,
+    private readonly fileService: FileService,
   ) {}
 
-  async findPagedList(filterDto: FilterFaqDto): Promise<PagedLisDto<Faq>> {
+  async findPagedList(filterDto: FilterFaqDto): Promise<PagedLisDto<FaqEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.faqRepository
       .createQueryBuilder('faq')
@@ -53,11 +52,11 @@ export class FaqService {
     return { list: rows, count: count };
   }
 
-  findAll(siteId: number): Promise<Faq[]> {
+  findAll(siteId: number): Promise<FaqEntity[]> {
     return this.faqRepository.findBy({ siteId, deleted: false });
   }
 
-  findById(id: number, siteId: number): Promise<Faq> {
+  findById(id: number, siteId: number): Promise<FaqEntity> {
     return this.faqRepository
       .createQueryBuilder('faq')
       .leftJoin('faq.createdByUser', 'cu')
@@ -79,97 +78,77 @@ export class FaqService {
       .getOne();
   }
 
-  create(createDto: CreateFaqDto): Promise<Faq> {
-    return this.faqRepository.save({
+  async create(createDto: CreateFaqDto, imageInfoList: FileInfo[], fileInfoList: FileInfo[]): Promise<FaqEntity> {
+    const faq = await this.faqRepository.save({
       ...createDto,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    await this.saveAttachment('images', faq, imageInfoList);
+    await this.saveAttachment('attachments', faq, fileInfoList);
+    return faq;
   }
 
-  async update(id: number, updateDto: UpdateFaqDto): Promise<Faq> {
-    const updatingFaq = await this.faqRepository.findOneBy({ id });
-    return this.faqRepository.save({
-      ..._.assign(updatingFaq, updateDto),
+  async update(
+    id: number,
+    updateDto: UpdateFaqDto,
+    siteId: number,
+    imageInfoList: FileInfo[],
+    fileInfoList: FileInfo[],
+  ): Promise<FaqEntity> {
+    const { deletingAttachments, ...dto } = updateDto;
+    const updatingFaq = await this.faqRepository.findOneBy({ id, siteId });
+    const faq = await this.faqRepository.save({
+      ...updatingFaq,
+      ...dto,
       updatedAt: new Date(),
     });
-  }
 
-  async updateFiles(id: number, name: string, images: Express.Multer.File[]): Promise<void> {
-    const faq = await this.faqRepository.findOneBy({ id });
-    for (const image of images) {
-      const attachmentName = uuid();
-      const imageUrl = await this.contentService.saveAttachment(attachmentName, image.buffer, image.mimetype);
-      const attachment = await this.attachmentRepository.save({
-        name: image.originalname,
-        url: imageUrl,
-        length: image.buffer.length,
-        mime: image.mimetype,
-        createdAt: new Date(),
-      });
-
-      await this.faqAttachmentRepository.save({
-        faq,
-        attachment,
-        groupName: name,
-        createdAt: new Date(),
-      });
+    if (deletingAttachments && deletingAttachments.length > 0) {
+      await this.faqAttachmentRepository
+        .createQueryBuilder()
+        .delete()
+        .where('faqId = :faqId', { faqId: id })
+        .andWhere('attachmentId in (:ids)', { ids: deletingAttachments })
+        .execute();
     }
 
-    // for (let image of images) {
-    //   const attachmentName = uuid();
-    //   const imageUrl = await this.contentService.saveAttachment(attachmentName, image.buffer, image.mimetype);
-    //   const attachment = await this.attachmentRepository.create({
-    //     name: image.originalname,
-    //     url: imageUrl,
-    //     length: image.buffer.length,
-    //     mime: image.mimetype,
-    //   });
-    //
-    //   await this.faqAttachmentRepository.create({
-    //     faqId: id,
-    //     attachmentId: attachment.id,
-    //     groupName: name,
-    //   });
-    // }
-
-    // return null;
+    await this.saveAttachment('images', faq, imageInfoList);
+    await this.saveAttachment('attachments', faq, fileInfoList);
+    return faq;
   }
 
-  async deleteFiles(id: number, attachmentIds: number[]): Promise<void> {
-    await this.faqAttachmentRepository
-      .createQueryBuilder()
-      .delete()
-      .where('faqId = :faqId', { faqId: id })
-      .andWhere('attachmentId in (:ids)', { ids: attachmentIds })
-      .execute();
+  private async saveAttachment(key: string, faq: FaqEntity, fileInfoList: FileInfo[]) {
+    if (fileInfoList) {
+      for (const fileInfo of fileInfoList) {
+        const attachment = await this.attachmentRepository.save({
+          name: fileInfo.name,
+          fileName: fileInfo.fileName,
+          length: fileInfo.length,
+          mime: fileInfo.mime,
+          createdAt: new Date(),
+        });
 
-    // await this.faqAttachmentRepository.destroy({
-    //   where: {
-    //     [Op.and]: [
-    //       {
-    //         faqId: id,
-    //         attachmentId: {
-    //           [Op.in]: attachmentIds,
-    //         },
-    //       },
-    //     ],
-    //   },
-    // });
-    // return null;
+        await this.faqAttachmentRepository.save({
+          faq,
+          attachment,
+          groupName: key,
+          createdAt: new Date(),
+        });
+      }
+    }
   }
 
-  async delete(id: number): Promise<void> {
-    const faq = await this.faqRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const faq = await this.faqRepository.findOneBy({ id, siteId });
     faq.deleted = true;
     faq.updatedAt = new Date();
     await this.faqRepository.save(faq);
-    // await this.faqRepository.update({ deleted: true }, { where: { id } });
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    // await this.faqRepository.update({ deleted: true }, { where: { id: ids } });
-    const faqs = await this.faqRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const faqs = await this.faqRepository.findBy({ id: In(ids), siteId });
     await this.faqRepository.save(
       faqs.map((faq) => {
         faq.deleted = true;

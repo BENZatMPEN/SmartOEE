@@ -10,6 +10,7 @@ import FaqAttachments from '../../sections/faqs/details/FaqAttachments';
 import FaqCarousel from '../../sections/faqs/details/FaqCarousel';
 import FaqSummary from '../../sections/faqs/details/FaqSummary';
 import axios from '../../utils/axios';
+import { getFileUrl } from '../../utils/imageHelper';
 
 export default function FaqDetails() {
   const { id } = useParams();
@@ -34,7 +35,9 @@ export default function FaqDetails() {
   }, []);
 
   const getImageUrls = (groupName: string): string[] => {
-    return (model?.attachments || []).filter((item) => item.groupName === groupName).map((item) => item.attachment.url);
+    return (model?.attachments || [])
+      .filter((item) => item.groupName === groupName)
+      .map((item) => getFileUrl(item.attachment.fileName) || '');
   };
 
   return (

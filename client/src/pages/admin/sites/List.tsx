@@ -13,8 +13,8 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Product } from '../../../@types/product';
 import { FilterSite } from '../../../@types/site';
+import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -22,22 +22,19 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
+import { deleteSite, deleteSites, getSitePagedList } from '../../../redux/actions/siteAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../routes/paths';
 import { SiteTableRow, SiteTableToolbar } from '../../../sections/admin/sites/list';
-import axios from '../../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'id', label: 'ID', align: 'left' },
   { id: 'name', label: 'Site Name', align: 'left' },
   { id: 'branch', label: 'Branch', align: 'left' },
+  { id: 'createdAt', label: 'Created Date', align: 'left' },
   { id: 'active', label: 'Active', align: 'center' },
   { id: '' },
 ];
-
-type SitePagedList = {
-  list: Product[];
-  count: number;
-};
 
 export default function SiteList() {
   const {
@@ -61,11 +58,11 @@ export default function SiteList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<SitePagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.site);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -75,55 +72,60 @@ export default function SiteList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get('/sites', {
-        params: {
-          search: filterName,
-          order: order,
-          orderBy: orderBy,
-          page: page,
-          rowsPerPage: rowsPerPage,
-        } as FilterSite,
-      });
-      const pagedList = response.data as SitePagedList;
-      setPagedList(pagedList);
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
-    }
+    const filter: FilterSite = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
+
+    await dispatch(getSitePagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
     setPage(0);
+    setFilterName(filterName);
   };
 
   const handleSearch = async () => {
-    await refreshData();
     setPage(0);
+    await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/sites/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteSite(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/sites`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
+    await dispatch(deleteSites(selectedIds));
+    await refreshData();
+    setSelected([]);
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
     }
+
+    if (deletingItems.length === 1) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    setOpenDeleteDialog(false);
   };
 
   const handleEditRow = (id: number) => {
@@ -178,7 +180,7 @@ export default function SiteList() {
                   }
                   actions={
                     <Tooltip title="Delete">
-                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                      <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                         <Iconify icon={'eva:trash-2-outline'} />
                       </IconButton>
                     </Tooltip>
@@ -210,7 +212,7 @@ export default function SiteList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                       />
@@ -237,6 +239,15 @@ export default function SiteList() {
             />
           </Box>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

@@ -6,7 +6,7 @@ export type Machine = {
   name: string;
   location: string;
   remark: string;
-  imageUrl: string;
+  imageName: string;
   createdAt: Date;
   updatedAt: Date;
   parameters: MachineParameter[];
@@ -20,6 +20,17 @@ export type MachineParameter = {
   oeeType: string;
   deviceId: number | null;
   tagId: number | null;
+};
+
+export type EditMachine = {
+  code: string;
+  name: string;
+  location: string;
+  remark: string;
+  image: File | null;
+  parameters: MachineParameter[];
+  widgets: Widget[];
+  siteId?: number;
 };
 
 export type FilterMachine = {

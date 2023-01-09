@@ -18,7 +18,7 @@ import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { Read } from '../common/type/read';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TagRead } from '../common/entities/tag-read';
+import { TagReadEntity } from '../common/entities/tag-read-entity';
 
 @UseGuards(WsAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,8 +30,8 @@ import { TagRead } from '../common/entities/tag-read';
 export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly socketService: SocketService,
-    @InjectRepository(TagRead)
-    private readonly tagReadRepository: Repository<TagRead>,
+    @InjectRepository(TagReadEntity)
+    private readonly tagReadRepository: Repository<TagReadEntity>,
   ) {}
 
   @WebSocketServer()

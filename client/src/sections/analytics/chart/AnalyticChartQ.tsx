@@ -2,11 +2,9 @@ import { ApexOptions } from 'apexcharts';
 import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
-import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
-import { fNumber2, fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
-import { convertToUnit } from '../../../utils/timeHelper';
+import { fNumber, fNumber2, fPercent } from '../../../utils/formatNumber';
+import { analyticChartTitle } from '../../../utils/formatText';
 
 interface Props {
   criteria: AnalyticCriteria;
@@ -115,7 +113,7 @@ export default function AnalyticChartQ({ criteria }: Props) {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return fNumber2(val);
+            return fNumber(val);
           },
         },
       },
@@ -223,9 +221,9 @@ export default function AnalyticChartQ({ criteria }: Props) {
 
         setSeries([
           {
-            name: getTimeUnitText(TIME_UNIT_MINUTE),
+            name: 'Count',
             type: 'column',
-            data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),
+            data: counts.map((item: any) => item),
           },
           {
             name: '%',

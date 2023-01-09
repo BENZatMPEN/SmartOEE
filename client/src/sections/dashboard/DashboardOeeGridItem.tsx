@@ -21,7 +21,7 @@ type Props = {
 };
 
 export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const {
     id,

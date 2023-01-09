@@ -9,7 +9,7 @@ export default function DashboardDetailsHeader() {
 
   const [time, setTime] = useState<Date>(new Date());
 
-  const { selectedOee } = useSelector((state: RootState) => state.oee);
+  const { currentOee } = useSelector((state: RootState) => state.oee);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -21,7 +21,7 @@ export default function DashboardDetailsHeader() {
     };
   }, []);
 
-  const { oeeCode, productionName } = selectedOee ?? {};
+  const { oeeCode, productionName } = currentOee ?? {};
 
   return (
     <Stack direction="row" justifyContent="space-between" alignItems="center">

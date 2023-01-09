@@ -7,7 +7,7 @@ import { PATH_SETTINGS } from '../../../routes/paths';
 import AlarmForm from '../../../sections/settings/alarms/details/AlarmForm';
 import axios from '../../../utils/axios';
 
-export default function ProductDetails() {
+export default function AlarmDetails() {
   const { pathname } = useLocation();
 
   const { id } = useParams();

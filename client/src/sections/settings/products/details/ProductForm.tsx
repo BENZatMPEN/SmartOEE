@@ -2,12 +2,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Grid, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Product } from '../../../../@types/product';
+import { EditProduct, Product } from '../../../../@types/product';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFEditor, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
@@ -15,10 +16,7 @@ import Iconify from '../../../../components/Iconify';
 import { RootState, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
-
-interface FormValuesProps extends Partial<Product> {
-  image: File;
-}
+import { getFileUrl } from '../../../../utils/imageHelper';
 
 type Props = {
   isEdit: boolean;
@@ -30,7 +28,7 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -39,59 +37,40 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
     name: Yup.string().required('Product Name is required'),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<EditProduct>({
+    resolver: yupResolver(NewProductSchema),
+    defaultValues: {
+      sku: '',
+      name: '',
+      remark: '',
+      image: null,
+    },
+    values: {
       sku: currentProduct?.sku || '',
       name: currentProduct?.name || '',
       remark: currentProduct?.remark || '',
-      siteId: currentProduct?.siteId || selectedSite?.id,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentProduct],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewProductSchema),
-    defaultValues,
+      image: null,
+    },
   });
 
   const {
-    reset,
-    watch,
-    control,
     setValue,
-    getValues,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  useEffect(() => {
-    if (isEdit && currentProduct) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentProduct]);
-
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: EditProduct) => {
     try {
-      const { image, ...dto } = data;
-      let product: Product;
-
       if (isEdit && currentProduct) {
-        const response = await axios.put<Product>(`/products/${currentProduct.id}`, dto);
-        product = response.data;
+        await axios.put<Product>(`/products/${currentProduct.id}`, data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
       } else {
-        const response = await axios.post<Product>(`/products`, dto);
-        product = response.data;
-      }
-
-      if (image) {
-        await axios.post(
-          `/products/${product.id}/upload`,
-          { image },
+        await axios.post<Product>(
+          `/products`,
+          { ...data, siteId: selectedSite?.id },
           {
             headers: {
               'Content-Type': 'multipart/form-data',
@@ -103,7 +82,19 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.products.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          if (Array.isArray(error.response?.data.message)) {
+            for (const item of error.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -148,7 +139,7 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
               accept="image/*"
               maxSize={3145728}
               onDrop={handleDrop}
-              currentFile={currentProduct?.imageUrl}
+              currentFile={isEdit ? getFileUrl(currentProduct?.imageName) : ''}
             />
           </Grid>
 

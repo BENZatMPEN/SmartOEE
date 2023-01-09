@@ -5,22 +5,22 @@ import { UpdateDeviceDto } from './dto/update-device.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Device } from '../common/entities/device';
-import { DeviceTag } from '../common/entities/device-tag';
-import { Site } from '../common/entities/site';
+import { DeviceEntity } from '../common/entities/device-entity';
+import { DeviceTagEntity } from '../common/entities/device-tag-entity';
+import { SiteEntity } from '../common/entities/site-entity';
 
 @Injectable()
 export class DeviceService {
   constructor(
-    @InjectRepository(Device)
-    private deviceRepository: Repository<Device>,
-    @InjectRepository(DeviceTag)
-    private deviceTagRepository: Repository<DeviceTag>,
-    @InjectRepository(Site)
-    private siteRepository: Repository<Site>,
+    @InjectRepository(DeviceEntity)
+    private deviceRepository: Repository<DeviceEntity>,
+    @InjectRepository(DeviceTagEntity)
+    private deviceTagRepository: Repository<DeviceTagEntity>,
+    @InjectRepository(SiteEntity)
+    private siteRepository: Repository<SiteEntity>,
   ) {}
 
-  async findFilter(filterDto: FilterDeviceDto): Promise<PagedLisDto<Device>> {
+  async findFilter(filterDto: FilterDeviceDto): Promise<PagedLisDto<DeviceEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.deviceRepository
       .createQueryBuilder('d')
@@ -38,11 +38,11 @@ export class DeviceService {
     return { list: rows, count: count };
   }
 
-  findAll(siteId: number): Promise<Device[]> {
+  findAll(siteId: number): Promise<DeviceEntity[]> {
     return this.deviceRepository.findBy({ siteId, deleted: false });
   }
 
-  findById(id: number, siteId: number): Promise<Device> {
+  findById(id: number, siteId: number): Promise<DeviceEntity> {
     // return this.deviceRepository.findOne({
     //   include: [{ model: DeviceTag, include: [DeviceModelTag] }, DeviceModel],
     //   where: { id, deleted: false },
@@ -53,7 +53,7 @@ export class DeviceService {
     });
   }
 
-  async create(createDto: CreateDeviceDto): Promise<Device> {
+  async create(createDto: CreateDeviceDto): Promise<DeviceEntity> {
     const { tags, ...dto } = createDto;
     const createdDevice = await this.deviceRepository.save({
       ...dto,
@@ -77,8 +77,9 @@ export class DeviceService {
     return createdDevice;
   }
 
-  async update(id: number, updateDto: UpdateDeviceDto): Promise<Device> {
+  async update(id: number, updateDto: UpdateDeviceDto, siteId: number): Promise<DeviceEntity> {
     const { tags, ...dto } = updateDto;
+    const updatingDevice = await this.deviceRepository.findOneBy({ id, siteId });
 
     if ((tags || []).length > 0) {
       if (tags.every((tag) => tag.id)) {
@@ -105,6 +106,7 @@ export class DeviceService {
     }
 
     const updatedDevice = await this.deviceRepository.save({
+      ...updatingDevice,
       ...dto,
       updatedAt: new Date(),
     });
@@ -118,15 +120,15 @@ export class DeviceService {
     return updatedDevice;
   }
 
-  async delete(id: number): Promise<void> {
-    const device = await this.deviceRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const device = await this.deviceRepository.findOneBy({ id, siteId });
     device.deleted = true;
     device.updatedAt = new Date();
     await this.deviceRepository.save(device);
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const devices = await this.deviceRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const devices = await this.deviceRepository.findBy({ id: In(ids), siteId });
     await this.deviceRepository.save(
       devices.map((device) => {
         device.deleted = true;

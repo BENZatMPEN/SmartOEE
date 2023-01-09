@@ -4,8 +4,8 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseArrayPipe,
   Post,
   Put,
   Query,
@@ -13,105 +13,127 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { IdListDto } from '../common/dto/id-list.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { ProblemSolutionService } from './problem-solution.service';
 import { CreateProblemSolutionDto } from './dto/create-problem-solution.dto';
 import { FilterProblemSolutionDto } from './dto/filter-problem-solution.dto';
 import { UpdateProblemSolutionDto } from './dto/update-problem-solution.dto';
-import { ProblemSolution } from '../common/entities/problem-solution';
+import { ProblemSolutionEntity } from '../common/entities/problem-solution-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
+import { ReqDec } from '../common/decorators/req-dec';
+import { SiteIdPipe } from '../common/pipe/site-id.pipe';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { FileInfo } from '../common/type/file-info';
+import { FileService } from '../common/services/file.service';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('problems-solutions')
 export class ProblemSolutionController {
-  constructor(private readonly problemSolutionService: ProblemSolutionService) {}
+  constructor(
+    private readonly problemSolutionService: ProblemSolutionService,
+    private readonly fileService: FileService,
+  ) {}
 
   @Get()
-  findFilter(
-    @Query() filterDto: FilterProblemSolutionDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<ProblemSolution>> {
+  findFilter(@Query() filterDto: FilterProblemSolutionDto): Promise<PagedLisDto<ProblemSolutionEntity>> {
     return this.problemSolutionService.findPagedList(filterDto);
   }
 
   @Get('all')
-  findAll(@ReqDec(SiteIdPipe) siteId: number): Promise<ProblemSolution[]> {
+  findAll(@ReqDec(SiteIdPipe) siteId: number): Promise<ProblemSolutionEntity[]> {
     return this.problemSolutionService.findAll(siteId);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<ProblemSolution> {
-    const problemSolution = await this.problemSolutionService.findById(id, siteId);
-    if (!problemSolution) {
-      throw new NotFoundException();
-    }
-
-    return problemSolution;
+  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<ProblemSolutionEntity> {
+    return this.problemSolutionService.findById(id, siteId);
   }
 
   @Post()
-  create(
+  @UseInterceptors(AnyFilesInterceptor())
+  async create(
     @Body() createDto: CreateProblemSolutionDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<ProblemSolution> {
-    return this.problemSolutionService.create(createDto);
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<ProblemSolutionEntity> {
+    const beforeProjectChartImageInfoList = await this.saveFileInfoList('beforeProjectChartImages[]', files);
+    const beforeProjectImageInfoList = await this.saveFileInfoList('beforeProjectImages[]', files);
+    const afterProjectChartImageInfoList = await this.saveFileInfoList('afterProjectChartImages[]', files);
+    const afterProjectImageInfoList = await this.saveFileInfoList('afterProjectImages[]', files);
+
+    return this.problemSolutionService.create(
+      createDto,
+      beforeProjectChartImageInfoList,
+      beforeProjectImageInfoList,
+      afterProjectChartImageInfoList,
+      afterProjectImageInfoList,
+    );
   }
 
   @Put(':id')
-  update(
+  @UseInterceptors(AnyFilesInterceptor())
+  async update(
     @Param('id') id: number,
     @Body() updateDto: UpdateProblemSolutionDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<ProblemSolution> {
-    return this.problemSolutionService.update(id, updateDto);
+    @UploadedFiles() files: Express.Multer.File[],
+    @Query('siteId') siteId: number,
+  ): Promise<ProblemSolutionEntity> {
+    const beforeProjectChartImageInfoList = await this.saveFileInfoList('beforeProjectChartImages[]', files);
+    const beforeProjectImageInfoList = await this.saveFileInfoList('beforeProjectImages[]', files);
+    const afterProjectChartImageInfoList = await this.saveFileInfoList('afterProjectChartImages[]', files);
+    const afterProjectImageInfoList = await this.saveFileInfoList('afterProjectImages[]', files);
+
+    return this.problemSolutionService.update(
+      id,
+      updateDto,
+      siteId,
+      beforeProjectChartImageInfoList,
+      beforeProjectImageInfoList,
+      afterProjectChartImageInfoList,
+      afterProjectImageInfoList,
+    );
   }
 
-  @Post(':id/upload-files')
-  @UseInterceptors(FilesInterceptor('images'))
-  async uploadFiles(
-    @Param('id') id: number,
-    @Query('name') name: string,
-    @UploadedFiles() images: Express.Multer.File[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.problemSolutionService.updateFiles(id, name, images);
+  private async saveFileInfoList(key: string, files: Express.Multer.File[]): Promise<FileInfo[]> {
+    const list: FileInfo[] = [];
+    for (const file of files.filter((file) => file.fieldname === key)) {
+      list.push(await this.fileService.saveFileInfo(file));
+    }
+    return list;
   }
 
-  @Delete(':id/delete-files')
-  async deleteFiles(
-    @Param('id') id: number,
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.problemSolutionService.deleteFiles(id, dto.ids);
-  }
+  // @Post(':id/upload-files')
+  // @UseInterceptors(FilesInterceptor('images'))
+  // async uploadFiles(
+  //   @Param('id') id: number,
+  //   @Query('name') name: string,
+  //   @UploadedFiles() images: Express.Multer.File[],
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   @ReqDec(SiteIdPipe) siteId: number,
+  // ): Promise<void> {
+  //   await this.problemSolutionService.updateFiles(id, name, images);
+  // }
+  //
+  // @Delete(':id/delete-files')
+  // async deleteFiles(
+  //   @Param('id') id: number,
+  //   @Query() dto: IdListDto,
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   @ReqDec(SiteIdPipe) siteId: number,
+  // ): Promise<void> {
+  //   await this.problemSolutionService.deleteFiles(id, dto.ids);
+  // }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.problemSolutionService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.problemSolutionService.delete(id, siteId);
   }
 
   @Delete()
   async deleteMany(
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
   ): Promise<void> {
-    await this.problemSolutionService.deleteMany(dto.ids);
+    await this.problemSolutionService.deleteMany(ids, siteId);
   }
 }

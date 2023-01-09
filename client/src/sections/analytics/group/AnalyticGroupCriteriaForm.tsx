@@ -48,7 +48,7 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
 
   const dispatch = useDispatch();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { isLoading, analytics, isGroupLoading, groupAnalytics, currentAnalytics } = useSelector(
     (state: RootState) => state.analytic,

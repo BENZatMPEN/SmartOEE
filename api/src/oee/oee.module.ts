@@ -1,19 +1,17 @@
 import { Module } from '@nestjs/common';
-import { ContentModule } from '../common/content/content.module';
 import { OeeService } from './oee.service';
 import { OeeController } from './oee.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Oee } from '../common/entities/oee';
-import { OeeProduct } from '../common/entities/oee-product';
-import { OeeMachine } from '../common/entities/oee-machine';
-import { Site } from '../common/entities/site';
-import { OeeBatch } from '../common/entities/oee-batch';
-import { SocketService } from '../common/services/socket.service';
-import { SocketModule } from '../common/services/socket.module';
+import { OeeEntity } from '../common/entities/oee-entity';
+import { OeeProductEntity } from '../common/entities/oee-product-entity';
+import { OeeMachineEntity } from '../common/entities/oee-machine-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { FileService } from '../common/services/file.service';
 
 @Module({
-  imports: [ContentModule, TypeOrmModule.forFeature([Oee, OeeProduct, OeeMachine, OeeBatch, Site])],
+  imports: [TypeOrmModule.forFeature([OeeEntity, OeeProductEntity, OeeMachineEntity, OeeBatchEntity, SiteEntity])],
   controllers: [OeeController],
-  providers: [OeeService],
+  providers: [OeeService, FileService],
 })
 export class OeeModule {}

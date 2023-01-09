@@ -1,13 +1,42 @@
+import { IsArray, IsDate, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class UpdateFaqDto {
-  readonly id: number;
+  @IsString()
   readonly topic: string;
+
+  @IsDate()
+  @Type(() => Date)
   readonly date: Date;
+
+  @IsDate()
+  @Type(() => Date)
   readonly startDate: Date;
+
+  @IsDate()
+  @Type(() => Date)
   readonly endDate: Date;
+
+  @IsNumber()
+  @Type(() => Number)
   readonly createdByUserId: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
   readonly approvedByUserId: number;
+
+  @IsString()
   readonly description: string;
+
+  @IsString()
   readonly remark: string;
-  readonly siteId: string;
+
+  @IsString()
   readonly status: string;
+
+  @IsArray()
+  @Type(() => Number)
+  @IsOptional()
+  readonly deletingAttachments: number[];
 }

@@ -1,14 +1,13 @@
 import { Button, Dialog, Divider, ListItemButton, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { OeeProduct } from '../../../../@types/oee';
+import { EditOee, OeeProduct } from '../../../../@types/oee';
 import { Product } from '../../../../@types/product';
 import { FormProvider, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import Scrollbar from '../../../../components/Scrollbar';
 import axios from '../../../../utils/axios';
 import { getTimeUnitText } from '../../../../utils/formatText';
-import { OeeFormValuesProps } from './OeeForm';
 
 type FormValuesProps = {
   searchTerm: string;
@@ -19,7 +18,7 @@ type Props = {
   onClose: VoidFunction;
   onSelect: (oeeProduct: OeeProduct) => void;
   editingProduct: OeeProduct | undefined;
-  currentOee: OeeFormValuesProps;
+  currentOee: EditOee;
 };
 
 export default function OeeProductDialog({ open, onClose, editingProduct, currentOee, onSelect }: Props) {

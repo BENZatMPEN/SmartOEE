@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HistoryLog } from '../entities/history-log';
+import { HistoryLogEntity } from '../entities/history-log-entity';
 import { Repository } from 'typeorm';
 import { HISTORY_LOG_TYPE_ACTION, HISTORY_LOG_TYPE_ALARM } from '../constant';
 
 @Injectable()
 export class LogService {
   constructor(
-    @InjectRepository(HistoryLog)
-    private historyLogRepository: Repository<HistoryLog>,
+    @InjectRepository(HistoryLogEntity)
+    private historyLogRepository: Repository<HistoryLogEntity>,
   ) {}
 
   async logAlarm(siteId: number, message: string): Promise<void> {

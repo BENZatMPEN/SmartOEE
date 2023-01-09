@@ -17,10 +17,10 @@ import { PlanningService } from './planning.service';
 import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
-import { Planning } from '../common/entities/planning';
+import { ReqDec } from '../common/decorators/req-dec';
+import { SiteIdPipe } from '../common/pipe/site-id.pipe';
+import { SiteEntity } from '../common/entities/site-entity';
+import { PlanningEntity } from '../common/entities/planning-entity';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,12 +33,12 @@ export class PlanningController {
     @ReqDec(SiteIdPipe) siteId: number,
     @Query('start') start: Date,
     @Query('end') end: Date,
-  ): Promise<Planning[]> {
+  ): Promise<PlanningEntity[]> {
     return this.planningService.findByDateRange(siteId, start || new Date(), end || new Date());
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<Planning> {
+  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<PlanningEntity> {
     const planning = await this.planningService.findById(id, siteId);
     if (!planning) {
       throw new NotFoundException();
@@ -52,7 +52,7 @@ export class PlanningController {
     @Body() createDto: CreatePlanningDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Planning> {
+  ): Promise<PlanningEntity> {
     return this.planningService.create(createDto);
   }
 
@@ -62,7 +62,7 @@ export class PlanningController {
     @Body() updateDto: UpdatePlanningDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Planning> {
+  ): Promise<PlanningEntity> {
     return this.planningService.update(id, updateDto);
   }
 

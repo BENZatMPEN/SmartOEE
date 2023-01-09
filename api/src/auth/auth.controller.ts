@@ -4,7 +4,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { LocalAuthGuard } from './local-auth.guard';
 import { TokenDto } from './dto/token.dto';
 import { AuthUserDto } from './dto/auth-user.dto';
-import { Role } from '../common/entities/role';
+import { RoleEntity } from '../common/entities/role-entity';
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +24,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('role')
-  getRole(@Request() req, @Query('siteId') siteId: string): Promise<Role> {
+  getRole(@Request() req, @Query('siteId') siteId: string): Promise<RoleEntity> {
     const user = req.user as AuthUserDto;
     return this.authService.findRoleByUserIdAndSiteId(user.id, Number(siteId));
   }

@@ -67,7 +67,7 @@ export default function Router() {
       children: [
         { element: <Home />, index: true },
         {
-          path: '/account',
+          path: 'account',
           children: [
             { element: <Navigate to="profile" replace />, index: true },
             { path: 'profile', element: <Profile /> },
@@ -75,7 +75,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/dashboard',
+          path: 'dashboard',
           children: [
             { element: <Dashboard />, index: true },
             {
@@ -98,7 +98,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/analytics',
+          path: 'analytics',
           children: [
             { element: <Analytics />, index: true },
             { path: 'view', element: <AnalyticView /> },
@@ -106,7 +106,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/problems-solutions',
+          path: 'problems-solutions',
           children: [
             { element: <ProblemsSolutions />, index: true },
             { path: 'new', element: <ProblemsSolutionsAddEdit /> },
@@ -116,7 +116,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/faqs',
+          path: 'faqs',
           children: [
             { element: <Faqs />, index: true },
             { path: 'new', element: <FaqsAddEdit /> },
@@ -126,7 +126,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/plannings',
+          path: 'plannings',
           children: [
             { element: <Plannings />, index: true },
             // { path: 'new', element: <FaqsAddEdit /> },
@@ -136,7 +136,7 @@ export default function Router() {
           ],
         },
         {
-          path: '/history',
+          path: 'history',
           element: <History />,
           children: [
             { element: <Navigate to="alarms" replace />, index: true },
@@ -145,114 +145,123 @@ export default function Router() {
           ],
         },
         {
-          path: '/settings',
+          path: 'settings',
           children: [
             { element: <Navigate to="oees" replace />, index: true },
-            { path: 'oees', element: <OEESettings /> },
             {
               path: 'oees',
               children: [
+                { element: <OEESettings />, index: true },
                 { path: 'new', element: <OEESettingsDetails /> },
                 { path: ':id/edit', element: <OEESettingsDetails /> },
                 { path: ':id/duplicate', element: <OEESettingsDetails /> },
               ],
             },
-            { path: 'machines', element: <MachineSettings /> },
             {
               path: 'machines',
               children: [
+                { element: <MachineSettings />, index: true },
                 { path: 'new', element: <MachineSettingsDetails /> },
                 { path: ':id/edit', element: <MachineSettingsDetails /> },
                 { path: ':id/duplicate', element: <MachineSettingsDetails /> },
               ],
             },
-            { path: 'products', element: <ProductSettings /> },
             {
               path: 'products',
               children: [
+                { element: <ProductSettings />, index: true },
                 { path: 'new', element: <ProductSettingsDetails /> },
                 { path: ':id/edit', element: <ProductSettingsDetails /> },
                 { path: ':id/duplicate', element: <ProductSettingsDetails /> },
               ],
             },
-            { path: 'devices', element: <DeviceSettings /> },
             {
               path: 'devices',
               children: [
+                { element: <DeviceSettings />, index: true },
                 { path: 'new', element: <DeviceSettingsAddEdit /> },
                 { path: ':id', element: <DeviceSettingsDetails /> },
                 { path: ':id/edit', element: <DeviceSettingsAddEdit /> },
                 { path: ':id/duplicate', element: <DeviceSettingsAddEdit /> },
               ],
             },
-            { path: 'models', element: <DeviceModelSettings /> },
             {
               path: 'models',
               children: [
+                { element: <DeviceModelSettings />, index: true },
                 { path: 'new', element: <DeviceModelSettingsDetails /> },
                 { path: ':id/edit', element: <DeviceModelSettingsDetails /> },
                 { path: ':id/duplicate', element: <DeviceModelSettingsDetails /> },
               ],
             },
-            { path: 'dashboard', element: <DashboardSettings /> },
             {
               path: 'dashboard',
               children: [
-                // { path: 'four', element: <PageFour /> },
-                // { path: 'five', element: <PageFive /> },
-                // { path: 'six', element: <PageSix /> },
+                { element: <DashboardSettings />, index: true },
+                { path: 'new', element: <DashboardSettingsDetails /> },
+                { path: ':id/edit', element: <DashboardSettingsDetails /> },
+                { path: ':id/duplicate', element: <DashboardSettingsDetails /> },
               ],
             },
-            { path: 'alarms', element: <AlarmSettings /> },
             {
               path: 'alarms',
               children: [
+                { element: <AlarmSettings />, index: true },
                 { path: 'new', element: <AlarmSettingsDetails /> },
                 { path: ':id/edit', element: <AlarmSettingsDetails /> },
                 { path: ':id/duplicate', element: <AlarmSettingsDetails /> },
               ],
             },
-            { path: 'planned-downtimes', element: <PlannedDowntimeSettings /> },
             {
               path: 'planned-downtimes',
               children: [
+                { element: <PlannedDowntimeSettings />, index: true },
                 { path: 'new', element: <PlannedDowntimeSettingsDetails /> },
                 { path: ':id/edit', element: <PlannedDowntimeSettingsDetails /> },
                 { path: ':id/duplicate', element: <PlannedDowntimeSettingsDetails /> },
               ],
             },
-            { path: 'site', element: <SiteSettingsDetails /> },
+            { path: 'site', element: <SiteSettingsDetails />, index: true },
+            {
+              path: 'users',
+              children: [
+                { element: <UserSettings />, index: true },
+                { path: 'new', element: <UserSettingsDetails /> },
+                { path: ':id/edit', element: <UserSettingsDetails /> },
+                { path: ':id/duplicate', element: <UserSettingsDetails /> },
+              ],
+            },
+            {
+              path: ':roles',
+              children: [
+                { element: <RoleSettings />, index: true },
+                { path: 'new', element: <RoleSettingsDetails /> },
+                { path: ':id/edit', element: <RoleSettingsDetails /> },
+                { path: ':id/duplicate', element: <RoleSettingsDetails /> },
+              ],
+            },
           ],
         },
         {
-          path: '/admin',
+          path: 'admin',
           children: [
             { element: <Navigate to="sites" replace />, index: true },
-            { path: 'sites', element: <AdminSiteSettings /> },
             {
               path: 'sites',
               children: [
+                { element: <AdminSiteSettings />, index: true },
                 { path: 'new', element: <AdminSiteSettingsDetails /> },
                 { path: ':id/edit', element: <AdminSiteSettingsDetails /> },
                 { path: ':id/duplicate', element: <AdminSiteSettingsDetails /> },
               ],
             },
-            { path: 'users', element: <AdminUserSettings /> },
             {
               path: 'users',
               children: [
+                { element: <AdminUserSettings />, index: true },
                 { path: 'new', element: <AdminUserSettingsDetails /> },
                 { path: ':id/edit', element: <AdminUserSettingsDetails /> },
                 { path: ':id/duplicate', element: <AdminUserSettingsDetails /> },
-              ],
-            },
-            { path: 'roles', element: <AdminRoleSettings /> },
-            {
-              path: 'roles',
-              children: [
-                { path: 'new', element: <AdminRoleSettingsDetails /> },
-                { path: ':id/edit', element: <AdminRoleSettingsDetails /> },
-                { path: ':id/duplicate', element: <AdminRoleSettingsDetails /> },
               ],
             },
           ],
@@ -333,6 +342,7 @@ const DeviceSettingsDetails = Loadable(lazy(() => import('../pages/settings/devi
 const DeviceSettingsAddEdit = Loadable(lazy(() => import('../pages/settings/devices/AddEdit')));
 // -- Dashboard
 const DashboardSettings = Loadable(lazy(() => import('../pages/settings/dashboard/List')));
+const DashboardSettingsDetails = Loadable(lazy(() => import('../pages/settings/dashboard/Details')));
 // -- Alarm
 const AlarmSettings = Loadable(lazy(() => import('../pages/settings/alarms/List')));
 const AlarmSettingsDetails = Loadable(lazy(() => import('../pages/settings/alarms/Details')));
@@ -341,6 +351,12 @@ const PlannedDowntimeSettings = Loadable(lazy(() => import('../pages/settings/pl
 const PlannedDowntimeSettingsDetails = Loadable(lazy(() => import('../pages/settings/planned-downtimes/Details')));
 // -- Site
 const SiteSettingsDetails = Loadable(lazy(() => import('../pages/settings/site/Details')));
+// -- Roles
+const UserSettings = Loadable(lazy(() => import('../pages/settings/users/List')));
+const UserSettingsDetails = Loadable(lazy(() => import('../pages/settings/users/Details')));
+// -- Roles
+const RoleSettings = Loadable(lazy(() => import('../pages/settings/roles/List')));
+const RoleSettingsDetails = Loadable(lazy(() => import('../pages/settings/roles/Details')));
 
 // Administrator
 // -- Sites
@@ -349,8 +365,5 @@ const AdminSiteSettingsDetails = Loadable(lazy(() => import('../pages/admin/site
 // -- Users
 const AdminUserSettings = Loadable(lazy(() => import('../pages/admin/users/List')));
 const AdminUserSettingsDetails = Loadable(lazy(() => import('../pages/admin/users/Details')));
-// -- Roles
-const AdminRoleSettings = Loadable(lazy(() => import('../pages/admin/roles/List')));
-const AdminRoleSettingsDetails = Loadable(lazy(() => import('../pages/admin/roles/Details')));
 
 const NotFound = Loadable(lazy(() => import('../pages/Page404')));

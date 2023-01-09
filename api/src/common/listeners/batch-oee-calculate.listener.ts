@@ -11,6 +11,17 @@ import {
   OEE_PARAM_TYPE_A,
   OEE_PARAM_TYPE_P,
   OEE_TAG_MC_STATE,
+  OEE_TAG_OUT_A,
+  OEE_TAG_OUT_BATCH_STATUS,
+  OEE_TAG_OUT_BREAKING_TIME,
+  OEE_TAG_OUT_CYCLE_TIME,
+  OEE_TAG_OUT_OEE,
+  OEE_TAG_OUT_OPERATING_TIME,
+  OEE_TAG_OUT_P,
+  OEE_TAG_OUT_PLANNED_DOWNTIME,
+  OEE_TAG_OUT_PLANNED_QUANTITY,
+  OEE_TAG_OUT_Q,
+  OEE_TAG_OUT_TOTAL_NG,
   OEE_TAG_TOTAL,
   OEE_TAG_TOTAL_NG,
   OEE_TYPE_A,
@@ -31,10 +42,10 @@ import { OeeService } from '../../oee/oee.service';
 import { SocketService } from '../services/socket.service';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { Read } from '../type/read';
-import { OeeTagMCStatus } from '../type/oee-tag';
+import { Read, ReadItem } from '../type/read';
+import { OeeTag, OeeTagMCStatus, OeeTagOutBatchStatus } from '../type/oee-tag';
 import { OeeBatchMcState } from '../type/oee-status';
-import { OeeBatch } from '../entities/oee-batch';
+import { OeeBatchEntity } from '../entities/oee-batch-entity';
 import {
   AnalyticAParamUpdateEvent,
   AnalyticPParamUpdateEvent,
@@ -49,11 +60,26 @@ export class BatchOeeCalculateListener {
     private readonly siteService: SiteService,
     private readonly oeeService: OeeService,
     private readonly oeeBatchService: OeeBatchService,
-    // private readonly analyticService: AnalyticService,
     private readonly socketService: SocketService,
     private readonly notificationService: NotificationService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  private findOeeTag(key: string, oeeTags: OeeTag[]): OeeTag {
+    const itemIndex = oeeTags.findIndex((item) => item.key === key && item.tagId);
+    if (itemIndex < 0) {
+      return null;
+    }
+    return oeeTags[itemIndex];
+  }
+
+  private findRead(tagId: number, reads: ReadItem[]): ReadItem {
+    const itemIndex = reads.findIndex((item) => item.tagId === tagId);
+    if (itemIndex < 0) {
+      return null;
+    }
+    return reads[itemIndex];
+  }
 
   @OnEvent('batch-oee.calculate')
   private async processRead(event: BatchOeeCalculateEvent): Promise<void> {
@@ -63,22 +89,23 @@ export class BatchOeeCalculateListener {
       const batch = await this.oeeBatchService.findById(batchId);
       const oee = await this.oeeService.findById(batch.oeeId);
       const oeeTags = oee.tags || [];
-      const tagMcStateIdx = oeeTags.findIndex((item) => item.key === OEE_TAG_MC_STATE && item.tagId);
-      const tagTotalIdx = oeeTags.findIndex((item) => item.key === OEE_TAG_TOTAL && item.tagId);
-      const tagTotalNgIdx = oeeTags.findIndex((item) => item.key === OEE_TAG_TOTAL_NG && item.tagId);
-      if (tagMcStateIdx < 0 || tagTotalIdx < 0 || tagTotalNgIdx < 0) {
+
+      const tagMcState = this.findOeeTag(OEE_TAG_MC_STATE, oeeTags);
+      const tagTotal = this.findOeeTag(OEE_TAG_TOTAL, oeeTags);
+      const tagTotalNg = this.findOeeTag(OEE_TAG_TOTAL_NG, oeeTags);
+      if (!tagMcState || !tagTotal || !tagTotalNg) {
         this.logger.log('OEE tags are required.');
         return;
       }
 
-      const tagMcState = oeeTags[tagMcStateIdx];
-      const tagMcStateData = tagMcState.data as OeeTagMCStatus;
-      const tagTotal = oeeTags[tagTotalIdx];
-      const tagTotalNg = oeeTags[tagTotalNgIdx];
+      const currentTagMcState = this.findRead(tagMcState.tagId, tagRead.reads);
+      const currentTagTotal = this.findRead(tagTotal.tagId, tagRead.reads);
+      const currentTagTotalNg = this.findRead(tagTotalNg.tagId, tagRead.reads);
 
-      const currentTagMcState = tagRead.reads.filter((read) => read.tagId === tagMcState.tagId)[0];
-      const currentTagTotal = tagRead.reads.filter((read) => read.tagId === tagTotal.tagId)[0];
-      const currentTagTotalNg = tagRead.reads.filter((read) => read.tagId === tagTotalNg.tagId)[0];
+      if (!currentTagMcState || !currentTagTotal || !currentTagTotalNg) {
+        this.logger.log(`Tag read doesn't contain the required values.`);
+        return;
+      }
 
       const previousMcState = batch.mcState;
       const currentMcState: OeeBatchMcState = {
@@ -166,6 +193,8 @@ export class BatchOeeCalculateListener {
       }
 
       // update current status
+      const tagMcStateData: OeeTagMCStatus = tagMcState.data;
+
       if (batch.batchStoppedDate || batch.toBeStopped) {
         currentMcState.batchStatus = OEE_BATCH_STATUS_ENDED;
       } else if (activePD && !activePD.expiredAt) {
@@ -185,6 +214,19 @@ export class BatchOeeCalculateListener {
       this.logger.log(
         `batch status - previous: ${previousMcState.batchStatus}, current: ${currentMcState.batchStatus}`,
       );
+
+      // send batch status
+      const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
+      if (tagOutBatchStatus !== null) {
+        const tagBatchStatusData: OeeTagOutBatchStatus = tagOutBatchStatus.data;
+        const outVal = this.getTagBatchStatus(currentMcState.batchStatus, tagBatchStatusData);
+        if (outVal !== '') {
+          this.socketService.socket.to(`site_${batch.siteId}`).emit(`tag_out`, {
+            tagId: tagOutBatchStatus.tagId,
+            value: outVal,
+          });
+        }
+      }
 
       await this.eventEmitter.emitAsync('batch-mc-state.update', {
         siteId: batch.siteId,
@@ -219,16 +261,53 @@ export class BatchOeeCalculateListener {
         await this.processQ(batch, tagRead);
       }
 
-      await this.handleBatchOeeCalculate(batch.id, previousMcState, currentMcState);
+      await this.handleBatchOeeCalculate(batch.id, previousMcState, currentMcState, oeeTags);
     } catch (error) {
       this.logger.error('exception', error);
     }
   }
 
-  async handleBatchOeeCalculate(batchId: number, previousMcState: OeeBatchMcState, currentMcState: OeeBatchMcState) {
+  getTagBatchStatus(batchStatus: string, data: OeeTagOutBatchStatus): string {
+    switch (batchStatus) {
+      case OEE_BATCH_STATUS_RUNNING:
+        return data.running;
+
+      case OEE_BATCH_STATUS_STANDBY:
+        return data.standby;
+
+      case OEE_BATCH_STATUS_BREAKDOWN:
+        return data.breakdown;
+
+      case OEE_BATCH_STATUS_PLANNED:
+        return data.plannedDowntime;
+
+      case OEE_BATCH_STATUS_MC_SETUP:
+        return data.mcSetup;
+
+      default:
+        return '';
+    }
+  }
+
+  sendTagOut(key: string, outVal: string, siteId: number, oeeTags: OeeTag[]): void {
+    const tagOut = this.findOeeTag(key, oeeTags);
+    if (tagOut !== null) {
+      this.socketService.socket.to(`site_${siteId}`).emit(`tag_out`, {
+        tagId: tagOut.tagId,
+        value: outVal,
+      });
+    }
+  }
+
+  async handleBatchOeeCalculate(
+    batchId: number,
+    previousMcState: OeeBatchMcState,
+    currentMcState: OeeBatchMcState,
+    oeeTags: OeeTag[],
+  ) {
     try {
       const batch = await this.oeeBatchService.findById(batchId);
-      const { batchStartedDate, standardSpeedSeconds, oeeStats, breakdownSeconds } = batch;
+      const { batchStartedDate, standardSpeedSeconds, oeeStats, breakdownSeconds, plannedQuantity } = batch;
       const { total, totalNg, stopSeconds, timestamp } = currentMcState;
       const { total: previousTotal } = previousMcState;
       const readTimestamp = new Date(timestamp);
@@ -355,6 +434,22 @@ export class BatchOeeCalculateListener {
       // send to socket
       this.socketService.socket.to(`site_${batch.siteId}`).emit(`stats_${batchId}.updated`, currentStats);
 
+      this.sendTagOut(OEE_TAG_OUT_OEE, currentStats.oeePercent.toFixed(2), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_A, currentStats.aPercent.toFixed(2), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_P, currentStats.pPercent.toFixed(2), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_Q, currentStats.qPercent.toFixed(2), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_OPERATING_TIME, currentStats.operatingSeconds.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(
+        OEE_TAG_OUT_PLANNED_DOWNTIME,
+        currentStats.plannedDowntimeSeconds.toString(),
+        batch.siteId,
+        oeeTags,
+      );
+      this.sendTagOut(OEE_TAG_OUT_BREAKING_TIME, currentStats.totalBreakdownSeconds.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_TOTAL_NG, currentStats.totalCount.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_CYCLE_TIME, standardSpeedSeconds.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
+
       // notify
       // this.notifyLow(batch.siteId, batch.oeeId, batch.oeeStatus, currentStatus),
     } catch (error) {
@@ -401,7 +496,7 @@ export class BatchOeeCalculateListener {
   }
 
   private async processA(
-    batch: OeeBatch,
+    batch: OeeBatchEntity,
     previousMcState: OeeBatchMcState,
     tagRead: Read,
     readTimestamp: Date,
@@ -464,18 +559,20 @@ export class BatchOeeCalculateListener {
       oeeId,
       productId: product.id,
       oeeBatchId: batch.id,
-      param: {
-        tagId: updatingA.tagId,
-        seconds: updatingA.seconds,
-        machineId: updatingA.machineId,
-        machineParameterId: updatingA.machineParameterId,
-      },
+      params: [
+        {
+          tagId: updatingA.tagId,
+          seconds: updatingA.seconds,
+          machineId: updatingA.machineId,
+          machineParameterId: updatingA.machineParameterId,
+        },
+      ],
     };
     await this.eventEmitter.emitAsync('analytic-a-params.update', analyticAParamsUpdateEvent);
   }
 
   private async processP(
-    batch: OeeBatch,
+    batch: OeeBatchEntity,
     previousMcState: OeeBatchMcState,
     tagRead: Read,
     readTimestamp: Date,
@@ -542,12 +639,14 @@ export class BatchOeeCalculateListener {
         oeeId,
         productId: product.id,
         oeeBatchId: batch.id,
-        param: {
-          tagId: updatingP.tagId,
-          seconds: updatingP.seconds,
-          machineId: updatingP.machineId,
-          machineParameterId: updatingP.machineParameterId,
-        },
+        params: [
+          {
+            tagId: updatingP.tagId,
+            seconds: updatingP.seconds,
+            machineId: updatingP.machineId,
+            machineParameterId: updatingP.machineParameterId,
+          },
+        ],
       };
       await this.eventEmitter.emitAsync('analytic-p-params.update', analyticPParamsUpdateEvent);
     } else {
@@ -563,7 +662,7 @@ export class BatchOeeCalculateListener {
     }
   }
 
-  private async processQ(batch: OeeBatch, tagRead: Read): Promise<void> {
+  private async processQ(batch: OeeBatchEntity, tagRead: Read): Promise<void> {
     const { siteId, oeeId, product } = batch;
     const currentParams = await this.oeeBatchService.findBatchQsById(batch.id);
     const updatingParams = currentParams.reduce((acc, param) => {
@@ -587,13 +686,15 @@ export class BatchOeeCalculateListener {
       oeeId,
       productId: product.id,
       oeeBatchId: batch.id,
-      param: {
-        autoAmount: updatingParam.autoAmount - currentParam.autoAmount,
-        manualAmount: 0,
-        tagId: currentParam.tagId,
-        machineId: currentParam.machineId,
-        machineParameterId: currentParam.machineParameterId,
-      },
+      params: [
+        {
+          autoAmount: updatingParam.autoAmount - currentParam.autoAmount,
+          manualAmount: 0,
+          tagId: currentParam.tagId,
+          machineId: currentParam.machineId,
+          machineParameterId: currentParam.machineParameterId,
+        },
+      ],
     };
     await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
 

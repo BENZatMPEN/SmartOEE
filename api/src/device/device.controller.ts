@@ -4,93 +4,67 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseArrayPipe,
   Post,
   Put,
   Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IdListDto } from '../common/dto/id-list.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { DeviceService } from './device.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { FilterDeviceDto } from './dto/filter-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
-import { Device } from '../common/entities/device';
+import { DeviceEntity } from '../common/entities/device-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
 
 @UseGuards(JwtAuthGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('devices')
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get()
-  @UseInterceptors(ClassSerializerInterceptor)
-  findFilter(
-    @Query() filterDto: FilterDeviceDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<Device>> {
+  findFilter(@Query() filterDto: FilterDeviceDto): Promise<PagedLisDto<DeviceEntity>> {
     return this.deviceService.findFilter(filterDto);
   }
 
   @Get('all')
-  @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@ReqDec(SiteIdPipe) siteId: number): Promise<Device[]> {
+  findAll(@Query('siteId') siteId: number): Promise<DeviceEntity[]> {
     return this.deviceService.findAll(siteId);
   }
 
   @Get(':id')
-  @UseInterceptors(ClassSerializerInterceptor)
-  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<Device> {
-    const device = await this.deviceService.findById(id, siteId);
-    if (!device) {
-      throw new NotFoundException();
-    }
-
-    return device;
+  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<DeviceEntity> {
+    return this.deviceService.findById(id, siteId);
   }
 
   @Post()
-  @UseInterceptors(ClassSerializerInterceptor)
-  create(@Body() createDto: CreateDeviceDto, @ReqDec(SiteIdPipe) siteId: number): Promise<Device> {
-    return this.deviceService.create({
-      ...createDto,
-      siteId: siteId,
-    });
+  create(@Body() createDto: CreateDeviceDto): Promise<DeviceEntity> {
+    return this.deviceService.create(createDto);
   }
 
   @Put(':id')
-  @UseInterceptors(ClassSerializerInterceptor)
   update(
     @Param('id') id: string,
     @Body() updateDto: UpdateDeviceDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Device> {
-    return this.deviceService.update(Number(id), updateDto);
+    @Query('siteId') siteId: number,
+  ): Promise<DeviceEntity> {
+    return this.deviceService.update(Number(id), updateDto, siteId);
   }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.deviceService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.deviceService.delete(id, siteId);
   }
 
   @Delete()
   async deleteMany(
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
   ): Promise<void> {
-    await this.deviceService.deleteMany(dto.ids);
+    await this.deviceService.deleteMany(ids, siteId);
   }
 }

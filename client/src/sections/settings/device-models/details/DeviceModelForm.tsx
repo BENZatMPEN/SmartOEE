@@ -1,12 +1,12 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { DeviceModel } from '../../../../@types/deviceModel';
+import { EditDeviceModel } from '../../../../@types/deviceModel';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFSelect, RHFTextField } from '../../../../components/hook-form';
@@ -21,9 +21,7 @@ import { createDeviceModel, updateDeviceModel } from '../../../../redux/actions/
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
-import DeviceModelTagDetails from './DeviceModelTagDetails';
-
-interface FormValuesProps extends Partial<DeviceModel> {}
+import DeviceModelTagList from './DeviceModelTagList';
 
 type Props = {
   isEdit: boolean;
@@ -33,6 +31,8 @@ export default function DeviceModelForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
   const { currentDeviceModel } = useSelector((state: RootState) => state.deviceModel);
+
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const navigate = useNavigate();
 
@@ -50,68 +50,53 @@ export default function DeviceModelForm({ isEdit }: Props) {
     ),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<EditDeviceModel>({
+    resolver: yupResolver(NewDeviceModelSchema),
+    defaultValues: {
+      name: '',
+      remark: '',
+      connectionType: DEVICE_MODEL_CONNECTION_TYPE_TCP,
+      modelType: DEVICE_MODEL_TYPE_MODBUS,
+      tags: [],
+    },
+    values: {
       name: currentDeviceModel?.name || '',
       remark: currentDeviceModel?.remark || '',
       connectionType: currentDeviceModel?.connectionType || DEVICE_MODEL_CONNECTION_TYPE_TCP,
       modelType: currentDeviceModel?.modelType || DEVICE_MODEL_TYPE_MODBUS,
       tags: currentDeviceModel?.tags || [],
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDeviceModel],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewDeviceModelSchema),
-    defaultValues,
+    },
   });
 
   const {
-    reset,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  useEffect(() => {
-    if (isEdit && currentDeviceModel) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentDeviceModel]);
-
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: EditDeviceModel) => {
     try {
       if (isEdit && currentDeviceModel) {
-        await dispatch(
-          updateDeviceModel(currentDeviceModel.id, {
-            ...currentDeviceModel,
-            name: data.name,
-            modelType: data.modelType,
-            connectionType: data.connectionType,
-            remark: data.remark,
-            tags: data.tags || [],
-          }),
-        );
+        await dispatch(updateDeviceModel(currentDeviceModel.id, data));
       } else {
-        await dispatch(
-          createDeviceModel({
-            name: data.name,
-            modelType: data.modelType,
-            connectionType: data.connectionType,
-            remark: data.remark,
-            tags: data.tags || [],
-          }),
-        );
+        await dispatch(createDeviceModel({ ...data, siteId: selectedSite?.id }));
       }
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.deviceModels.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          if (Array.isArray(error.response?.data.message)) {
+            for (const item of error.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -217,7 +202,7 @@ export default function DeviceModelForm({ isEdit }: Props) {
 
         <Card>
           <CardContent>
-            <DeviceModelTagDetails />
+            <DeviceModelTagList />
           </CardContent>
         </Card>
       </Stack>

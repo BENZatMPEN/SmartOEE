@@ -26,9 +26,6 @@ export default function ProductDetails() {
         if (isEdit || isDuplicate) {
           const response = await axios.get<Product>(`/products/${id}`);
           const product = response.data;
-          if (isDuplicate) {
-            product.imageUrl = '';
-          }
           setModel(product);
         }
       } catch (error) {

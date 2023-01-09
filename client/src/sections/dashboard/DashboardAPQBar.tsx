@@ -8,16 +8,15 @@ import { fPercent } from '../../utils/formatNumber';
 export default function DashboardAPQBar() {
   const theme = useTheme();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { selectedOee } = useSelector((state: RootState) => state.oee);
+  const { currentOee } = useSelector((state: RootState) => state.oee);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
   const percentSettings =
-    (selectedOee?.useSitePercentSettings || true
-      ? selectedSite?.defaultPercentSettings
-      : selectedOee?.percentSettings) || initialPercentSettings;
+    (currentOee?.useSitePercentSettings || true ? selectedSite?.defaultPercentSettings : currentOee?.percentSettings) ||
+    initialPercentSettings;
   const aPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_A)[0];
   const pPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_P)[0];
   const qPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_Q)[0];

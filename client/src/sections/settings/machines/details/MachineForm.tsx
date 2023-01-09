@@ -2,12 +2,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Machine, MachineParameter } from '../../../../@types/machine';
+import { EditMachine, Machine, MachineParameter } from '../../../../@types/machine';
 import { Widget } from '../../../../@types/widget';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -19,13 +20,13 @@ import useToggle from '../../../../hooks/useToggle';
 import { RootState, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
+import { getFileUrl } from '../../../../utils/imageHelper';
 import MachineParamAList from './MachineParamAList';
 import MachineParameterDialog from './MachineParameterDialog';
 import MachineParamPList from './MachineParamPList';
 import MachineParamQList from './MachineParamQList';
 
-interface FormValuesProps extends Partial<Machine> {
-  image: File;
+interface FormValuesProps extends Partial<EditMachine> {
   aParams: MachineParameter[];
   pParams: MachineParameter[];
   qParams: MachineParameter[];
@@ -43,7 +44,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -66,13 +67,24 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
     name: Yup.string().required('Machine Name is required'),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<FormValuesProps>({
+    resolver: yupResolver(NewMachineSchema),
+    defaultValues: {
+      code: '',
+      name: '',
+      location: '',
+      remark: '',
+      aParams: [],
+      pParams: [],
+      qParams: [],
+      widgets: defaultWidget,
+      image: null,
+    },
+    values: {
       code: currentMachine?.code || '',
       name: currentMachine?.name || '',
       location: currentMachine?.location || '',
       remark: currentMachine?.remark || '',
-      siteId: currentMachine?.siteId || selectedSite?.id,
       aParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_A) || [],
       pParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_P) || [],
       qParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_Q) || [],
@@ -81,18 +93,11 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
           ? currentMachine.widgets
           : defaultWidget
         : defaultWidget,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentMachine],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewMachineSchema),
-    defaultValues,
+      image: null,
+    },
   });
 
   const {
-    reset,
     watch,
     setValue,
     getValues,
@@ -102,40 +107,30 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
 
   const values = watch();
 
-  useEffect(() => {
-    if (isEdit && currentMachine) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentMachine]);
-
   const onSubmit = async (data: FormValuesProps) => {
     try {
-      const { image, aParams, pParams, qParams, widgets, ...dto } = data;
+      const { aParams, pParams, qParams, widgets, ...dto } = data;
       dto.parameters = [...aParams, ...pParams, ...qParams];
       let machine: Machine;
 
       if (isEdit && currentMachine) {
-        const response = await axios.put<Machine>(`/machines/${currentMachine.id}`, dto);
+        const response = await axios.put<Machine>(`/machines/${currentMachine.id}`, dto, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
         machine = response.data;
       } else {
-        const response = await axios.post<Machine>(`/machines`, dto);
-        machine = response.data;
-      }
-
-      if (image) {
-        await axios.post(
-          `/machines/${machine.id}/upload`,
-          { image },
+        const response = await axios.post<Machine>(
+          `/machines`,
+          { ...dto, siteId: selectedSite?.id },
           {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           },
         );
+        machine = response.data;
       }
 
       await axios.post(`/machines/${machine.id}/widgets`, { machineId: machine.id, widgets });
@@ -143,7 +138,15 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.machines.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          for (const item of error.response?.data.message) {
+            enqueueSnackbar(item, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -249,7 +252,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
                     accept="image/*"
                     maxSize={3145728}
                     onDrop={handleDrop}
-                    currentFile={currentMachine?.imageUrl}
+                    currentFile={isEdit ? getFileUrl(currentMachine?.imageName) : ''}
                   />
                 </CardContent>
               </Card>

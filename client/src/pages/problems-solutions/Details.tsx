@@ -8,6 +8,7 @@ import { PATH_PROBLEMS_SOLUTIONS } from '../../routes/paths';
 import ProblemSolutionCarousel from '../../sections/problems-solutions/details/ProblemSolutionCarousel';
 import ProblemSolutionSummary from '../../sections/problems-solutions/details/ProblemSolutionSummary';
 import axios from '../../utils/axios';
+import { getFileUrl } from '../../utils/imageHelper';
 
 export default function ProblemSolutionDetails() {
   const { id } = useParams();
@@ -31,7 +32,9 @@ export default function ProblemSolutionDetails() {
   }, []);
 
   const getImageUrls = (groupName: string): string[] => {
-    return (model?.attachments || []).filter((item) => item.groupName === groupName).map((item) => item.attachment.url);
+    return (model?.attachments || [])
+      .filter((item) => item.groupName === groupName)
+      .map((item) => getFileUrl(item.attachment.fileName) || '');
   };
 
   return (

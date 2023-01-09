@@ -10,11 +10,11 @@ import * as dayjs from 'dayjs';
 import { initialOeeBatchStats, OeeStats } from '../type/oee-stats';
 import { AnalyticData } from '../type/analytic-data';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OeeBatch } from '../entities/oee-batch';
+import { OeeBatchEntity } from '../entities/oee-batch-entity';
 import { Repository } from 'typeorm';
-import { OeeBatchStats } from '../entities/oee-batch-stats';
-import { AnalyticStats } from '../entities/analytic-stats';
-import { AnalyticStatsParam } from '../entities/analytic-stats-param';
+import { OeeBatchStatsEntity } from '../entities/oee-batch-stats-entity';
+import { AnalyticStatsEntity } from '../entities/analytic-stats-entity';
+import { AnalyticStatsParamEntity } from '../entities/analytic-stats-param-entity';
 import { OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../constant';
 
 @Injectable()
@@ -22,14 +22,14 @@ export class AnalyticEventsListener {
   private readonly logger = new Logger(AnalyticEventsListener.name);
 
   constructor(
-    @InjectRepository(OeeBatch)
-    private readonly oeeBatchRepository: Repository<OeeBatch>,
-    @InjectRepository(OeeBatchStats)
-    private readonly oeeBatchStatsRepository: Repository<OeeBatchStats>,
-    @InjectRepository(AnalyticStats)
-    private readonly analyticStatsRepository: Repository<AnalyticStats>,
-    @InjectRepository(AnalyticStatsParam)
-    private readonly analyticStatsParamRepository: Repository<AnalyticStatsParam>,
+    @InjectRepository(OeeBatchEntity)
+    private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(OeeBatchStatsEntity)
+    private readonly oeeBatchStatsRepository: Repository<OeeBatchStatsEntity>,
+    @InjectRepository(AnalyticStatsEntity)
+    private readonly analyticStatsRepository: Repository<AnalyticStatsEntity>,
+    @InjectRepository(AnalyticStatsParamEntity)
+    private readonly analyticStatsParamRepository: Repository<AnalyticStatsParamEntity>,
   ) {}
 
   @OnEvent('analytic-oee.update')
@@ -40,47 +40,53 @@ export class AnalyticEventsListener {
 
   @OnEvent('analytic-a-params.update')
   async handleAnalyticAParamsUpdateEvent(event: AnalyticAParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, param } = event;
+    const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
-    await this.analyticStatsParamRepository.save({
-      data: param,
-      paramType: OEE_PARAM_TYPE_A,
-      timestamp: timestamp.toDate(),
-      siteId,
-      oeeId,
-      oeeBatchId,
-      productId,
-    });
+    await this.analyticStatsParamRepository.save(
+      params.map((param) => ({
+        data: param,
+        paramType: OEE_PARAM_TYPE_A,
+        timestamp: timestamp.toDate(),
+        siteId,
+        oeeId,
+        oeeBatchId,
+        productId,
+      })),
+    );
   }
 
   @OnEvent('analytic-p-params.update')
   async handleAnalyticPParamsUpdateEvent(event: AnalyticPParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, param } = event;
+    const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
-    await this.analyticStatsParamRepository.save({
-      data: param,
-      paramType: OEE_PARAM_TYPE_P,
-      timestamp: timestamp.toDate(),
-      siteId,
-      oeeId,
-      oeeBatchId,
-      productId,
-    });
+    await this.analyticStatsParamRepository.save(
+      params.map((param) => ({
+        data: param,
+        paramType: OEE_PARAM_TYPE_P,
+        timestamp: timestamp.toDate(),
+        siteId,
+        oeeId,
+        oeeBatchId,
+        productId,
+      })),
+    );
   }
 
   @OnEvent('analytic-q-params.update')
   async handleAnalyticQParamsUpdateEvent(event: AnalyticQParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, param } = event;
+    const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
-    await this.analyticStatsParamRepository.save({
-      data: param,
-      paramType: OEE_PARAM_TYPE_Q,
-      timestamp: timestamp.toDate(),
-      siteId,
-      oeeId,
-      oeeBatchId,
-      productId,
-    });
+    await this.analyticStatsParamRepository.save(
+      params.map((param) => ({
+        data: param,
+        paramType: OEE_PARAM_TYPE_Q,
+        timestamp: timestamp.toDate(),
+        siteId,
+        oeeId,
+        oeeBatchId,
+        productId,
+      })),
+    );
   }
 
   async collectOeeStatsFromBatch(batchId: number, currentOeeStats: OeeStats): Promise<void> {

@@ -11,9 +11,9 @@ import DashboardOeeGridItem from '../../sections/dashboard/DashboardOeeGridItem'
 import DashboardOeeTimelineItem from '../../sections/dashboard/DashboardOeeTimelineItem';
 
 export default function List() {
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { ganttView } = useSelector((state: RootState) => state.site);
+  const { ganttView } = useSelector((state: RootState) => state.userSite);
 
   const { oeeStatus } = useSelector((state: RootState) => state.oee);
 

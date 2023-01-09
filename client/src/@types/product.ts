@@ -3,10 +3,18 @@ export type Product = {
   sku: string;
   name: string;
   remark: string;
-  imageUrl: string;
+  imageName: string;
   createdAt: Date;
   updatedAt: Date;
   siteId: number;
+};
+
+export type EditProduct = {
+  sku: string;
+  name: string;
+  remark: string;
+  image: File | null;
+  siteId?: number;
 };
 
 export type FilterProduct = {

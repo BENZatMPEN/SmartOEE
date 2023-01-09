@@ -1,25 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { OptionItem } from '../../@types/option';
 import { Role, RolePagedList } from '../../@types/role';
 
 export type RoleState = {
   isLoading: boolean;
-  error: any | string | null;
+  roleOptions: OptionItem[];
   pagedList: RolePagedList;
   isDetailsLoading: boolean;
   currentRole: Role | null;
-  detailsError: any | string | null;
 };
 
 const initialState: RoleState = {
   isLoading: false,
-  error: null,
+  roleOptions: [],
   pagedList: {
     list: [],
     count: 0,
   },
   isDetailsLoading: false,
   currentRole: null,
-  detailsError: null,
 };
 
 const roleSlice = createSlice({
@@ -29,23 +28,22 @@ const roleSlice = createSlice({
     startLoading(state) {
       state.isLoading = true;
     },
-    hasError(state, action) {
+    getRoleOptionsSuccess(state, action) {
       state.isLoading = false;
-      state.error = action.payload;
+      state.roleOptions = action.payload;
     },
-    getRolesSuccess(state, action) {
+    getRolePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
     startDetailsLoading(state) {
       state.isDetailsLoading = true;
     },
-    hasDetailsError(state, action) {
-      state.isDetailsLoading = false;
-      state.detailsError = action.payload;
-    },
     emptyCurrentRole(state) {
       state.currentRole = null;
+    },
+    emptyRoleOptions(state) {
+      state.roleOptions = [];
     },
     updateRoleSettings(state, action) {
       // const {roles} = state.currentRole;

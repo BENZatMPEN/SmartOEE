@@ -53,7 +53,7 @@ type OptionItem = {
 export default function AlarmForm({ isEdit, currentAlarm }: Props) {
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 

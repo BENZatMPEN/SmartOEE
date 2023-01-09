@@ -62,7 +62,7 @@ export default function FaqList() {
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const [pagedList, setPagedList] = useState<FaqPagedList>({ list: [], count: 0 });
 

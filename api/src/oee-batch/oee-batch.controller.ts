@@ -16,26 +16,26 @@ import {
 import { OeeBatchService, ParetoData } from './oee-batch.service';
 import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
-import { OeeBatch } from '../common/entities/oee-batch';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
-import { OeeBatchA } from '../common/entities/oee-batch-a';
-import { OeeBatchP } from '../common/entities/oee-batch-p';
-import { OeeBatchQ } from '../common/entities/oee-batch-q';
-import { OeeBatchPlannedDowntime } from '../common/entities/oee-batch-planned-downtime';
+import { ReqDec } from '../common/decorators/req-dec';
+import { SiteIdPipe } from '../common/pipe/site-id.pipe';
+import { SiteEntity } from '../common/entities/site-entity';
+import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
+import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
+import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
+import { OeeBatchPlannedDowntimeEntity } from '../common/entities/oee-batch-planned-downtime-entity';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { FilterOeeBatchDto } from './dto/filter-oee-batch.dto';
 import type { Response } from 'express';
 import * as XLSX from 'xlsx';
 import { OEE_BATCH_HISTORY_TYPE_EDIT, OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../common/constant';
 import { OeeBatchHistoryEdit } from '../common/type/oee-batch-history-edit';
-import { OeeBatchHistory } from '../common/entities/oee-batch-history';
+import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history-entity';
 import * as dayjs from 'dayjs';
-import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeline';
+import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
 import { fNumber2 } from '../common/utils/formatNumber';
-import { OeeBatchStats } from '../common/entities/oee-batch-stats';
+import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
 import { OptionItem } from '../common/type/option-item';
 
 @UseGuards(JwtAuthGuard)
@@ -49,7 +49,7 @@ export class OeeBatchController {
     @Query() filterDto: FilterOeeBatchDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<OeeBatch>> {
+  ): Promise<PagedLisDto<OeeBatchEntity>> {
     return this.oeeBatchService.findPagedList(filterDto);
   }
 
@@ -59,7 +59,7 @@ export class OeeBatchController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @Query('oeeId') oeeId: number): Promise<OeeBatch> {
+  findById(@Param('id') id: number, @Query('oeeId') oeeId: number): Promise<OeeBatchEntity> {
     return this.oeeBatchService.findByIdAndOeeId(id, oeeId);
   }
 
@@ -69,7 +69,7 @@ export class OeeBatchController {
     @Body() createDto: CreateOeeBatchDto,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<OeeBatch> {
+  ): Promise<OeeBatchEntity> {
     return this.oeeBatchService.create(Number(oeeId), createDto);
   }
 
@@ -90,14 +90,8 @@ export class OeeBatchController {
   // }
 
   @Put(':id/start')
-  async start(@Param('id') id: string): Promise<Date> {
-    const batchId = Number(id);
-    const batchStartedDate = dayjs().startOf('s').toDate();
-    await this.oeeBatchService.update1(batchId, {
-      batchStartedDate,
-    });
-
-    return batchStartedDate;
+  start(@Param('id') id: number): Promise<Date> {
+    return this.oeeBatchService.startBatch(id);
   }
 
   @Put(':id/end')
@@ -129,32 +123,32 @@ export class OeeBatchController {
   }
 
   @Get(':id/active-planned-downtime')
-  getActivePlannedDowntime(@Param('id') id: number): Promise<OeeBatchPlannedDowntime> {
+  getActivePlannedDowntime(@Param('id') id: number): Promise<OeeBatchPlannedDowntimeEntity> {
     return this.oeeBatchService.findActivePlannedDowntimeById(id);
   }
 
   @Get(':id/a-params')
-  getOeeBatchAs(@Param('id') id: number): Promise<OeeBatchA[]> {
+  getOeeBatchAs(@Param('id') id: number): Promise<OeeBatchAEntity[]> {
     return this.oeeBatchService.findBatchAsById(id);
   }
 
   @Patch(':id/a-param')
-  saveOeeBatchAs(@Param('id') id: number, @Body() updateDto: any): Promise<OeeBatchA> {
+  saveOeeBatchAs(@Param('id') id: number, @Body() updateDto: any): Promise<OeeBatchAEntity> {
     return this.oeeBatchService.updateBatchA(updateDto.id, updateDto);
   }
 
   @Get(':id/p-params')
-  getOeeBatchPs(@Param('id') id: number): Promise<OeeBatchP[]> {
+  getOeeBatchPs(@Param('id') id: number): Promise<OeeBatchPEntity[]> {
     return this.oeeBatchService.findBatchPsByIdAndMinorStop(id);
   }
 
   @Patch(':id/p-param')
-  saveOeeBatchPs(@Param('id') id: number, @Body() updateDto: any): Promise<OeeBatchP> {
+  saveOeeBatchPs(@Param('id') id: number, @Body() updateDto: any): Promise<OeeBatchPEntity> {
     return this.oeeBatchService.updateBatchP(updateDto.id, updateDto);
   }
 
   @Get(':id/q-params')
-  getOeeBatchQs(@Param('id') id: string): Promise<OeeBatchQ[]> {
+  getOeeBatchQs(@Param('id') id: string): Promise<OeeBatchQEntity[]> {
     const batchId = Number(id);
     return this.oeeBatchService.findBatchQsById(batchId);
   }
@@ -296,12 +290,15 @@ export class OeeBatchController {
   }
 
   @Post(':id/open-edit')
-  createOpenEditHistory(@Param('id') id: number, @Body() createDto: OeeBatchHistoryEdit): Promise<OeeBatchHistory> {
+  createOpenEditHistory(
+    @Param('id') id: number,
+    @Body() createDto: OeeBatchHistoryEdit,
+  ): Promise<OeeBatchEditHistoryEntity> {
     return this.oeeBatchService.createBatchHistory(id, OEE_BATCH_HISTORY_TYPE_EDIT, createDto);
   }
 
   @Get(':id/timelines')
-  getOeeBatchTimelines(@Param('id') id: string): Promise<OeeBatchStatsTimeline[]> {
+  getOeeBatchTimelines(@Param('id') id: string): Promise<OeeBatchStatsTimelineEntity[]> {
     const batchId = Number(id);
     return this.oeeBatchService.findBatchTimelinesByBatchId(batchId);
   }
@@ -310,7 +307,7 @@ export class OeeBatchController {
   getOeeBatchStatsTime(
     @Param('id') id: string,
     @Query('samplingSeconds') samplingSeconds: string,
-  ): Promise<OeeBatchStats[]> {
+  ): Promise<OeeBatchStatsEntity[]> {
     const batchId = Number(id);
     return this.oeeBatchService.findBatchStatsByBatchId(batchId, Number(samplingSeconds));
   }

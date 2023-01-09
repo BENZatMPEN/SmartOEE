@@ -3,16 +3,16 @@ import { FilterHistoryLogDto } from './dto/filter-history-log.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HistoryLog } from '../common/entities/history-log';
+import { HistoryLogEntity } from '../common/entities/history-log-entity';
 
 @Injectable()
 export class HistoryLogService {
   constructor(
-    @InjectRepository(HistoryLog)
-    private historyLogRepository: Repository<HistoryLog>,
+    @InjectRepository(HistoryLogEntity)
+    private historyLogRepository: Repository<HistoryLogEntity>,
   ) {}
 
-  async findPagedList(filterDto: FilterHistoryLogDto): Promise<PagedLisDto<HistoryLog>> {
+  async findPagedList(filterDto: FilterHistoryLogDto): Promise<PagedLisDto<HistoryLogEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.historyLogRepository
       .createQueryBuilder()
@@ -34,7 +34,7 @@ export class HistoryLogService {
     return { list: rows, count: count };
   }
 
-  async findList(filterDto: FilterHistoryLogDto): Promise<HistoryLog[]> {
+  async findList(filterDto: FilterHistoryLogDto): Promise<HistoryLogEntity[]> {
     return this.historyLogRepository
       .createQueryBuilder()
       .andWhere('siteId = :siteId', { siteId: filterDto.siteId })

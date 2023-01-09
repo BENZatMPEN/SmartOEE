@@ -26,9 +26,6 @@ export default function MachineDetails() {
         if (isEdit || isDuplicate) {
           const response = await axios.get<Machine>(`/machines/${id}`);
           const machine = response.data;
-          if (isDuplicate) {
-            machine.imageUrl = '';
-          }
           setModel(machine);
         }
       } catch (error) {

@@ -1,22 +1,26 @@
 import { Module } from '@nestjs/common';
-import { ContentModule } from '../common/content/content.module';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { User } from '../common/entities/user';
+import { UserEntity } from '../common/entities/user-entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Role } from '../common/entities/role';
-import { Site } from '../common/entities/site';
+import { RoleEntity } from '../common/entities/role-entity';
+import { SiteEntity } from '../common/entities/site-entity';
 import { CaslModule } from '../casl/casl.module';
-import { UserRole } from '../common/entities/user-role';
+import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
 import { AuthService } from '../auth/auth.service';
 import { LogService } from '../common/services/log.service';
 import { JwtService } from '@nestjs/jwt';
-import { HistoryLog } from '../common/entities/history-log';
+import { HistoryLogEntity } from '../common/entities/history-log-entity';
+import { FileService } from '../common/services/file.service';
+import { EmailExistsRule } from '../common/validations/email-exists.validator';
 
 @Module({
-  imports: [ContentModule, CaslModule, TypeOrmModule.forFeature([User, Role, Site, HistoryLog, UserRole])],
+  imports: [
+    CaslModule,
+    TypeOrmModule.forFeature([UserEntity, RoleEntity, SiteEntity, HistoryLogEntity, UserSiteRoleEntity]),
+  ],
   controllers: [UserController],
-  providers: [UserService, AuthService, LogService, JwtService],
+  providers: [UserService, FileService, AuthService, LogService, JwtService, EmailExistsRule],
   exports: [UserService],
 })
 export class UserModule {}

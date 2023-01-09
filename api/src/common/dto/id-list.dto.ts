@@ -1,3 +1,8 @@
+import { Type } from 'class-transformer';
+import { IsArray } from 'class-validator';
+
 export class IdListDto {
-  ids: number[];
+  @IsArray()
+  @Type(() => Number)
+  readonly ids: number[];
 }

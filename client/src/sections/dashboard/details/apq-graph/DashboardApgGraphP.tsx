@@ -18,11 +18,11 @@ export default function DashboardApgGraphP() {
 
   const { socket } = useWebSocket();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { selectedOee } = useSelector((state: RootState) => state.oee);
+  const { currentOee } = useSelector((state: RootState) => state.oee);
 
-  const { timeUnit, useSitePercentSettings, percentSettings } = selectedOee || {
+  const { timeUnit, useSitePercentSettings, percentSettings } = currentOee || {
     timeUnit: '',
     useSitePercentSettings: true,
   };

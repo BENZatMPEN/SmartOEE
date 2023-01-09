@@ -4,7 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { RoleAction, RoleSubject } from '../common/type/role-setting';
 import { AuthService } from '../auth/auth.service';
-import { Role } from '../common/entities/role';
+import { RoleEntity } from '../common/entities/role-entity';
 
 type Subjects = InferSubjects<RoleSubject> | 'all';
 
@@ -12,7 +12,7 @@ export type AppAbility = Ability<[RoleAction, Subjects]>;
 
 @Injectable()
 export class CaslAbilityFactory {
-  createForUser(user: AuthUserDto, role: Role) {
+  createForUser(user: AuthUserDto, role: RoleEntity) {
     const { can, cannot, build } = new AbilityBuilder<Ability<[RoleAction, Subjects]>>(
       Ability as AbilityClass<AppAbility>,
     );
@@ -63,7 +63,7 @@ export class PoliciesGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const policyHandlers = this.reflector.get<PolicyHandler[]>(CHECK_POLICIES_KEY, context.getHandler()) || [];
     const { user, query } = context.switchToHttp().getRequest();
-    let role: Role = null;
+    let role: RoleEntity = null;
 
     // if (!user.isAdmin) {
     const { siteId } = query;

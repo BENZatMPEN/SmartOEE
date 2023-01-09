@@ -3,25 +3,25 @@ import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Analytic } from '../common/entities/analytic';
+import { AnalyticEntity } from '../common/entities/analytic-entity';
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
-import { AnalyticStats } from '../common/entities/analytic-stats';
-import { Site } from '../common/entities/site';
-import { Oee } from '../common/entities/oee';
-import { OeeBatch } from '../common/entities/oee-batch';
-import { Product } from '../common/entities/product';
-import { OeeBatchStats } from '../common/entities/oee-batch-stats';
+import { AnalyticStatsEntity } from '../common/entities/analytic-stats-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { OeeEntity } from '../common/entities/oee-entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { ProductEntity } from '../common/entities/product-entity';
+import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
 import * as isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import * as isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import * as isBetween from 'dayjs/plugin/isBetween';
-import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeline';
+import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
 import { OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../common/constant';
-import { OeeBatchA } from '../common/entities/oee-batch-a';
-import { MachineParameter } from '../common/entities/machine-parameter';
-import { OeeBatchP } from '../common/entities/oee-batch-p';
-import { OeeBatchQ } from '../common/entities/oee-batch-q';
-import { AnalyticStatsParam } from '../common/entities/analytic-stats-param';
+import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
+import { MachineParameterEntity } from '../common/entities/machine-parameter-entity';
+import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
+import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
+import { AnalyticStatsParamEntity } from '../common/entities/analytic-stats-param-entity';
 import { AnalyticAParam, AnalyticPParam, AnalyticQParam } from '../common/type/analytic-data';
 
 dayjs.extend(isSameOrBefore);
@@ -61,55 +61,55 @@ type OeeSumData = {
 };
 
 type StatsGroup = {
-  [key: string]: AnalyticStats[];
+  [key: string]: AnalyticStatsEntity[];
 };
 
 type StatsParamGroup = {
-  [key: string]: AnalyticStatsParam[];
+  [key: string]: AnalyticStatsParamEntity[];
 };
 
 type BatchGroup = {
-  [key: number]: OeeBatch[];
+  [key: number]: OeeBatchEntity[];
 };
 
 @Injectable()
 export class AnalyticService {
   constructor(
-    @InjectRepository(Site)
-    private readonly siteRepository: Repository<Site>,
-    @InjectRepository(Oee)
-    private readonly oeeRepository: Repository<Oee>,
-    @InjectRepository(OeeBatch)
-    private readonly oeeBatchRepository: Repository<OeeBatch>,
-    @InjectRepository(OeeBatchStats)
-    private readonly oeeBatchStatsRepository: Repository<OeeBatchStats>,
-    @InjectRepository(OeeBatchStatsTimeline)
-    private readonly oeeBatchStatsTimelineRepository: Repository<OeeBatchStatsTimeline>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
-    @InjectRepository(Analytic)
-    private readonly analyticRepository: Repository<Analytic>,
-    @InjectRepository(AnalyticStats)
-    private readonly analyticStatsRepository: Repository<AnalyticStats>,
-    @InjectRepository(AnalyticStatsParam)
-    private readonly analyticStatsParamRepository: Repository<AnalyticStatsParam>,
-    @InjectRepository(OeeBatchA)
-    private readonly oeeBatchARepository: Repository<OeeBatchA>,
-    @InjectRepository(OeeBatchP)
-    private readonly oeeBatchPRepository: Repository<OeeBatchP>,
-    @InjectRepository(OeeBatchQ)
-    private readonly oeeBatchQRepository: Repository<OeeBatchQ>,
+    @InjectRepository(SiteEntity)
+    private readonly siteRepository: Repository<SiteEntity>,
+    @InjectRepository(OeeEntity)
+    private readonly oeeRepository: Repository<OeeEntity>,
+    @InjectRepository(OeeBatchEntity)
+    private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(OeeBatchStatsEntity)
+    private readonly oeeBatchStatsRepository: Repository<OeeBatchStatsEntity>,
+    @InjectRepository(OeeBatchStatsTimelineEntity)
+    private readonly oeeBatchStatsTimelineRepository: Repository<OeeBatchStatsTimelineEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly productRepository: Repository<ProductEntity>,
+    @InjectRepository(AnalyticEntity)
+    private readonly analyticRepository: Repository<AnalyticEntity>,
+    @InjectRepository(AnalyticStatsEntity)
+    private readonly analyticStatsRepository: Repository<AnalyticStatsEntity>,
+    @InjectRepository(AnalyticStatsParamEntity)
+    private readonly analyticStatsParamRepository: Repository<AnalyticStatsParamEntity>,
+    @InjectRepository(OeeBatchAEntity)
+    private readonly oeeBatchARepository: Repository<OeeBatchAEntity>,
+    @InjectRepository(OeeBatchPEntity)
+    private readonly oeeBatchPRepository: Repository<OeeBatchPEntity>,
+    @InjectRepository(OeeBatchQEntity)
+    private readonly oeeBatchQRepository: Repository<OeeBatchQEntity>,
   ) {}
 
-  findAll(group: boolean, siteId: number): Promise<Analytic[]> {
+  findAll(group: boolean, siteId: number): Promise<AnalyticEntity[]> {
     return this.analyticRepository.findBy({ siteId, group });
   }
 
-  findById(id: number, siteId: number): Promise<Analytic> {
+  findById(id: number, siteId: number): Promise<AnalyticEntity> {
     return this.analyticRepository.findOneBy({ id, siteId });
   }
 
-  create(createDto: CreateAnalyticDto): Promise<Analytic> {
+  create(createDto: CreateAnalyticDto): Promise<AnalyticEntity> {
     return this.analyticRepository.save({
       ...createDto,
       createdAt: new Date(),
@@ -117,7 +117,7 @@ export class AnalyticService {
     });
   }
 
-  async update(id: number, updateDto: UpdateAnalyticDto): Promise<Analytic> {
+  async update(id: number, updateDto: UpdateAnalyticDto): Promise<AnalyticEntity> {
     const updatingAnalytic = await this.analyticRepository.findOneBy({ id });
     return this.analyticRepository.save({
       ..._.assign(updatingAnalytic, updateDto),
@@ -1150,7 +1150,7 @@ export class AnalyticService {
     return {};
   }
 
-  private sumOeeData(rows: AnalyticStats[]): OeeSumData {
+  private sumOeeData(rows: AnalyticStatsEntity[]): OeeSumData {
     const initSum: OeeSumData = {
       runningSeconds: 0,
       totalBreakdownSeconds: 0,
@@ -1239,7 +1239,7 @@ export class AnalyticService {
     };
   }
 
-  private async calculateParetoA(aParams: AnalyticAParam[], mcParams: MachineParameter[]): Promise<ParetoData> {
+  private async calculateParetoA(aParams: AnalyticAParam[], mcParams: MachineParameterEntity[]): Promise<ParetoData> {
     const total = aParams.reduce((acc, item) => acc + item.seconds, 0);
     const list = aParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
@@ -1266,13 +1266,13 @@ export class AnalyticService {
 
     // const params = machines.map((mc) => mc.parameters.filter((mcParam) => mcParam.oeeType === OEE_PARAM_TYPE_A)).flat();
     const labels = listFirstNine.map((item) => mcParams.filter((param) => param.id === item.key)[0].name);
-    labels.push('Other');
 
     const finalList = [...listFirstNine];
     const otherList = list.filter((item) => item.key === 0);
     if (otherList.length > 0) {
       const itemOther = list.filter((item) => item.key === 0)[0];
       itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
+      labels.push('Other');
       finalList.push(itemOther);
     }
 
@@ -1282,14 +1282,21 @@ export class AnalyticService {
       return (sum / total) * 100;
     });
 
+    const emptyItems = counts.reduce((acc, item, idx) => {
+      if (item === 0) {
+        acc.push(idx);
+      }
+      return acc;
+    }, []);
+
     return {
-      labels,
-      counts,
-      percents,
+      labels: labels.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      counts: counts.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      percents: percents.filter((item, idx) => emptyItems.indexOf(idx) < 0),
     };
   }
 
-  private async calculateParetoP(pParams: AnalyticPParam[], mcParams: MachineParameter[]): Promise<ParetoData> {
+  private async calculateParetoP(pParams: AnalyticPParam[], mcParams: MachineParameterEntity[]): Promise<ParetoData> {
     const total = pParams.reduce((acc, item) => acc + item.seconds, 0);
     const list = pParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
@@ -1315,13 +1322,12 @@ export class AnalyticService {
     const restOfTheList = sortedList.slice(9, sortedList.length);
 
     const labels = listFirstNine.map((item) => mcParams.filter((param) => param.id === item.key)[0].name);
-    labels.push('Other');
-
     const finalList = [...listFirstNine];
     const otherList = list.filter((item) => item.key === 0);
     if (otherList.length > 0) {
       const itemOther = list.filter((item) => item.key === 0)[0];
       itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
+      labels.push('Other');
       finalList.push(itemOther);
     }
 
@@ -1331,14 +1337,21 @@ export class AnalyticService {
       return (sum / total) * 100;
     });
 
+    const emptyItems = counts.reduce((acc, item, idx) => {
+      if (item === 0) {
+        acc.push(idx);
+      }
+      return acc;
+    }, []);
+
     return {
-      labels,
-      counts,
-      percents,
+      labels: labels.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      counts: counts.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      percents: percents.filter((item, idx) => emptyItems.indexOf(idx) < 0),
     };
   }
 
-  private async calculateParetoQ(qParams: AnalyticQParam[], mcParams: MachineParameter[]): Promise<ParetoData> {
+  private async calculateParetoQ(qParams: AnalyticQParam[], mcParams: MachineParameterEntity[]): Promise<ParetoData> {
     const total = qParams.reduce((acc, item) => acc + item.autoAmount + item.manualAmount, 0);
     const list = qParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
@@ -1364,13 +1377,12 @@ export class AnalyticService {
     const restOfTheList = sortedList.slice(9, sortedList.length);
 
     const labels = listFirstNine.map((item) => mcParams.filter((param) => param.id === item.key)[0].name);
-    labels.push('Other');
-
     const finalList = [...listFirstNine];
     const otherList = list.filter((item) => item.key === 0);
     if (otherList.length > 0) {
       const itemOther = list.filter((item) => item.key === 0)[0];
       itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
+      labels.push('Other');
       finalList.push(itemOther);
     }
 
@@ -1380,14 +1392,21 @@ export class AnalyticService {
       return (sum / total) * 100;
     });
 
+    const emptyItems = counts.reduce((acc, item, idx) => {
+      if (item === 0) {
+        acc.push(idx);
+      }
+      return acc;
+    }, []);
+
     return {
-      labels,
-      counts,
-      percents,
+      labels: labels.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      counts: counts.filter((item, idx) => emptyItems.indexOf(idx) < 0),
+      percents: percents.filter((item, idx) => emptyItems.indexOf(idx) < 0),
     };
   }
 
-  private sumAParamData(aParams: AnalyticAParam[], mcParams: MachineParameter[]): ParamData {
+  private sumAParamData(aParams: AnalyticAParam[], mcParams: MachineParameterEntity[]): ParamData {
     const list = aParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
       if (idx < 0) {
@@ -1429,7 +1448,7 @@ export class AnalyticService {
     };
   }
 
-  private sumPParamData(pParams: AnalyticPParam[], mcParams: MachineParameter[]): ParamData {
+  private sumPParamData(pParams: AnalyticPParam[], mcParams: MachineParameterEntity[]): ParamData {
     const list = pParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
       if (idx < 0) {
@@ -1472,7 +1491,7 @@ export class AnalyticService {
     };
   }
 
-  private sumQParamData(qParams: AnalyticQParam[], mcParams: MachineParameter[]): ParamData {
+  private sumQParamData(qParams: AnalyticQParam[], mcParams: MachineParameterEntity[]): ParamData {
     const list = qParams.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
       if (idx < 0) {

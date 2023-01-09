@@ -3,49 +3,49 @@ import { NotificationService } from './notification.service';
 import { LineNotifyService } from './line-notify.service';
 import { EmailService } from './email.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Alarm } from '../entities/alarm';
-import { HistoryLog } from '../entities/history-log';
+import { AlarmEntity } from '../entities/alarm-entity';
+import { HistoryLogEntity } from '../entities/history-log-entity';
 import { HttpModule } from '@nestjs/axios';
 import * as https from 'https';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../../configuration';
-import { Oee } from '../entities/oee';
-import { OeeBatch } from '../entities/oee-batch';
-import { OeeBatchA } from '../entities/oee-batch-a';
-import { OeeBatchP } from '../entities/oee-batch-p';
-import { OeeBatchQ } from '../entities/oee-batch-q';
-import { OeeBatchPlannedDowntime } from '../entities/oee-batch-planned-downtime';
-import { TagRead } from '../entities/tag-read';
-import { Site } from '../entities/site';
+import { OeeEntity } from '../entities/oee-entity';
+import { OeeBatchEntity } from '../entities/oee-batch-entity';
+import { OeeBatchAEntity } from '../entities/oee-batch-a-entity';
+import { OeeBatchPEntity } from '../entities/oee-batch-p-entity';
+import { OeeBatchQEntity } from '../entities/oee-batch-q-entity';
+import { OeeBatchPlannedDowntimeEntity } from '../entities/oee-batch-planned-downtime-entity';
+import { TagReadEntity } from '../entities/tag-read-entity';
+import { SiteEntity } from '../entities/site-entity';
 import { LogService } from './log.service';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
-import { OeeProduct } from '../entities/oee-product';
-import { OeeMachine } from '../entities/oee-machine';
-import { OeeBatchHistory } from '../entities/oee-batch-history';
-import { OeeBatchStatsTimeline } from '../entities/oee-batch-stats-timeline';
-import { OeeBatchStats } from '../entities/oee-batch-stats';
-import { OeeBatchLog } from '../entities/oee-batch-logs';
+import { OeeProductEntity } from '../entities/oee-product-entity';
+import { OeeMachineEntity } from '../entities/oee-machine-entity';
+import { OeeBatchEditHistoryEntity } from '../entities/oee-batch-edit-history-entity';
+import { OeeBatchStatsTimelineEntity } from '../entities/oee-batch-stats-timeline-entity';
+import { OeeBatchStatsEntity } from '../entities/oee-batch-stats-entity';
+import { OeeBatchLogEntity } from '../entities/oee-batch-logs-entity';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Site,
-      Oee,
-      OeeMachine,
-      OeeProduct,
-      OeeBatch,
-      OeeBatchA,
-      OeeBatchP,
-      OeeBatchQ,
-      OeeBatchPlannedDowntime,
-      OeeBatchHistory,
-      OeeBatchStatsTimeline,
-      OeeBatchStats,
-      OeeBatchLog,
-      TagRead,
-      Alarm,
-      HistoryLog,
+      SiteEntity,
+      OeeEntity,
+      OeeMachineEntity,
+      OeeProductEntity,
+      OeeBatchEntity,
+      OeeBatchAEntity,
+      OeeBatchPEntity,
+      OeeBatchQEntity,
+      OeeBatchPlannedDowntimeEntity,
+      OeeBatchEditHistoryEntity,
+      OeeBatchStatsTimelineEntity,
+      OeeBatchStatsEntity,
+      OeeBatchLogEntity,
+      TagReadEntity,
+      AlarmEntity,
+      HistoryLogEntity,
     ]),
     ConfigModule.forFeature(configuration),
     HttpModule.register({

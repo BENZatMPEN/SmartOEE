@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { AlarmService } from './alarm.service';
 import { AlarmController } from './alarm.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Site } from '../common/entities/site';
-import { Alarm } from '../common/entities/alarm';
+import { SiteEntity } from '../common/entities/site-entity';
+import { AlarmEntity } from '../common/entities/alarm-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Alarm, Site])],
+  imports: [TypeOrmModule.forFeature([AlarmEntity, SiteEntity])],
   controllers: [AlarmController],
   providers: [AlarmService],
 })

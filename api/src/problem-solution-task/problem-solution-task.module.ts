@@ -1,19 +1,23 @@
 import { Module } from '@nestjs/common';
-import { ContentModule } from '../common/content/content.module';
 import { ProblemSolutionTaskService } from './problem-solution-task.service';
 import { ProblemSolutionTaskController } from './problem-solution-task.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Attachment } from '../common/entities/attachment';
-import { ProblemSolutionTask } from '../common/entities/problem-solution-task';
-import { ProblemSolutionTaskAttachment } from '../common/entities/problem-solution-task-attachment';
-import { Site } from '../common/entities/site';
+import { AttachmentEntity } from '../common/entities/attachment-entity';
+import { ProblemSolutionTaskEntity } from '../common/entities/problem-solution-task-entity';
+import { ProblemSolutionTaskAttachmentEntity } from '../common/entities/problem-solution-task-attachment-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { FileService } from '../common/services/file.service';
 
 @Module({
   imports: [
-    ContentModule,
-    TypeOrmModule.forFeature([Attachment, ProblemSolutionTask, ProblemSolutionTaskAttachment, Site]),
+    TypeOrmModule.forFeature([
+      AttachmentEntity,
+      ProblemSolutionTaskEntity,
+      ProblemSolutionTaskAttachmentEntity,
+      SiteEntity,
+    ]),
   ],
   controllers: [ProblemSolutionTaskController],
-  providers: [ProblemSolutionTaskService],
+  providers: [ProblemSolutionTaskService, FileService],
 })
 export class ProblemSolutionTaskModule {}

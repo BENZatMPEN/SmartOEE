@@ -2,14 +2,15 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Box, Card, CardContent, Grid, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { PercentSetting } from '../../../../@types/percentSetting';
-import { Site } from '../../../../@types/site';
+import { EditSite, Site } from '../../../../@types/site';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import FormLabelStyle from '../../../../components/FormLabelStyle';
@@ -22,20 +23,17 @@ import {
 } from '../../../../components/hook-form';
 import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../../components/Iconify';
-import { defaultMaps } from '../../../../constants';
+import { GOOGLE_MAPS_KEY } from '../../../../config';
+import { defaultMaps, initialPercentSettings } from '../../../../constants';
 import axios from '../../../../utils/axios';
+import { getFileUrl } from '../../../../utils/imageHelper';
 import SitePercentSettings from './SitePercentSettings';
-
-interface FormValuesProps extends Partial<Site> {
-  percentSettings: PercentSetting[];
-  image: File;
-}
 
 interface Props {
   currentSite: Site;
 }
 
-interface mapProps {
+interface MapProps {
   map: any;
   maps: any;
 }
@@ -45,7 +43,7 @@ export default function SiteForm({ currentSite }: Props) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [mapApi, setMapApi] = useState<mapProps>({ map: null, maps: null });
+  const [mapApi, setMapApi] = useState<MapProps>({ map: null, maps: null });
 
   const [marker, setMarker] = useState<any>(null);
 
@@ -55,65 +53,81 @@ export default function SiteForm({ currentSite }: Props) {
     lng: Yup.number().required('Longitude is required'),
   });
 
-  console.log(currentSite);
-  const defaultValues = useMemo(
-    () => ({
-      name: currentSite.name,
-      branch: currentSite.branch,
-      address: currentSite.address,
-      remark: currentSite.remark,
-      lat: currentSite.lat,
-      lng: currentSite.lng,
-      sync: currentSite.sync,
-      percentSettings: currentSite.defaultPercentSettings,
-      cutoffTime: currentSite.cutoffTime,
-    }),
-    [currentSite],
-  );
-
-  const methods = useForm<FormValuesProps>({
+  const methods = useForm<EditSite>({
     resolver: yupResolver(NewSiteSchema),
-    defaultValues,
+    defaultValues: {
+      name: '',
+      branch: '',
+      address: '',
+      remark: '',
+      lat: defaultMaps.center.lat,
+      lng: defaultMaps.center.lng,
+      active: true,
+      sync: true,
+      defaultPercentSettings: initialPercentSettings,
+      cutoffTime: null,
+      image: null,
+    },
+    values: {
+      name: currentSite?.name || '',
+      branch: currentSite?.branch || '',
+      address: currentSite?.address || '',
+      remark: currentSite?.remark || '',
+      lat: currentSite?.lat || defaultMaps.center.lat,
+      lng: currentSite?.lng || defaultMaps.center.lng,
+      active: currentSite ? currentSite.active : true,
+      sync: currentSite ? currentSite.sync : true,
+      defaultPercentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
+      cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
+      image: null,
+      oeeLimit: currentSite?.oeeLimit || -1,
+    },
   });
 
   const {
-    reset,
+    watch,
     setValue,
     getValues,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
+  const values = watch();
+
   useEffect(() => {
-    reset(defaultValues);
+    console.log(currentSite);
     handleLocationChange();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSite]);
 
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: EditSite) => {
+    data.cutoffTime = dayjs(data.cutoffTime).startOf('m').toDate();
     try {
-      const { image, percentSettings, ...dto } = data;
-      dto.cutoffTime = dayjs(dto.cutoffTime).startOf('m').toDate();
-      dto.defaultPercentSettings = percentSettings;
-
-      await axios.put<Site>(`/sites/${currentSite.id}`, dto);
-
-      if (image) {
-        await axios.post(
-          `/sites/${currentSite.id}/upload`,
-          { image },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
-      }
+      await axios.request<Site>({
+        method: 'put',
+        url: `/sites/${currentSite?.id}`,
+        data: data,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       enqueueSnackbar('Update success!');
       window.location.reload();
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          if (Array.isArray(error.response?.data.message)) {
+            for (const item of error.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -163,7 +177,7 @@ export default function SiteForm({ currentSite }: Props) {
   };
 
   const handlePercentSettingChange = (percentSetting: PercentSetting) => {
-    const percentSettings = getValues('percentSettings') || [];
+    const percentSettings = getValues('defaultPercentSettings') || [];
     const newPercentSettings = [
       ...percentSettings.map((item) => {
         if (item.type === percentSetting.type) {
@@ -172,7 +186,7 @@ export default function SiteForm({ currentSite }: Props) {
         return item;
       }),
     ];
-    setValue('percentSettings', newPercentSettings);
+    setValue('defaultPercentSettings', newPercentSettings);
   };
 
   return (
@@ -210,7 +224,7 @@ export default function SiteForm({ currentSite }: Props) {
                 accept="image/*"
                 maxSize={3145728}
                 onDrop={handleDrop}
-                currentFile={currentSite?.imageUrl}
+                currentFile={getFileUrl(currentSite?.imageName)}
               />
             </CardContent>
           </Card>
@@ -254,7 +268,7 @@ export default function SiteForm({ currentSite }: Props) {
             <Card>
               <CardContent>
                 <Stack spacing={theme.spacing(2)}>
-                  {getValues('percentSettings').map((percentSetting) => (
+                  {values.defaultPercentSettings.map((percentSetting) => (
                     <SitePercentSettings
                       key={percentSetting.type}
                       percentSetting={percentSetting}
@@ -295,7 +309,7 @@ export default function SiteForm({ currentSite }: Props) {
                   <Grid item xs={12}>
                     <div style={{ height: '300px', width: '100%' }}>
                       <GoogleMapReact
-                        bootstrapURLKeys={{ key: 'AIzaSyCTZZLIUayWOzR6FWskr8opyfx91mjNkK8' }}
+                        bootstrapURLKeys={{ key: GOOGLE_MAPS_KEY }}
                         defaultCenter={defaultMaps.center}
                         defaultZoom={defaultMaps.zoom}
                         yesIWantToUseGoogleMapApiInternals

@@ -8,7 +8,8 @@ import useResponsive from '../../hooks/useResponsive';
 import useSettings from '../../hooks/useSettings';
 import { getGroupAnalytics } from '../../redux/actions/analyticAction';
 import { getAuthRole } from '../../redux/actions/authAction';
-import { getSites } from '../../redux/actions/siteAction';
+import { getAllDashboard } from '../../redux/actions/dashboardAction';
+import { getUserSites } from '../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import axios from '../../utils/axios';
 import DashboardHeader from './header';
@@ -53,21 +54,13 @@ export default function DashboardLayout() {
 
   const dispatch = useDispatch();
 
-  const { selectedSite, selectedSiteId, isLoading } = useSelector((state: RootState) => state.site);
+  const { selectedSite, selectedSiteId, isLoading } = useSelector((state: RootState) => state.userSite);
 
   useEffect(() => {
     (async () => {
-      await dispatch(getSites());
+      await dispatch(getUserSites());
     })();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (!selectedSiteId) {
-      return;
-    }
-
-    (async () => {})();
-  }, [dispatch, selectedSiteId]);
 
   useEffect(() => {
     if (selectedSiteId) {
@@ -77,6 +70,7 @@ export default function DashboardLayout() {
     (async () => {
       await dispatch(getAuthRole());
       await dispatch(getGroupAnalytics());
+      await dispatch(getAllDashboard());
     })();
   }, [dispatch, selectedSiteId]);
 

@@ -1,5 +1,4 @@
 import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useState } from 'react';
 import { User } from '../../../../@types/user';
 import Iconify from '../../../../components/Iconify';
@@ -16,8 +15,6 @@ type Props = {
 };
 
 export default function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
-  const theme = useTheme();
-
   const { email, firstName, lastName, createdAt } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
@@ -36,11 +33,11 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
         <Checkbox checked={selected} onClick={onSelectRow} />
       </TableCell>
 
-      <TableCell align="left">{email}</TableCell>
-
       <TableCell align="left">{firstName}</TableCell>
 
       <TableCell align="left">{lastName}</TableCell>
+
+      <TableCell align="left">{email}</TableCell>
 
       <TableCell align="left">{fDateTime(createdAt)}</TableCell>
 

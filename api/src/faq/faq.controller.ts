@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseArrayPipe,
   Post,
   Put,
   Query,
@@ -13,41 +14,35 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { IdListDto } from '../common/dto/id-list.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { FaqService } from './faq.service';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { FilterFaqDto } from './dto/filter-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
-import { Faq } from '../common/entities/faq';
+import { FaqEntity } from '../common/entities/faq-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorator/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { FileService } from '../common/services/file.service';
+import { FileInfo } from '../common/type/file-info';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('faqs')
 export class FaqController {
-  constructor(private readonly faqService: FaqService) {}
+  constructor(private readonly faqService: FaqService, private readonly fileService: FileService) {}
 
   @Get()
-  findFilter(
-    @Query() filterDto: FilterFaqDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<Faq>> {
+  findFilter(@Query() filterDto: FilterFaqDto): Promise<PagedLisDto<FaqEntity>> {
     return this.faqService.findPagedList(filterDto);
   }
 
   @Get('all')
-  findAll(@ReqDec(SiteIdPipe) siteId: number): Promise<Faq[]> {
+  findAll(@Query('siteId') siteId: number): Promise<FaqEntity[]> {
     return this.faqService.findAll(siteId);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<Faq> {
+  async findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<FaqEntity> {
     const faq = await this.faqService.findById(id, siteId);
     if (!faq) {
       throw new NotFoundException();
@@ -57,61 +52,46 @@ export class FaqController {
   }
 
   @Post()
-  create(
-    @Body() createDto: CreateFaqDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Faq> {
-    return this.faqService.create(createDto);
+  @UseInterceptors(AnyFilesInterceptor())
+  async create(@Body() createDto: CreateFaqDto, @UploadedFiles() files: Express.Multer.File[]): Promise<FaqEntity> {
+    const imageInfoList = await this.saveFileInfoList('images[]', files);
+    const fileInfoList = await this.saveFileInfoList('files[]', files);
+
+    return this.faqService.create(createDto, imageInfoList, fileInfoList);
   }
 
   @Put(':id')
-  update(
+  @UseInterceptors(AnyFilesInterceptor())
+  async update(
     @Param('id') id: number,
     @Body() updateDto: UpdateFaqDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<Faq> {
-    return this.faqService.update(id, updateDto);
+    @UploadedFiles() files: Express.Multer.File[],
+    @Query('siteId') siteId: number,
+  ): Promise<FaqEntity> {
+    const imageInfoList = await this.saveFileInfoList('images[]', files);
+    const fileInfoList = await this.saveFileInfoList('files[]', files);
+
+    return this.faqService.update(id, updateDto, siteId, imageInfoList, fileInfoList);
   }
 
-  @Post(':id/upload-files')
-  @UseInterceptors(FilesInterceptor('images'))
-  async uploadFiles(
-    @Param('id') id: number,
-    @Query('name') name: string,
-    @UploadedFiles() images: Express.Multer.File[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.faqService.updateFiles(id, name, images);
-  }
-
-  @Delete(':id/delete-files')
-  async deleteFiles(
-    @Param('id') id: number,
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.faqService.deleteFiles(id, dto.ids);
+  private async saveFileInfoList(key: string, files: Express.Multer.File[]): Promise<FileInfo[]> {
+    const list: FileInfo[] = [];
+    for (const file of files.filter((file) => file.fieldname === key)) {
+      list.push(await this.fileService.saveFileInfo(file));
+    }
+    return list;
   }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.faqService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.faqService.delete(id, siteId);
   }
 
   @Delete()
   async deleteMany(
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
   ): Promise<void> {
-    await this.faqService.deleteMany(dto.ids);
+    await this.faqService.deleteMany(ids, siteId);
   }
 }

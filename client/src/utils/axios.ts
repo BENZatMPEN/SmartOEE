@@ -4,6 +4,9 @@ import { HOST_API } from '../config';
 
 const axiosInstance = axios.create({
   baseURL: HOST_API,
+  validateStatus: function (status) {
+    return status < 400;
+  },
 });
 
 axiosInstance.interceptors.response.use(
@@ -11,7 +14,7 @@ axiosInstance.interceptors.response.use(
     handleDates(response.data);
     return response;
   },
-  (error) => Promise.reject((error.response && error.response.data) || 'Something went wrong'),
+  // (error) => Promise.reject((error.response && error.response.data) || 'Something went wrong'),
 );
 
 const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;

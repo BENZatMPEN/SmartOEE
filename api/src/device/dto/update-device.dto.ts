@@ -1,14 +1,34 @@
 import { DeviceTagDto } from './device-tag.dto';
+import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class UpdateDeviceDto {
-  readonly id: number;
+  @IsString()
   readonly name: string;
+
+  @IsString()
   readonly remark: string;
+
+  @IsNumber()
+  @Type(() => Number)
   readonly deviceId: number;
+
+  @IsNumber()
+  @Type(() => Number)
   readonly deviceModelId: number;
+
+  @IsString()
   readonly address: string;
+
+  @IsNumber()
+  @Type(() => Number)
   readonly port: number;
+
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   readonly stopped: boolean;
-  readonly siteId: number;
+
+  @IsArray()
+  @Type(() => DeviceTagDto)
   readonly tags: DeviceTagDto[];
 }

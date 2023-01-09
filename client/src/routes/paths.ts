@@ -135,6 +135,18 @@ export const PATH_SETTINGS = {
   site: {
     root: path(ROOTS_SETTINGS, '/site'),
   },
+  users: {
+    root: path(ROOTS_SETTINGS, `/users`),
+    new: path(ROOTS_SETTINGS, `/users/new`),
+    edit: (id: string) => path(ROOTS_SETTINGS, `/users/${id}/edit`),
+    duplicate: (id: string) => path(ROOTS_SETTINGS, `/users/${id}/duplicate`),
+  },
+  roles: {
+    root: path(ROOTS_SETTINGS, `/roles`),
+    new: path(ROOTS_SETTINGS, `/roles/new`),
+    edit: (id: string) => path(ROOTS_SETTINGS, `/roles/${id}/edit`),
+    duplicate: (id: string) => path(ROOTS_SETTINGS, `/roles/${id}/duplicate`),
+  },
 };
 
 export const PATH_ADMINISTRATOR = {
@@ -150,11 +162,5 @@ export const PATH_ADMINISTRATOR = {
     new: path(ROOTS_ADMINISTRATOR, '/users/new'),
     edit: (id: string) => path(ROOTS_ADMINISTRATOR, `/users/${id}/edit`),
     duplicate: (id: string) => path(ROOTS_ADMINISTRATOR, `/users/${id}/duplicate`),
-  },
-  roles: {
-    root: path(ROOTS_ADMINISTRATOR, '/roles'),
-    new: path(ROOTS_ADMINISTRATOR, '/roles/new'),
-    edit: (id: string) => path(ROOTS_ADMINISTRATOR, `/roles/${id}/edit`),
-    duplicate: (id: string) => path(ROOTS_ADMINISTRATOR, `/roles/${id}/duplicate`),
   },
 };

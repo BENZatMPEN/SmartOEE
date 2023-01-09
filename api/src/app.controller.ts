@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Controller, Get } from '@nestjs/common';
-import { Site } from './common/entities/site';
+import { SiteEntity } from './common/entities/site-entity';
 import { SiteService } from './site/site.service';
 import { EntityManager } from 'typeorm';
 import { UserService } from './user/user.service';
@@ -30,22 +30,22 @@ import {
 import { PlannedDowntimeService } from './planned-downtime/planned-downtime.service';
 import { DeviceModelTagDto } from './device-model/dto/device-model-tag.dto';
 import { DeviceModelService } from './device-model/device-model.service';
-import { Device } from './common/entities/device';
+import { DeviceEntity } from './common/entities/device-entity';
 import { DeviceService } from './device/device.service';
 import { DeviceTagDto } from './device/dto/device-tag.dto';
 import { ProductService } from './product/product.service';
-import { Product } from './common/entities/product';
+import { ProductEntity } from './common/entities/product-entity';
 import { MachineService } from './machine/machine.service';
 import { MachineParameterDto } from './machine/dto/machine-parameter.dto';
-import { DeviceTag } from './common/entities/device-tag';
-import { Machine } from './common/entities/machine';
-import { OeeProduct } from './common/entities/oee-product';
-import { OeeMachine } from './common/entities/oee-machine';
+import { DeviceTagEntity } from './common/entities/device-tag-entity';
+import { MachineEntity } from './common/entities/machine-entity';
+import { OeeProductEntity } from './common/entities/oee-product-entity';
+import { OeeMachineEntity } from './common/entities/oee-machine-entity';
 import { OeeService } from './oee/oee.service';
 import { FaqService } from './faq/faq.service';
 import { ProblemSolutionService } from './problem-solution/problem-solution.service';
 import { PercentSetting } from './common/type/percent-settings';
-import { Oee } from './common/entities/oee';
+import { OeeEntity } from './common/entities/oee-entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
 import * as dayjs from 'dayjs';
 import { OeeTagMCStatus } from './common/type/oee-tag';
@@ -212,20 +212,24 @@ export class AppController {
 
     await this.entityManager.query('SET FOREIGN_KEY_CHECKS = 1');
 
-    const sites = [] as Site[];
+    const sites = [] as SiteEntity[];
 
     for (let i = 0; i < 5; i++) {
-      const site = await this.siteService.create({
-        name: faker.company.catchPhrase(),
-        remark: faker.commerce.productDescription(),
-        branch: '',
-        address: '',
-        lng: 0,
-        lat: 0,
-        active: false,
-        sync: false,
-        defaultPercentSettings: defaultPercentSettings,
-      });
+      const site = await this.siteService.create(
+        {
+          name: faker.company.catchPhrase(),
+          remark: faker.commerce.productDescription(),
+          branch: '',
+          address: '',
+          lng: 0,
+          lat: 0,
+          active: false,
+          sync: false,
+          defaultPercentSettings: defaultPercentSettings,
+          oeeLimit: -1,
+        },
+        null,
+      );
 
       sites.push(site);
     }
@@ -244,29 +248,35 @@ export class AppController {
       siteId: sites[0].id,
     });
 
-    await this.userService.create({
-      email: 'admin@user.com',
-      password: 'P@ssword1',
-      firstName: 'Super',
-      lastName: 'Admin',
-      siteId: sites[0].id,
-      roleIds: [ownerRole.id],
-    });
+    await this.userService.create(
+      {
+        email: 'admin@user.com',
+        password: 'P@ssword1',
+        firstName: 'Super',
+        lastName: 'Admin',
+        roleId: ownerRole.id,
+        // siteId: sites[0].id,
+        // roleIds: [ownerRole.id],
+      },
+      null,
+    );
 
-    await this.userService.create({
-      email: 'user1@user.com',
-      password: 'P@ssword1',
-      firstName: 'User',
-      lastName: '1',
-      siteId: sites[0].id,
-      roleIds: [adminRole.id],
-    });
+    await this.userService.create(
+      {
+        email: 'user1@user.com',
+        password: 'P@ssword1',
+        firstName: 'User',
+        lastName: '1',
+        roleId: adminRole.id,
+      },
+      null,
+    );
 
     const modelTypes = ['opcua', 'modbus'];
     const connectionTypes = ['tpc', 'serial'];
     const lengths = [16, 32];
     const dataTypes = ['int16', 'int16s', 'int16u', 'int32', 'int32s', 'int32u', 'float'];
-    const devices = [] as Device[];
+    const devices = [] as DeviceEntity[];
 
     // real device
     const realDeviceModel = await this.deviceModelService.create({
@@ -472,134 +482,149 @@ export class AppController {
     });
 
     const reloadRealDevice = await this.deviceService.findById(realDevice.id, realDevice.siteId);
-    const realMc = await this.machineService.create({
-      name: 'Machine 1',
-      code: 'MC001',
-      location: 'Bangkok',
-      remark: faker.commerce.productDescription(),
-      siteId: sites[0].id,
-      parameters: [
-        // a
-        ...reloadRealDevice.tags
-          .filter((deviceTag) => deviceTag.name.startsWith('Breakdown'))
-          .map((deviceTag, idx) => {
+    const realMc = await this.machineService.create(
+      {
+        name: 'Machine 1',
+        code: 'MC001',
+        location: 'Bangkok',
+        remark: faker.commerce.productDescription(),
+        siteId: sites[0].id,
+        parameters: [
+          // a
+          ...reloadRealDevice.tags
+            .filter((deviceTag) => deviceTag.name.startsWith('Breakdown'))
+            .map((deviceTag, idx) => {
+              return {
+                name: `A สาเหตุ ${idx + 1} (A)`,
+                oeeType: OEE_PARAM_TYPE_A,
+                deviceId: deviceTag.deviceId,
+                tagId: deviceTag.id,
+              };
+            }),
+          ...[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((val) => {
             return {
-              name: `A สาเหตุ ${idx + 1} (A)`,
+              name: `A สาเหตุ ${val} (M)`,
               oeeType: OEE_PARAM_TYPE_A,
-              deviceId: deviceTag.deviceId,
-              tagId: deviceTag.id,
             };
           }),
-        ...[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((val) => {
-          return {
-            name: `A สาเหตุ ${val} (M)`,
-            oeeType: OEE_PARAM_TYPE_A,
-          };
-        }),
-        // p
-        ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((val) => {
-          return {
-            name: `P สาเหตุ ${val} (M)`,
-            oeeType: OEE_PARAM_TYPE_P,
-          };
-        }),
-        // q
-        ...reloadRealDevice.tags
-          .filter((deviceTag) => deviceTag.name.startsWith('NG'))
-          .map((deviceTag, idx) => {
+          // p
+          ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((val) => {
             return {
-              name: `Q สาเหตุ ${idx + 1} (A)`,
-              oeeType: OEE_PARAM_TYPE_Q,
-              deviceId: deviceTag.deviceId,
-              tagId: deviceTag.id,
+              name: `P สาเหตุ ${val} (M)`,
+              oeeType: OEE_PARAM_TYPE_P,
             };
           }),
-        ...[11, 12].map((val) => {
-          return {
-            name: `Q สาเหตุ ${val} (M)`,
-            oeeType: OEE_PARAM_TYPE_Q,
-          };
-        }),
-      ] as MachineParameterDto[],
-    });
+          // q
+          ...reloadRealDevice.tags
+            .filter((deviceTag) => deviceTag.name.startsWith('NG'))
+            .map((deviceTag, idx) => {
+              return {
+                name: `Q สาเหตุ ${idx + 1} (A)`,
+                oeeType: OEE_PARAM_TYPE_Q,
+                deviceId: deviceTag.deviceId,
+                tagId: deviceTag.id,
+              };
+            }),
+          ...[11, 12].map((val) => {
+            return {
+              name: `Q สาเหตุ ${val} (M)`,
+              oeeType: OEE_PARAM_TYPE_Q,
+            };
+          }),
+        ] as MachineParameterDto[],
+      },
+      null,
+    );
 
-    const realPd1 = await this.productService.create({
-      sku: 'SKU001',
-      name: 'Product 1',
-      remark: faker.commerce.productDescription(),
-      siteId: sites[0].id,
-    });
+    const realPd1 = await this.productService.create(
+      {
+        sku: 'SKU001',
+        name: 'Product 1',
+        remark: faker.commerce.productDescription(),
+        siteId: sites[0].id,
+      },
+      null,
+    );
 
-    const realPd2 = await this.productService.create({
-      sku: 'SKU002',
-      name: 'Product 2',
-      remark: faker.commerce.productDescription(),
-      siteId: sites[0].id,
-    });
+    const realPd2 = await this.productService.create(
+      {
+        sku: 'SKU002',
+        name: 'Product 2',
+        remark: faker.commerce.productDescription(),
+        siteId: sites[0].id,
+      },
+      null,
+    );
 
-    const realPd3 = await this.productService.create({
-      sku: 'SKU003',
-      name: 'Product 3',
-      remark: faker.commerce.productDescription(),
-      siteId: sites[0].id,
-    });
+    const realPd3 = await this.productService.create(
+      {
+        sku: 'SKU003',
+        name: 'Product 3',
+        remark: faker.commerce.productDescription(),
+        siteId: sites[0].id,
+      },
+      null,
+    );
 
-    await this.oeeService.create({
-      oeeCode: 'OEE001',
-      oeeType: OEE_TYPE_STANDALONE,
-      minorStopSeconds: 10,
-      breakdownSeconds: 15,
-      siteId: sites[0].id,
-      location: faker.address.city(),
-      productionName: faker.commerce.productName(),
-      remark: faker.commerce.productDescription(),
-      percentSettings: null,
-      useSitePercentSettings: true,
-      tags: [
-        {
-          deviceId: 1,
-          tagId: 1,
-          key: OEE_TAG_MC_STATE,
-          data: {
-            running: '2',
-            standby: '1',
-            off: '0',
-          } as OeeTagMCStatus,
-        },
-        {
-          deviceId: 1,
-          tagId: 2,
-          key: OEE_TAG_TOTAL,
-          data: null,
-        },
-        {
-          deviceId: 1,
-          tagId: 3,
-          key: OEE_TAG_TOTAL_NG,
-          data: null,
-        },
-      ],
-      timeUnit: OEE_TIME_UNIT_SECOND,
-      oeeProducts: [
-        {
-          productId: realPd1.id,
-          standardSpeedSeconds: 3,
-        } as OeeProduct,
-        {
-          productId: realPd2.id,
-          standardSpeedSeconds: 3,
-        } as OeeProduct,
-        {
-          productId: realPd3.id,
-          standardSpeedSeconds: 3,
-        } as OeeProduct,
-      ],
-      oeeMachines: [
-        {
-          machineId: realMc.id,
-        } as OeeMachine,
-      ],
-    });
+    await this.oeeService.create(
+      {
+        oeeCode: 'OEE001',
+        oeeType: OEE_TYPE_STANDALONE,
+        minorStopSeconds: 10,
+        breakdownSeconds: 15,
+        siteId: sites[0].id,
+        location: faker.address.city(),
+        productionName: faker.commerce.productName(),
+        remark: faker.commerce.productDescription(),
+        percentSettings: null,
+        useSitePercentSettings: true,
+        tags: [
+          {
+            deviceId: 1,
+            tagId: 1,
+            key: OEE_TAG_MC_STATE,
+            data: {
+              running: '2',
+              standby: '1',
+              off: '0',
+            },
+          },
+          {
+            deviceId: 1,
+            tagId: 2,
+            key: OEE_TAG_TOTAL,
+            data: null,
+          },
+          {
+            deviceId: 1,
+            tagId: 3,
+            key: OEE_TAG_TOTAL_NG,
+            data: null,
+          },
+        ],
+        timeUnit: OEE_TIME_UNIT_SECOND,
+        oeeProducts: [
+          {
+            productId: realPd1.id,
+            standardSpeedSeconds: 3,
+          } as OeeProductEntity,
+          {
+            productId: realPd2.id,
+            standardSpeedSeconds: 3,
+          } as OeeProductEntity,
+          {
+            productId: realPd3.id,
+            standardSpeedSeconds: 3,
+          } as OeeProductEntity,
+        ],
+        oeeMachines: [
+          {
+            machineId: realMc.id,
+          } as OeeMachineEntity,
+        ],
+      },
+      null,
+    );
 
     await this.plannedDowntimeService.create({
       name: 'ประชุม (auto)',
@@ -682,15 +707,18 @@ export class AppController {
       devices.push(await this.deviceService.findById(device.id, device.siteId));
     }
 
-    const products = [] as Product[];
+    const products = [] as ProductEntity[];
 
     for (let i = 0; i < 20; i++) {
-      const product = await this.productService.create({
-        sku: 'S' + faker.datatype.number({ min: 100000, max: 999999 }),
-        name: faker.commerce.productName(),
-        remark: faker.commerce.productDescription(),
-        siteId: sites[1].id,
-      });
+      const product = await this.productService.create(
+        {
+          sku: 'S' + faker.datatype.number({ min: 100000, max: 999999 }),
+          name: faker.commerce.productName(),
+          remark: faker.commerce.productDescription(),
+          siteId: sites[1].id,
+        },
+        null,
+      );
 
       products.push(product);
     }
@@ -698,79 +726,85 @@ export class AppController {
     const oeeParamTypes = [OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P];
     const deviceTags = devices.reduce((previousValue, current) => {
       return [...previousValue, ...current.tags];
-    }, [] as DeviceTag[]);
-    const machines = [] as Machine[];
+    }, [] as DeviceTagEntity[]);
+    const machines = [] as MachineEntity[];
 
     for (let i = 0; i < 10; i++) {
-      const machine = await this.machineService.create({
-        name: faker.company.catchPhrase(),
-        code: 'MC' + faker.datatype.number({ min: 10000, max: 99999 }),
-        location: faker.address.city(),
-        remark: faker.commerce.productDescription(),
-        siteId: sites[1].id,
-        parameters: [
-          ...[...Array(10)].map((item, idx) => {
-            const deviceTag = deviceTags[10 * i + idx];
-            return {
-              name: faker.commerce.productName(),
-              oeeType: oeeParamTypes[faker.datatype.number({ min: 0, max: 1 })],
-              deviceId: deviceTag.deviceId,
-              tagId: deviceTag.id,
-            } as MachineParameterDto;
-          }),
-          ...[...Array(24)].map((item, idx) => {
-            return {
-              name: faker.commerce.productName(),
-              oeeType: OEE_PARAM_TYPE_Q,
-              deviceId: null,
-              tagId: null,
-            } as MachineParameterDto;
-          }),
-        ],
-      });
+      const machine = await this.machineService.create(
+        {
+          name: faker.company.catchPhrase(),
+          code: 'MC' + faker.datatype.number({ min: 10000, max: 99999 }),
+          location: faker.address.city(),
+          remark: faker.commerce.productDescription(),
+          siteId: sites[1].id,
+          parameters: [
+            ...[...Array(10)].map((item, idx) => {
+              const deviceTag = deviceTags[10 * i + idx];
+              return {
+                name: faker.commerce.productName(),
+                oeeType: oeeParamTypes[faker.datatype.number({ min: 0, max: 1 })],
+                deviceId: deviceTag.deviceId,
+                tagId: deviceTag.id,
+              } as MachineParameterDto;
+            }),
+            ...[...Array(24)].map((item, idx) => {
+              return {
+                name: faker.commerce.productName(),
+                oeeType: OEE_PARAM_TYPE_Q,
+                deviceId: null,
+                tagId: null,
+              } as MachineParameterDto;
+            }),
+          ],
+        },
+        null,
+      );
 
       machines.push(machine);
     }
 
     const oeeTypes = [OEE_TYPE_STANDALONE, OEE_TYPE_CONTINUOUS];
     const timeUnits = [OEE_TIME_UNIT_SECOND, OEE_TIME_UNIT_MINUTE];
-    const oees: Oee[] = [];
+    const oees: OeeEntity[] = [];
 
     for (let i = 0; i < 5; i++) {
       const timeUnit = timeUnits[faker.datatype.number({ min: 0, max: 1 })];
       oees.push(
-        await this.oeeService.create({
-          oeeCode: 'OEE' + faker.datatype.number({ min: 100, max: 999 }),
-          oeeType: oeeTypes[faker.datatype.number({ min: 0, max: 1 })],
-          minorStopSeconds:
-            timeUnit == OEE_TIME_UNIT_MINUTE
-              ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
-              : faker.datatype.number({ min: 1, max: 200 }),
-          breakdownSeconds:
-            timeUnit == OEE_TIME_UNIT_MINUTE
-              ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
-              : faker.datatype.number({ min: 1, max: 200 }),
-          siteId: sites[1].id,
-          location: faker.address.city(),
-          productionName: faker.commerce.productName(),
-          remark: faker.commerce.productDescription(),
-          percentSettings: null,
-          useSitePercentSettings: true,
-          timeUnit: timeUnit,
-          tags: null,
-          oeeProducts: [...Array(3)].map((item, idx) => {
-            const product = products[3 * i + idx];
-            return {
-              standardSpeedSeconds: faker.datatype.number({ min: 200, max: 1000 }),
-              productId: product.id,
-            } as OeeProduct;
-          }),
-          oeeMachines: [
-            {
-              machineId: machines[i].id,
-            } as OeeMachine,
-          ],
-        }),
+        await this.oeeService.create(
+          {
+            oeeCode: 'OEE' + faker.datatype.number({ min: 100, max: 999 }),
+            oeeType: oeeTypes[faker.datatype.number({ min: 0, max: 1 })],
+            minorStopSeconds:
+              timeUnit == OEE_TIME_UNIT_MINUTE
+                ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
+                : faker.datatype.number({ min: 1, max: 200 }),
+            breakdownSeconds:
+              timeUnit == OEE_TIME_UNIT_MINUTE
+                ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
+                : faker.datatype.number({ min: 1, max: 200 }),
+            siteId: sites[1].id,
+            location: faker.address.city(),
+            productionName: faker.commerce.productName(),
+            remark: faker.commerce.productDescription(),
+            percentSettings: null,
+            useSitePercentSettings: true,
+            timeUnit: timeUnit,
+            tags: null,
+            oeeProducts: [...Array(3)].map((item, idx) => {
+              const product = products[3 * i + idx];
+              return {
+                standardSpeedSeconds: faker.datatype.number({ min: 200, max: 1000 }),
+                productId: product.id,
+              } as OeeProductEntity;
+            }),
+            oeeMachines: [
+              {
+                machineId: machines[i].id,
+              } as OeeMachineEntity,
+            ],
+          },
+          null,
+        ),
       );
     }
 
@@ -819,34 +853,43 @@ export class AppController {
     ];
 
     for (let i = 0; i < 10; i++) {
-      await this.problemSolutionService.create({
-        name: faker.company.catchPhrase(),
-        remark: faker.commerce.productDescription(),
-        date: new Date(),
-        headProjectUserId: null,
-        approveByUserId: null,
-        oeeId: null,
-        startDate: new Date(),
-        endDate: new Date(),
-        status: projectStatus[faker.datatype.number({ min: 0, max: projectStatus.length - 1 })],
-        siteId: sites[1].id,
-        tasks: [],
-      });
+      await this.problemSolutionService.create(
+        {
+          name: faker.company.catchPhrase(),
+          remark: faker.commerce.productDescription(),
+          date: new Date(),
+          headProjectUserId: null,
+          approveByUserId: null,
+          oeeId: null,
+          startDate: new Date(),
+          endDate: new Date(),
+          status: projectStatus[faker.datatype.number({ min: 0, max: projectStatus.length - 1 })],
+          siteId: sites[1].id,
+        },
+        null,
+        null,
+        null,
+        null,
+      );
     }
 
     for (let i = 0; i < 10; i++) {
-      await this.faqService.create({
-        topic: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
-        remark: faker.commerce.productDescription(),
-        createdByUserId: null,
-        approvedByUserId: null,
-        date: new Date(),
-        startDate: new Date(),
-        endDate: new Date(),
-        status: projectStatus[faker.datatype.number({ min: 0, max: projectStatus.length - 1 })],
-        siteId: sites[1].id,
-      });
+      await this.faqService.create(
+        {
+          topic: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          remark: faker.commerce.productDescription(),
+          createdByUserId: null,
+          approvedByUserId: null,
+          date: new Date(),
+          startDate: new Date(),
+          endDate: new Date(),
+          status: projectStatus[faker.datatype.number({ min: 0, max: projectStatus.length - 1 })],
+          siteId: sites[1].id,
+        },
+        null,
+        null,
+      );
     }
 
     const downtimeTypes = [PLANNED_DOWNTIME_TYPE_PLANNED, PLANNED_DOWNTIME_TYPE_MC_SETUP];
@@ -872,17 +915,21 @@ export class AppController {
 
   @Get('solo')
   async getSolo(): Promise<string> {
-    const site = await this.siteService.create({
-      name: 'Main Site',
-      remark: '',
-      branch: '',
-      address: '',
-      lng: 0,
-      lat: 0,
-      active: false,
-      sync: false,
-      defaultPercentSettings: defaultPercentSettings,
-    });
+    const site = await this.siteService.create(
+      {
+        name: 'Main Site',
+        remark: '',
+        branch: '',
+        address: '',
+        lng: 0,
+        lat: 0,
+        active: false,
+        sync: false,
+        defaultPercentSettings: defaultPercentSettings,
+        oeeLimit: -1,
+      },
+      null,
+    );
 
     const sites = [site];
     const ownerRole = await this.roleService.create({
@@ -899,23 +946,31 @@ export class AppController {
       siteId: sites[0].id,
     });
 
-    await this.userService.create({
-      email: 'admin@user.com',
-      password: 'P@ssword1',
-      firstName: 'Super',
-      lastName: 'Admin',
-      siteId: sites[0].id,
-      roleIds: [ownerRole.id],
-    });
+    await this.userService.create(
+      {
+        email: 'admin@user.com',
+        password: 'P@ssword1',
+        firstName: 'Super',
+        lastName: 'Admin',
+        roleId: ownerRole.id,
+        // siteId: sites[0].id,
+        // roleIds: [ownerRole.id],
+      },
+      null,
+    );
 
-    await this.userService.create({
-      email: 'user1@user.com',
-      password: 'P@ssword1',
-      firstName: 'User',
-      lastName: '1',
-      siteId: sites[0].id,
-      roleIds: [adminRole.id],
-    });
+    await this.userService.create(
+      {
+        email: 'user1@user.com',
+        password: 'P@ssword1',
+        firstName: 'User',
+        lastName: '1',
+        roleId: adminRole.id,
+        // siteId: sites[0].id,
+        // roleIds: [adminRole.id],
+      },
+      null,
+    );
 
     return 'Solo!';
   }

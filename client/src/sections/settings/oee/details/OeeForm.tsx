@@ -2,12 +2,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Oee, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
+import { EditOee, Oee, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
 import { PercentSetting } from '../../../../@types/percentSetting';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -26,6 +27,7 @@ import { RootState, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
 import { getTimeUnitText } from '../../../../utils/formatText';
+import { getFileUrl } from '../../../../utils/imageHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import OeeMachineDialog from './OeeMachineDialog';
 import OeeMachineTable from './OeeMachineTable';
@@ -34,11 +36,6 @@ import OeeProductDialog from './OeeProductDialog';
 import OeeProductTable from './OeeProductTable';
 import OeeTagDialog from './OeeTagDialog';
 import { OeeTagList } from './OeeTagList';
-
-export interface OeeFormValuesProps extends Partial<Oee> {
-  image: File;
-  percentSettings: PercentSetting[] | null;
-}
 
 type SelectedItem<T> = {
   index: number;
@@ -55,7 +52,7 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -78,8 +75,25 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
     productionName: Yup.string().required('Production Name is required'),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<EditOee>({
+    resolver: yupResolver(NewOeeSchema),
+    defaultValues: {
+      oeeCode: '',
+      oeeType: OEE_TYPE_OPTIONS[0],
+      location: '',
+      productionName: '',
+      minorStopSeconds: 0,
+      breakdownSeconds: 0,
+      remark: '',
+      oeeMachines: [],
+      oeeProducts: [],
+      timeUnit: TIME_UNIT_OPTIONS[0],
+      useSitePercentSettings: true,
+      percentSettings: initialPercentSettings,
+      tags: initialOeeTags,
+      image: null,
+    },
+    values: {
       oeeCode: currentOee?.oeeCode || '',
       oeeType: currentOee?.oeeType || OEE_TYPE_OPTIONS[0],
       location: currentOee?.location || '',
@@ -94,23 +108,20 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
             return item;
           })
         : [],
-      siteId: currentOee?.siteId || selectedSite?.id,
       timeUnit: currentOee?.timeUnit || TIME_UNIT_OPTIONS[0],
       useSitePercentSettings: currentOee ? currentOee.useSitePercentSettings : true,
       percentSettings: currentOee?.percentSettings ? currentOee.percentSettings : initialPercentSettings,
-      tags: currentOee?.tags ? currentOee.tags : initialOeeTags,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentOee],
-  );
-
-  const methods = useForm<OeeFormValuesProps>({
-    resolver: yupResolver(NewOeeSchema),
-    defaultValues,
+      tags: currentOee?.tags
+        ? [
+            ...currentOee.tags,
+            ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
+          ]
+        : initialOeeTags,
+      image: null,
+    },
   });
 
   const {
-    reset,
     setValue,
     getValues,
     watch,
@@ -120,43 +131,29 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
 
   const values = watch();
 
-  useEffect(() => {
-    if (isEdit && currentOee) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentOee]);
-
-  const onSubmit = async (data: OeeFormValuesProps) => {
+  const onSubmit = async (data: EditOee) => {
     try {
-      const { image, ...dto } = data;
-      if (dto.timeUnit === 'minute') {
-        dto.minorStopSeconds = Number(dto.minorStopSeconds) * 60;
-        dto.breakdownSeconds = Number(dto.breakdownSeconds) * 60;
-        dto.oeeProducts = (dto.oeeProducts || []).map((item) => {
+      if (data.timeUnit === 'minute') {
+        data.minorStopSeconds = Number(data.minorStopSeconds) * 60;
+        data.breakdownSeconds = Number(data.breakdownSeconds) * 60;
+        data.oeeProducts = (data.oeeProducts || []).map((item) => {
           item.standardSpeedSeconds = item.standardSpeedSeconds * 60;
           return item;
         });
       }
 
-      dto.percentSettings = dto.useSitePercentSettings ? null : dto.percentSettings;
-      let oee: Oee;
+      data.percentSettings = data.useSitePercentSettings ? null : data.percentSettings;
 
       if (isEdit && currentOee) {
-        const response = await axios.put<Oee>(`/oees/${currentOee.id}`, dto);
-        oee = response.data;
+        await axios.put<Oee>(`/oees/${currentOee.id}`, data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
       } else {
-        const response = await axios.post<Oee>(`/oees`, dto);
-        oee = response.data;
-      }
-
-      if (image) {
-        await axios.post(
-          `/oees/${oee.id}/upload`,
-          { image },
+        await axios.post<Oee>(
+          `/oees`,
+          { ...data, siteId: selectedSite?.id },
           {
             headers: {
               'Content-Type': 'multipart/form-data',
@@ -168,7 +165,19 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.oees.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          if (Array.isArray(error.response?.data.message)) {
+            for (const item of error.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -325,7 +334,7 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
                     accept="image/*"
                     maxSize={3145728}
                     onDrop={handleDrop}
-                    currentFile={currentOee?.imageUrl}
+                    currentFile={isEdit ? getFileUrl(currentOee?.imageName) : ''}
                   />
                 </CardContent>
               </Card>

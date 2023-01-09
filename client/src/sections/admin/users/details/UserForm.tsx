@@ -1,38 +1,44 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Box, Button, Card, CardContent, Grid, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useCallback, useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditUser, User } from '../../../../@types/user';
+import { OptionItem } from '../../../../@types/option';
+import { EditUser, EditUserPassword } from '../../../../@types/user';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
-import { RootState, useSelector } from '../../../../redux/store';
+import { PS_PROCESS_STATUS_ON_PROCESS } from '../../../../constants';
+import { emptyRoleOptions } from '../../../../redux/actions/roleAction';
+import { emptySiteOptions, getSiteOptions } from '../../../../redux/actions/siteAction';
+import { createUser, updateUser } from '../../../../redux/actions/userAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
+import { getFileUrl } from '../../../../utils/imageHelper';
+import UserSiteRoleList from './UserSiteRoleList';
 
-interface FormValuesProps extends Partial<EditUser> {
-  confirmPassword: string;
-  image: File;
-  isNew: boolean;
+type UserProps = EditUser & EditUserPassword;
+
+interface FormValuesProps extends UserProps {
+  isNew: boolean; // use for validation
+  siteRoles: { site: OptionItem; role: OptionItem }[];
 }
 
 type Props = {
   isEdit: boolean;
-  currentUser: User | undefined;
 };
 
-export default function UserForm({ isEdit, currentUser }: Props) {
-  const theme = useTheme();
+export default function UserForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { currentUser } = useSelector((state: RootState) => state.user);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -47,79 +53,84 @@ export default function UserForm({ isEdit, currentUser }: Props) {
         is: true,
         then: Yup.string().required('ConfirmPassword is required'),
       }),
+    roleId: Yup.number().min(1, 'Role must be selected'),
   });
-
-  const defaultValues = useMemo(
-    () => ({
-      email: currentUser?.email || '',
-      firstName: currentUser?.firstName || '',
-      lastName: currentUser?.lastName || '',
-      password: '',
-      confirmPassword: '',
-      siteId: selectedSite?.id,
-      isNew: !isEdit,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentUser],
-  );
 
   const methods = useForm<FormValuesProps>({
     resolver: yupResolver(NewUserSchema),
-    defaultValues,
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      isNew: false,
+      image: null,
+      roleId: -1,
+      siteRoles: [],
+    },
+    values: {
+      firstName: currentUser?.firstName || '',
+      lastName: currentUser?.lastName || '',
+      email: currentUser?.email || '',
+      password: '',
+      confirmPassword: '',
+      isNew: !isEdit,
+      image: null,
+      roleId: currentUser?.roleId || -1,
+      siteRoles: [],
+    },
   });
 
   const {
-    reset,
-    watch,
+    control,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const values = watch();
-
-  useEffect(() => {
-    if (isEdit && currentUser) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentUser]);
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'siteRoles',
+  });
 
   const onSubmit = async (data: FormValuesProps) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { image, isNew, confirmPassword, ...dto } = data;
-      let user: User;
       if (isEdit && currentUser) {
-        const response = await axios.put<User>(`/users/${currentUser?.id}`, dto);
-        user = response.data;
+        await dispatch(updateUser(currentUser.id, data));
       } else {
-        const response = await axios.post<User>(`/users`, dto);
-        user = response.data;
+        await dispatch(createUser(data));
       }
 
-      if (image) {
-        await axios.post(
-          `/users/${user.id}/upload`,
-          { image },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
-      }
-
-      enqueueSnackbar(!isNew ? 'Create success!' : 'Update success!');
+      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_ADMINISTRATOR.users.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          for (const item of error.response?.data.message) {
+            enqueueSnackbar(item, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
+
+  // const handleAdd = () => {
+  //   append({
+  //     // title: '',
+  //     // assigneeUserId: -1,
+  //     // startDate: new Date(),
+  //     // endDate: new Date(),
+  //     // status: PS_PROCESS_STATUS_ON_PROCESS,
+  //     // comment: '',
+  //     // attachments: [],
+  //     // files: [],
+  //     // addingFiles: [],
+  //     // deletingFiles: [],
+  //   });
+  // };
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -166,7 +177,7 @@ export default function UserForm({ isEdit, currentUser }: Props) {
         }
       />
 
-      <Grid container spacing={theme.spacing(3)}>
+      <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
@@ -175,7 +186,7 @@ export default function UserForm({ isEdit, currentUser }: Props) {
                 accept="image/*"
                 maxSize={3145728}
                 onDrop={handleDrop}
-                currentFile={currentUser?.imageUrl}
+                currentFile={isEdit ? getFileUrl(currentUser?.imageName) : ''}
               />
             </CardContent>
           </Card>
@@ -184,9 +195,9 @@ export default function UserForm({ isEdit, currentUser }: Props) {
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Stack spacing={theme.spacing(3)}>
+              <Stack spacing={3}>
                 <Box>
-                  <Grid container spacing={theme.spacing(3)}>
+                  <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <RHFTextField name="firstName" label="First Name" />
                     </Grid>
@@ -198,22 +209,66 @@ export default function UserForm({ isEdit, currentUser }: Props) {
                     <Grid item xs={12} md={6}>
                       <RHFTextField name="email" label="Email" />
                     </Grid>
+
+                    {/*<Grid item xs={12} md={6}>*/}
+                    {/*  <RHFSelect*/}
+                    {/*    name="roleId"*/}
+                    {/*    label="Role"*/}
+                    {/*    InputLabelProps={{ shrink: true }}*/}
+                    {/*    SelectProps={{ native: false }}*/}
+                    {/*    // onChange={(event) => onDeviceModelChanged(Number(event.target.value))}*/}
+                    {/*  >*/}
+                    {/*    <MenuItem*/}
+                    {/*      value={-1}*/}
+                    {/*      sx={{*/}
+                    {/*        mx: 1,*/}
+                    {/*        borderRadius: 0.75,*/}
+                    {/*        typography: 'body1',*/}
+                    {/*        fontStyle: 'italic',*/}
+                    {/*        color: 'text.secondary',*/}
+                    {/*      }}*/}
+                    {/*    >*/}
+                    {/*      None*/}
+                    {/*    </MenuItem>*/}
+
+                    {/*    <Divider />*/}
+
+                    {/*    {(roleOptions || []).map((item) => (*/}
+                    {/*      <MenuItem*/}
+                    {/*        key={item.id}*/}
+                    {/*        value={item.id}*/}
+                    {/*        sx={{*/}
+                    {/*          mx: 1,*/}
+                    {/*          my: 0.5,*/}
+                    {/*          borderRadius: 0.75,*/}
+                    {/*          typography: 'body1',*/}
+                    {/*        }}*/}
+                    {/*      >*/}
+                    {/*        {item.name}*/}
+                    {/*      </MenuItem>*/}
+                    {/*    ))}*/}
+                    {/*  </RHFSelect>*/}
+                    {/*</Grid>*/}
                   </Grid>
                 </Box>
 
                 {!isEdit && (
                   <Box>
-                    <Grid container spacing={theme.spacing(3)}>
+                    <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
-                        <RHFTextField name="password" label="Password" />
+                        <RHFTextField type="password" name="password" label="Password" />
                       </Grid>
 
                       <Grid item xs={12} md={6}>
-                        <RHFTextField name="confirmPassword" label="Confirm Password" />
+                        <RHFTextField type="password" name="confirmPassword" label="Confirm Password" />
                       </Grid>
                     </Grid>
                   </Box>
                 )}
+
+                <Box>
+                  <UserSiteRoleList />
+                </Box>
               </Stack>
             </CardContent>
           </Card>

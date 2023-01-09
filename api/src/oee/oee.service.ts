@@ -1,36 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateOeeDto } from './dto/create-oee.dto';
 import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
-import { ContentService } from '../common/content/content.service';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, In, Repository } from 'typeorm';
-import { Oee } from 'src/common/entities/oee';
-import { OeeProduct } from 'src/common/entities/oee-product';
-import { OeeMachine } from 'src/common/entities/oee-machine';
-import * as _ from 'lodash';
-import { OeeBatch } from '../common/entities/oee-batch';
+import { OeeEntity } from 'src/common/entities/oee-entity';
+import { OeeProductEntity } from 'src/common/entities/oee-product-entity';
+import { OeeMachineEntity } from 'src/common/entities/oee-machine-entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
 import { OeeStatus, OeeStatusItem } from '../common/type/oee-status';
 import { initialOeeBatchStats } from '../common/type/oee-stats';
 import { OptionItem } from '../common/type/option-item';
+import { SiteEntity } from '../common/entities/site-entity';
+import { FileService } from '../common/services/file.service';
 
 @Injectable()
 export class OeeService {
   constructor(
-    private readonly contentService: ContentService,
-    @InjectRepository(Oee)
-    private readonly oeeRepository: Repository<Oee>,
-    @InjectRepository(OeeProduct)
-    private readonly oeeProductRepository: Repository<OeeProduct>,
-    @InjectRepository(OeeMachine)
-    private readonly oeeMachineRepository: Repository<OeeMachine>,
-    @InjectRepository(OeeBatch)
-    private readonly oeeBatchRepository: Repository<OeeBatch>,
+    @InjectRepository(OeeEntity)
+    private readonly oeeRepository: Repository<OeeEntity>,
+    @InjectRepository(OeeProductEntity)
+    private readonly oeeProductRepository: Repository<OeeProductEntity>,
+    @InjectRepository(OeeMachineEntity)
+    private readonly oeeMachineRepository: Repository<OeeMachineEntity>,
+    @InjectRepository(OeeBatchEntity)
+    private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(SiteEntity)
+    private siteRepository: Repository<SiteEntity>,
     private readonly entityManager: EntityManager,
+    private readonly fileService: FileService,
   ) {}
 
-  async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<Oee>> {
+  async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.oeeRepository
       .createQueryBuilder()
@@ -50,7 +52,7 @@ export class OeeService {
     return { list: rows, count: count };
   }
 
-  findAll(siteId: number): Promise<Oee[]> {
+  findAll(siteId: number): Promise<OeeEntity[]> {
     return this.oeeRepository.find({
       where: { siteId, deleted: false },
       // relations: [
@@ -178,7 +180,7 @@ export class OeeService {
     } as OeeStatus;
   }
 
-  findByIdIncludingDetails(id: number, siteId: number): Promise<Oee> {
+  findByIdIncludingDetails(id: number, siteId: number): Promise<OeeEntity> {
     return this.oeeRepository.findOne({
       where: { id, siteId, deleted: false },
       relations: [
@@ -210,145 +212,187 @@ export class OeeService {
     // return null;
   }
 
-  findByIdIncludingProducts(id: number): Promise<OeeProduct[]> {
+  findByIdIncludingProducts(id: number): Promise<OeeProductEntity[]> {
     return this.oeeProductRepository.find({ where: { oeeId: id }, relations: { product: true } });
   }
 
-  findByIdIncludingMachines(id: number): Promise<OeeMachine[]> {
+  findByIdIncludingMachines(id: number): Promise<OeeMachineEntity[]> {
     return this.oeeMachineRepository.find({
       where: { oeeId: id },
       relations: ['machine', 'machine.parameters'],
     });
   }
 
-  findLatestBatch(id: number): Promise<OeeBatch> {
-    return this.oeeBatchRepository.findOne({ where: { oeeId: id }, order: { createdAt: 'DESC' } });
+  findLatestBatch(id: number, siteId: number): Promise<OeeBatchEntity> {
+    return this.oeeBatchRepository.findOne({ where: { oeeId: id, siteId: siteId }, order: { createdAt: 'DESC' } });
   }
 
-  findById(id: number): Promise<Oee> {
+  findById(id: number): Promise<OeeEntity> {
     return this.oeeRepository.findOne({
       where: { id, deleted: false },
     });
   }
 
-  async create(createDto: CreateOeeDto): Promise<Oee> {
+  async create(createDto: CreateOeeDto, imageName: string): Promise<OeeEntity> {
+    const site = await this.siteRepository.findOneBy({ id: createDto.siteId });
+    const countOee = await this.oeeRepository.countBy({ siteId: site.id });
+    if (site.oeeLimit > -1 && countOee >= site.oeeLimit) {
+      throw new BadRequestException(`Number of OEE has reached the limit (${site.oeeLimit})`);
+    }
+
     const { oeeProducts, oeeMachines, ...dto } = createDto;
     const oee = await this.oeeRepository.save({
       ...dto,
+      imageName,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    for (const product of oeeProducts) {
-      await this.oeeProductRepository.save({
-        ...product,
-        oee,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    if (oeeProducts) {
+      for (const product of oeeProducts) {
+        await this.oeeProductRepository.save({
+          ...product,
+          oeeId: oee.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
 
-    for (const machine of oeeMachines) {
-      await this.oeeMachineRepository.save({
-        ...machine,
-        oee,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    if (oeeMachines) {
+      for (const machine of oeeMachines) {
+        await this.oeeMachineRepository.save({
+          ...machine,
+          oeeId: oee.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
 
     return oee;
   }
 
-  async update(id: number, updateDto: UpdateOeeDto): Promise<Oee> {
+  async update(id: number, updateDto: UpdateOeeDto, imageName: string, siteId: number): Promise<OeeEntity> {
     const { oeeProducts, oeeMachines, ...dto } = updateDto;
-    const updatingOee = await this.oeeRepository.findOneBy({ id });
+    const updatingOee = await this.oeeRepository.findOneBy({ id, siteId });
+    const { imageName: existingImageName } = updatingOee;
+    if (imageName && existingImageName) {
+      await this.fileService.deleteFile(existingImageName);
+    }
+
     const oee = await this.oeeRepository.save({
-      ..._.assign(updatingOee, dto),
+      ...updatingOee,
+      ...dto,
+      imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
 
-    await this.oeeProductRepository
-      .createQueryBuilder()
-      .delete()
-      .where('oeeId = :oeeId', { oeeId: oee.id })
-      .andWhere('id not in (:ids)', { ids: oeeProducts.map((oeeProduct) => oeeProduct.id) })
-      .execute();
-
-    await this.oeeMachineRepository
-      .createQueryBuilder()
-      .delete()
-      .where('oeeId = :oeeId', { oeeId: oee.id })
-      .andWhere('id not in (:ids)', { ids: oeeMachines.map((oeeMachine) => oeeMachine.id) })
-      .execute();
-
-    for (const oeeProduct of oeeProducts) {
-      if (oeeProduct.id) {
-        await this.oeeProductRepository.save({ ...oeeProduct, updatedAt: new Date() });
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...oeeProductDto } = oeeProduct;
-        await this.oeeProductRepository.save({
-          ...oeeProductDto,
-          oee,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
-
-      // const count = await this.oeeProductRepository.count({
-      //   where: { [Op.and]: [{ oeeId: oee.id }, { productId: oeeProduct.productId }] },
-      // });
-      //
-      // if (count === 0) {
-      //   await this.oeeProductRepository.create({
-      //     oeeId: oee.id,
-      //     ...oeeProduct,
-      //   });
-      // } else {
-      //   await this.oeeProductRepository.update(
-      //     { ...oeeProduct },
-      //     {
-      //       where: {
-      //         [Op.and]: [{ oeeId: oee.id }, { productId: oeeProduct.productId }],
-      //       },
-      //     },
-      //   );
-      // }
+    const deletingProductIds = (oeeProducts || []).map((oeeProduct) => oeeProduct.id);
+    if (deletingProductIds.length > 0) {
+      await this.oeeProductRepository
+        .createQueryBuilder()
+        .delete()
+        .where('oeeId = :oeeId', { oeeId: oee.id })
+        .andWhere('id not in (:ids)', { ids: deletingProductIds })
+        .execute();
+    } else {
+      await this.oeeProductRepository
+        .createQueryBuilder()
+        .delete()
+        .where('oeeId = :oeeId', { oeeId: oee.id })
+        .execute();
     }
 
-    for (const oeeMachine of oeeMachines) {
-      if (oeeMachine.id) {
-        await this.oeeMachineRepository.save({ ...oeeMachine, updatedAt: new Date() });
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...oeeMachineDto } = oeeMachine;
-        await this.oeeMachineRepository.save({
-          ...oeeMachineDto,
-          oee,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+    const deletingMachineIds = (oeeMachines || []).map((oeeMachine) => oeeMachine.id);
+    if (deletingMachineIds.length > 0) {
+      await this.oeeMachineRepository
+        .createQueryBuilder()
+        .delete()
+        .where('oeeId = :oeeId', { oeeId: oee.id })
+        .andWhere('id not in (:ids)', { ids: deletingMachineIds })
+        .execute();
+    } else {
+      await this.oeeMachineRepository
+        .createQueryBuilder()
+        .delete()
+        .where('oeeId = :oeeId', { oeeId: oee.id })
+        .execute();
+    }
+
+    if (oeeProducts) {
+      for (const oeeProduct of oeeProducts) {
+        if (oeeProduct.id) {
+          const updatingProduct = await this.oeeProductRepository.findOneBy({ id: oeeProduct.id });
+          await this.oeeProductRepository.save({ ...updatingProduct, ...oeeProduct, updatedAt: new Date() });
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...oeeProductDto } = oeeProduct;
+          await this.oeeProductRepository.save({
+            ...oeeProductDto,
+            oeeId: oee.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+
+        // const count = await this.oeeProductRepository.count({
+        //   where: { [Op.and]: [{ oeeId: oee.id }, { productId: oeeProduct.productId }] },
+        // });
+        //
+        // if (count === 0) {
+        //   await this.oeeProductRepository.create({
+        //     oeeId: oee.id,
+        //     ...oeeProduct,
+        //   });
+        // } else {
+        //   await this.oeeProductRepository.update(
+        //     { ...oeeProduct },
+        //     {
+        //       where: {
+        //         [Op.and]: [{ oeeId: oee.id }, { productId: oeeProduct.productId }],
+        //       },
+        //     },
+        //   );
+        // }
       }
-      //   const count = await this.oeeMachineRepository.count({
-      //     where: { [Op.and]: [{ oeeId: oee.id }, { machineId: oeeMachine.machineId }] },
-      //   });
-      //
-      //   if (count === 0) {
-      //     await this.oeeMachineRepository.create({
-      //       oeeId: oee.id,
-      //       ...oeeMachine,
-      //     });
-      //   } else {
-      //     await this.oeeMachineRepository.update(
-      //       { ...oeeMachine },
-      //       {
-      //         where: {
-      //           [Op.and]: [{ oeeId: oee.id }, { machineId: oeeMachine.machineId }],
-      //         },
-      //       },
-      //     );
-      //   }
+    }
+
+    if (oeeMachines) {
+      for (const oeeMachine of oeeMachines) {
+        if (oeeMachine.id) {
+          const updatingMachine = await this.oeeProductRepository.findOneBy({ id: oeeMachine.id });
+          await this.oeeMachineRepository.save({ ...updatingMachine, ...oeeMachine, updatedAt: new Date() });
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...oeeMachineDto } = oeeMachine;
+          await this.oeeMachineRepository.save({
+            ...oeeMachineDto,
+            oeeId: oee.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+        //   const count = await this.oeeMachineRepository.count({
+        //     where: { [Op.and]: [{ oeeId: oee.id }, { machineId: oeeMachine.machineId }] },
+        //   });
+        //
+        //   if (count === 0) {
+        //     await this.oeeMachineRepository.create({
+        //       oeeId: oee.id,
+        //       ...oeeMachine,
+        //     });
+        //   } else {
+        //     await this.oeeMachineRepository.update(
+        //       { ...oeeMachine },
+        //       {
+        //         where: {
+        //           [Op.and]: [{ oeeId: oee.id }, { machineId: oeeMachine.machineId }],
+        //         },
+        //       },
+        //     );
+        //   }
+      }
     }
 
     return oee;
@@ -439,25 +483,15 @@ export class OeeService {
     // return oee.reload({ include: [Product, Machine] });
   }
 
-  async upload(id: number, image: Express.Multer.File): Promise<Oee> {
-    const oee = await this.oeeRepository.findOneBy({ id });
-    if (image) {
-      oee.imageUrl = await this.contentService.saveOeeImage(oee.id.toString(), image.buffer, image.mimetype);
-      await this.oeeRepository.save(oee);
-    }
-
-    return oee;
-  }
-
-  async delete(id: number): Promise<void> {
-    const oee = await this.oeeRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const oee = await this.oeeRepository.findOneBy({ id, siteId });
     oee.deleted = true;
     oee.updatedAt = new Date();
     await this.oeeRepository.save(oee);
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const oees = await this.oeeRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const oees = await this.oeeRepository.findBy({ id: In(ids), siteId });
     await this.oeeRepository.save(
       oees.map((oee) => {
         oee.deleted = true;

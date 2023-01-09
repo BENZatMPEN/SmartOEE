@@ -1,35 +1,216 @@
-// @mui
-import { Container, Typography } from '@mui/material';
-// components
+import {
+  Box,
+  Button,
+  Card,
+  Container,
+  IconButton,
+  Table,
+  TableBody,
+  TableContainer,
+  TablePagination,
+  Tooltip,
+} from '@mui/material';
+import { paramCase } from 'change-case';
+import { useEffect, useState } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Dashboard, FilterDashboard } from '../../../@types/dashboard';
+import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
+import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
-// hooks
-import useSettings from '../../../hooks/useSettings';
+import Scrollbar from '../../../components/Scrollbar';
+import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
+import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
+import useTable from '../../../hooks/useTable';
+import { deleteDashboard, deleteDashboards, getDashboardPagedList } from '../../../redux/actions/dashboardAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
+import { PATH_SETTINGS } from '../../../routes/paths';
+import { DashboardTableRow, DashboardTableToolbar } from '../../../sections/settings/dashboard/list';
 
-// ----------------------------------------------------------------------
+const TABLE_HEAD = [
+  { id: 'title', label: 'Title', align: 'left' },
+  { id: 'link', label: 'Link', align: 'left' },
+  { id: '' },
+];
 
-export default function PageOne() {
-  const { themeStretch } = useSettings();
+export default function DashboardList() {
+  const {
+    dense,
+    page,
+    order,
+    orderBy,
+    rowsPerPage,
+    setPage,
+    selected,
+    setSelected,
+    onSelectRow,
+    onSelectAllRows,
+    onSort,
+    onChangePage,
+    onChangeRowsPerPage,
+  } = useTable({
+    defaultOrderBy: 'createdAt',
+    defaultOrder: 'desc',
+  });
+
+  const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.dashboard);
+
+  const [filterName, setFilterName] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      await refreshData();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order, orderBy, page, rowsPerPage]);
+
+  const refreshData = async () => {
+    const filter: FilterDashboard = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
+
+    await dispatch(getDashboardPagedList(filter));
+  };
+
+  const handleFilterName = (filterName: string) => {
+    setPage(0);
+    setFilterName(filterName);
+  };
+
+  const handleSearch = async () => {
+    setPage(0);
+    await refreshData();
+  };
+
+  const handleDeleteRow = async (id: number) => {
+    await dispatch(deleteDashboard(id));
+    await refreshData();
+  };
+
+  const handleDeleteRows = async (selectedIds: number[]) => {
+    await dispatch(deleteDashboards(selectedIds));
+    await refreshData();
+    setSelected([]);
+  };
+
+  const handleEditRow = (id: number) => {
+    navigate(PATH_SETTINGS.dashboard.edit(paramCase(id.toString())));
+  };
+
+  const handleDuplicateRow = (id: number) => {
+    navigate(PATH_SETTINGS.dashboard.duplicate(paramCase(id.toString())));
+  };
+
+  const denseHeight = dense ? 60 : 80;
+
+  const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
   return (
-    <Page title="Page One">
-      <Container maxWidth={themeStretch ? false : 'xl'}>
-        <Typography variant="h3" component="h1" paragraph>
-          Settings Dashboard
-        </Typography>
-        <Typography gutterBottom>
-          Curabitur turpis. Vestibulum facilisis, purus nec pulvinar iaculis, ligula mi congue nunc, vitae euismod
-          ligula urna in dolor. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Phasellus blandit leo
-          ut odio. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id
-          purus. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. In consectetuer turpis ut velit.
-          Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus.
-          Vestibulum suscipit nulla quis orci. Nam commodo suscipit quam. Sed a libero.
-        </Typography>
-        <Typography>
-          Praesent ac sem eget est egestas volutpat. Phasellus viverra nulla ut metus varius laoreet. Curabitur
-          ullamcorper ultricies nisi. Ut non enim eleifend felis pretium feugiat. Donec mi odio, faucibus at,
-          scelerisque quis, convallis in, nisi. Fusce vel dui. Quisque libero metus, condimentum nec, tempor a, commodo
-          mollis, magna. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Cras dapibus.
-        </Typography>
+    <Page title="Settings - Dashboard List">
+      <Container maxWidth={false}>
+        <HeaderBreadcrumbs
+          heading="Dashboard List"
+          links={[
+            { name: 'Home', href: '/' },
+            {
+              name: 'Dashboard',
+            },
+          ]}
+          action={
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="eva:plus-fill" />}
+              component={RouterLink}
+              to={PATH_SETTINGS.dashboard.new}
+            >
+              New
+            </Button>
+          }
+        />
+
+        <Card>
+          <DashboardTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <Scrollbar>
+            <TableContainer sx={{ minWidth: 800 }}>
+              {selected.length > 0 && (
+                <TableSelectedActions
+                  dense={dense}
+                  numSelected={selected.length}
+                  rowCount={pagedList.list.length}
+                  onSelectAllRows={(checked) =>
+                    onSelectAllRows(
+                      checked,
+                      pagedList.list.map((row) => row.id),
+                    )
+                  }
+                  actions={
+                    <Tooltip title="Delete">
+                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                        <Iconify icon={'eva:trash-2-outline'} />
+                      </IconButton>
+                    </Tooltip>
+                  }
+                />
+              )}
+
+              <Table size={'medium'}>
+                <TableHeadCustom
+                  order={order}
+                  orderBy={orderBy}
+                  headLabel={TABLE_HEAD}
+                  rowCount={pagedList.list.length}
+                  numSelected={selected.length}
+                  onSort={onSort}
+                  onSelectAllRows={(checked) =>
+                    onSelectAllRows(
+                      checked,
+                      pagedList.list.map((row) => row.id),
+                    )
+                  }
+                />
+
+                <TableBody>
+                  {(isLoading ? [...Array(rowsPerPage)] : pagedList.list).map((row, index) =>
+                    row ? (
+                      <DashboardTableRow
+                        key={'row_' + row.id}
+                        row={row}
+                        selected={selected.includes(row.id)}
+                        onSelectRow={() => onSelectRow(row.id)}
+                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onEditRow={() => handleEditRow(row.id)}
+                        onDuplicateRow={() => handleDuplicateRow(row.id)}
+                      />
+                    ) : (
+                      !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />
+                    ),
+                  )}
+
+                  <TableNoData key={'noData'} isNotFound={isNotFound} />
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Scrollbar>
+
+          <Box sx={{ position: 'relative' }}>
+            <TablePagination
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+              component="div"
+              count={pagedList.count}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={onChangePage}
+              onRowsPerPageChange={onChangeRowsPerPage}
+            />
+          </Box>
+        </Card>
       </Container>
     </Page>
   );

@@ -1,55 +1,55 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, Button, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
+import { AxiosError } from 'axios';
+import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { PercentSetting } from '../../../../@types/percentSetting';
-import { Site } from '../../../../@types/site';
+import { EditSite } from '../../../../@types/site';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import FormLabelStyle from '../../../../components/FormLabelStyle';
 import {
   FormProvider,
   RHFEditor,
-  RHFSelect,
   RHFSwitch,
   RHFTextField,
   RHFUploadSingleFile,
 } from '../../../../components/hook-form';
+import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../../components/Iconify';
-import { defaultMaps, initialPercentSettings, TIME_UNIT_OPTIONS } from '../../../../constants';
+import { GOOGLE_MAPS_KEY } from '../../../../config';
+import { defaultMaps, initialPercentSettings } from '../../../../constants';
+import { createSite, updateSite } from '../../../../redux/actions/siteAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
+import { getFileUrl } from '../../../../utils/imageHelper';
 import SitePercentSettings from './SitePercentSettings';
-
-interface FormValuesProps extends Partial<Site> {
-  image: File;
-  percentSettings: PercentSetting[];
-}
 
 interface Props {
   isEdit: boolean;
-  currentSite: Site | undefined;
 }
 
-interface mapProps {
+interface MapProps {
   map: any;
   maps: any;
 }
 
-export default function SiteForm({ isEdit, currentSite }: Props) {
-  const theme = useTheme();
+export default function SiteForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
+  const { currentSite } = useSelector((state: RootState) => state.site);
+
   const { enqueueSnackbar } = useSnackbar();
 
-  const [mapApi, setMapApi] = useState<mapProps>({ map: null, maps: null });
+  const [mapApi, setMapApi] = useState<MapProps>({ map: null, maps: null });
 
   const [marker, setMarker] = useState<any>(null);
 
@@ -59,8 +59,22 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
     lng: Yup.number().required('Longitude is required'),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<EditSite>({
+    resolver: yupResolver(NewSiteSchema),
+    defaultValues: {
+      name: '',
+      branch: '',
+      address: '',
+      remark: '',
+      lat: defaultMaps.center.lat,
+      lng: defaultMaps.center.lng,
+      active: true,
+      sync: true,
+      defaultPercentSettings: initialPercentSettings,
+      cutoffTime: null,
+      image: null,
+    },
+    values: {
       name: currentSite?.name || '',
       branch: currentSite?.branch || '',
       address: currentSite?.address || '',
@@ -69,69 +83,49 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
       lng: currentSite?.lng || defaultMaps.center.lng,
       active: currentSite ? currentSite.active : true,
       sync: currentSite ? currentSite.sync : true,
-      percentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
-    }),
-    [currentSite],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewSiteSchema),
-    defaultValues,
+      defaultPercentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
+      cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
+      image: null,
+      oeeLimit: currentSite?.oeeLimit || -1,
+    },
   });
 
   const {
-    reset,
+    watch,
     setValue,
     getValues,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  useEffect(() => {
-    if (isEdit && currentSite) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentSite]);
+  const values = watch();
 
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: EditSite) => {
+    data.cutoffTime = dayjs(data.cutoffTime).startOf('m').toDate();
+
     try {
-      const { image, percentSettings, ...dto } = data;
-      dto.defaultPercentSettings = percentSettings;
-      let site: Site;
-
       if (isEdit && currentSite) {
-        const response = await axios.put<Site>(`/sites/${currentSite?.id}`, dto);
-        site = response.data;
+        await dispatch(updateSite(currentSite.id, data));
       } else {
-        const response = await axios.post<Site>(`/sites`, dto);
-        site = response.data;
-      }
-
-      if (image) {
-        await axios.post<Site>(
-          `/sites/${site.id}/upload`,
-          { image },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
+        await dispatch(createSite(data));
       }
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      window.location.href = PATH_ADMINISTRATOR.sites.root;
-      // if (isEdit) {
-      //   window.location.href = PATH_ADMINISTRATOR.sites.root;
-      // } else {
-      //   navigate(PATH_ADMINISTRATOR.sites.root);
-      // }
+      navigate(PATH_ADMINISTRATOR.sites.root);
     } catch (error) {
-      console.error(error);
+      if (error instanceof AxiosError) {
+        if ('message' in error.response?.data) {
+          if (Array.isArray(error.response?.data.message)) {
+            for (const item of error.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+          }
+          return;
+        }
+        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      }
     }
   };
 
@@ -177,7 +171,7 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
   };
 
   const handlePercentSettingChange = (percentSetting: PercentSetting) => {
-    const percentSettings = getValues('percentSettings') || [];
+    const percentSettings = getValues('defaultPercentSettings') || [];
     const newPercentSettings = [
       ...percentSettings.map((item) => {
         if (item.type === percentSetting.type) {
@@ -186,7 +180,7 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
         return item;
       }),
     ];
-    setValue('percentSettings', newPercentSettings);
+    setValue('defaultPercentSettings', newPercentSettings);
   };
 
   return (
@@ -221,7 +215,6 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
           </Button>
         }
       />
-
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Card>
@@ -231,14 +224,14 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
                 accept="image/*"
                 maxSize={3145728}
                 onDrop={handleDrop}
-                currentFile={currentSite?.imageUrl}
+                currentFile={isEdit ? getFileUrl(currentSite?.imageName) : ''}
               />
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Stack spacing={theme.spacing(3)}>
+          <Stack spacing={3}>
             <Card>
               <CardContent>
                 <Grid container spacing={3}>
@@ -250,16 +243,20 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={6}>
                     <RHFTextField name="name" label="Site Name" />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={6}>
                     <RHFTextField name="branch" label="Branch" />
                   </Grid>
 
                   <Grid item xs={12}>
                     <RHFTextField name="address" label="Address" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTimePicker name="cutoffTime" label="Cutoff Time" />
                   </Grid>
 
                   <Grid item xs={12}>
@@ -272,8 +269,28 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
 
             <Card>
               <CardContent>
-                <Stack spacing={theme.spacing(2)}>
-                  {getValues('percentSettings').map((percentSetting) => (
+                <Typography variant="subtitle1" paragraph>
+                  Limit
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField
+                      type="number"
+                      name="oeeLimit"
+                      label="OEE Limit"
+                      onChange={(event) => {
+                        setValue('oeeLimit', Number(event.target.value));
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Stack spacing={2}>
+                  {values.defaultPercentSettings.map((percentSetting) => (
                     <SitePercentSettings
                       key={percentSetting.type}
                       percentSetting={percentSetting}
@@ -286,7 +303,7 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
 
             <Card>
               <CardContent>
-                <Grid container spacing={theme.spacing(3)}>
+                <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
                     <RHFTextField
                       type="number"
@@ -314,7 +331,7 @@ export default function SiteForm({ isEdit, currentSite }: Props) {
                   <Grid item xs={12}>
                     <div style={{ height: '300px', width: '100%' }}>
                       <GoogleMapReact
-                        bootstrapURLKeys={{ key: 'AIzaSyCTZZLIUayWOzR6FWskr8opyfx91mjNkK8' }}
+                        bootstrapURLKeys={{ key: GOOGLE_MAPS_KEY }}
                         defaultCenter={defaultMaps.center}
                         defaultZoom={defaultMaps.zoom}
                         yesIWantToUseGoogleMapApiInternals

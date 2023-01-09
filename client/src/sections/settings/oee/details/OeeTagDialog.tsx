@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Device } from 'src/@types/device';
 import * as Yup from 'yup';
-import { OeeTag, OeeTagMCState } from '../../../../@types/oee';
+import { OeeTag } from '../../../../@types/oee';
 import { FormProvider, RHFSelect } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
+import { OEE_TAG_MC_STATE, OEE_TAG_OUT_BATCH_STATUS, OEE_TAG_OUT_RESET } from '../../../../constants';
 import axios from '../../../../utils/axios';
 
 type FormValuesProps = {
@@ -105,7 +106,7 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
 
       if (editingTag) {
         const { deviceId, tagId, data } = editingTag;
-        setValue('data', data as OeeTagMCState);
+        setValue('data', data);
 
         if (deviceId > -1) {
           await getDevice(deviceId);
@@ -123,7 +124,7 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
   };
 
   const handleDataChange = (dataVal: any) => {
-    const data = getValues('data') as OeeTagMCState;
+    const data = getValues('data');
     setValue('data', {
       ...data,
       ...dataVal,
@@ -230,10 +231,10 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
               ))}
             </RHFSelect>
 
-            {editingTag && editingTag.key === 'mc_state' && (
+            {editingTag && editingTag.key === OEE_TAG_MC_STATE && (
               <Box>
                 <Grid container spacing={theme.spacing(3)}>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={6} sm={4}>
                     <TextField
                       type="number"
                       fullWidth
@@ -247,7 +248,41 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="Standby"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.standby}
+                      onChange={(event) => {
+                        handleDataChange({ standby: event.target.value });
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+
+            {editingTag && editingTag.key === OEE_TAG_OUT_BATCH_STATUS && (
+              <Box>
+                <Grid container spacing={theme.spacing(3)}>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="Running"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.running}
+                      onChange={(event) => {
+                        handleDataChange({ running: event.target.value });
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={6} sm={4}>
                     <TextField
                       type="number"
                       fullWidth
@@ -261,16 +296,62 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={6} sm={4}>
                     <TextField
                       type="number"
                       fullWidth
-                      label="Off"
+                      label="Breakdown"
                       size="small"
                       InputLabelProps={{ shrink: true }}
-                      defaultValue={editingTag.data.off}
+                      defaultValue={editingTag.data.breakdown}
                       onChange={(event) => {
-                        handleDataChange({ off: event.target.value });
+                        handleDataChange({ breakdown: event.target.value });
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="P/D"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.plannedDowntime}
+                      onChange={(event) => {
+                        handleDataChange({ plannedDowntime: event.target.value });
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="M/C Setup"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.mcSetup}
+                      onChange={(event) => {
+                        handleDataChange({ mcSetup: event.target.value });
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+
+            {editingTag && editingTag.key === OEE_TAG_OUT_RESET && (
+              <Box>
+                <Grid container spacing={theme.spacing(3)}>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="Reset"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.reset}
+                      onChange={(event) => {
+                        handleDataChange({ reset: event.target.value });
                       }}
                     />
                   </Grid>

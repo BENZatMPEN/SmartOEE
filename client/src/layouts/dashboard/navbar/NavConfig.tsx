@@ -1,5 +1,4 @@
 import Iconify from '../../../components/Iconify';
-import SvgIconStyle from '../../../components/SvgIconStyle';
 import {
   PATH_ADMINISTRATOR,
   PATH_ANALYTICS,
@@ -27,6 +26,7 @@ const navConfig = [
         title: 'Dashboard',
         path: PATH_DASHBOARD.root,
         icon: <Iconify icon="ic:round-dashboard" />,
+        children: [{ title: 'Home', path: PATH_DASHBOARD.root }],
       },
     ],
   },
@@ -88,6 +88,8 @@ const navConfig = [
           { title: 'Dashboard', path: PATH_SETTINGS.dashboard.root },
           { title: 'Alarms', path: PATH_SETTINGS.alarms.root },
           { title: 'Site', path: PATH_SETTINGS.site.root },
+          { title: 'Users', path: PATH_SETTINGS.users.root },
+          { title: 'Roles', path: PATH_SETTINGS.roles.root },
         ],
       },
     ],
@@ -102,7 +104,6 @@ const navConfig = [
         children: [
           { title: 'Sites', path: PATH_ADMINISTRATOR.sites.root },
           { title: 'Users', path: PATH_ADMINISTRATOR.users.root },
-          { title: 'Roles', path: PATH_ADMINISTRATOR.roles.root },
         ],
       },
     ],

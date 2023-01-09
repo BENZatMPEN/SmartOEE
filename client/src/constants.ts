@@ -1,5 +1,5 @@
-import { OeeTag, OeeTagMCState } from './@types/oee';
-import { OeeBatchMcState, OeeStats } from './@types/oeeBatch';
+import { OeeTag } from './@types/oee';
+import { OeeStats } from './@types/oeeBatch';
 import { PercentSetting } from './@types/percentSetting';
 import { RoleAction, RoleSetting, RoleSubject } from './@types/role';
 
@@ -31,6 +31,18 @@ export const OEE_TYPE_Q = 'q';
 export const OEE_TAG_MC_STATE = 'mc_state';
 export const OEE_TAG_TOTAL = 'total';
 export const OEE_TAG_TOTAL_NG = 'total_ng';
+export const OEE_TAG_OUT_OEE = 'out_oee';
+export const OEE_TAG_OUT_A = 'out_a';
+export const OEE_TAG_OUT_P = 'out_p';
+export const OEE_TAG_OUT_Q = 'out_q';
+export const OEE_TAG_OUT_OPERATING_TIME = 'out_operating_time';
+export const OEE_TAG_OUT_PLANNED_DOWNTIME = 'out_planned_downtime';
+export const OEE_TAG_OUT_BREAKING_TIME = 'out_breaking_time';
+export const OEE_TAG_OUT_TOTAL_NG = 'out_total_ng';
+export const OEE_TAG_OUT_CYCLE_TIME = 'out_cycle_time';
+export const OEE_TAG_OUT_PLANNED_QUANTITY = 'out_planned_quantity';
+export const OEE_TAG_OUT_BATCH_STATUS = 'out_batch_status';
+export const OEE_TAG_OUT_RESET = 'out_reset';
 
 export const OEE_BATCH_STATUS_STANDBY = 'standby';
 export const OEE_BATCH_STATUS_RUNNING = 'running';
@@ -94,8 +106,7 @@ export const initialOeeTags: OeeTag[] = [
     data: {
       running: '',
       standby: '',
-      off: '',
-    } as OeeTagMCState,
+    },
     deviceId: -1,
     tagId: -1,
   },
@@ -107,6 +118,86 @@ export const initialOeeTags: OeeTag[] = [
   },
   {
     key: OEE_TAG_TOTAL_NG,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_BATCH_STATUS,
+    data: {
+      standby: '',
+      running: '',
+      breakdown: '',
+      plannedDowntime: '',
+      mcSetup: '',
+    },
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_RESET,
+    data: {
+      reset: '',
+    },
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_OEE,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_A,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_P,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_Q,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_OPERATING_TIME,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_PLANNED_DOWNTIME,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_BREAKING_TIME,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_TOTAL_NG,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_CYCLE_TIME,
+    data: null,
+    deviceId: -1,
+    tagId: -1,
+  },
+  {
+    key: OEE_TAG_OUT_PLANNED_QUANTITY,
     data: null,
     deviceId: -1,
     tagId: -1,
@@ -135,15 +226,6 @@ export const initialOeeStats: OeeStats = {
   totalOtherDefects: 0,
   target: 0,
   efficiency: 0,
-};
-
-export const initialOeeBatchMcState: OeeBatchMcState = {
-  mcStatus: '0',
-  total: 0,
-  totalNg: 0,
-  stopSeconds: 0,
-  batchStatus: '',
-  timestamp: new Date(-8640000000000000),
 };
 
 export const initialPercentSettings: PercentSetting[] = [

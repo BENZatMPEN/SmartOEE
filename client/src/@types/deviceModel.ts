@@ -6,18 +6,17 @@ export type DeviceModel = {
   connectionType: string;
   createdAt: Date;
   updatedAt: Date;
-  deleted: boolean;
   siteId: number;
   tags: DeviceModelTag[];
 };
 
-export type CreateDeviceModel = {
+export type EditDeviceModel = {
   name: string;
   remark: string;
   modelType: string;
   connectionType: string;
   tags: DeviceModelTag[];
-  siteId: number;
+  siteId?: number;
 };
 
 export type FilterDeviceModel = {
@@ -27,16 +26,6 @@ export type FilterDeviceModel = {
   page: number;
   rowsPerPage: number;
   siteId?: number;
-};
-
-export type UpdateDeviceModel = {
-  id: number;
-  name: string;
-  remark: string;
-  modelType: string;
-  connectionType: string;
-  tags: DeviceModelTag[];
-  siteId: number;
 };
 
 export type DeviceModelTag = {

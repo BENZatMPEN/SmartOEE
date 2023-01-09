@@ -3,7 +3,7 @@ import { EmailService } from './email.service';
 import { LineNotifyService } from './line-notify.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Alarm } from '../entities/alarm';
+import { AlarmEntity } from '../entities/alarm-entity';
 import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE } from '../constant';
 import { AlarmEmailDataItem, AlarmLineData } from '../type/alarm';
 import * as dayjs from 'dayjs';
@@ -17,8 +17,8 @@ export class NotificationService {
     private readonly lineNotifyService: LineNotifyService,
     private readonly oeeBatchService: OeeBatchService,
     private readonly logService: LogService,
-    @InjectRepository(Alarm)
-    private alarmRepository: Repository<Alarm>,
+    @InjectRepository(AlarmEntity)
+    private alarmRepository: Repository<AlarmEntity>,
   ) {}
 
   private readonly logger = new Logger(NotificationService.name);
@@ -119,7 +119,7 @@ export class NotificationService {
     }
   }
 
-  getAlarms(siteId: number): Promise<Alarm[]> {
+  getAlarms(siteId: number): Promise<AlarmEntity[]> {
     return this.alarmRepository.find({ where: { siteId: siteId, notify: true, deleted: false } });
   }
 

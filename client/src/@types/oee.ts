@@ -9,7 +9,7 @@ export type Oee = {
   location: string;
   productionName: string;
   remark: string;
-  imageUrl: string;
+  imageName: string;
   minorStopSeconds: number;
   breakdownSeconds: number;
   oeeProducts: OeeProduct[];
@@ -21,6 +21,24 @@ export type Oee = {
   timeUnit: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type EditOee = {
+  oeeCode: string;
+  oeeType: string;
+  location: string;
+  productionName: string;
+  remark: string;
+  image: File | null;
+  minorStopSeconds: number;
+  breakdownSeconds: number;
+  oeeProducts: OeeProduct[];
+  oeeMachines: OeeMachine[];
+  siteId?: number;
+  tags: OeeTag[];
+  percentSettings: PercentSetting[] | null;
+  useSitePercentSettings: boolean;
+  timeUnit: string;
 };
 
 export type FilterOee = {
@@ -50,12 +68,6 @@ export type OeeTag = {
   tagId: number;
 };
 
-export type OeeTagMCState = {
-  running: string;
-  standby: string;
-  off: string;
-};
-
 export type OeeStatus = {
   running: number;
   breakdown: number;
@@ -80,4 +92,9 @@ export type OeeStatusItem = {
   useSitePercentSettings: boolean;
   percentSettings: PercentSetting[];
   standardSpeedSeconds: number;
+};
+
+export type OeePagedList = {
+  list: Oee[];
+  count: number;
 };

@@ -7,7 +7,7 @@ import SiteForm from '../../../sections/settings/site/details/SiteForm';
 import axios from '../../../utils/axios';
 
 export default function SiteDetails() {
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const [model, setModel] = useState<Site | null>(null);
 

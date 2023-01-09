@@ -39,7 +39,7 @@ export default function History() {
 
   const dispatch = useDispatch();
 
-  const { selectedOee } = useSelector((state: RootState) => state.oee);
+  const { currentOee } = useSelector((state: RootState) => state.oee);
 
   const { batchPagedList } = useSelector((state: RootState) => state.oeeBatch);
 
@@ -55,7 +55,7 @@ export default function History() {
   const refreshData = async () => {
     setIsLoading(true);
 
-    if (!selectedOee) {
+    if (!currentOee) {
       setPage(0);
       setIsLoading(false);
       return;
@@ -67,7 +67,7 @@ export default function History() {
         orderBy: orderBy,
         page: page,
         rowsPerPage: rowsPerPage,
-        oeeId: selectedOee.id,
+        oeeId: currentOee.id,
       };
 
       await dispatch(getOeeBatchPagedList(filter));

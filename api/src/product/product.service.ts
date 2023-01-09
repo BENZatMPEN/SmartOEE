@@ -2,23 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ContentService } from '../common/content/content.service';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Product } from '../common/entities/product';
-import * as _ from 'lodash';
+import { ProductEntity } from '../common/entities/product-entity';
 import { OptionItem } from '../common/type/option-item';
+import { FileService } from '../common/services/file.service';
 
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    private readonly contentService: ContentService,
+    @InjectRepository(ProductEntity)
+    private productRepository: Repository<ProductEntity>,
+    private fileService: FileService,
   ) {}
 
-  async findPagedList(filterDto: FilterProductDto): Promise<PagedLisDto<Product>> {
+  async findPagedList(filterDto: FilterProductDto): Promise<PagedLisDto<ProductEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.productRepository
       .createQueryBuilder()
@@ -35,7 +34,7 @@ export class ProductService {
     return { list: rows, count: count };
   }
 
-  findAll(siteId: number): Promise<Product[]> {
+  findAll(siteId: number): Promise<ProductEntity[]> {
     return this.productRepository.findBy({ siteId, deleted: false });
   }
 
@@ -48,40 +47,34 @@ export class ProductService {
     return list.map((item) => ({ id: item.id, name: item.name }));
   }
 
-  findById(id: number, siteId: number): Promise<Product> {
+  findById(id: number, siteId: number): Promise<ProductEntity> {
     return this.productRepository.findOne({
       where: { id, siteId, deleted: false },
     });
   }
 
-  create(createDto: CreateProductDto): Promise<Product> {
+  create(createDto: CreateProductDto, imageName: string): Promise<ProductEntity> {
     return this.productRepository.save({
       ...createDto,
+      imageName,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdateProductDto): Promise<Product> {
+  async update(id: number, updateDto: UpdateProductDto, imageName: string): Promise<ProductEntity> {
     const updatingProduct = await this.productRepository.findOneBy({ id });
-    return this.productRepository.save({
-      ..._.assign(updatingProduct, updateDto),
-      updatedAt: new Date(),
-    });
-  }
-
-  async upload(id: number, image: Express.Multer.File): Promise<Product> {
-    const product = await this.productRepository.findOneBy({ id });
-    if (image) {
-      product.imageUrl = await this.contentService.saveProductImage(
-        product.id.toString(),
-        image.buffer,
-        image.mimetype,
-      );
-      await this.productRepository.save(product);
+    const { imageName: existingImageName } = updatingProduct;
+    if (imageName && existingImageName) {
+      await this.fileService.deleteFile(existingImageName);
     }
 
-    return product;
+    return this.productRepository.save({
+      ...updatingProduct,
+      ...updateDto,
+      imageName: !imageName ? existingImageName : imageName,
+      updatedAt: new Date(),
+    });
   }
 
   async delete(id: number): Promise<void> {

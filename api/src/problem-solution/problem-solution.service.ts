@@ -2,29 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { CreateProblemSolutionDto } from './dto/create-problem-solution.dto';
 import { FilterProblemSolutionDto } from './dto/filter-problem-solution.dto';
 import { UpdateProblemSolutionDto } from './dto/update-problem-solution.dto';
-import { ContentService } from '../common/content/content.service';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Attachment } from '../common/entities/attachment';
-import { ProblemSolution } from '../common/entities/problem-solution';
-import { ProblemSolutionAttachment } from '../common/entities/problem-solution-attachment';
-import * as _ from 'lodash';
-import { v4 as uuid } from 'uuid';
+import { AttachmentEntity } from '../common/entities/attachment-entity';
+import { ProblemSolutionEntity } from '../common/entities/problem-solution-entity';
+import { ProblemSolutionAttachmentEntity } from '../common/entities/problem-solution-attachment-entity';
+import { FileInfo } from '../common/type/file-info';
 
 @Injectable()
 export class ProblemSolutionService {
   constructor(
-    @InjectRepository(Attachment)
-    private attachmentRepository: Repository<Attachment>,
-    @InjectRepository(ProblemSolution)
-    private problemSolutionRepository: Repository<ProblemSolution>,
-    @InjectRepository(ProblemSolutionAttachment)
-    private problemSolutionAttachmentRepository: Repository<ProblemSolutionAttachment>,
-    private readonly contentService: ContentService,
+    @InjectRepository(AttachmentEntity)
+    private attachmentRepository: Repository<AttachmentEntity>,
+    @InjectRepository(ProblemSolutionEntity)
+    private problemSolutionRepository: Repository<ProblemSolutionEntity>,
+    @InjectRepository(ProblemSolutionAttachmentEntity)
+    private problemSolutionAttachmentRepository: Repository<ProblemSolutionAttachmentEntity>,
   ) {}
 
-  async findPagedList(filterDto: FilterProblemSolutionDto): Promise<PagedLisDto<ProblemSolution>> {
+  async findPagedList(filterDto: FilterProblemSolutionDto): Promise<PagedLisDto<ProblemSolutionEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.problemSolutionRepository
       .createQueryBuilder('ps')
@@ -56,12 +53,12 @@ export class ProblemSolutionService {
     return { list: rows, count: count };
   }
 
-  findAll(siteId: number): Promise<ProblemSolution[]> {
+  findAll(siteId: number): Promise<ProblemSolutionEntity[]> {
     return this.problemSolutionRepository.findBy({ siteId, deleted: false });
     // return this.problemSolutionRepository.findAll({ where: { deleted: false } });
   }
 
-  findById(id: number, siteId: number): Promise<ProblemSolution> {
+  findById(id: number, siteId: number): Promise<ProblemSolutionEntity> {
     return this.problemSolutionRepository
       .createQueryBuilder('ps')
       .leftJoin('ps.headProjectUser', 'hu')
@@ -94,94 +91,91 @@ export class ProblemSolutionService {
       .getOne();
   }
 
-  async create(createDto: CreateProblemSolutionDto): Promise<ProblemSolution> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { tasks, ...dto } = createDto;
-    return this.problemSolutionRepository.save({
-      ...dto,
+  async create(
+    createDto: CreateProblemSolutionDto,
+    beforeProjectChartImageInfoList: FileInfo[],
+    beforeProjectImageInfoList: FileInfo[],
+    afterProjectChartImageInfoList: FileInfo[],
+    afterProjectImageInfoList: FileInfo[],
+  ): Promise<ProblemSolutionEntity> {
+    const problemSolution = await this.problemSolutionRepository.save({
+      ...createDto,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    // const { tasks, ...dto } = createDto;
-    // const problemSolution = await this.problemSolutionRepository.create({
-    //   ...dto,
-    // });
-    //
-    // return problemSolution.reload();
-    // return null;
+
+    await this.saveAttachment('beforeProjectChartImages', problemSolution, beforeProjectChartImageInfoList);
+    await this.saveAttachment('beforeProjectImages', problemSolution, beforeProjectImageInfoList);
+    await this.saveAttachment('afterProjectChartImages', problemSolution, afterProjectChartImageInfoList);
+    await this.saveAttachment('afterProjectImages', problemSolution, afterProjectImageInfoList);
+
+    return problemSolution;
   }
 
-  async update(id: number, updateDto: UpdateProblemSolutionDto): Promise<ProblemSolution> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { tasks, ...dto } = updateDto;
-    const updatingProblemSolution = await this.problemSolutionRepository.findOneBy({ id });
-    return this.problemSolutionRepository.save({
-      ..._.assign(updatingProblemSolution, dto),
+  async update(
+    id: number,
+    updateDto: UpdateProblemSolutionDto,
+    siteId: number,
+    beforeProjectChartImageInfoList: FileInfo[],
+    beforeProjectImageInfoList: FileInfo[],
+    afterProjectChartImageInfoList: FileInfo[],
+    afterProjectImageInfoList: FileInfo[],
+  ): Promise<ProblemSolutionEntity> {
+    const { deletingAttachments, ...dto } = updateDto;
+    const updatingProblemSolution = await this.problemSolutionRepository.findOneBy({ id, siteId });
+    const problemSolution = await this.problemSolutionRepository.save({
+      ...updatingProblemSolution,
+      ...dto,
       updatedAt: new Date(),
     });
-    // const problemSolution = await this.problemSolutionRepository.findByPk(id);
-    // await problemSolution.update({
-    //   ...updateDto,
-    // });
-    //
-    // return problemSolution.reload();
-  }
 
-  async updateFiles(id: number, name: string, images: Express.Multer.File[]): Promise<void> {
-    const problemSolution = await this.problemSolutionRepository.findOneBy({ id });
-    for (const image of images) {
-      const attachmentName = uuid();
-      const imageUrl = await this.contentService.saveAttachment(attachmentName, image.buffer, image.mimetype);
-      const attachment = await this.attachmentRepository.save({
-        name: image.originalname,
-        url: imageUrl,
-        length: image.buffer.length,
-        mime: image.mimetype,
-        createdAt: new Date(),
-      });
-
-      await this.problemSolutionAttachmentRepository.save({
-        problemSolution,
-        attachment,
-        groupName: name,
-        createdAt: new Date(),
-      });
+    if (deletingAttachments && deletingAttachments.length > 0) {
+      await this.problemSolutionAttachmentRepository
+        .createQueryBuilder()
+        .delete()
+        .where('problemSolutionId = :problemSolutionId', { problemSolutionId: id })
+        .andWhere('attachmentId in (:ids)', { ids: deletingAttachments })
+        .execute();
     }
-    // return null;
+
+    await this.saveAttachment('beforeProjectChartImages', problemSolution, beforeProjectChartImageInfoList);
+    await this.saveAttachment('beforeProjectImages', problemSolution, beforeProjectImageInfoList);
+    await this.saveAttachment('afterProjectChartImages', problemSolution, afterProjectChartImageInfoList);
+    await this.saveAttachment('afterProjectImages', problemSolution, afterProjectImageInfoList);
+
+    return problemSolution;
   }
 
-  async deleteFiles(id: number, attachmentIds: number[]): Promise<void> {
-    await this.problemSolutionAttachmentRepository
-      .createQueryBuilder()
-      .delete()
-      .where('problemSolutionId = :problemSolutionId', { problemSolutionId: id })
-      .andWhere('attachmentId in (:ids)', { ids: attachmentIds })
-      .execute();
-    // await this.problemSolutionAttachmentRepository.destroy({
-    //   where: {
-    //     [Op.and]: [
-    //       {
-    //         problemSolutionId: id,
-    //         attachmentId: {
-    //           [Op.in]: attachmentIds,
-    //         },
-    //       },
-    //     ],
-    //   },
-    // });
+  private async saveAttachment(key: string, problemSolution: ProblemSolutionEntity, fileInfoList: FileInfo[]) {
+    if (fileInfoList) {
+      for (const fileInfo of fileInfoList) {
+        const attachment = await this.attachmentRepository.save({
+          name: fileInfo.name,
+          fileName: fileInfo.fileName,
+          length: fileInfo.length,
+          mime: fileInfo.mime,
+          createdAt: new Date(),
+        });
+
+        await this.problemSolutionAttachmentRepository.save({
+          problemSolution,
+          attachment,
+          groupName: key,
+          createdAt: new Date(),
+        });
+      }
+    }
   }
 
-  async delete(id: number): Promise<void> {
-    const problemSolution = await this.problemSolutionRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const problemSolution = await this.problemSolutionRepository.findOneBy({ id, siteId });
     problemSolution.deleted = true;
     problemSolution.updatedAt = new Date();
     await this.problemSolutionRepository.save(problemSolution);
-    // await this.problemSolutionRepository.update({ deleted: true }, { where: { id } });
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    // await this.problemSolutionRepository.update({ deleted: true }, { where: { id: ids } });
-    const problemSolutions = await this.problemSolutionRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const problemSolutions = await this.problemSolutionRepository.findBy({ id: In(ids), siteId });
     await this.problemSolutionRepository.save(
       problemSolutions.map((problemSolution) => {
         problemSolution.deleted = true;

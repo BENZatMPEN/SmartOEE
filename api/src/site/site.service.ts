@@ -2,25 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { FilterSiteDto } from './dto/filter-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
-import { ContentService } from '../common/content/content.service';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Site } from '../common/entities/site';
-import * as _ from 'lodash';
-import { User } from '../common/entities/user';
+import { SiteEntity } from '../common/entities/site-entity';
+import { FileService } from '../common/services/file.service';
+import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
+import { OptionItem } from '../common/type/option-item';
 
 @Injectable()
 export class SiteService {
   constructor(
-    @InjectRepository(Site)
-    private siteRepository: Repository<Site>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private readonly contentService: ContentService,
+    @InjectRepository(SiteEntity)
+    private siteRepository: Repository<SiteEntity>,
+    @InjectRepository(UserSiteRoleEntity)
+    private userSiteRoleEntityRepository: Repository<UserSiteRoleEntity>,
+    private fileService: FileService,
   ) {}
 
-  async findPagedList(filterDto: FilterSiteDto): Promise<PagedLisDto<Site>> {
+  async findPagedList(filterDto: FilterSiteDto): Promise<PagedLisDto<SiteEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.siteRepository
       .createQueryBuilder()
@@ -35,29 +35,39 @@ export class SiteService {
     return { list: rows, count: count };
   }
 
-  findAll(): Promise<Site[]> {
+  findAll(): Promise<SiteEntity[]> {
     return this.siteRepository.find({ where: { deleted: false } });
   }
 
-  async findByUserId(userId: number): Promise<Site[]> {
-    const user = await this.userRepository.findOne({
-      relations: { sites: true },
+  async findOptions(): Promise<OptionItem[]> {
+    const list = await this.siteRepository.find({
+      where: { deleted: false },
+    });
+
+    return list.map((item) => ({ id: item.id, name: item.name }));
+  }
+
+  async findUserSites(userId: number): Promise<SiteEntity[]> {
+    const list = await this.userSiteRoleEntityRepository.find({
+      relations: { site: true },
       where: {
-        id: userId,
-        sites: {
+        userId: userId,
+        site: {
           deleted: false,
         },
       },
     });
 
-    return user?.sites || [];
+    console.log(list);
+
+    return list.map((item) => item.site);
   }
 
-  findById(id): Promise<Site> {
+  findById(id): Promise<SiteEntity> {
     return this.siteRepository.findOne({ where: { id, deleted: false } });
   }
 
-  findDevicesById(id: number): Promise<Site> {
+  findDevicesById(id: number): Promise<SiteEntity> {
     return this.siteRepository.findOne({
       where: { id, deleted: false },
       relations: ['devices', 'devices.tags', 'devices.tags.deviceModelTag', 'devices.deviceModel'],
@@ -89,30 +99,28 @@ export class SiteService {
     });
   }
 
-  create(createDto: CreateSiteDto): Promise<Site> {
+  create(createDto: CreateSiteDto, imageName: string): Promise<SiteEntity> {
     return this.siteRepository.save({
       ...createDto,
+      imageName,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdateSiteDto): Promise<Site> {
+  async update(id: number, updateDto: UpdateSiteDto, imageName: string): Promise<SiteEntity> {
     const updatingSite = await this.siteRepository.findOneBy({ id });
-    return this.siteRepository.save({
-      ..._.assign(updatingSite, updateDto),
-      updatedAt: new Date(),
-    });
-  }
-
-  async upload(id: number, image: Express.Multer.File): Promise<Site> {
-    const site = await this.siteRepository.findOneBy({ id });
-    if (image) {
-      site.imageUrl = await this.contentService.saveSiteImage(site.id.toString(), image.buffer, image.mimetype);
-      await this.siteRepository.save(site);
+    const { imageName: existingImageName } = updatingSite;
+    if (imageName && existingImageName) {
+      await this.fileService.deleteFile(existingImageName);
     }
 
-    return site;
+    return this.siteRepository.save({
+      ...updatingSite,
+      ...updateDto,
+      imageName: !imageName ? existingImageName : imageName,
+      updatedAt: new Date(),
+    });
   }
 
   async delete(id: number): Promise<void> {

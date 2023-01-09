@@ -4,16 +4,16 @@ import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { merge } from 'lodash';
-import { Planning } from '../common/entities/planning';
+import { PlanningEntity } from '../common/entities/planning-entity';
 
 @Injectable()
 export class PlanningService {
   constructor(
-    @InjectRepository(Planning)
-    private planningRepository: Repository<Planning>,
+    @InjectRepository(PlanningEntity)
+    private planningRepository: Repository<PlanningEntity>,
   ) {}
 
-  findByDateRange(siteId: number, start: Date, end: Date): Promise<Planning[]> {
+  findByDateRange(siteId: number, start: Date, end: Date): Promise<PlanningEntity[]> {
     return this.planningRepository.find({
       where: { deleted: false, siteId, startDate: MoreThanOrEqual(start), endDate: LessThanOrEqual(end) },
       order: { startDate: 'asc' },
@@ -21,13 +21,13 @@ export class PlanningService {
     });
   }
 
-  findById(id: number, siteId: number): Promise<Planning> {
+  findById(id: number, siteId: number): Promise<PlanningEntity> {
     return this.planningRepository.findOne({
       where: { id, siteId, deleted: false },
     });
   }
 
-  create(createDto: CreatePlanningDto): Promise<Planning> {
+  create(createDto: CreatePlanningDto): Promise<PlanningEntity> {
     return this.planningRepository.save({
       oeeId: 1,
       siteId: 1,
@@ -38,7 +38,7 @@ export class PlanningService {
     });
   }
 
-  async update(id: number, updateDto: UpdatePlanningDto): Promise<Planning> {
+  async update(id: number, updateDto: UpdatePlanningDto): Promise<PlanningEntity> {
     const updatingAlarm = await this.planningRepository.findOneBy({ id });
     return this.planningRepository.save({
       ...merge({}, updatingAlarm, updateDto),

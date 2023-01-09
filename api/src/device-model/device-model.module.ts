@@ -2,16 +2,17 @@ import { Module } from '@nestjs/common';
 import { DeviceModelService } from './device-model.service';
 import { DeviceModelController } from './device-model.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DeviceModel } from '../common/entities/device-model';
-import { DeviceModelTag } from '../common/entities/device-model-tag';
-import { SiteIdPipe } from '../common/pipe/site-id-pipe.service';
-import { Site } from '../common/entities/site';
-import { DeviceTag } from '../common/entities/device-tag';
-import { Device } from '../common/entities/device';
+import { DeviceModelEntity } from '../common/entities/device-model-entity';
+import { DeviceModelTagEntity } from '../common/entities/device-model-tag-entity';
+import { SiteEntity } from '../common/entities/site-entity';
+import { DeviceTagEntity } from '../common/entities/device-tag-entity';
+import { DeviceEntity } from '../common/entities/device-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DeviceModel, DeviceModelTag, Device, DeviceTag, Site])],
+  imports: [
+    TypeOrmModule.forFeature([DeviceModelEntity, DeviceModelTagEntity, DeviceEntity, DeviceTagEntity, SiteEntity]),
+  ],
   controllers: [DeviceModelController],
-  providers: [DeviceModelService, SiteIdPipe],
+  providers: [DeviceModelService],
 })
 export class DeviceModelModule {}

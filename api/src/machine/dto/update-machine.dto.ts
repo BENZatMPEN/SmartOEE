@@ -1,11 +1,21 @@
 import { MachineParameterDto } from './machine-parameter.dto';
+import { IsArray, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateMachineDto {
-  readonly id: number;
+  @IsString()
   readonly code: string;
+
+  @IsString()
   readonly name: string;
+
+  @IsString()
   readonly location: string;
+
+  @IsString()
   readonly remark: string;
-  readonly siteId: number;
+
+  @IsArray()
+  @Type(() => MachineParameterDto)
   readonly parameters: MachineParameterDto[];
 }

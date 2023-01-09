@@ -6,7 +6,7 @@ export type Site = {
   branch: string;
   address: string;
   remark: string;
-  imageUrl: string;
+  imageName: string;
   lat: number;
   lng: number;
   createdAt: Date;
@@ -15,6 +15,22 @@ export type Site = {
   active: boolean;
   defaultPercentSettings: PercentSetting[];
   cutoffTime: Date;
+  oeeLimit: number;
+};
+
+export type EditSite = {
+  name: string;
+  branch: string;
+  address: string;
+  remark: string;
+  lat: number;
+  lng: number;
+  sync: boolean;
+  active: boolean;
+  defaultPercentSettings: PercentSetting[];
+  cutoffTime: Date | null;
+  image: File | null;
+  oeeLimit: number;
 };
 
 export type FilterSite = {
@@ -23,4 +39,9 @@ export type FilterSite = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
+};
+
+export type SitePagedList = {
+  list: Site[];
+  count: number;
 };

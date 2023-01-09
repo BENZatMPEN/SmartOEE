@@ -3,11 +3,16 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Oee } from '../../../@types/oee';
 import Page from '../../../components/Page';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import OeeForm from '../../../sections/settings/oee/details/OeeForm';
 import axios from '../../../utils/axios';
 
 export default function OEEDetails() {
+  const dispatch = useDispatch();
+
+  const { currentDevice, detailsError } = useSelector((state: RootState) => state.device);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -26,9 +31,6 @@ export default function OEEDetails() {
         if (isEdit || isDuplicate) {
           const response = await axios.get<Oee>(`/oees/${id}`);
           const oee = response.data;
-          if (isDuplicate) {
-            oee.imageUrl = '';
-          }
           setModel(oee);
         }
       } catch (error) {

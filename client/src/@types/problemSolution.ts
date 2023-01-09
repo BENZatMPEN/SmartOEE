@@ -34,6 +34,24 @@ type ProblemSolutionOee = {
   productionName: string;
 };
 
+export type EditProblemSolution = {
+  name: string;
+  remark: string;
+  date: Date;
+  startDate: Date;
+  endDate: Date;
+  headProjectUserId: number;
+  approvedByUserId: number | null;
+  oeeId: number;
+  siteId?: number;
+  status: string;
+  deletingAttachments: number[];
+  beforeProjectChartImages: File[] | null;
+  beforeProjectImages: File[] | null;
+  afterProjectChartImages: File[] | null;
+  afterProjectImages: File[] | null;
+};
+
 export type FilterProblemSolution = {
   search: string;
   order: string;
@@ -63,8 +81,18 @@ export type ProblemSolutionTask = {
   updatedAt: Date;
   problemSolutionId: number;
   attachments: ProblemSolutionTaskAttachment[];
+};
 
-  // for the form
+export type EditProblemSolutionTask = {
+  id?: number;
+  title: string;
+  assigneeUserId: number | null;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  comment: string;
+  problemSolutionId?: number;
+  attachments: ProblemSolutionTaskAttachment[];
   files: string[];
   addingFiles: File[];
   deletingFiles: number[];

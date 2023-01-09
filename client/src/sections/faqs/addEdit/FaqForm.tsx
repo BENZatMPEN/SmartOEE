@@ -4,11 +4,11 @@ import { Box, Button, Card, Divider, Grid, MenuItem, TextField, Typography } fro
 import { useTheme } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Faq } from '../../../@types/faq';
+import { EditFaq, Faq, FaqAttachment } from '../../../@types/faq';
 import { User } from '../../../@types/user';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import { EditorLabelStyle } from '../../../components/EditorLabelStyle';
@@ -27,12 +27,12 @@ import { RootState, useSelector } from '../../../redux/store';
 import { PATH_FAQS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
 import { getFaqProcessStatusText } from '../../../utils/formatText';
+import { getFileUrl } from '../../../utils/imageHelper';
 
-interface FormValuesProps extends Partial<Faq> {
-  images: (File | string)[];
-  files: string[];
-  addingFiles: File[];
-  deletingFiles: number[];
+interface FormValuesProps extends Partial<EditFaq> {
+  attachments: FaqAttachment[];
+  viewingImages: (File | string)[];
+  viewingFiles: string[];
 }
 
 type Props = {
@@ -47,14 +47,33 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const NewFaqSchema = Yup.object().shape({
     topic: Yup.string().required('Topic is required'),
+    createdByUserId: Yup.number().min(1),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<FormValuesProps>({
+    resolver: yupResolver(NewFaqSchema),
+    defaultValues: {
+      topic: '',
+      description: '',
+      status: FAQ_PROCESS_STATUS[0],
+      remark: '',
+      createdByUserId: -1,
+      approvedByUserId: -1,
+      date: new Date(),
+      startDate: new Date(),
+      endDate: new Date(),
+      attachments: [],
+      viewingImages: [],
+      viewingFiles: [],
+      images: [],
+      files: [],
+      deletingAttachments: [],
+    },
+    values: {
       topic: currentFaq?.topic || '',
       description: currentFaq?.description || '',
       status: currentFaq?.status || FAQ_PROCESS_STATUS[0],
@@ -65,27 +84,19 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
       startDate: currentFaq?.startDate || new Date(),
       endDate: currentFaq?.endDate || new Date(),
       attachments: currentFaq?.attachments || [],
-      siteId: currentFaq?.siteId || selectedSite?.id,
-      images: (currentFaq?.attachments || [])
+      viewingImages: (currentFaq?.attachments || [])
         .filter((item) => item.groupName === 'images')
-        .map((item) => item.attachment.url),
-      files: (currentFaq?.attachments || [])
+        .map((item) => `${getFileUrl(item.attachment.fileName)}`),
+      viewingFiles: (currentFaq?.attachments || [])
         .filter((item) => item.groupName === 'attachments')
         .map((attachment) => attachment.attachment.name),
-      addingFiles: [],
-      deletingFiles: [],
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentFaq],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewFaqSchema),
-    defaultValues,
+      images: [],
+      files: [],
+      deletingAttachments: [],
+    },
   });
 
   const {
-    reset,
     watch,
     control,
     setValue,
@@ -96,87 +107,38 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
 
   const values = watch();
 
-  useEffect(() => {
-    if (isEdit && currentFaq) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentFaq]);
-
   const onSubmit = async (data: FormValuesProps) => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {
-        createdByUser,
-        approvedByUser,
-        createdByUserId,
-        approvedByUserId,
-        images,
-        files,
-        addingFiles,
-        deletingFiles,
-        ...other
-      } = data;
-      let faq: Faq;
-
-      const dto = {
-        ...other,
-        createdByUserId: createdByUserId === -1 ? null : createdByUserId,
-        approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
-      };
-
-      if (isEdit && currentFaq) {
-        const response = await axios.put<Faq>(`/faqs/${currentFaq.id}`, dto);
-        faq = response.data;
-      } else {
-        const response = await axios.post(`/faqs`, dto);
-        faq = response.data;
+      const { viewingImages, attachments, viewingFiles, ...dto } = data;
+      dto.approvedByUserId = dto.approvedByUserId === -1 ? null : dto.approvedByUserId;
+      dto.images = (viewingImages || []).filter((file) => file instanceof File) as File[];
+      if (!isEdit && selectedSite) {
+        dto.siteId = selectedSite.id;
       }
 
-      await uploadFiles(faq.id, 'images', images);
-      await uploadFiles(faq.id, 'attachments', addingFiles);
-
-      if (deletingFiles.length > 0) {
-        await deleteFiles(faq.id, deletingFiles);
-      }
+      await axios.request<Faq>({
+        method: isEdit ? 'put' : 'post',
+        url: isEdit ? `/faqs/${currentFaq?.id}` : '/faqs',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        data: dto,
+      });
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_FAQS.root);
+      console.log(dto);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const uploadFiles = async (id: number, fieldName: string, files: (File | string)[]): Promise<void> => {
-    const formData = new FormData();
-    (files || []).forEach((image) => {
-      if (image instanceof File) {
-        const item = image as File;
-        formData.append('images', item, item.name);
-      }
-    });
-
-    await axios.post(`/faqs/${id}/upload-files`, formData, {
-      params: { name: fieldName },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  };
-
-  const deleteFiles = async (id: number, fileIds: number[]): Promise<void> => {
-    const url = `/faqs/${id}/delete-files`;
-    await axios.delete(url, { params: { ids: fileIds } });
-  };
-
   const handleImageDrop = useCallback(
     (acceptedFiles) => {
-      const existingImages = getValues('images');
-      setValue('images', [
-        ...existingImages,
+      const viewingImages = getValues('viewingImages');
+      setValue('viewingImages', [
+        ...viewingImages,
         ...acceptedFiles.map((file: Blob | MediaSource) =>
           Object.assign(file, {
             preview: URL.createObjectURL(file),
@@ -184,28 +146,28 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
         ),
       ]);
     },
-    [setValue],
+    [getValues, setValue],
   );
 
   const handleImageRemove = (index: number) => {
-    const existingImages = getValues('images');
-    if (typeof existingImages[index] === 'string') {
-      removeImage(existingImages[index] as string);
+    const viewingImages = getValues('viewingImages');
+    if (typeof viewingImages[index] === 'string') {
+      removeImage(viewingImages[index] as string);
     }
 
-    existingImages.splice(index, 1);
-    setValue('images', existingImages);
+    viewingImages.splice(index, 1);
+    setValue('viewingImages', viewingImages);
   };
 
   const removeImage = (url: string) => {
-    const attachments = getValues('attachments') || [];
-    const deletingFiles = getValues('deletingFiles');
-    const files = attachments.filter((item) => item.attachment.url === url);
+    const attachments = getValues('attachments');
+    const deletingAttachments = getValues('deletingAttachments') || [];
+    const files = attachments.filter((item) => url.indexOf(item.attachment.fileName) >= 0);
     if (files.length !== 0) {
-      deletingFiles.push(files[0].attachmentId);
+      deletingAttachments.push(files[0].attachmentId);
     }
 
-    setValue('deletingFiles', deletingFiles);
+    setValue('deletingAttachments', deletingAttachments);
   };
 
   const handleFilesSelected = (event: ChangeEvent<HTMLInputElement>) => {
@@ -213,46 +175,47 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
       return;
     }
 
-    const files = getValues('files');
-    const addingFiles = getValues('addingFiles');
+    const viewingFiles = getValues('viewingFiles');
+    const addingFiles = getValues('files') || [];
 
     for (let i = 0; i < event.target.files.length; i++) {
       const file = event.target.files[i];
       if (addingFiles.filter((addingFile) => addingFile.name === file.name).length === 0) {
         addingFiles.push(file);
-        files.push(file.name);
+        viewingFiles.push(file.name);
       }
     }
 
-    setValue('files', files);
-    setValue('addingFiles', addingFiles);
+    setValue('viewingFiles', viewingFiles);
+    setValue('files', addingFiles);
   };
 
   const handleFileDeleted = (index: number, fileName: string) => {
-    const attachments = getValues('attachments') || [];
-    const files = getValues('files');
-    const addingFiles = getValues('addingFiles');
-    const deletingFiles = getValues('deletingFiles');
+    const attachments = getValues('attachments');
+    const viewingFiles = getValues('viewingFiles');
+    const addingFiles = getValues('files') || [];
+    const deletingAttachments = getValues('deletingAttachments') || [];
 
     // filter deleting attachments
-    const deletingAttachments = attachments.filter((item) => item.attachment.name === fileName);
+    deletingAttachments.push(
+      ...attachments.filter((item) => item.attachment.name === fileName).map((item) => item.attachmentId),
+    );
+    setValue('deletingAttachments', deletingAttachments);
     setValue(
       'attachments',
       attachments.filter((item) => item.attachment.name !== fileName),
     );
 
-    setValue('deletingFiles', [...deletingFiles, ...deletingAttachments.map((item) => item.attachmentId)]);
-
     // remove adding files
     setValue(
-      'addingFiles',
+      'files',
       addingFiles.filter((item) => item.name !== fileName),
     );
 
     // remove displaying files
     setValue(
-      'files',
-      files.filter((item) => item !== fileName),
+      'viewingFiles',
+      viewingFiles.filter((item) => item !== fileName),
     );
   };
 
@@ -530,23 +493,23 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
               </Box>
             </Box>
 
-            {values.files.length !== 0 && (
+            {values.viewingFiles.length !== 0 && (
               <Box sx={{ mb: theme.spacing(2), display: 'flex', gap: theme.spacing(1), flexWrap: 'wrap' }}>
-                {values.files.map((file, fileIndex) => (
+                {values.viewingFiles.map((item, itemIndex) => (
                   <Label
-                    key={file}
+                    key={item}
                     variant={theme.palette.mode === 'light' ? 'ghost' : 'filled'}
                     color={'default'}
                     sx={{ py: 1.8, fontSize: '0.85rem' }}
                   >
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                       <Iconify icon="eva:attach-fill" fontSize={'1rem'} />
-                      {file}
+                      {item}
                       <Iconify
                         icon="eva:close-fill"
                         fontSize={'1rem'}
                         sx={{ cursor: 'pointer' }}
-                        onClick={() => handleFileDeleted(fileIndex, file)}
+                        onClick={() => handleFileDeleted(itemIndex, item)}
                       />
                     </Box>
                   </Label>
@@ -561,7 +524,7 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
             </Typography>
 
             <RHFGalleryUploadMultiFile
-              name="images"
+              name="viewingImages"
               accept="image/*"
               maxSize={3145728}
               onDrop={handleImageDrop}

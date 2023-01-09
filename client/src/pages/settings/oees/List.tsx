@@ -13,7 +13,7 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterOee, Oee } from '../../../@types/oee';
+import { FilterOee, Oee, OeePagedList } from '../../../@types/oee';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -33,11 +33,6 @@ const TABLE_HEAD = [
   { id: 'oeeType', label: 'OEE Type', align: 'left' },
   { id: '' },
 ];
-
-type OeePagedList = {
-  list: Oee[];
-  count: number;
-};
 
 export default function OEEList() {
   const {
@@ -67,8 +62,6 @@ export default function OEEList() {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
-
   useEffect(() => {
     (async () => {
       await refreshData();
@@ -85,7 +78,6 @@ export default function OEEList() {
         orderBy: orderBy,
         page: page,
         rowsPerPage: rowsPerPage,
-        siteId: selectedSite?.id,
       };
       const response = await axios.get<OeePagedList>('/oees', { params });
       setPagedList(response.data);

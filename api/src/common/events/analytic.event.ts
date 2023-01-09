@@ -1,7 +1,4 @@
 import { OeeStats } from '../type/oee-stats';
-import { OeeBatchA } from '../entities/oee-batch-a';
-import { OeeBatchP } from '../entities/oee-batch-p';
-import { OeeBatchQ } from '../entities/oee-batch-q';
 import { AnalyticAParam, AnalyticPParam, AnalyticQParam } from '../type/analytic-data';
 
 export class AnalyticOeeUpdateEvent {
@@ -14,7 +11,7 @@ export class AnalyticAParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
-  param: AnalyticAParam;
+  params: AnalyticAParam[];
 }
 
 export class AnalyticPParamUpdateEvent {
@@ -22,7 +19,7 @@ export class AnalyticPParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
-  param: AnalyticPParam;
+  params: AnalyticPParam[];
 }
 
 export class AnalyticQParamUpdateEvent {
@@ -30,5 +27,5 @@ export class AnalyticQParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
-  param: AnalyticQParam;
+  params: AnalyticQParam[];
 }

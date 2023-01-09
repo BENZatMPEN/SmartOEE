@@ -3,27 +3,33 @@ import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, IsNull, Repository } from 'typeorm';
-import { Oee } from 'src/common/entities/oee';
-import { OeeBatch } from '../common/entities/oee-batch';
-import { OeeMachine } from '../common/entities/oee-machine';
-import { OeeProduct } from '../common/entities/oee-product';
+import { OeeEntity } from 'src/common/entities/oee-entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { OeeMachineEntity } from '../common/entities/oee-machine-entity';
+import { OeeProductEntity } from '../common/entities/oee-product-entity';
 import * as dayjs from 'dayjs';
-import { OeeBatchQ } from '../common/entities/oee-batch-q';
-import { OeeBatchPlannedDowntime } from '../common/entities/oee-batch-planned-downtime';
-import { OeeBatchA } from '../common/entities/oee-batch-a';
-import { OeeBatchP } from '../common/entities/oee-batch-p';
+import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
+import { OeeBatchPlannedDowntimeEntity } from '../common/entities/oee-batch-planned-downtime-entity';
+import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
+import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
 import { UpdateOeeBatchADto } from './dto/update-oee-batch-a.dto';
 import { initialOeeBatchStats, OeeStats } from '../common/type/oee-stats';
 import { UpdateOeeBatchPDto } from './dto/update-oee-batch-p.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
-import { OEE_BATCH_STATUS_UNKNOWN, OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../common/constant';
-import { OeeBatchHistory } from '../common/entities/oee-batch-history';
+import {
+  OEE_BATCH_STATUS_UNKNOWN,
+  OEE_PARAM_TYPE_A,
+  OEE_PARAM_TYPE_P,
+  OEE_PARAM_TYPE_Q,
+  OEE_TAG_OUT_RESET,
+} from '../common/constant';
+import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history-entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FilterOeeBatchDto } from './dto/filter-oee-batch.dto';
 import { initialOeeBatchMcState, OeeBatchMcState } from '../common/type/oee-status';
-import { OeeBatchStatsTimeline } from '../common/entities/oee-batch-stats-timeline';
-import { OeeBatchLog } from '../common/entities/oee-batch-logs';
-import { OeeBatchStats } from '../common/entities/oee-batch-stats';
+import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
+import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs-entity';
+import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
 import { OptionItem } from '../common/type/option-item';
 import { fLotNumber } from '../common/utils/formatNumber';
 import {
@@ -31,6 +37,9 @@ import {
   AnalyticPParamUpdateEvent,
   AnalyticQParamUpdateEvent,
 } from '../common/events/analytic.event';
+import { AnalyticQParam } from '../common/type/analytic-data';
+import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
+import { SocketService } from '../common/services/socket.service';
 
 export type ParetoData = {
   labels: string[];
@@ -46,35 +55,36 @@ type CalculationItem = {
 @Injectable()
 export class OeeBatchService {
   constructor(
-    @InjectRepository(Oee)
-    private readonly oeeRepository: Repository<Oee>,
-    @InjectRepository(OeeProduct)
-    private readonly oeeProductRepository: Repository<OeeProduct>,
-    @InjectRepository(OeeMachine)
-    private readonly oeeMachineRepository: Repository<OeeMachine>,
-    @InjectRepository(OeeBatch)
-    private readonly oeeBatchRepository: Repository<OeeBatch>,
-    @InjectRepository(OeeBatchA)
-    private readonly oeeBatchARepository: Repository<OeeBatchA>,
-    @InjectRepository(OeeBatchP)
-    private readonly oeeBatchPRepository: Repository<OeeBatchP>,
-    @InjectRepository(OeeBatchQ)
-    private readonly oeeBatchQRepository: Repository<OeeBatchQ>,
-    @InjectRepository(OeeBatchPlannedDowntime)
-    private readonly oeeBatchPlannedDowntimeRepository: Repository<OeeBatchPlannedDowntime>,
-    @InjectRepository(OeeBatchHistory)
-    private readonly oeeBatchHistoryRepository: Repository<OeeBatchHistory>,
-    @InjectRepository(OeeBatchStatsTimeline)
-    private readonly oeeBatchStatsTimelineRepository: Repository<OeeBatchStatsTimeline>,
-    @InjectRepository(OeeBatchStats)
-    private readonly oeeBatchStatsRepository: Repository<OeeBatchStats>,
-    @InjectRepository(OeeBatchLog)
-    private readonly oeeBatchLogRepository: Repository<OeeBatchLog>,
+    @InjectRepository(OeeEntity)
+    private readonly oeeRepository: Repository<OeeEntity>,
+    @InjectRepository(OeeProductEntity)
+    private readonly oeeProductRepository: Repository<OeeProductEntity>,
+    @InjectRepository(OeeMachineEntity)
+    private readonly oeeMachineRepository: Repository<OeeMachineEntity>,
+    @InjectRepository(OeeBatchEntity)
+    private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(OeeBatchAEntity)
+    private readonly oeeBatchARepository: Repository<OeeBatchAEntity>,
+    @InjectRepository(OeeBatchPEntity)
+    private readonly oeeBatchPRepository: Repository<OeeBatchPEntity>,
+    @InjectRepository(OeeBatchQEntity)
+    private readonly oeeBatchQRepository: Repository<OeeBatchQEntity>,
+    @InjectRepository(OeeBatchPlannedDowntimeEntity)
+    private readonly oeeBatchPlannedDowntimeRepository: Repository<OeeBatchPlannedDowntimeEntity>,
+    @InjectRepository(OeeBatchEditHistoryEntity)
+    private readonly oeeBatchHistoryRepository: Repository<OeeBatchEditHistoryEntity>,
+    @InjectRepository(OeeBatchStatsTimelineEntity)
+    private readonly oeeBatchStatsTimelineRepository: Repository<OeeBatchStatsTimelineEntity>,
+    @InjectRepository(OeeBatchStatsEntity)
+    private readonly oeeBatchStatsRepository: Repository<OeeBatchStatsEntity>,
+    @InjectRepository(OeeBatchLogEntity)
+    private readonly oeeBatchLogRepository: Repository<OeeBatchLogEntity>,
     private readonly eventEmitter: EventEmitter2,
     private readonly entityManager: EntityManager,
+    private readonly socketService: SocketService,
   ) {}
 
-  async findPagedList(filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatch>> {
+  async findPagedList(filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatchEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.oeeBatchRepository
       .createQueryBuilder()
@@ -88,11 +98,11 @@ export class OeeBatchService {
     return { list: rows, count: count };
   }
 
-  findByIdAndOeeId(id: number, oeeId: number): Promise<OeeBatch> {
+  findByIdAndOeeId(id: number, oeeId: number): Promise<OeeBatchEntity> {
     return this.oeeBatchRepository.findOne({ where: { id, oeeId } });
   }
 
-  findById(id: number): Promise<OeeBatch> {
+  findById(id: number): Promise<OeeBatchEntity> {
     return this.oeeBatchRepository.findOneBy({ id });
   }
 
@@ -108,7 +118,7 @@ export class OeeBatchService {
     });
   }
 
-  async create(oeeId: number, createDto: CreateOeeBatchDto): Promise<OeeBatch> {
+  async create(oeeId: number, createDto: CreateOeeBatchDto): Promise<OeeBatchEntity> {
     const { startDate, endDate, plannedQuantity, productId, lotNumber } = createDto;
     const oee = await this.oeeRepository.findOneBy({ id: oeeId });
     const oeeProduct = await this.oeeProductRepository.findOne({
@@ -200,18 +210,39 @@ export class OeeBatchService {
     // await this.oeeCalculationQueue.add('calculate', calculateDto);
   }
 
-  async startBatch(id: number): Promise<void> {
+  async startBatch(id: number): Promise<Date> {
+    const batchStartedDate = dayjs().startOf('s').toDate();
     const oeeBatch = await this.oeeBatchRepository.findOne({
       where: { id: id, batchStartedDate: IsNull(), batchStoppedDate: IsNull() },
+      relations: ['oee'],
     });
 
     if (oeeBatch) {
       await this.oeeBatchRepository.save({
-        ...oeeBatch,
-        batchStartedDate: dayjs().startOf('s').toDate(),
+        id: oeeBatch.id,
+        batchStartedDate,
         updatedAt: new Date(),
       });
+
+      const tagOutRest = this.findOeeTag(oeeBatch.oee.tags, OEE_TAG_OUT_RESET);
+      if (tagOutRest !== null) {
+        const tagOutResetData: OeeTagOutReset = tagOutRest.data;
+        this.socketService.socket.to(`site_${oeeBatch.siteId}`).emit(`tag_out`, {
+          tagId: tagOutRest.tagId,
+          value: tagOutResetData.reset,
+        });
+      }
     }
+
+    return batchStartedDate;
+  }
+
+  private findOeeTag(oeeTags: OeeTag[], key: string): OeeTag {
+    const itemIndex = oeeTags.findIndex((item) => item.key === key && item.tagId);
+    if (itemIndex < 0) {
+      return null;
+    }
+    return oeeTags[itemIndex];
   }
 
   async endBatch(id: number): Promise<void> {
@@ -246,7 +277,7 @@ export class OeeBatchService {
     });
   }
 
-  async findActivePlannedDowntimeById(id: number): Promise<OeeBatchPlannedDowntime> {
+  async findActivePlannedDowntimeById(id: number): Promise<OeeBatchPlannedDowntimeEntity> {
     return this.oeeBatchPlannedDowntimeRepository.findOne({
       where: { oeeBatchId: id, expiredAt: IsNull() },
       order: { createdAt: 'DESC' },
@@ -278,7 +309,7 @@ export class OeeBatchService {
     }
   }
 
-  findRunningBatchById(id: number): Promise<OeeBatch> {
+  findRunningBatchById(id: number): Promise<OeeBatchEntity> {
     return this.oeeBatchRepository
       .createQueryBuilder()
       .where('id = :id', { id })
@@ -306,7 +337,7 @@ export class OeeBatchService {
   //   // return null;
   // }
 
-  async findBatchAsById(id: number): Promise<OeeBatchA[]> {
+  async findBatchAsById(id: number): Promise<OeeBatchAEntity[]> {
     return this.oeeBatchARepository.find({
       where: {
         oeeBatchId: id,
@@ -315,16 +346,13 @@ export class OeeBatchService {
     });
   }
 
-  async updateBatchA(oeeBatchAId: number, updateDto: UpdateOeeBatchADto): Promise<OeeBatchA> {
+  async updateBatchA(oeeBatchAId: number, updateDto: UpdateOeeBatchADto): Promise<OeeBatchAEntity> {
     const current = await this.oeeBatchARepository.findOneBy({ id: oeeBatchAId });
     const updating = {
       ...current,
       ...updateDto,
       updatedAt: new Date(),
     };
-    const batchA = await this.oeeBatchARepository.save(updating);
-
-    await this.eventEmitter.emitAsync('batch-a-params.updated', { batchId: batchA.oeeBatchId, createLog: true });
 
     const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
     const { siteId, oeeId, product } = batch;
@@ -333,25 +361,36 @@ export class OeeBatchService {
       oeeId,
       productId: product.id,
       oeeBatchId: batch.id,
-      param: {
-        tagId: updating.tagId,
-        seconds: updating.seconds,
-        machineId: updating.machineId,
-        machineParameterId: updating.machineParameterId,
-      },
+      params: [
+        {
+          tagId: current.tagId,
+          seconds: -current.seconds,
+          machineId: current.machineId,
+          machineParameterId: current.machineParameterId,
+        },
+        {
+          tagId: updating.tagId,
+          seconds: updating.seconds,
+          machineId: updating.machineId,
+          machineParameterId: updating.machineParameterId,
+        },
+      ],
     };
     await this.eventEmitter.emitAsync('analytic-a-params.update', analyticAParamsUpdateEvent);
+
+    const batchA = await this.oeeBatchARepository.save(updating);
+    await this.eventEmitter.emitAsync('batch-a-params.updated', { batchId: batchA.oeeBatchId, createLog: true });
 
     return batchA;
   }
 
-  async findBatchPsById(id: number): Promise<OeeBatchP[]> {
+  async findBatchPsById(id: number): Promise<OeeBatchPEntity[]> {
     return this.oeeBatchPRepository.findBy({
       oeeBatchId: id,
     });
   }
 
-  async findBatchPsByIdAndMinorStop(id: number): Promise<OeeBatchP[]> {
+  async findBatchPsByIdAndMinorStop(id: number): Promise<OeeBatchPEntity[]> {
     return this.oeeBatchPRepository.find({
       where: {
         oeeBatchId: id,
@@ -361,16 +400,13 @@ export class OeeBatchService {
     });
   }
 
-  async updateBatchP(oeeBatchPId: number, updateDto: UpdateOeeBatchPDto): Promise<OeeBatchP> {
+  async updateBatchP(oeeBatchPId: number, updateDto: UpdateOeeBatchPDto): Promise<OeeBatchPEntity> {
     const current = await this.oeeBatchPRepository.findOneBy({ id: oeeBatchPId });
     const updating = {
       ...current,
       ...updateDto,
       updatedAt: new Date(),
     };
-    const batchP = await this.oeeBatchPRepository.save(updating);
-
-    await this.eventEmitter.emitAsync('batch-p-params.updated', { batchId: batchP.oeeBatchId, createLog: true });
 
     const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
     const { siteId, oeeId, product } = batch;
@@ -379,77 +415,82 @@ export class OeeBatchService {
       oeeId,
       productId: product.id,
       oeeBatchId: batch.id,
-      param: {
-        tagId: updating.tagId,
-        seconds: updating.seconds,
-        machineId: updating.machineId,
-        machineParameterId: updating.machineParameterId,
-      },
+      params: [
+        {
+          tagId: current.tagId,
+          seconds: -current.seconds,
+          machineId: current.machineId,
+          machineParameterId: current.machineParameterId,
+        },
+        {
+          tagId: updating.tagId,
+          seconds: updating.seconds,
+          machineId: updating.machineId,
+          machineParameterId: updating.machineParameterId,
+        },
+      ],
     };
     await this.eventEmitter.emitAsync('analytic-p-params.update', analyticPParamsUpdateEvent);
+
+    const batchP = await this.oeeBatchPRepository.save(updating);
+    await this.eventEmitter.emitAsync('batch-p-params.updated', { batchId: batchP.oeeBatchId, createLog: true });
 
     return batchP;
   }
 
-  async findBatchQsById(id: number): Promise<OeeBatchQ[]> {
+  async findBatchQsById(id: number): Promise<OeeBatchQEntity[]> {
     return this.oeeBatchQRepository.findBy({
       oeeBatchId: id,
     });
   }
 
-  async updateBatchQs(id: number, updateDto: any): Promise<void> {
+  async updateBatchQs(id: number, updateDto: any /*UpdateOeeBatchPDto*/): Promise<void> {
     // calculate for analytic first
     const batch = await this.oeeBatchRepository.findOneBy({ id });
     const { siteId, oeeId, product, oeeStats } = batch;
+    const currentParams = await this.oeeBatchQRepository
+      .createQueryBuilder()
+      .where('oeeBatchId = :oeeBatchId', { oeeBatchId: batch.id })
+      .andWhere(`id IN (:...ids)`, { ids: updateDto.qParams.map((item) => item.id) })
+      .getMany();
 
-    for (const updatingParam of updateDto.qParams) {
-      const currentParam = await this.oeeBatchQRepository.findOneBy({ id: updatingParam.id });
-      let manualAmount = 0;
-      if (currentParam.manualAmount === 0 && updatingParam.manualAmount > 0) {
-        manualAmount = updatingParam.manualAmount;
-      } else {
-        manualAmount = updatingParam.manualAmount - currentParam.manualAmount;
-      }
-
-      const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
-        siteId,
-        oeeId,
-        productId: product.id,
-        oeeBatchId: batch.id,
-        param: {
-          autoAmount: 0,
-          manualAmount: manualAmount,
-          tagId: currentParam.tagId,
-          machineId: currentParam.machineId,
-          machineParameterId: currentParam.machineParameterId,
-        },
+    const analyticQParams: AnalyticQParam[] = updateDto.qParams.map((updatingParam) => {
+      const currentParam = currentParams.filter((item) => item.id === updatingParam.id)[0];
+      return {
+        autoAmount: 0,
+        manualAmount:
+          currentParam.manualAmount === 0 && updatingParam.manualAmount > 0
+            ? updatingParam.manualAmount
+            : updatingParam.manualAmount - currentParam.manualAmount,
+        tagId: currentParam.tagId,
+        machineId: currentParam.machineId,
+        machineParameterId: currentParam.machineParameterId,
       };
-      await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
-    }
+    });
 
     // calculate q other
     const sumManual = updateDto.qParams.reduce((acc, x) => acc + x.manualAmount, 0);
+    console.log('totalManual', updateDto.totalManual);
+    console.log('sumManual', sumManual);
+
     const updatingOther = updateDto.totalManual - sumManual;
-    const currentOther = oeeStats.totalOtherDefects;
-    let otherAmount = 0;
-    if (currentOther === 0 && updatingOther > 0) {
-      otherAmount = updatingOther;
-    } else {
-      otherAmount = updatingOther - currentOther;
-    }
+    console.log('updatingOther', updatingOther);
+    const currentOther = oeeStats.totalOtherDefects; //currentParams.reduce((acc, x) => acc + x.manualAmount, 0);
+    console.log('currentOther', currentOther);
+    analyticQParams.push({
+      autoAmount: 0,
+      manualAmount: currentOther === 0 && updatingOther > 0 ? updatingOther : updatingOther - currentOther,
+      tagId: null,
+      machineId: null,
+      machineParameterId: null,
+    });
 
     const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
       siteId,
       oeeId,
       productId: product.id,
       oeeBatchId: batch.id,
-      param: {
-        autoAmount: 0,
-        manualAmount: otherAmount,
-        tagId: null,
-        machineId: null,
-        machineParameterId: null,
-      },
+      params: analyticQParams,
     };
     await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
 
@@ -479,7 +520,7 @@ export class OeeBatchService {
     // await this.oeeCalculationQueue.add('calculate', calculateDto);
   }
 
-  createBatchHistory(id: number, type: string, data: any): Promise<OeeBatchHistory> {
+  createBatchHistory(id: number, type: string, data: any): Promise<OeeBatchEditHistoryEntity> {
     return this.oeeBatchHistoryRepository.save({
       type,
       data,
@@ -504,14 +545,14 @@ export class OeeBatchService {
     });
   }
 
-  expireActivePlannedDowntime(plannedDowntime: OeeBatchPlannedDowntime): Promise<OeeBatchPlannedDowntime> {
+  expireActivePlannedDowntime(plannedDowntime: OeeBatchPlannedDowntimeEntity): Promise<OeeBatchPlannedDowntimeEntity> {
     return this.oeeBatchPlannedDowntimeRepository.save({
       ...plannedDowntime,
       expiredAt: new Date(),
     });
   }
 
-  findBatchPlannedDowntimesById(oeeBatchId: number): Promise<OeeBatchPlannedDowntime[]> {
+  findBatchPlannedDowntimesById(oeeBatchId: number): Promise<OeeBatchPlannedDowntimeEntity[]> {
     return this.oeeBatchPlannedDowntimeRepository.find({
       where: { oeeBatchId },
     });
@@ -531,34 +572,34 @@ export class OeeBatchService {
     return rows.map((row) => row.siteId);
   }
 
-  createBatchA(createDto: any): Promise<OeeBatchA> {
+  createBatchA(createDto: any): Promise<OeeBatchAEntity> {
     return this.oeeBatchARepository.save({ ...createDto, createdAt: new Date(), updatedAt: new Date() });
   }
 
-  createBatchP(createDto: any): Promise<OeeBatchP> {
+  createBatchP(createDto: any): Promise<OeeBatchPEntity> {
     return this.oeeBatchPRepository.save({ ...createDto, createdAt: new Date(), updatedAt: new Date() });
   }
 
-  updateBatchQ(updateDto: any): Promise<OeeBatchQ> {
+  updateBatchQ(updateDto: any): Promise<OeeBatchQEntity> {
     return this.oeeBatchQRepository.save({
       ...updateDto,
       updatedAt: new Date(),
     });
   }
 
-  findBatchAByIdAndTagId(id: number, tagId: number): Promise<OeeBatchA> {
+  findBatchAByIdAndTagId(id: number, tagId: number): Promise<OeeBatchAEntity> {
     return this.oeeBatchARepository.findOne({ where: { oeeBatchId: id, tagId }, relations: ['machineParameter'] });
   }
 
-  findBatchPByIdAndTagId(id: number, tagId: number): Promise<OeeBatchP> {
+  findBatchPByIdAndTagId(id: number, tagId: number): Promise<OeeBatchPEntity> {
     return this.oeeBatchPRepository.findOne({ where: { oeeBatchId: id, tagId }, relations: ['machineParameter'] });
   }
 
-  findBatchQByIdAndTagId(id: number, tagId: number): Promise<OeeBatchQ> {
+  findBatchQByIdAndTagId(id: number, tagId: number): Promise<OeeBatchQEntity> {
     return this.oeeBatchQRepository.findOne({ where: { oeeBatchId: id, tagId }, relations: ['machineParameter'] });
   }
 
-  findBatchLatestTimeline(batchId: number): Promise<OeeBatchStatsTimeline> {
+  findBatchLatestTimeline(batchId: number): Promise<OeeBatchStatsTimelineEntity> {
     return this.oeeBatchStatsTimelineRepository.findOne({
       where: { oeeBatchId: batchId },
       order: { toDate: 'DESC' },
@@ -584,7 +625,7 @@ export class OeeBatchService {
     });
   }
 
-  findBatchTimelinesByBatchId(batchId: number): Promise<OeeBatchStatsTimeline[]> {
+  findBatchTimelinesByBatchId(batchId: number): Promise<OeeBatchStatsTimelineEntity[]> {
     return this.oeeBatchStatsTimelineRepository.find({
       where: {
         oeeBatchId: batchId,
@@ -654,7 +695,7 @@ export class OeeBatchService {
     }
   }
 
-  async findBatchStatsByBatchId(batchId: number, samplingSeconds: number): Promise<OeeBatchStats[]> {
+  async findBatchStatsByBatchId(batchId: number, samplingSeconds: number): Promise<OeeBatchStatsEntity[]> {
     const rows = await this.entityManager.query(
       'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, b.timeSlot as timestamp\n' +
         'from oeeBatchStats a\n' +
@@ -796,7 +837,7 @@ export class OeeBatchService {
     });
   }
 
-  findBatchLogsById(id: number): Promise<OeeBatchLog[]> {
+  findBatchLogsById(id: number): Promise<OeeBatchLogEntity[]> {
     return this.oeeBatchLogRepository.find({ where: { oeeBatchId: id } });
   }
 

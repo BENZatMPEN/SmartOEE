@@ -9,12 +9,20 @@ export type Role = {
   siteId: number;
 };
 
+export type EditRole = {
+  name: string;
+  remark: string;
+  roles: RoleSetting[];
+  siteId?: number;
+};
+
 export type FilterRole = {
   search: string;
   order: string;
   orderBy: string;
   page: number;
   rowsPerPage: number;
+  siteId: number;
 };
 
 export type RolePagedList = {

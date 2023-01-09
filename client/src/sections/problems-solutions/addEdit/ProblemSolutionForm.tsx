@@ -4,12 +4,18 @@ import { Box, Button, Card, Divider, Grid, MenuItem, TextField } from '@mui/mate
 import { useTheme } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Oee } from '../../../@types/oee';
-import { ProblemSolution, ProblemSolutionTask } from '../../../@types/problemSolution';
+import {
+  EditProblemSolution,
+  EditProblemSolutionTask,
+  ProblemSolution,
+  ProblemSolutionAttachment,
+  ProblemSolutionTask,
+} from '../../../@types/problemSolution';
 import { User } from '../../../@types/user';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import { EditorLabelStyle } from '../../../components/EditorLabelStyle';
@@ -22,19 +28,21 @@ import {
   RHFTextField,
 } from '../../../components/hook-form';
 import Iconify from '../../../components/Iconify';
-import { PS_PROCESS_STATUS } from '../../../constants';
+import { PS_PROCESS_STATUS, PS_PROCESS_STATUS_ON_PROCESS } from '../../../constants';
 import { RootState, useSelector } from '../../../redux/store';
 import { PATH_PROBLEMS_SOLUTIONS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
 import { getPsProcessStatusText } from '../../../utils/formatText';
+import { getFileUrl } from '../../../utils/imageHelper';
 import ProblemSolutionTaskList from './ProblemSolutionTaskList';
 
-interface FormValuesProps extends Partial<ProblemSolution> {
-  beforeProjectChartImages: File[] | string[];
-  beforeProjectImages: File[] | string[];
-  afterProjectChartImages: File[] | string[];
-  afterProjectImages: File[] | string[];
-  deletingImages: number[];
+export interface ProblemSolutionFormValuesProps extends Partial<EditProblemSolution> {
+  viewingBeforeProjectChartImages: (File | string)[];
+  viewingBeforeProjectImages: (File | string)[];
+  viewingAfterProjectChartImages: (File | string)[];
+  viewingAfterProjectImages: (File | string)[];
+  attachments: ProblemSolutionAttachment[];
+  tasks: EditProblemSolutionTask[];
 }
 
 type Props = {
@@ -49,14 +57,35 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const NewProblemSolutionSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
+    headProjectUserId: Yup.number().min(1),
+    oeeId: Yup.number().min(1),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<ProblemSolutionFormValuesProps>({
+    resolver: yupResolver(NewProblemSolutionSchema),
+    defaultValues: {
+      name: '',
+      status: PS_PROCESS_STATUS[0],
+      remark: '',
+      date: new Date(),
+      headProjectUserId: -1,
+      approvedByUserId: -1,
+      oeeId: -1,
+      startDate: new Date(),
+      endDate: new Date(),
+      attachments: [],
+      viewingBeforeProjectChartImages: [],
+      viewingBeforeProjectImages: [],
+      viewingAfterProjectChartImages: [],
+      viewingAfterProjectImages: [],
+      deletingAttachments: [],
+      tasks: [],
+    },
+    values: {
       name: currentProblemSolution?.name || '',
       status: currentProblemSolution?.status || PS_PROCESS_STATUS[0],
       remark: currentProblemSolution?.remark || '',
@@ -67,43 +96,39 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
       startDate: currentProblemSolution?.startDate || new Date(),
       endDate: currentProblemSolution?.endDate || new Date(),
       attachments: currentProblemSolution?.attachments || [],
-      siteId: currentProblemSolution?.siteId || selectedSite?.id,
-      beforeProjectChartImages: (currentProblemSolution?.attachments || [])
+      viewingBeforeProjectChartImages: (currentProblemSolution?.attachments || [])
         .filter((item) => item.groupName === 'beforeProjectChartImages')
-        .map((item) => item.attachment.url),
-      beforeProjectImages: (currentProblemSolution?.attachments || [])
+        .map((item) => getFileUrl(item.attachment.fileName) || ''),
+      viewingBeforeProjectImages: (currentProblemSolution?.attachments || [])
         .filter((item) => item.groupName === 'beforeProjectImages')
-        .map((item) => item.attachment.url),
-      afterProjectChartImages: (currentProblemSolution?.attachments || [])
+        .map((item) => getFileUrl(item.attachment.fileName) || ''),
+      viewingAfterProjectChartImages: (currentProblemSolution?.attachments || [])
         .filter((item) => item.groupName === 'afterProjectChartImages')
-        .map((item) => item.attachment.url),
-      afterProjectImages: (currentProblemSolution?.attachments || [])
+        .map((item) => getFileUrl(item.attachment.fileName) || ''),
+      viewingAfterProjectImages: (currentProblemSolution?.attachments || [])
         .filter((item) => item.groupName === 'afterProjectImages')
-        .map((item) => item.attachment.url),
-      deletingImages: [],
+        .map((item) => getFileUrl(item.attachment.fileName) || ''),
+      deletingAttachments: [],
       tasks: (currentProblemSolution?.tasks || []).map((task) => {
         return {
-          ...task,
-          assigneeUserId: task.assigneeUserId || -1,
-          attachments: task.attachments || [],
-          files: task.attachments.map((attachment) => attachment.attachment.name),
+          id: task?.id,
+          title: task?.title || '',
+          assigneeUserId: task?.assigneeUserId || -1,
+          startDate: task?.startDate || new Date(),
+          endDate: task?.endDate || new Date(),
+          status: task?.status || PS_PROCESS_STATUS_ON_PROCESS,
+          comment: task?.comment || '',
+          problemSolutionId: task?.problemSolutionId,
+          attachments: task?.attachments || [],
+          files: task?.attachments.map((attachment) => attachment.attachment.name),
           addingFiles: [],
           deletingFiles: [],
         };
       }),
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentProblemSolution],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewProblemSolutionSchema),
-    defaultValues,
+    },
   });
 
   const {
-    reset,
-    watch,
     control,
     setValue,
     getValues,
@@ -111,73 +136,44 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
     formState: { isSubmitting },
   } = methods;
 
-  const values = watch();
-
-  useEffect(() => {
-    if (isEdit && currentProblemSolution) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentProblemSolution]);
-
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: ProblemSolutionFormValuesProps) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {
-        headProjectUser,
-        approvedByUser,
-        headProjectUserId,
-        approvedByUserId,
-        oee,
-        oeeId,
-        beforeProjectChartImages,
-        beforeProjectImages,
-        afterProjectChartImages,
-        afterProjectImages,
-        deletingImages,
+        viewingBeforeProjectChartImages,
+        viewingBeforeProjectImages,
+        viewingAfterProjectChartImages,
+        viewingAfterProjectImages,
         tasks,
-        ...other
+        ...dto
       } = data;
-      let problemSolution: ProblemSolution;
-      const dto = {
-        ...other,
-        headProjectUserId: headProjectUserId === -1 ? null : headProjectUserId,
-        approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
-        oeeId: oeeId === -1 ? null : oeeId,
-      };
 
-      if (isEdit && currentProblemSolution) {
-        const response = await axios.put<ProblemSolution>(`/problems-solutions/${currentProblemSolution.id}`, dto);
-        problemSolution = response.data;
-      } else {
-        const response = await axios.post<ProblemSolution>(`/problems-solutions`, dto);
-        problemSolution = response.data;
+      dto.approvedByUserId = dto.approvedByUserId === -1 ? null : dto.approvedByUserId;
+      dto.beforeProjectChartImages = (viewingBeforeProjectChartImages || []).filter(
+        (file) => file instanceof File,
+      ) as File[];
+      dto.beforeProjectImages = (viewingBeforeProjectImages || []).filter((file) => file instanceof File) as File[];
+      dto.afterProjectChartImages = (viewingAfterProjectChartImages || []).filter(
+        (file) => file instanceof File,
+      ) as File[];
+      dto.afterProjectImages = (viewingAfterProjectImages || []).filter((file) => file instanceof File) as File[];
+      if (!isEdit && selectedSite) {
+        dto.siteId = selectedSite.id;
       }
 
-      if (beforeProjectChartImages && beforeProjectChartImages.length > 0) {
-        await uploadImages(problemSolution.id, 'beforeProjectChartImages', beforeProjectChartImages);
-      }
+      const response = await axios.request<ProblemSolution>({
+        method: isEdit ? 'put' : 'post',
+        url: isEdit ? `/problems-solutions/${currentProblemSolution?.id}` : '/problems-solutions',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        data: dto,
+      });
 
-      if (beforeProjectImages && beforeProjectImages.length > 0) {
-        await uploadImages(problemSolution.id, 'beforeProjectImages', beforeProjectImages);
-      }
-
-      if (afterProjectChartImages && afterProjectChartImages.length > 0) {
-        await uploadImages(problemSolution.id, 'afterProjectChartImages', afterProjectChartImages);
-      }
-
-      if (afterProjectImages && afterProjectImages.length > 0) {
-        await uploadImages(problemSolution.id, 'afterProjectImages', afterProjectImages);
-      }
-
-      if (deletingImages.length > 0) {
-        await deleteImages(problemSolution.id, deletingImages);
-      }
-
+      const { data: problemSolution } = response;
       await createOrUpdateTasks(tasks || [], problemSolution.id);
+      if (deletingTasks.length > 0) {
+        await deleteTasks(deletingTasks, problemSolution.id);
+      }
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_PROBLEMS_SOLUTIONS.root);
@@ -186,99 +182,38 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
     }
   };
 
-  const uploadImages = async (id: number, fieldName: string, images: (File | string)[]): Promise<void> => {
-    const formData = new FormData();
-    (images || []).forEach((image) => {
-      if (image instanceof File) {
-        const item = image as File;
-        formData.append('images', item, item.name);
-      }
-    });
-
-    await axios.post(`/problems-solutions/${id}/upload-files`, formData, {
-      params: { name: fieldName },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  };
-
-  const deleteImages = async (id: number, imageIds: number[]): Promise<void> => {
-    const url = `/problems-solutions/${id}/delete-files`;
-    await axios.delete(url, { params: { ids: imageIds } });
-  };
-
-  const createOrUpdateTasks = async (tasks: ProblemSolutionTask[], problemSolutionId: number) => {
+  const createOrUpdateTasks = async (tasks: EditProblemSolutionTask[], problemSolutionId: number) => {
     for (let task of tasks) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { assigneeUserId, assigneeUser, attachments, files, addingFiles, deletingFiles, ...other } = task;
-      console.log(assigneeUserId);
-      const dto = {
-        ...other,
-        problemSolutionId: problemSolutionId,
-        assigneeUserId: assigneeUserId === -1 ? null : assigneeUserId,
-      };
+      const { attachments, files, ...dto } = task;
+      dto.assigneeUserId = dto.assigneeUserId === -1 ? null : dto.assigneeUserId;
+      dto.problemSolutionId = problemSolutionId;
 
-      let problemSolutionTask: ProblemSolutionTask;
-
-      if (task.id) {
-        // update
-        const response = await axios.put<ProblemSolutionTask>(`/problems-solution-tasks/${task.id}`, dto, {
-          params: { problemSolutionId },
-        });
-        problemSolutionTask = response.data;
-      } else {
-        // create
-        const response = await axios.post<ProblemSolutionTask>(`/problems-solution-tasks`, dto, {
-          params: { problemSolutionId },
-        });
-        problemSolutionTask = response.data;
-      }
-
-      if (addingFiles.length !== 0) {
-        await uploadTaskAttachments(problemSolutionTask.id, 'attachments', addingFiles, problemSolutionId);
-      }
-
-      if (deletingFiles.length !== 0) {
-        await deleteTaskAttachments(problemSolutionTask.id, deletingFiles, problemSolutionId);
-      }
+      await axios.request<ProblemSolutionTask>({
+        method: task.id ? 'put' : 'post',
+        url: task.id ? `/problems-solution-tasks/${task.id}` : '/problems-solution-tasks',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        data: dto,
+        params: {
+          problemSolutionId,
+        },
+      });
     }
   };
 
-  const uploadTaskAttachments = async (
-    id: number,
-    fieldName: string,
-    attachments: File[],
-    problemSolutionId: number,
-  ): Promise<void> => {
-    const formData = new FormData();
-    attachments.forEach((image) => {
-      formData.append('images', image, image.name);
+  const deleteTasks = async (deletingTasks: number[], problemSolutionId: number) => {
+    await axios.delete('/problems-solution-tasks', {
+      params: { ids: deletingTasks, problemSolutionId },
     });
-
-    const url = `/problems-solution-tasks/${id}/upload-files`;
-    await axios.post(url, formData, {
-      params: { name: fieldName, problemSolutionId },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  };
-
-  const deleteTaskAttachments = async (
-    id: number,
-    attachmentIds: number[],
-    problemSolutionId: number,
-  ): Promise<void> => {
-    const url = `/problems-solution-tasks/${id}/delete-files`;
-    await axios.delete(url, { params: { ids: attachmentIds, problemSolutionId } });
   };
 
   const handleBeforeProjectChartImageDrop = useCallback(
     (acceptedFiles) => {
-      const existingImages = getValues('beforeProjectChartImages');
-      setValue('beforeProjectChartImages', [
-        ...existingImages,
+      const viewingImages = getValues('viewingBeforeProjectChartImages');
+      setValue('viewingBeforeProjectChartImages', [
+        ...viewingImages,
         ...acceptedFiles.map((file: Blob | MediaSource) =>
           Object.assign(file, {
             preview: URL.createObjectURL(file),
@@ -286,13 +221,13 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
         ),
       ]);
     },
-    [setValue],
+    [getValues, setValue],
   );
 
   const handleBeforeProjectImageDrop = useCallback(
     (acceptedFiles) => {
-      const existingImages = getValues('beforeProjectImages');
-      setValue('beforeProjectImages', [
+      const existingImages = getValues('viewingBeforeProjectImages');
+      setValue('viewingBeforeProjectImages', [
         ...existingImages,
         ...acceptedFiles.map((file: Blob | MediaSource) =>
           Object.assign(file, {
@@ -301,13 +236,13 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
         ),
       ]);
     },
-    [setValue],
+    [getValues, setValue],
   );
 
   const handleAfterProjectChartImageDrop = useCallback(
     (acceptedFiles) => {
-      const existingImages = getValues('afterProjectChartImages');
-      setValue('afterProjectChartImages', [
+      const existingImages = getValues('viewingAfterProjectChartImages');
+      setValue('viewingAfterProjectChartImages', [
         ...existingImages,
         ...acceptedFiles.map((file: Blob | MediaSource) =>
           Object.assign(file, {
@@ -316,13 +251,13 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
         ),
       ]);
     },
-    [setValue],
+    [getValues, setValue],
   );
 
   const handleAfterProjectImageDrop = useCallback(
     (acceptedFiles) => {
-      const existingImages = getValues('afterProjectImages');
-      setValue('afterProjectImages', [
+      const existingImages = getValues('viewingAfterProjectImages');
+      setValue('viewingAfterProjectImages', [
         ...existingImages,
         ...acceptedFiles.map((file: Blob | MediaSource) =>
           Object.assign(file, {
@@ -331,54 +266,58 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
         ),
       ]);
     },
-    [setValue],
+    [getValues, setValue],
   );
 
   const handleBeforeProjectChartImageRemove = (index: number) => {
-    const existingImages = values.beforeProjectChartImages as any[];
+    const existingImages = getValues('viewingBeforeProjectChartImages');
     if (typeof existingImages[index] === 'string') {
-      removeImage(existingImages[index]);
+      removeImage(existingImages[index] as string);
     }
 
     existingImages.splice(index, 1);
-    setValue('beforeProjectChartImages', existingImages);
+    setValue('viewingBeforeProjectChartImages', existingImages);
   };
 
   const handleBeforeProjectImageRemove = (index: number) => {
-    const existingImages = values.beforeProjectImages as any[];
+    const existingImages = getValues('viewingBeforeProjectImages');
     if (typeof existingImages[index] === 'string') {
-      removeImage(existingImages[index]);
+      removeImage(existingImages[index] as string);
     }
 
     existingImages.splice(index, 1);
-    setValue('beforeProjectImages', existingImages);
+    setValue('viewingBeforeProjectImages', existingImages);
   };
 
   const handleAfterProjectChartImageRemove = (index: number) => {
-    const existingImages = values.afterProjectChartImages as any[];
+    const existingImages = getValues('viewingAfterProjectChartImages');
     if (typeof existingImages[index] === 'string') {
-      removeImage(existingImages[index]);
+      removeImage(existingImages[index] as string);
     }
 
     existingImages.splice(index, 1);
-    setValue('afterProjectChartImages', existingImages);
+    setValue('viewingAfterProjectChartImages', existingImages);
   };
 
   const handleAfterProjectImageRemove = (index: number) => {
-    const existingImages = values.afterProjectImages as any[];
+    const existingImages = getValues('viewingAfterProjectImages');
     if (typeof existingImages[index] === 'string') {
-      removeImage(existingImages[index]);
+      removeImage(existingImages[index] as string);
     }
 
     existingImages.splice(index, 1);
-    setValue('afterProjectImages', existingImages);
+    setValue('viewingAfterProjectImages', existingImages);
   };
 
   const removeImage = (url: string) => {
-    const deletingImages = (values.attachments || []).filter((item) => item.attachment.url === url);
-    if (deletingImages.length !== 0) {
-      values.deletingImages.push(deletingImages[0].attachmentId);
+    const attachments = getValues('attachments');
+    const deletingAttachments = getValues('deletingAttachments') || [];
+    const files = attachments.filter((item) => url.indexOf(item.attachment.fileName) >= 0);
+    if (files.length !== 0) {
+      deletingAttachments.push(files[0].attachmentId);
     }
+
+    setValue('deletingAttachments', deletingAttachments);
   };
 
   const [oees, setOees] = useState<Oee[]>([]);
@@ -418,6 +357,15 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
       setUsers(response.data);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const [deletingTasks, setDeletingTasks] = useState<number[]>([]);
+
+  const onDeleteTask = (taskId?: number) => {
+    if (taskId) {
+      deletingTasks.push(taskId);
+      setDeletingTasks(deletingTasks);
     }
   };
 
@@ -668,12 +616,12 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
             </Grid>
           </Grid>
 
-          <ProblemSolutionTaskList users={users} />
+          <ProblemSolutionTaskList users={users} onDeleteTask={onDeleteTask} />
 
           <Box>
             <EditorLabelStyle>Before - Charts</EditorLabelStyle>
             <RHFGalleryUploadMultiFile
-              name="beforeProjectChartImages"
+              name="viewingBeforeProjectChartImages"
               accept="image/*"
               maxSize={3145728}
               onDrop={handleBeforeProjectChartImageDrop}
@@ -684,7 +632,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
           <Box>
             <EditorLabelStyle>Before - Photos</EditorLabelStyle>
             <RHFGalleryUploadMultiFile
-              name="beforeProjectImages"
+              name="viewingBeforeProjectImages"
               accept="image/*"
               maxSize={3145728}
               onDrop={handleBeforeProjectImageDrop}
@@ -695,7 +643,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
           <Box>
             <EditorLabelStyle>After - Charts</EditorLabelStyle>
             <RHFGalleryUploadMultiFile
-              name="afterProjectChartImages"
+              name="viewingAfterProjectChartImages"
               accept="image/*"
               maxSize={3145728}
               onDrop={handleAfterProjectChartImageDrop}
@@ -706,7 +654,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
           <Box>
             <EditorLabelStyle>After - Photos</EditorLabelStyle>
             <RHFGalleryUploadMultiFile
-              name="afterProjectImages"
+              name="viewingAfterProjectImages"
               accept="image/*"
               maxSize={3145728}
               onDrop={handleAfterProjectImageDrop}

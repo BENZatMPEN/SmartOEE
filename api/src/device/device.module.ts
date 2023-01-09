@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { DeviceController } from './device.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Device } from '../common/entities/device';
-import { DeviceTag } from '../common/entities/device-tag';
-import { Site } from '../common/entities/site';
+import { DeviceEntity } from '../common/entities/device-entity';
+import { DeviceTagEntity } from '../common/entities/device-tag-entity';
+import { SiteEntity } from '../common/entities/site-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Device, DeviceTag, Site])],
+  imports: [TypeOrmModule.forFeature([DeviceEntity, DeviceTagEntity, SiteEntity])],
   controllers: [DeviceController],
   providers: [DeviceService],
 })
