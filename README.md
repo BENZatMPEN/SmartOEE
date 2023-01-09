@@ -109,7 +109,7 @@ PORT=3010
 
 GENERATE_SOURCEMAP=false
 
-REACT_APP_HOST_API_KEY=https://localhost:3020
+REACT_APP_HOST_API_KEY=http://localhost:3020
 REACT_APP_GOOGLE_MAPS_KEY=key
 ```
 
@@ -117,11 +117,11 @@ REACT_APP_GOOGLE_MAPS_KEY=key
 
 #### ความหมายค่าต่างๆ
 
-| Variable                  | Value               | Description                               |
-| ------------------------- | ------------------- | ----------------------------------------- |
+| Variable                  | Value               | Description                                 |
+| ------------------------- | ------------------- | ------------------------------------------- |
 | PORT                      | 3010                | port สำหรับเข้าถึง localhost:3010 หรือ [ip]:3010 |
-| REACT_APP_HOST_API_KEY    | http://api-url      | URL ของ API (ที่ตั้งค่าส่วนส่วน api)             |
-| REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                    |
+| REACT_APP_HOST_API_KEY    | http://api-url      | URL ของ API (ที่ตั้งค่าส่วนส่วน api)               |
+| REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                      |
 
 
 ## 5. รันคำสั่ง prepare.sh
