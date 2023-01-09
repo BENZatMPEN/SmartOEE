@@ -19,7 +19,6 @@ services:
     image: node:16-bullseye
     restart: always
     depends_on:
-      - minio
       - db
     environment:
       DB_HOST: db
