@@ -1,21 +1,21 @@
 # Deployment
 
-## API
+## Install node
 
-```
-npm run build
-```
+## Set up environment variables in docker-compose.yaml
 
-Check the environment in docker-compose.yaml
-
-## Web (React)
+## Prepare .env file for client
 
 Must have .env in the folder before run the build command
 
+## Run prepare.sh
+
 ```
-npm run build
+bash prepare.sh
 ```
 
-## Poller
+## Run docker-compose.yaml
 
-Check the environment in docker-compose.yaml
+```
+docker-compose up -d
+```
