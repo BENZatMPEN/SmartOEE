@@ -16,7 +16,7 @@ services:
       - ./data/mysql:/var/lib/mysql
 
   api:
-    image: node:16-alpine
+    image: node:16-bullseye
     restart: always
     depends_on:
       - minio
