@@ -1,18 +1,5 @@
 version: "3.8"
 services:
-  minio:
-    image: "minio/minio"
-    restart: always
-    environment:
-      MINIO_ROOT_USER: "admin"
-      MINIO_ROOT_PASSWORD: "P@ssword1"
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - "./data/minio:/data"
-
   db:
     image: mysql:8
     restart: always
@@ -21,8 +8,8 @@ services:
       MYSQL_DATABASE: smartoee
       MYSQL_USER: smartoee
       MYSQL_PASSWORD: smartoee
-    ports:
-      - "33061:3306"
+    # ports:
+    #   - "33061:3306" # chnage 33061
     cap_add:
       - SYS_NICE
     volumes:
@@ -35,19 +22,15 @@ services:
       - minio
       - db
     environment:
-      STORAGE_URL: http://localhost:9000
       DB_HOST: db
       DB_PORT: 3306
       DB_USER: smartoee
       DB_PASS: smartoee
       DB_NAME: smartoee
-      MINIO_END_POINT: minio
-      MINIO_PORT: 9000
-      MINIO_USE_SSL: 0
-      MINIO_LOCATION: us-east-1
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: "P@ssword1"
       EMAIL_HOST: smtp4dev
+      EMAIL_HAS_AUTH: 0
+      EMAIL_USER: user
+      EMAIL_PASSWORD: password
       EMAIL_PORT: 25
       EMAIL_USE_SSL: 0
       EMAIL_DEFAULT_FROM: hello@user.com
