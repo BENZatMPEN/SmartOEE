@@ -96,7 +96,9 @@ ports:
 
 ```
 # อยู่ใน folder ที่ clone มา (SmartOEE)
+
 cd ./client
+
 touch .env
 ```
 
@@ -117,7 +119,7 @@ REACT_APP_GOOGLE_MAPS_KEY=key
 
 | Variable                  | Value               | Description                               |
 | ------------------------- | ------------------- | ----------------------------------------- |
-| PORT                      | 3010                | port สำหรับเข้าถึง localhost:3010 หรือ IP:3010 |
+| PORT                      | 3010                | port สำหรับเข้าถึง localhost:3010 หรือ [ip]:3010 |
 | REACT_APP_HOST_API_KEY    | http://api-url      | URL ของ API (ที่ตั้งค่าส่วนส่วน api)             |
 | REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                    |
 
@@ -125,12 +127,16 @@ REACT_APP_GOOGLE_MAPS_KEY=key
 ## 5. รันคำสั่ง prepare.sh
 
 ```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
 sh prepare.sh
 ```
 
 ## 6. รัน docker-compose.yaml
 
 ```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
 docker compose up -d
 
 # หรือ
@@ -171,22 +177,22 @@ http://[ip]:3010
 ในกรณีใช้ git
 
 ```
-# เข้า folder ที่ clone มาในหัวข้อที่ 1
-cd SmartOEE
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
 # หยุด docker compsoe
+
 docker compose down
+
 git pull
-```
 
-แล้วใช้คำสั่ง
-
-```
 sh prepare.sh
 ```
 
 จากนั้นรัน docker compose เพื่อเริ่มต้นการทำงาน
 
 ```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
 docker compose up -d
 
 # หรือ
