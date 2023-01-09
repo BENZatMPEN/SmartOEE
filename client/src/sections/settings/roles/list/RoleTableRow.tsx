@@ -1,15 +1,12 @@
 import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Site } from '../../../../@types/site';
+import { Role } from '../../../../@types/role';
 import Iconify from '../../../../components/Iconify';
-import Label from '../../../../components/Label';
 import { TableMoreMenu } from '../../../../components/table';
 import { fDateTime } from '../../../../utils/formatTime';
 
 type Props = {
-  row: Site;
+  row: Role;
   selected: boolean;
   onEditRow: VoidFunction;
   onSelectRow: VoidFunction;
@@ -17,12 +14,8 @@ type Props = {
   onDuplicateRow: VoidFunction;
 };
 
-export default function SiteTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
-  const theme = useTheme();
-
-  const { id, name, branch, active, createdAt } = row;
-
-  const navigate = useNavigate();
+export default function RoleTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
+  const { name, remark, createdAt } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
 
@@ -40,23 +33,11 @@ export default function SiteTableRow({ row, selected, onEditRow, onSelectRow, on
         <Checkbox checked={selected} onClick={onSelectRow} />
       </TableCell>
 
-      <TableCell align="left">{id}</TableCell>
-
       <TableCell align="left">{name}</TableCell>
 
-      <TableCell align="left">{branch}</TableCell>
+      <TableCell align="left">{remark}</TableCell>
 
       <TableCell align="left">{fDateTime(createdAt)}</TableCell>
-
-      <TableCell align="center">
-        <Label
-          variant={theme.palette.mode === 'light' ? 'ghost' : 'filled'}
-          color={(active && 'success') || (!active && 'error') || 'default'}
-          sx={{ textTransform: 'capitalize' }}
-        >
-          {active ? 'Active' : 'Inactive'}
-        </Label>
-      </TableCell>
 
       <TableCell align="right">
         <TableMoreMenu

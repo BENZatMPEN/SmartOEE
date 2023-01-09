@@ -25,7 +25,7 @@ import { deleteRole, deleteRoles, getRolePagedList } from '../../../redux/action
 import { getSite } from '../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR, PATH_SETTINGS } from '../../../routes/paths';
-import { RoleTableRow, RoleTableToolbar } from '../../../sections/admin/sites/roles/list';
+import { RoleTableRow, RoleTableToolbar } from '../../../sections/settings/roles/list';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },

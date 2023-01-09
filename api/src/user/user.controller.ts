@@ -61,8 +61,12 @@ export class UserController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  async create(@Body() createDto: CreateUserDto, @UploadedFile(FileSavePipe) image: string): Promise<UserEntity> {
-    return this.userService.create(createDto, image);
+  async create(
+    @Body() createDto: CreateUserDto,
+    @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
+  ): Promise<UserEntity> {
+    return this.userService.create(createDto, image, siteId);
   }
 
   @Put(':id')
@@ -72,8 +76,9 @@ export class UserController {
     @Param('id') id: number,
     @Body() updateDto: UpdateUserDto,
     @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
   ): Promise<UserEntity> {
-    return this.userService.update(id, updateDto, image);
+    return this.userService.update(id, updateDto, image, siteId);
   }
 
   @Delete(':id')

@@ -1,6 +1,6 @@
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { EmailExists } from '../../common/validations/email-exists.validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateUserDto {
   @IsString()
@@ -17,7 +17,8 @@ export class CreateUserDto {
   @IsString()
   readonly lastName: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly roleId: number;
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  @IsOptional()
+  readonly isAdmin?: boolean;
 }

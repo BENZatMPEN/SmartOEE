@@ -16,6 +16,7 @@ export type Site = {
   defaultPercentSettings: PercentSetting[];
   cutoffTime: Date;
   oeeLimit: number;
+  userLimit: number;
 };
 
 export type EditSite = {
@@ -26,11 +27,12 @@ export type EditSite = {
   lat: number;
   lng: number;
   sync: boolean;
-  active: boolean;
+  active?: boolean;
   defaultPercentSettings: PercentSetting[];
   cutoffTime: Date | null;
   image: File | null;
-  oeeLimit: number;
+  oeeLimit?: number;
+  userLimit?: number;
 };
 
 export type FilterSite = {

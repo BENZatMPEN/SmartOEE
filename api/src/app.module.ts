@@ -4,7 +4,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CaslModule } from './casl/casl.module';
 import { AuthModule } from './auth/auth.module';
 import { UserEntity } from './common/entities/user-entity';
 import { RoleModule } from './role/role.module';
@@ -245,7 +244,6 @@ import { FileService } from './common/services/file.service';
     DeviceModule,
     SiteModule,
     UserModule,
-    CaslModule,
     AuthModule,
     RoleModule,
     AlarmModule,

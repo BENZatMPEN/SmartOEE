@@ -73,6 +73,8 @@ export default function SiteForm({ isEdit }: Props) {
       defaultPercentSettings: initialPercentSettings,
       cutoffTime: null,
       image: null,
+      oeeLimit: -1,
+      userLimit: -1,
     },
     values: {
       name: currentSite?.name || '',
@@ -87,6 +89,7 @@ export default function SiteForm({ isEdit }: Props) {
       cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
       image: null,
       oeeLimit: currentSite?.oeeLimit || -1,
+      userLimit: currentSite?.userLimit || -1,
     },
   });
 
@@ -280,6 +283,17 @@ export default function SiteForm({ isEdit }: Props) {
                       label="OEE Limit"
                       onChange={(event) => {
                         setValue('oeeLimit', Number(event.target.value));
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField
+                      type="number"
+                      name="userLimit"
+                      label="User Limit"
+                      onChange={(event) => {
+                        setValue('userLimit', Number(event.target.value));
                       }}
                     />
                   </Grid>

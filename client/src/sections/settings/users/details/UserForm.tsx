@@ -3,19 +3,24 @@ import { LoadingButton } from '@mui/lab';
 import { Box, Button, Card, CardContent, Grid, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useCallback, useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { OptionItem } from '../../../../@types/option';
 import { EditUser, EditUserPassword } from '../../../../@types/user';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
-import { FormProvider, RHFSwitch, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
+import { FormProvider, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
+import { PS_PROCESS_STATUS_ON_PROCESS } from '../../../../constants';
+import { emptyRoleOptions } from '../../../../redux/actions/roleAction';
+import { emptySiteOptions, getSiteOptions } from '../../../../redux/actions/siteAction';
 import { createUser, updateUser } from '../../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
 import { getFileUrl } from '../../../../utils/imageHelper';
+import UserSiteRoleList from './UserSiteRoleList';
 
 type UserProps = EditUser & EditUserPassword;
 
@@ -60,7 +65,6 @@ export default function UserForm({ isEdit }: Props) {
       confirmPassword: '',
       isNew: false,
       image: null,
-      isAdmin: false,
     },
     values: {
       firstName: currentUser?.firstName || '',
@@ -70,11 +74,11 @@ export default function UserForm({ isEdit }: Props) {
       confirmPassword: '',
       isNew: !isEdit,
       image: null,
-      isAdmin: currentUser?.isAdmin || false,
     },
   });
 
   const {
+    control,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
@@ -102,6 +106,21 @@ export default function UserForm({ isEdit }: Props) {
       }
     }
   };
+
+  // const handleAdd = () => {
+  //   append({
+  //     // title: '',
+  //     // assigneeUserId: -1,
+  //     // startDate: new Date(),
+  //     // endDate: new Date(),
+  //     // status: PS_PROCESS_STATUS_ON_PROCESS,
+  //     // comment: '',
+  //     // attachments: [],
+  //     // files: [],
+  //     // addingFiles: [],
+  //     // deletingFiles: [],
+  //   });
+  // };
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -169,12 +188,6 @@ export default function UserForm({ isEdit }: Props) {
               <Stack spacing={3}>
                 <Box>
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', justifyContent: 'end' }}>
-                        <RHFSwitch name="isAdmin" label="Administrator" />
-                      </Box>
-                    </Grid>
-
                     <Grid item xs={12} md={6}>
                       <RHFTextField name="firstName" label="First Name" />
                     </Grid>
@@ -242,6 +255,10 @@ export default function UserForm({ isEdit }: Props) {
                     </Grid>
                   </Box>
                 )}
+
+                <Box>
+                  <UserSiteRoleList />
+                </Box>
               </Stack>
             </CardContent>
           </Card>

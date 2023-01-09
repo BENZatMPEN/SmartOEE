@@ -63,6 +63,9 @@ export class SiteEntity {
   @Column({ type: 'int', default: -1 })
   oeeLimit: number;
 
+  @Column({ type: 'int', default: -1 })
+  userLimit: number;
+
   // @OneToMany(() => Role, (role) => role.site)
   // roles: Role[];
   //

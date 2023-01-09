@@ -98,7 +98,7 @@ const navConfig = [
     subheader: 'administrator',
     items: [
       {
-        title: 'Administrator',
+        title: 'FUYUU Admin',
         path: PATH_ADMINISTRATOR.root,
         icon: <Iconify icon="ic:outline-admin-panel-settings" />,
         children: [

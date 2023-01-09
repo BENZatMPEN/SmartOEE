@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserEntity } from '../common/entities/user-entity';
@@ -57,7 +57,15 @@ export class UserService {
     return userRole?.role;
   }
 
-  async create(createDto: CreateUserDto, imageName: string): Promise<UserEntity> {
+  async create(createDto: CreateUserDto, imageName: string, siteId: number): Promise<UserEntity> {
+    // if (siteId) {
+    //   const site = await this.siteRepository.findOneBy({ id: siteId });
+    //   const countUser = await this.userRepository.countBy({ siteId: site.id });
+    //   if (site.oeeLimit > -1 && countUser >= site.userLimit) {
+    //     throw new BadRequestException(`Number of users has reached the limit (${site.oeeLimit})`);
+    //   }
+    // }
+
     const { password, ...dto } = createDto;
     const saltOrRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltOrRounds);
@@ -78,7 +86,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async update(id: number, updateDto: UpdateUserDto, imageName: string): Promise<UserEntity> {
+  async update(id: number, updateDto: UpdateUserDto, imageName: string, siteId: number): Promise<UserEntity> {
     const updatingUser = await this.userRepository.findOneBy({ id });
     const { imageName: existingImageName } = updatingUser;
     if (imageName && existingImageName) {

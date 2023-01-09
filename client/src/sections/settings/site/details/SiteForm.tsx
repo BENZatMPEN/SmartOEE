@@ -80,7 +80,6 @@ export default function SiteForm({ currentSite }: Props) {
       defaultPercentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
       cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
       image: null,
-      oeeLimit: currentSite?.oeeLimit || -1,
     },
   });
 

@@ -8,7 +8,7 @@ import { emptyCurrentRole, getRole } from '../../../redux/actions/roleAction';
 import { emptyCurrentSite, getSite } from '../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
-import RoleForm from '../../../sections/admin/sites/roles/details/RoleForm';
+import RoleForm from '../../../sections/settings/roles/details/RoleForm';
 
 export default function RoleDetails() {
   const dispatch = useDispatch();

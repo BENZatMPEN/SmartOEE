@@ -48,7 +48,6 @@ import { PercentSetting } from './common/type/percent-settings';
 import { OeeEntity } from './common/entities/oee-entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
 import * as dayjs from 'dayjs';
-import { OeeTagMCStatus } from './common/type/oee-tag';
 import { RoleAction, RoleSetting, RoleSubject } from './common/type/role-setting';
 import { AnalyticService } from './analytic/analytic.service';
 
@@ -227,6 +226,7 @@ export class AppController {
           sync: false,
           defaultPercentSettings: defaultPercentSettings,
           oeeLimit: -1,
+          userLimit: -1,
         },
         null,
       );
@@ -254,10 +254,12 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'Super',
         lastName: 'Admin',
-        roleId: ownerRole.id,
+        isAdmin: true,
+        // roleId: ownerRole.id,
         // siteId: sites[0].id,
         // roleIds: [ownerRole.id],
       },
+      null,
       null,
     );
 
@@ -267,8 +269,10 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'User',
         lastName: '1',
-        roleId: adminRole.id,
+        isAdmin: false,
+        // roleId: adminRole.id,
       },
+      null,
       null,
     );
 
@@ -913,8 +917,8 @@ export class AppController {
     return 'Hello, World!';
   }
 
-  @Get('solo')
-  async getSolo(): Promise<string> {
+  @Get('init-data')
+  async initData(): Promise<string> {
     const site = await this.siteService.create(
       {
         name: 'Main Site',
@@ -927,24 +931,25 @@ export class AppController {
         sync: false,
         defaultPercentSettings: defaultPercentSettings,
         oeeLimit: -1,
+        userLimit: -1,
       },
       null,
     );
 
-    const sites = [site];
-    const ownerRole = await this.roleService.create({
-      name: ROLE_OWNER,
-      remark: '',
-      roles: initialRoles,
-      siteId: sites[0].id,
-    });
-
-    const adminRole = await this.roleService.create({
-      name: 'Admin',
-      remark: '',
-      roles: initialRoles,
-      siteId: sites[0].id,
-    });
+    // const sites = [site];
+    // const ownerRole = await this.roleService.create({
+    //   name: ROLE_OWNER,
+    //   remark: '',
+    //   roles: initialRoles,
+    //   siteId: sites[0].id,
+    // });
+    //
+    // const adminRole = await this.roleService.create({
+    //   name: 'Admin',
+    //   remark: '',
+    //   roles: initialRoles,
+    //   siteId: sites[0].id,
+    // });
 
     await this.userService.create(
       {
@@ -952,10 +957,12 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'Super',
         lastName: 'Admin',
-        roleId: ownerRole.id,
+        isAdmin: true,
+        // roleId: ownerRole.id,
         // siteId: sites[0].id,
         // roleIds: [ownerRole.id],
       },
+      null,
       null,
     );
 
@@ -965,13 +972,15 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'User',
         lastName: '1',
-        roleId: adminRole.id,
+        isAdmin: false,
+        // roleId: adminRole.id,
         // siteId: sites[0].id,
         // roleIds: [adminRole.id],
       },
       null,
+      site.id,
     );
 
-    return 'Solo!';
+    return 'Data has been initialized!';
   }
 }

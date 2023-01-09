@@ -313,12 +313,25 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
                     <TextField
                       type="number"
                       fullWidth
-                      label="P/D"
+                      label="P/D Manual"
                       size="small"
                       InputLabelProps={{ shrink: true }}
-                      defaultValue={editingTag.data.plannedDowntime}
+                      defaultValue={editingTag.data.plannedDowntimeManual}
                       onChange={(event) => {
-                        handleDataChange({ plannedDowntime: event.target.value });
+                        handleDataChange({ plannedDowntimeManual: event.target.value });
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="P/D Auto"
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      defaultValue={editingTag.data.plannedDowntimeAuto}
+                      onChange={(event) => {
+                        handleDataChange({ plannedDowntimeAuto: event.target.value });
                       }}
                     />
                   </Grid>

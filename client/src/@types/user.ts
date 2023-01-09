@@ -16,8 +16,7 @@ export type EditUser = {
   firstName: string;
   lastName: string;
   image: File | null;
-
-  roleId: number;
+  isAdmin?: boolean;
 };
 
 export type EditUserPassword = {

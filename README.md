@@ -129,6 +129,46 @@ docker compose up -d
 sudo docker compose up -d
 ```
 
+## 7. สร้างข้อมูลเริ่มต้น
+
+เปิด browser แล้วพิมพ์ URL ของ API
+
+```
+http://localhost:3020/home/init-data
+
+หรือ
+
+http://ip:3020/home/init_data
+```
+
+## การอัพเดต code (ใช้ git หรือ copy file)
+
+ในกรณีใช้ git
+
+```
+# เข้า folder ที่ clone มาในหัวข้อที่ 1
+cd SmartOEE
+# หยุด docker compsoe
+docker compose down
+git pull
+```
+
+แล้วใช้คำสั่ง
+
+```
+sh prepare.sh
+```
+
+จากนั้นรัน docker compose เพื่อเริ่มต้นการทำงาน
+
+```
+docker compose up -d
+
+# หรือ
+
+sudo docker compose up -d
+```
+
 ## On cloud remove the poller section
 
 TBA

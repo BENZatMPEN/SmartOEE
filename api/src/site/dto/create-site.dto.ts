@@ -1,5 +1,5 @@
 import { PercentSetting } from '../../common/type/percent-settings';
-import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class CreateSiteDto {
@@ -29,7 +29,8 @@ export class CreateSiteDto {
 
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  readonly active: boolean;
+  @IsOptional()
+  readonly active?: boolean;
 
   @IsArray()
   @Type(() => PercentSetting)
@@ -37,5 +38,11 @@ export class CreateSiteDto {
 
   @IsNumber()
   @Type(() => Number)
-  readonly oeeLimit: number;
+  @IsOptional()
+  readonly oeeLimit?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  readonly userLimit?: number;
 }
