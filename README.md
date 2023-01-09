@@ -92,7 +92,7 @@ ports:
 
 ## 4. เตรียมไฟล์ .env สำหรับ web
 
-เข้า folder client (อยู่ใน SmartOEE)
+สร้างไฟล์ .env
 
 ```
 # อยู่ใน folder ที่ clone มา (SmartOEE)
@@ -102,7 +102,7 @@ cd ./client
 touch .env
 ```
 
-ทำการแก้ไขไฟล์ .env โดย copy เนื้อหาข้างล่าง แล้วเปลี่ยนตามที่ต้องการ
+ทำการแก้ไขไฟล์ .env โดย copy เนื้อหาข้างล่าง แล้วเปลี่ยนค่าตามที่ต้องการ
 
 ```
 PORT=3010
@@ -150,9 +150,11 @@ sudo docker compose up -d
 
 ```
 http://localhost:3020/init-data
+```
 
 หรือ
 
+```
 http://[ip]:3020/init_data
 ```
 
@@ -160,9 +162,11 @@ http://[ip]:3020/init_data
 
 ```
 http://localhost:3010
+```
 
 หรือ
 
+```
 http://[ip]:3010
 ```
 
