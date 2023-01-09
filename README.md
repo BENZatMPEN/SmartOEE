@@ -155,7 +155,7 @@ http://localhost:3020/init-data
 หรือ
 
 ```
-http://[ip]:3020/init_data
+http://[ip]:3020/init-data
 ```
 
 ## 8. เปิดเว็บ
