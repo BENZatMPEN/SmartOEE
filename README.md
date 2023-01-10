@@ -11,15 +11,7 @@
 git clone https://github.com/BENZatMPEN/SmartOEE.git
 ```
 
-## 2. ติดตั้ง node
-
-ถ้ายังไม่มี node ให้ทำการติดตั้ง node ก่อน
-
-```
-curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
-```
-
-## 3. ตั้งค่า environment variables ใน docker-compose.yaml
+## 2. ตั้งค่า environment variables ใน docker-compose.yaml
 
 เข้า folder SmartOEE
 
@@ -90,6 +82,17 @@ ports:
 | READ_INTERVAL | "0/3 * * * * *" | รอบที่ต้องการติดต่อกับ PLC (ค่าตั้งต้น 3 วินาที - cron format)                                |
 | SYNC_INTERVAL | "0/3 * * * * *" | รอบที่ต้องการติดต่อ API เพื่อทำการตรวจสอบข้อมูลที่มีการเปลี่ยนแปลง (ค่าตั้งต้น 3 วินาที - cron format) |
 
+### ส่วน web
+
+#### environment
+
+เข้าถึง web ด้วยการระบุ port localhost:3010 หรือ [ip]:3010
+
+```
+ports:
+  - "3010:80" #เปลี่ยน 3010 ได้ตามต้องการ
+```
+
 ## 4. เตรียมไฟล์ .env สำหรับ web
 
 สร้างไฟล์ .env
@@ -105,34 +108,36 @@ touch .env
 ทำการแก้ไขไฟล์ .env โดย copy เนื้อหาข้างล่าง แล้วเปลี่ยนค่าตามที่ต้องการ
 
 ```
-PORT=3010
-
-GENERATE_SOURCEMAP=false
-
 REACT_APP_HOST_API_KEY=http://localhost:3020
 REACT_APP_GOOGLE_MAPS_KEY=key
 ```
 
 บันทึกไฟล์ .env
 
-#### ความหมายค่าต่างๆ
+#### ความหมายค่าต่างๆ ใน .env
 
 | Variable                  | Value               | Description                                 |
 | ------------------------- | ------------------- | ------------------------------------------- |
-| PORT                      | 3010                | port สำหรับเข้าถึง localhost:3010 หรือ [ip]:3010 |
 | REACT_APP_HOST_API_KEY    | http://api-url      | URL ของ API (ที่ตั้งค่าส่วนส่วน api)               |
 | REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                      |
 
+## 5. รัน docker-compose.yaml build
 
-## 5. รันคำสั่ง prepare.sh
+ทุกครั้งที่มีการเปลี่ยนค่าใน docker-compose.yaml และ ./clinet/.env จะต้องทำการรัน docker compose build ทุกครั้ง
 
 ```
 # อยู่ใน folder ที่ clone มา (SmartOEE)
 
-sh prepare.sh
+docker compose build
+
+# หรือ
+
+sudo docker compose build
 ```
 
 ## 6. รัน docker-compose.yaml
+
+เริ่มการทำงานของโปรแกรมทั้งหมดโดยใช้คำสั่ง docker compose up
 
 ```
 # อยู่ใน folder ที่ clone มา (SmartOEE)
@@ -146,28 +151,30 @@ sudo docker compose up -d
 
 ## 7. สร้างข้อมูลเริ่มต้น
 
+**ใช้เฉพาะตอนเริ่มรันคร้้งแรกเท่านั้น**
+
 เปิด browser แล้วพิมพ์ URL ของ API
 
 ```
-http://localhost:3020/init-data
+http://localhost:3020/init-data หรือ port ที่ตั้งค่าไว้ใน api
 ```
 
 หรือ
 
 ```
-http://[ip]:3020/init-data
+http://[ip]:3020/init-data หรือ port ที่ตั้งค่าไว้ใน api
 ```
 
 ## 8. เปิดเว็บ
 
 ```
-http://localhost:3010
+http://localhost:3010 หรือ port ที่ตั้งค่าไว้ใน web
 ```
 
 หรือ
 
 ```
-http://[ip]:3010
+http://[ip]:3010 หรือ port ที่ตั้งค่าไว้ใน web
 ```
 
 **default user**
@@ -188,15 +195,20 @@ http://[ip]:3010
 docker compose down
 
 git pull
+```
+แล้วใช้คำสั่ง docker compose build
 
-sh prepare.sh
+```
+docker compose build
+
+# หรือ
+
+sudo docker compose build
 ```
 
 จากนั้นรัน docker compose เพื่อเริ่มต้นการทำงาน
 
 ```
-# อยู่ใน folder ที่ clone มา (SmartOEE)
-
 docker compose up -d
 
 # หรือ
