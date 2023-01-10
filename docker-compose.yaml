@@ -16,7 +16,9 @@ services:
       - ./data/mysql:/var/lib/mysql
 
   api:
-    image: node:16-bullseye
+    build:
+      dockerfile: Dockerfile
+      context: ./api
     restart: always
     depends_on:
       - db
@@ -36,24 +38,22 @@ services:
       LINE_API_URL: https://notify-api.line.me/api/notify
     ports:
       - "3020:3000"
-    volumes:
-      - ./api:/app
-    working_dir: /app
-    entrypoint:
-      - npm
-      - start
 
   web:
-    image: nginx
+    build:
+      dockerfile: Dockerfile
+      context: ./client
     restart: always
+    environment:
+      REACT_APP_HOST_API_KEY: http://localhost:3020
+      REACT_APP_GOOGLE_MAPS_KEY: key
     ports:
       - "3010:80"
-    volumes:
-      - ./client/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./client/build:/usr/share/nginx/html
 
   poller:
-    image: node:16-alpine
+    build:
+      dockerfile: Dockerfile
+      context: ./poller
     restart: always
     environment:
       SITE_ID: 1
@@ -61,9 +61,3 @@ services:
       READ_INTERVAL: "0/3 * * * * *"
       SYNC_INTERVAL: "0/3 * * * * *"
       NODE_TLS_REJECT_UNAUTHORIZED: 0
-    volumes:
-      - ./poller:/app
-    working_dir: /app
-    entrypoint:
-      - npm
-      - start
