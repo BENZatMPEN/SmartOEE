@@ -61,3 +61,5 @@ services:
       READ_INTERVAL: "0/3 * * * * *"
       SYNC_INTERVAL: "0/3 * * * * *"
       NODE_TLS_REJECT_UNAUTHORIZED: 0
+    volumes:
+      - ./poller-data:/app/data
