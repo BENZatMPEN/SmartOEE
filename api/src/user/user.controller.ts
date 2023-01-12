@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InjectParamIdTo } from '../common/decorators/request-interceptor.dectorator';
+import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
+import { AuthUserDto } from '../auth/dto/auth-user.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,9 +32,17 @@ import { InjectParamIdTo } from '../common/decorators/request-interceptor.dector
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  private getSiteId(authUser: AuthUserDto, siteId: number): number {
+    return authUser && authUser.isAdmin ? null : siteId;
+  }
+
   @Get()
-  async findFilter(@Query() filterDto: FilterUserDto): Promise<PagedLisDto<UserEntity>> {
-    return this.userService.findPagedList(filterDto);
+  async findFilter(
+    @Query() filterDto: FilterUserDto,
+    @ReqAuthUser() authUser: AuthUserDto,
+    @Query('siteId') siteId: number,
+  ): Promise<PagedLisDto<UserEntity>> {
+    return this.userService.findPagedList(filterDto, this.getSiteId(authUser, siteId));
   }
 
   // @Get('canRead')
@@ -50,13 +60,17 @@ export class UserController {
   // }
 
   @Get('all')
-  findAll(): Promise<UserEntity[]> {
-    return this.userService.findAll();
+  findAll(@ReqAuthUser() authUser: AuthUserDto, @Query('siteId') siteId: number): Promise<UserEntity[]> {
+    return this.userService.findAll(this.getSiteId(authUser, siteId));
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number): Promise<UserEntity> {
-    return this.userService.findById(id);
+  async findById(
+    @Param('id') id: number,
+    @ReqAuthUser() authUser: AuthUserDto,
+    @Query('siteId') siteId: number,
+  ): Promise<UserEntity> {
+    return this.userService.findById(id, this.getSiteId(authUser, siteId));
   }
 
   @Post()
@@ -64,9 +78,10 @@ export class UserController {
   async create(
     @Body() createDto: CreateUserDto,
     @UploadedFile(FileSavePipe) image: string,
+    @ReqAuthUser() authUser: AuthUserDto,
     @Query('siteId') siteId: number,
   ): Promise<UserEntity> {
-    return this.userService.create(createDto, image, siteId);
+    return this.userService.create(createDto, image, this.getSiteId(authUser, siteId));
   }
 
   @Put(':id')
@@ -76,18 +91,27 @@ export class UserController {
     @Param('id') id: number,
     @Body() updateDto: UpdateUserDto,
     @UploadedFile(FileSavePipe) image: string,
+    @ReqAuthUser() authUser: AuthUserDto,
     @Query('siteId') siteId: number,
   ): Promise<UserEntity> {
-    return this.userService.update(id, updateDto, image, siteId);
+    return this.userService.update(id, updateDto, image, this.getSiteId(authUser, siteId));
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: number): Promise<void> {
-    await this.userService.delete(id);
+  async delete(
+    @Param('id') id: number,
+    @ReqAuthUser() authUser: AuthUserDto,
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.userService.delete(id, this.getSiteId(authUser, siteId));
   }
 
   @Delete()
-  async deleteMany(@Query('ids', new ParseArrayPipe({ items: Number })) ids: number[]): Promise<void> {
-    await this.userService.deleteMany(ids);
+  async deleteMany(
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @ReqAuthUser() authUser: AuthUserDto,
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.userService.deleteMany(ids, this.getSiteId(authUser, siteId));
   }
 }

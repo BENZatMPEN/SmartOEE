@@ -1,4 +1,4 @@
-import { Device, DevicePagedList, FilterDevice } from '../../@types/device';
+import { Device, DevicePagedList, EditDevice, FilterDevice } from '../../@types/device';
 import axios from '../../utils/axios';
 import deviceSlice from '../slices/deviceSlice';
 import { dispatch } from '../store';
@@ -20,46 +20,38 @@ export function getDevicePagedList(filter: FilterDevice) {
 
 export function getDevice(id: number) {
   return async () => {
-    dispatch(deviceSlice.actions.startDetailsLoading());
+    dispatch(deviceSlice.actions.startLoading());
 
     try {
       const response = await axios.get<Device>(`/devices/${id}`);
       dispatch(deviceSlice.actions.getDeviceDetailsSuccess(response.data));
     } catch (error) {
-      dispatch(deviceSlice.actions.hasDetailsError(error));
+      dispatch(deviceSlice.actions.hasError(error));
     }
   };
 }
 
-export function createDevice(dto: any) {
+export function createDevice(dto: EditDevice) {
   return async () => {
-    dispatch(deviceSlice.actions.startDetailsLoading());
-
+    dispatch(deviceSlice.actions.startSavingError());
     try {
       const response = await axios.post<Device>(`/devices`, dto);
-      const { data } = response;
-      dispatch(deviceSlice.actions.createDeviceSuccess());
-      dispatch(deviceSlice.actions.emptyCurrentDevice());
-      return data;
+      return response.data;
     } catch (error) {
-      dispatch(deviceSlice.actions.hasDetailsError(error));
+      dispatch(deviceSlice.actions.hasSaveError(error));
       return null;
     }
   };
 }
 
-export function updateDevice(id: number, dto: any) {
+export function updateDevice(id: number, dto: EditDevice) {
   return async () => {
-    dispatch(deviceSlice.actions.startDetailsLoading());
-
+    dispatch(deviceSlice.actions.startSavingError());
     try {
       const response = await axios.put<Device>(`/devices/${id}`, dto);
-      const { data } = response;
-      dispatch(deviceSlice.actions.updateDeviceSuccess());
-      dispatch(deviceSlice.actions.emptyCurrentDevice());
-      return data;
+      return response.data;
     } catch (error) {
-      dispatch(deviceSlice.actions.hasDetailsError(error));
+      dispatch(deviceSlice.actions.hasSaveError(error));
       return null;
     }
   };

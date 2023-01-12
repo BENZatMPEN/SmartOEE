@@ -9,10 +9,10 @@ import { ValidationPipe } from '@nestjs/common';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
-import { EntityNotFoundExceptionFilter } from './common/filters/entity-not-found-exception.filter';
 
 async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
+  const uploadFileSize = Number(process.env.UPLOAD_FILE_SIZE ?? 10);
   const sslCrtPath = process.env.SSL_CRT_PATH;
   const sslKeyPath = process.env.SSL_KEY_PATH;
   const sslRootCaPath = process.env.SSL_ROOT_CA_PATH;
@@ -47,8 +47,8 @@ async function bootstrap() {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  app.use(bodyParser.json({ limit: '50mb' }));
-  app.use(bodyParser.urlencoded({ limit: '50mb' }));
+  app.use(bodyParser.json({ limit: `${uploadFileSize}mb` }));
+  app.use(bodyParser.urlencoded({ limit: `${uploadFileSize}mb` }));
   app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });

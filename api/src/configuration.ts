@@ -2,7 +2,10 @@ import { registerAs } from '@nestjs/config';
 
 export type Config = {
   lineApiUrl: string;
-  clientSecret: string;
+  token: {
+    secret: string;
+    expiresIn: string;
+  };
   db: {
     host: string;
     port: number;
@@ -14,6 +17,7 @@ export type Config = {
     host: string;
     port: number;
     useSSL: boolean;
+    hasAuth: boolean;
     username: string;
     password: string;
     defaultFrom: string;
@@ -23,7 +27,10 @@ export type Config = {
 export default registerAs('config', () => {
   const config: Config = {
     lineApiUrl: process.env.LINE_API_URL || '',
-    clientSecret: process.env.CLIENT_SECRET || '',
+    token: {
+      secret: process.env.TOKEN_SECRET || 'tokenSecret',
+      expiresIn: process.env.TOKEN_EXPIRES_IN || '30d',
+    },
     db: {
       host: process.env.DB_HOST || '',
       port: Number(process.env.DB_PORT) || 3306,
@@ -34,7 +41,8 @@ export default registerAs('config', () => {
     email: {
       host: process.env.EMAIL_HOST || '',
       port: Number(process.env.EMAIL_PORT) || 25,
-      useSSL: process.env.EMAIL_USE_SSL === '1',
+      useSSL: (process.env.EMAIL_USE_SSL || '0') === '1',
+      hasAuth: (process.env.EMAIL_HAS_AUTH || '0') === '1',
       username: process.env.EMAIL_USER || '',
       password: process.env.EMAIL_PASS || '',
       defaultFrom: process.env.EMAIL_DEFAULT_FROM || '',

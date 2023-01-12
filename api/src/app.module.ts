@@ -76,7 +76,6 @@ import { OeeBatchStatsEntity } from './common/entities/oee-batch-stats-entity';
 import { OeeBatchLogEntity } from './common/entities/oee-batch-logs-entity';
 import { AnalyticStatsEntity } from './common/entities/analytic-stats-entity';
 import { TagReadJob } from './common/jobs/tag-read.job';
-import { UserSiteRoleEntity } from './common/entities/user-site-role-entity';
 import { NotificationModule } from './common/services/notification.module';
 import { BatchEventsListener } from './common/listeners/batch-events.listener';
 import { BatchOeeCalculateListener } from './common/listeners/batch-oee-calculate.listener';
@@ -96,6 +95,7 @@ import { FileService } from './common/services/file.service';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const config = configService.get<Config>('config');
         return {
@@ -105,10 +105,8 @@ import { FileService } from './common/services/file.service';
           username: config.db.username,
           password: config.db.password,
           database: config.db.name,
-          // entities: [__dirname + '/**/entities/*{.ts,.js}'],
           entities: [
             UserEntity,
-            UserSiteRoleEntity,
             SiteEntity,
             RoleEntity,
             PlannedDowntimeEntity,
@@ -152,11 +150,9 @@ import { FileService } from './common/services/file.service';
           // logging: 'all',
         };
       },
-      inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([
       UserEntity,
-      UserSiteRoleEntity,
       SiteEntity,
       RoleEntity,
       PlannedDowntimeEntity,
@@ -204,18 +200,20 @@ import { FileService } from './common/services/file.service';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const config = configService.get<Config>('config');
+        const emailAuth = config.email.hasAuth
+          ? {
+              auth: {
+                user: config.email.username,
+                pass: config.email.password,
+              },
+            }
+          : undefined;
         return {
           transport: {
             host: config.email.host,
             port: config.email.port,
             secure: config.email.useSSL,
-            auth:
-              config.email.username || config.email.password
-                ? {
-                    user: config.email.username,
-                    pass: config.email.password,
-                  }
-                : undefined,
+            ...emailAuth,
           },
           defaults: {
             from: config.email.defaultFrom,

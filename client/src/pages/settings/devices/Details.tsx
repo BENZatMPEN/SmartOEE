@@ -1,4 +1,6 @@
 import { Container } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
@@ -14,22 +16,30 @@ export default function DeviceDetails() {
 
   const navigate = useNavigate();
 
-  const { currentDevice, detailsError } = useSelector((state: RootState) => state.device);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentDevice, error } = useSelector((state: RootState) => state.device);
 
   useEffect(() => {
     (async () => {
       await dispatch(getDevice(Number(id)));
-
-      if (detailsError && detailsError.statusCode === 404) {
-        navigate(PATH_SETTINGS.devices.root);
-      }
     })();
 
     return () => {
       dispatch(emptyCurrentDevice());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]);
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.devices.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
     <Page title="Device">

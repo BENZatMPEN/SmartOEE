@@ -24,12 +24,10 @@ export default function SiteDetails() {
 
   const isEdit = pathname.includes('edit');
 
-  const isDuplicate = pathname.includes('duplicate');
-
   useEffect(() => {
     (async () => {
       try {
-        if (isEdit || isDuplicate) {
+        if (isEdit) {
           await dispatch(getSite(Number(id)));
         }
       } catch (error) {
@@ -48,7 +46,7 @@ export default function SiteDetails() {
     return () => {
       dispatch(emptyCurrentSite());
     };
-  }, [dispatch, enqueueSnackbar, id, isDuplicate, isEdit, navigate]);
+  }, [dispatch, enqueueSnackbar, id, isEdit, navigate]);
 
   return (
     <Page title={`Site Settings: ${currentSite ? 'Edit Site' : 'Create Site'}`}>

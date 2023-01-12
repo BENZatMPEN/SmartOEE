@@ -25,6 +25,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { OptionItem } from '../common/type/option-item';
+import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,12 +34,7 @@ export class SiteController {
   constructor(private readonly siteService: SiteService) {}
 
   @Get('user-sites')
-  async findUserOptions(@Request() req): Promise<SiteEntity[]> {
-    const authUser = req.user as AuthUserDto;
-    if (!authUser) {
-      return [];
-    }
-
+  async findUserOptions(@ReqAuthUser() authUser: AuthUserDto): Promise<SiteEntity[]> {
     if (authUser.isAdmin) {
       return this.siteService.findAll();
     }

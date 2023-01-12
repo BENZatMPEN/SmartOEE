@@ -8,7 +8,6 @@ import * as bcrypt from 'bcrypt';
 import { AuthUserDto } from './dto/auth-user.dto';
 import { RoleEntity } from '../common/entities/role-entity';
 import { LogService } from '../common/services/log.service';
-import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
 import { SiteEntity } from '../common/entities/site-entity';
 
 @Injectable()
@@ -20,8 +19,8 @@ export class AuthService {
     private userRepository: Repository<UserEntity>,
     @InjectRepository(SiteEntity)
     private siteRepository: Repository<SiteEntity>,
-    @InjectRepository(UserSiteRoleEntity)
-    private userSiteRoleEntityRepository: Repository<UserSiteRoleEntity>,
+    @InjectRepository(RoleEntity)
+    private roleRepository: Repository<RoleEntity>,
   ) {}
 
   async validateUser(email: string, password: string): Promise<UserEntity> {
@@ -59,29 +58,24 @@ export class AuthService {
     };
   }
 
-  private async getUserSites(user: UserEntity): Promise<SiteEntity[]> {
-    if (user.isAdmin) {
-      return await this.siteRepository.find();
-    } else {
-      const userSiteRoles = await this.userSiteRoleEntityRepository.find({
-        relations: { site: true },
-        where: {
-          userId: user.id,
-          site: {
-            deleted: false,
-          },
-        },
-      });
-
-      return userSiteRoles.map((item) => item.site);
-    }
+  private getUserSites(user: UserEntity): Promise<SiteEntity[]> {
+    return user.isAdmin
+      ? this.siteRepository.findBy({ deleted: false })
+      : this.siteRepository
+          .createQueryBuilder('s')
+          .innerJoin('s.users', 'su', 'su.id = :userId', { userId: user.id })
+          .where('deleted = false')
+          .getMany();
   }
 
-  async findRoleByUserIdAndSiteId(userId: number, siteId): Promise<RoleEntity> {
-    const userRole = await this.userSiteRoleEntityRepository.findOne({
-      where: { userId, siteId },
-      relations: ['role'],
-    });
-    return userRole?.role;
+  async findRoleByUserIdAndSiteId(userId: number, siteId: number): Promise<RoleEntity> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    return user.isAdmin
+      ? null
+      : this.roleRepository
+          .createQueryBuilder('r')
+          .innerJoin('r.users', 'ru', 'ru.id = :userId', { userId: user.id })
+          .where('siteId = :siteId and deleted = false', { siteId })
+          .getOne();
   }
 }

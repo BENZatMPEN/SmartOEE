@@ -1,5 +1,5 @@
 import { DeviceTagDto } from './device-tag.dto';
-import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class UpdateDeviceDto {
@@ -15,6 +15,7 @@ export class UpdateDeviceDto {
 
   @IsNumber()
   @Type(() => Number)
+  @IsOptional()
   readonly deviceModelId: number;
 
   @IsString()

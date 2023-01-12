@@ -49,7 +49,6 @@ export class SiteEntity {
   @Column({ type: 'datetime' })
   updatedAt: Date;
 
-  @Exclude()
   @ManyToMany(() => UserEntity)
   @JoinTable({ name: 'userSites' })
   users: UserEntity[];

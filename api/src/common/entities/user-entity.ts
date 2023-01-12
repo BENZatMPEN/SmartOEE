@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SiteEntity } from './site-entity';
 import { RoleEntity } from './role-entity';
 
@@ -55,10 +55,13 @@ export class UserEntity {
   // @ManyToOne(() => RoleEntity)
   // roleId: number;
 
-  // @Exclude()
-  // @ManyToMany(() => SiteEntity, { onDelete: 'CASCADE' })
-  // @JoinTable({ name: 'userSites' })
-  // sites: SiteEntity[];
+  @ManyToMany(() => SiteEntity, { onDelete: 'CASCADE' })
+  @JoinTable({ name: 'userSites' })
+  sites: SiteEntity[];
+
+  @ManyToMany(() => RoleEntity, { onDelete: 'CASCADE' })
+  @JoinTable({ name: 'userRoles' })
+  roles: RoleEntity[];
 
   // @OneToMany(() => UserSiteRole, (userSite) => userSite.user)
   // userSites: UserSiteRole[];

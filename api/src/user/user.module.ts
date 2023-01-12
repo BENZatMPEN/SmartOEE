@@ -6,7 +6,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleEntity } from '../common/entities/role-entity';
 import { SiteEntity } from '../common/entities/site-entity';
 import { CaslModule } from '../casl/casl.module';
-import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
 import { AuthService } from '../auth/auth.service';
 import { LogService } from '../common/services/log.service';
 import { JwtService } from '@nestjs/jwt';
@@ -15,10 +14,7 @@ import { FileService } from '../common/services/file.service';
 import { EmailExistsRule } from '../common/validations/email-exists.validator';
 
 @Module({
-  imports: [
-    CaslModule,
-    TypeOrmModule.forFeature([UserEntity, RoleEntity, SiteEntity, HistoryLogEntity, UserSiteRoleEntity]),
-  ],
+  imports: [CaslModule, TypeOrmModule.forFeature([UserEntity, RoleEntity, SiteEntity, HistoryLogEntity])],
   controllers: [UserController],
   providers: [UserService, FileService, AuthService, LogService, JwtService, EmailExistsRule],
   exports: [UserService],

@@ -1,7 +1,8 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { SiteEntity } from './site-entity';
 import { RoleSetting } from '../type/role-setting';
+import { UserEntity } from './user-entity';
 
 @Entity('roles')
 export class RoleEntity {
@@ -26,6 +27,10 @@ export class RoleEntity {
 
   @ManyToOne(() => SiteEntity, { onDelete: 'CASCADE' })
   site: SiteEntity;
+
+  @ManyToMany(() => UserEntity)
+  @JoinTable({ name: 'userRoles' })
+  users: UserEntity[];
 
   @Column({ type: 'datetime' })
   createdAt: Date;

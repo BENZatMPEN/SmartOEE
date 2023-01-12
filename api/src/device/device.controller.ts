@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseArrayPipe,
   Post,
@@ -19,6 +20,7 @@ import { FilterDeviceDto } from './dto/filter-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { DeviceEntity } from '../common/entities/device-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { authorize } from 'passport';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -37,8 +39,12 @@ export class DeviceController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<DeviceEntity> {
-    return this.deviceService.findById(id, siteId);
+  async findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<DeviceEntity> {
+    const device = await this.deviceService.findById(id, siteId);
+    if (!device) {
+      throw new NotFoundException();
+    }
+    return device;
   }
 
   @Post()

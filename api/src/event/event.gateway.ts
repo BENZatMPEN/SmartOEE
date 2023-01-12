@@ -9,16 +9,17 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ClassSerializerInterceptor, Logger, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Inject, Logger, Request, UseGuards, UseInterceptors } from '@nestjs/common';
 import { SocketService } from '../common/services/socket.service';
 import { WsAuthGuard } from '../auth/ws-auth.guard';
 import * as jwt from 'jsonwebtoken';
-import { jwtConstants } from '../auth/constants';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { Read } from '../common/type/read';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TagReadEntity } from '../common/entities/tag-read-entity';
+import configuration from '../configuration';
+import { ConfigType } from '@nestjs/config';
 
 @UseGuards(WsAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -29,6 +30,8 @@ import { TagReadEntity } from '../common/entities/tag-read-entity';
 })
 export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
+    @Inject(configuration.KEY)
+    private readonly config: ConfigType<typeof configuration>,
     private readonly socketService: SocketService,
     @InjectRepository(TagReadEntity)
     private readonly tagReadRepository: Repository<TagReadEntity>,
@@ -44,7 +47,7 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   }
 
   handleConnection(client: any, ...args: any[]): any {
-    const user = jwt.verify(client.request.headers.authorization, jwtConstants.secret) as AuthUserDto;
+    const user = jwt.verify(client.request.headers.authorization, this.config.token.secret) as AuthUserDto;
     (user.sites || []).forEach((id) => {
       client.join(`site_${id}`);
     });
@@ -57,7 +60,7 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   }
 
   @SubscribeMessage('tagReads')
-  async onTagReads(@Req() req, @ConnectedSocket() socket: Socket, @MessageBody() data: Read) {
+  async onTagReads(@Request() req, @ConnectedSocket() socket: Socket, @MessageBody() data: Read) {
     const { siteId, timestamp } = data;
     this.socket.to(`site_${siteId}`).emit('tag-reads.updated', data);
     await this.tagReadRepository.save({

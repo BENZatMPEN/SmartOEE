@@ -4,10 +4,10 @@ import { SiteController } from './site.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SiteEntity } from '../common/entities/site-entity';
 import { FileService } from '../common/services/file.service';
-import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
+import { UserEntity } from '../common/entities/user-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SiteEntity, UserSiteRoleEntity])],
+  imports: [TypeOrmModule.forFeature([SiteEntity, UserEntity])],
   controllers: [SiteController],
   providers: [SiteService, FileService],
 })

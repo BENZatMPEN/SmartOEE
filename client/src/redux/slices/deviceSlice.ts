@@ -3,11 +3,10 @@ import { Device, DevicePagedList } from '../../@types/device';
 
 export type DeviceState = {
   isLoading: boolean;
-  error: any | string | null;
+  error: any | null;
   pagedList: DevicePagedList;
-  isDetailsLoading: boolean;
   currentDevice: Device | null;
-  detailsError: any | string | null;
+  saveError: any | null;
 };
 
 const initialState: DeviceState = {
@@ -17,9 +16,8 @@ const initialState: DeviceState = {
     list: [],
     count: 0,
   },
-  isDetailsLoading: false,
   currentDevice: null,
-  detailsError: null,
+  saveError: null,
 };
 
 const deviceSlice = createSlice({
@@ -28,6 +26,7 @@ const deviceSlice = createSlice({
   reducers: {
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
     },
     hasError(state, action) {
       state.isLoading = false;
@@ -37,25 +36,17 @@ const deviceSlice = createSlice({
       state.isLoading = false;
       state.pagedList = action.payload;
     },
-    startDetailsLoading(state) {
-      state.isDetailsLoading = true;
+    startSavingError(state) {
+      state.saveError = null;
     },
-    hasDetailsError(state, action) {
-      state.isDetailsLoading = false;
-      state.detailsError = action.payload;
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
     emptyCurrentDevice(state) {
       state.currentDevice = null;
     },
     getDeviceDetailsSuccess(state, action) {
-      state.isDetailsLoading = false;
       state.currentDevice = action.payload;
-    },
-    createDeviceSuccess(state) {
-      state.isDetailsLoading = false;
-    },
-    updateDeviceSuccess(state) {
-      state.isDetailsLoading = false;
     },
   },
 });

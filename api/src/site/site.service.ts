@@ -7,16 +7,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { SiteEntity } from '../common/entities/site-entity';
 import { FileService } from '../common/services/file.service';
-import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
 import { OptionItem } from '../common/type/option-item';
+import { UserEntity } from '../common/entities/user-entity';
 
 @Injectable()
 export class SiteService {
   constructor(
     @InjectRepository(SiteEntity)
     private siteRepository: Repository<SiteEntity>,
-    @InjectRepository(UserSiteRoleEntity)
-    private userSiteRoleEntityRepository: Repository<UserSiteRoleEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     private fileService: FileService,
   ) {}
 
@@ -48,19 +48,27 @@ export class SiteService {
   }
 
   async findUserSites(userId: number): Promise<SiteEntity[]> {
-    const list = await this.userSiteRoleEntityRepository.find({
-      relations: { site: true },
-      where: {
-        userId: userId,
-        site: {
-          deleted: false,
-        },
-      },
-    });
-
-    console.log(list);
-
-    return list.map((item) => item.site);
+    const user = await this.userRepository.findOneBy({ id: userId });
+    return user.isAdmin
+      ? this.siteRepository.findBy({ deleted: false })
+      : this.siteRepository
+          .createQueryBuilder('s')
+          .innerJoin('s.users', 'su', 'su.id = :userId', { userId: user.id })
+          .where('deleted = false')
+          .getMany();
+    // const list = await this.userSiteRoleEntityRepository.find({
+    //   relations: { site: true },
+    //   where: {
+    //     userId: userId,
+    //     site: {
+    //       deleted: false,
+    //     },
+    //   },
+    // });
+    //
+    // console.log(list);
+    //
+    // return list.map((item) => item.site);
   }
 
   findById(id): Promise<SiteEntity> {

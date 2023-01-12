@@ -36,6 +36,9 @@ services:
       EMAIL_USE_SSL: 0
       EMAIL_DEFAULT_FROM: hello@user.com
       LINE_API_URL: https://notify-api.line.me/api/notify
+      TOKEN_SECRET: secret
+      TOKEN_EXPIRES_IN: 30d
+      UPLOAD_FILE_SIZE: 10
     ports:
       - "3020:3000"
 

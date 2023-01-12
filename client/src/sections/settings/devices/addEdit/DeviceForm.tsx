@@ -1,41 +1,70 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Button, Card, CardContent, Divider, Grid, MenuItem, Stack } from '@mui/material';
+import { Button, Card, CardContent, Grid, Stack } from '@mui/material';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Device, DeviceTag } from '../../../../@types/device';
+import { DeviceTag, EditDevice } from '../../../../@types/device';
 import { DeviceModel } from '../../../../@types/deviceModel';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
-import { FormProvider, RHFCheckbox, RHFSelect, RHFTextField } from '../../../../components/hook-form';
+import { FormProvider, RHFCheckbox, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import { createDevice, updateDevice } from '../../../../redux/actions/deviceAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
 import DeviceTagList from './DeviceTagList';
+import ModelSelect from './ModelSelect';
 
-interface FormValuesProps extends Partial<Device> {
-  selectedDeviceModelId: number;
+interface Props {
+  isEdit: boolean;
 }
 
-type Props = {
-  isEdit: boolean;
-};
+class FormState {
+  constructor(isModelOptionLoading: boolean) {
+    this.isModelOptionLoading = isModelOptionLoading;
+  }
+
+  isModelOptionLoading: boolean;
+
+  isReady(): boolean {
+    return !this.isModelOptionLoading;
+  }
+}
 
 export default function DeviceForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
-  const { currentDevice } = useSelector((state: RootState) => state.device);
-
   const navigate = useNavigate();
 
-  const [deviceModelOptions, setDeviceModelOptions] = useState<DeviceModel[]>([]);
-
   const { enqueueSnackbar } = useSnackbar();
+
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+
+  const { currentDevice, saveError } = useSelector((state: RootState) => state.device);
+
+  const [formState, setFormState] = useState<FormState>(new FormState(true));
+
+  const [formValues, setFormValues] = useState<EditDevice | undefined>(undefined);
+
+  useEffect(() => {
+    if (formState.isReady()) {
+      setFormValues({
+        name: currentDevice?.name || '',
+        remark: currentDevice?.remark || '',
+        deviceId: currentDevice?.deviceId || 0,
+        deviceModelId: currentDevice?.deviceModelId || -1,
+        address: currentDevice?.address || '',
+        port: currentDevice?.port || 0,
+        stopped: currentDevice?.stopped || false,
+        tags: currentDevice?.tags || [],
+      });
+    }
+  }, [formState, currentDevice]);
 
   const NewDeviceSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -50,92 +79,65 @@ export default function DeviceForm({ isEdit }: Props) {
     ),
   });
 
-  const defaultValues = useMemo(
-    () => ({
-      name: currentDevice?.name || '',
-      remark: currentDevice?.remark || '',
-      deviceId: currentDevice?.deviceId || 0,
-      selectedDeviceModelId: currentDevice?.deviceModelId || -1,
-      address: currentDevice?.address || '',
-      port: currentDevice?.port || 0,
-      stopped: currentDevice?.stopped || false,
-      tags: currentDevice?.tags || [],
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDevice],
-  );
-
-  const methods = useForm<FormValuesProps>({
+  const methods = useForm<EditDevice>({
     resolver: yupResolver(NewDeviceSchema),
-    defaultValues,
+    defaultValues: {
+      name: '',
+      remark: '',
+      deviceId: 0,
+      deviceModelId: -1,
+      address: '',
+      port: 0,
+      stopped: false,
+      tags: [],
+    },
+    values: formValues,
   });
 
   const {
-    reset,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  useEffect(() => {
-    if (isEdit && currentDevice) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentDevice]);
+  const onSubmit = async (data: EditDevice) => {
+    data.deviceModelId = data.deviceModelId === -1 ? null : data.deviceModelId;
+    const device =
+      isEdit && currentDevice
+        ? await dispatch(updateDevice(currentDevice.id, data))
+        : await dispatch(
+            createDevice({
+              ...data,
+              siteId: selectedSite?.id,
+            }),
+          );
 
-  const onSubmit = async (data: FormValuesProps) => {
-    try {
-      if (isEdit && currentDevice) {
-        await dispatch(
-          updateDevice(currentDevice.id, {
-            ...currentDevice,
-            name: data.name,
-            remark: data.remark,
-            deviceModelId: data.selectedDeviceModelId,
-            deviceId: data.deviceId,
-            address: data.address,
-            port: data.port,
-            stopped: data.stopped,
-            tags: data.tags || [],
-          }),
-        );
-      } else {
-        await dispatch(
-          createDevice({
-            name: data.name,
-            remark: data.remark,
-            deviceModelId: data.selectedDeviceModelId,
-            deviceId: data.deviceId,
-            address: data.address,
-            port: data.port,
-            stopped: data.stopped,
-            tags: data.tags || [],
-          }),
-        );
-      }
-
+    if (device) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.devices.root);
-    } catch (error) {
-      console.error(error);
     }
   };
 
   useEffect(() => {
-    (async () => {
-      if (deviceModelOptions.length === 0) {
-        const response = await axios.get<DeviceModel[]>('/device-models/all');
-        setDeviceModelOptions(response.data);
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
-    })();
-  }, [deviceModelOptions]);
+    }
+  }, [enqueueSnackbar, saveError]);
 
   const onDeviceModelChanged = async (deviceModelId: number) => {
-    setValue('selectedDeviceModelId', deviceModelId);
+    setValue('deviceModelId', deviceModelId);
     setValue('tags', []);
 
     if (deviceModelId === -1) {
@@ -210,43 +212,15 @@ export default function DeviceForm({ isEdit }: Props) {
               </Grid>
 
               <Grid item xs={4}>
-                <RHFSelect
-                  name="selectedDeviceModelId"
+                <ModelSelect
+                  name="deviceModelId"
                   label="Model"
-                  InputLabelProps={{ shrink: true }}
-                  SelectProps={{ native: false }}
-                  onChange={(event) => onDeviceModelChanged(Number(event.target.value))}
-                >
-                  <MenuItem
-                    value={-1}
-                    sx={{
-                      mx: 1,
-                      borderRadius: 0.75,
-                      typography: 'body1',
-                      fontStyle: 'italic',
-                      color: 'text.secondary',
-                    }}
-                  >
-                    None
-                  </MenuItem>
-
-                  <Divider />
-
-                  {deviceModelOptions.map((deviceModel) => (
-                    <MenuItem
-                      key={deviceModel.id}
-                      value={deviceModel.id}
-                      sx={{
-                        mx: 1,
-                        my: 0.5,
-                        borderRadius: 0.75,
-                        typography: 'body1',
-                      }}
-                    >
-                      {deviceModel.name}
-                    </MenuItem>
-                  ))}
-                </RHFSelect>
+                  onSelected={(selectedId) => onDeviceModelChanged(selectedId)}
+                  onLoading={(isLoading) => {
+                    formState.isModelOptionLoading = isLoading;
+                    setFormState(formState);
+                  }}
+                />
               </Grid>
 
               <Grid item xs={4}>

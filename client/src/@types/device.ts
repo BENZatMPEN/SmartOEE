@@ -16,6 +16,18 @@ export type Device = {
   siteId: number;
 };
 
+export type EditDevice = {
+  name: string;
+  remark: string;
+  deviceId: number;
+  address: string;
+  port: number;
+  stopped: boolean;
+  deviceModelId: number | null;
+  tags: DeviceTag[];
+  siteId?: number;
+};
+
 export type FilterDevice = {
   search: string;
   order: string;

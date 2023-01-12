@@ -1,4 +1,6 @@
 import { Container } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
@@ -10,7 +12,9 @@ import DeviceForm from '../../../sections/settings/devices/addEdit/DeviceForm';
 export default function DeviceDetails() {
   const dispatch = useDispatch();
 
-  const { currentDevice, detailsError } = useSelector((state: RootState) => state.device);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentDevice, error } = useSelector((state: RootState) => state.device);
 
   const { pathname } = useLocation();
 
@@ -26,18 +30,24 @@ export default function DeviceDetails() {
     (async () => {
       if (isEdit || isDuplicate) {
         await dispatch(getDevice(Number(id)));
-
-        if (detailsError && detailsError.statusCode === 404) {
-          navigate(PATH_SETTINGS.devices.root);
-        }
       }
     })();
 
     return () => {
       dispatch(emptyCurrentDevice());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]);
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.devices.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
     <Page title={currentDevice ? 'Device Settings: Edit Device' : 'Device Settings: Create Device'}>

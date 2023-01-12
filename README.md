@@ -60,6 +60,8 @@ ports:
 | EMAIL_USE_SSL      | 0                                     | ถ้า SMTP server มีการใช้ SSL ให้ตั้งเป็น 1                              |
 | EMAIL_DEFAULT_FROM | hello@user.com                        | ชื่อ email ขาออก                                                   |
 | LINE_API_URL       | https://notify-api.line.me/api/notify | LINE Notify API URL (ตามคู่มือ https://notify-bot.line.me/doc/en/ ) |
+| TOKEN_SECRET       | secret                                | ขอความลับที่ใช้สำหรับสร้าง token (ต้องตั้งใหม่สำหรับทุกไซต์เพื่อความปลอดภัย)       |
+| TOKEN_EXPIRES_IN   | 30d                                   | อายุของ token (d = วัน)                                            |
 | UPLOAD_FILE_SIZE   | 10                                    | ขนาดของ file ที่ให้ upload ได้ (หน่วยเป็น MB)                          |
 
 #### ports
@@ -108,7 +110,7 @@ touch .env
 ทำการแก้ไขไฟล์ .env โดย copy เนื้อหาข้างล่าง แล้วเปลี่ยนค่าตามที่ต้องการ
 
 ```
-REACT_APP_HOST_API_KEY=http://localhost:3020
+REACT_APP_HOST_API_KEY=http://0.0.0.0:3020
 REACT_APP_GOOGLE_MAPS_KEY=key
 ```
 
@@ -116,10 +118,10 @@ REACT_APP_GOOGLE_MAPS_KEY=key
 
 #### ความหมายค่าต่างๆ ใน .env
 
-| Variable                  | Value               | Description                                 |
-| ------------------------- | ------------------- | ------------------------------------------- |
-| REACT_APP_HOST_API_KEY    | http://api-url      | URL ของ API (ที่ตั้งค่าส่วนส่วน api)               |
-| REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                      |
+| Variable                  | Value               | Description                                              |
+| ------------------------- | ------------------- | -------------------------------------------------------- |
+| REACT_APP_HOST_API_KEY    | http://0.0.0.0:3020 | URL ของ API เป็น localhost หรือ ip และ port ที่ตั้งไว้ในส่วน api |
+| REACT_APP_GOOGLE_MAPS_KEY | key_from_google_map | key จาก GoogleMaps API                                   |
 
 ## 5. รัน docker-compose.yaml build
 

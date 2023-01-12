@@ -11,8 +11,6 @@ import axios from '../../../utils/axios';
 export default function OEEDetails() {
   const dispatch = useDispatch();
 
-  const { currentDevice, detailsError } = useSelector((state: RootState) => state.device);
-
   const { pathname } = useLocation();
 
   const { id } = useParams();

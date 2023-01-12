@@ -7,19 +7,28 @@ import { UserEntity } from '../common/entities/user-entity';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
-import { jwtConstants } from './constants';
 import { LogService } from '../common/services/log.service';
 import { HistoryLogEntity } from '../common/entities/history-log-entity';
-import { UserSiteRoleEntity } from '../common/entities/user-site-role-entity';
 import { SiteEntity } from '../common/entities/site-entity';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import configuration, { Config } from '../configuration';
+import { RoleEntity } from '../common/entities/role-entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SiteEntity, UserEntity, UserSiteRoleEntity, HistoryLogEntity]),
+    ConfigModule.forFeature(configuration),
+    TypeOrmModule.forFeature([SiteEntity, UserEntity, RoleEntity, HistoryLogEntity]),
     PassportModule,
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: jwtConstants.expiresIn },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const config = configService.get<Config>('config');
+        return {
+          secret: config.token.secret,
+          signOptions: { expiresIn: config.token.expiresIn },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
