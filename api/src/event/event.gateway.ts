@@ -47,12 +47,19 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   }
 
   handleConnection(client: any, ...args: any[]): any {
-    const user = jwt.verify(client.request.headers.authorization, this.config.token.secret) as AuthUserDto;
-    (user.sites || []).forEach((id) => {
-      client.join(`site_${id}`);
-    });
+    const authorization = client?.request.headers.authorization;
+    if (!authorization) {
+      return;
+    }
 
-    this.logger.log(`Client connected`);
+    try {
+      const user = jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
+      (user.sites || []).forEach((id) => {
+        client.join(`site_${id}`);
+      });
+
+      this.logger.log(`Client connected`);
+    } catch {}
   }
 
   handleDisconnect(client: any): any {
