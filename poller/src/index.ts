@@ -236,7 +236,7 @@ bootstrap()
 
       try {
         // TODO: support multiple sites???
-        fs.readFile('./site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
+        fs.readFile('./data/site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
           if (fileErr) {
             console.error(fileErr);
             return;
@@ -249,6 +249,11 @@ bootstrap()
             const { address, port, stopped, deviceModel } = device;
             if (stopped) {
               console.log(address, port, 'has been stopped.');
+              return;
+            }
+
+            if (!deviceModel) {
+              console.log('Model has been provided.');
               return;
             }
 
@@ -296,7 +301,7 @@ bootstrap()
         const devicesResp = await axios.get<Device[]>(`sites/${SITE_ID}/devices`);
         const { data: devices } = devicesResp;
         const siteJson = JSON.stringify(devices);
-        fs.writeFile('./site-infos.json', siteJson, (fileErr) => {
+        fs.writeFile('./data/site-infos.json', siteJson, (fileErr) => {
           if (fileErr) {
             console.log(fileErr);
           }

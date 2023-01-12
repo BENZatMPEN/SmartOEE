@@ -75,27 +75,17 @@ export class SiteService {
     return this.siteRepository.findOne({ where: { id, deleted: false } });
   }
 
-  findDevicesById(id: number): Promise<SiteEntity> {
-    return this.siteRepository.findOne({
+  async findDevicesById(id: number): Promise<SiteEntity> {
+    const site = await this.siteRepository.findOne({
       where: { id, deleted: false },
       relations: ['devices', 'devices.tags', 'devices.tags.deviceModelTag', 'devices.deviceModel'],
     });
-    // return this.siteRepository.findOne({
-    //   include: [
-    //     {
-    //       model: Device,
-    //       include: [
-    //         DeviceModel,
-    //         {
-    //           model: DeviceTag,
-    //           include: [DeviceModelTag],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    //   where: { id, deleted: false },
-    // });
-    // return null;
+
+    if (site) {
+      site.devices = site.devices.filter((device) => !device.deleted && device.deviceModel);
+    }
+
+    return site;
   }
 
   async updateSynced(id: number): Promise<void> {
