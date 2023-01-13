@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import axios from './utils/axios';
-import { BASE_API_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
+import { API_PASS, API_USER, BASE_API_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
 import { Site } from './@types/site';
 import { scheduleJob } from 'node-schedule';
 import ModbusRTU from 'modbus-serial';
@@ -23,7 +23,7 @@ const bootstrap = async () => {
 
 type ReadItem = {
   tagId: number;
-  read: number;
+  read: string;
 };
 
 type WriteItem = {
@@ -109,7 +109,7 @@ const handleModbus = async (socket: Socket, device: Device, writeData: WriteItem
   console.log(jobId, '-', 'end reading', dayjs().format('HH:mm:ss:SSS'));
 };
 
-const readModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag): Promise<number> => {
+const readModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag): Promise<string> => {
   // FC1 "Read Coil Status"	readCoils(coil, len)
   // FC2 "Read Input Status"	readDiscreteInputs(addr, arg)
   // FC3 "Read Holding Registers"	readHoldingRegisters(addr, len)
@@ -129,26 +129,36 @@ const readModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag): 
     return readModbusBuffer(modelTag.dataType, result.buffer);
   }
 
-  return 0;
+  return '0';
 };
 
-const readModbusBuffer = (dataType: string, resultBuffer: Buffer): number => {
+const readModbusBuffer = (dataType: string, resultBuffer: Buffer): string => {
+  let result: number = 0;
+
   switch (dataType) {
     case 'int16':
     case 'int16s':
-      return resultBuffer.readInt16BE();
+      result = resultBuffer.readInt16BE();
+      break;
+
     case 'int16u':
-      return resultBuffer.readUInt16BE();
+      result = resultBuffer.readUInt16BE();
+      break;
+
     case 'int32':
     case 'int32s':
-      return resultBuffer.readInt32BE();
+      result = resultBuffer.readInt32BE();
+      break;
+
     case 'int32u':
-      return resultBuffer.readUInt32BE();
+      result = resultBuffer.readUInt32BE();
+      break;
+
     case 'float':
-      return resultBuffer.readFloatBE();
-    default:
-      return 0;
+      result = resultBuffer.readFloatBE();
   }
+
+  return String(result);
 };
 
 const writeModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag, value: any): Promise<void> => {
@@ -179,8 +189,8 @@ bootstrap()
       try {
         await wait(3000);
         const authResp = await axios.post<Token>('auth/login', {
-          email: 'admin@user.com',
-          password: 'P@ssword1',
+          email: API_USER,
+          password: API_PASS,
         });
 
         const { data: token } = authResp;
@@ -238,7 +248,7 @@ bootstrap()
         // TODO: support multiple sites???
         fs.readFile('./data/site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
           if (fileErr) {
-            console.error(fileErr);
+            console.error('site-infos.json is not found.');
             return;
           }
 
@@ -299,6 +309,7 @@ bootstrap()
 
         console.log('started syncing.');
         const devicesResp = await axios.get<Device[]>(`sites/${SITE_ID}/devices`);
+
         const { data: devices } = devicesResp;
         const siteJson = JSON.stringify(devices);
         fs.writeFile('./data/site-infos.json', siteJson, (fileErr) => {

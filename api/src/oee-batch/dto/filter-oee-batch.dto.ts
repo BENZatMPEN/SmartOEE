@@ -3,9 +3,6 @@ import { Type } from 'class-transformer';
 
 export class FilterOeeBatchDto {
   @IsString()
-  readonly search: string;
-
-  @IsString()
   readonly order: string;
 
   @IsString()

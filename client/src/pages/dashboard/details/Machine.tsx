@@ -10,18 +10,18 @@ import DashboardMachineTimeline from '../../../sections/dashboard/details/machin
 import axios from '../../../utils/axios';
 
 export default function Machine() {
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const [imgWidget, setImgWidget] = useState<Widget | null>(null);
 
   useEffect(() => {
-    if (!currentOee) {
+    if (!selectedOee) {
       setImgWidget(null);
       return;
     }
 
     (async () => {
-      const oeeMachines = currentOee.oeeMachines || [];
+      const oeeMachines = selectedOee.oeeMachines || [];
       if (oeeMachines.length > 0) {
         const oeeMachine = oeeMachines[0];
         const response = await axios.get<MachineType>(`/machines/${oeeMachine.machineId}`);
@@ -33,7 +33,7 @@ export default function Machine() {
       }
     })();
     // TODO: there will be multiple machine - use the machine from oeeBatch
-  }, [currentOee]);
+  }, [selectedOee]);
 
   return (
     <Box>

@@ -4,7 +4,7 @@ import { OeeStatus } from '../../@types/oee';
 import { AbilityContext } from '../../caslContext';
 import Page from '../../components/Page';
 import useWebSocket from '../../hooks/useWebSocket';
-import { getOeeStatus, updateOeeStatus } from '../../redux/actions/oeeAction';
+import { getOeeStatus, updateOeeStatus } from '../../redux/actions/oeeDashboardAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import DashboardHeader from '../../sections/dashboard/DashboardHeader';
 import DashboardOeeGridItem from '../../sections/dashboard/DashboardOeeGridItem';
@@ -15,7 +15,7 @@ export default function List() {
 
   const { ganttView } = useSelector((state: RootState) => state.userSite);
 
-  const { oeeStatus } = useSelector((state: RootState) => state.oee);
+  const { oeeStatus } = useSelector((state: RootState) => state.oeeDashboard);
 
   const dispatch = useDispatch();
 

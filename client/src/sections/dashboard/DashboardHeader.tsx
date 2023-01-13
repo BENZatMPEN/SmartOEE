@@ -7,7 +7,7 @@ import DashboardHeaderWidget from './DashboardHeaderWidget';
 export default function DashboardHeader() {
   const theme = useTheme();
 
-  const { oeeStatus } = useSelector((state: RootState) => state.oee);
+  const { oeeStatus } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { running, ended, standby, breakdown } = oeeStatus;
 

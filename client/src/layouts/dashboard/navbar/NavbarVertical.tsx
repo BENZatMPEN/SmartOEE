@@ -43,7 +43,7 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }: Props)
 
   const { groupAnalytics } = useSelector((state: RootState) => state.analytic);
 
-  const { allDashboard } = useSelector((state: RootState) => state.dashboard);
+  const { allDashboard } = useSelector((state: RootState) => state.userSite);
 
   const { pathname } = useLocation();
 

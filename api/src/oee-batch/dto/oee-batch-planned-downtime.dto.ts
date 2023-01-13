@@ -13,7 +13,7 @@ export class OeeBatchPlannedDowntimeDto {
 
   @IsNumber()
   @Type(() => Number)
-  readonly minutes: number;
+  readonly seconds: number;
 
   @IsNumber()
   @Type(() => Number)

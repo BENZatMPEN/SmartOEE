@@ -7,11 +7,11 @@ import { getColor } from '../../../../utils/colorHelper';
 import { getBatchStatus } from '../../../../utils/formatText';
 
 export default function DashboardMachineTimeline() {
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { batchTimeline } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { oeeCode } = currentOee || { oeeCode: '' };
+  const { oeeCode } = selectedOee || { oeeCode: '' };
 
   const [initOpt, setInitOpt] = useState<boolean>(false);
 

@@ -53,17 +53,18 @@ export class ProductService {
     });
   }
 
-  create(createDto: CreateProductDto, imageName: string): Promise<ProductEntity> {
+  create(createDto: CreateProductDto, imageName: string, siteId: number): Promise<ProductEntity> {
     return this.productRepository.save({
       ...createDto,
       imageName,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdateProductDto, imageName: string): Promise<ProductEntity> {
-    const updatingProduct = await this.productRepository.findOneBy({ id });
+  async update(id: number, updateDto: UpdateProductDto, imageName: string, siteId: number): Promise<ProductEntity> {
+    const updatingProduct = await this.productRepository.findOneBy({ id, siteId });
     const { imageName: existingImageName } = updatingProduct;
     if (imageName && existingImageName) {
       await this.fileService.deleteFile(existingImageName);
@@ -77,15 +78,15 @@ export class ProductService {
     });
   }
 
-  async delete(id: number): Promise<void> {
-    const product = await this.productRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const product = await this.productRepository.findOneBy({ id, siteId });
     product.deleted = true;
     product.updatedAt = new Date();
     await this.productRepository.save(product);
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const products = await this.productRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const products = await this.productRepository.findBy({ id: In(ids), siteId });
     await this.productRepository.save(
       products.map((product) => {
         product.deleted = true;

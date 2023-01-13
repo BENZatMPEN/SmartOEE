@@ -19,7 +19,7 @@ export default function DashboardDetailsControlPanel() {
 
   const dispatch = useDispatch();
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
@@ -38,13 +38,13 @@ export default function DashboardDetailsControlPanel() {
   const { toggle: openEndBatch, onOpen: onOpenEndBatch, onClose: onCloseEndBatch } = useToggle();
 
   const handleStartBatch = async () => {
-    if (!currentOee || !currentBatch) {
+    if (!selectedOee || !currentBatch) {
       return;
     }
 
     try {
       const response = await axios.put(`/oee-batches/${currentBatch.id}/start`, null, {
-        params: { oeeId: currentOee.id },
+        params: { oeeId: selectedOee.id },
       });
 
       const { data: batchStartedDate } = response;
@@ -59,14 +59,14 @@ export default function DashboardDetailsControlPanel() {
   };
 
   const handleStopBatch = async (endBatch: boolean) => {
-    if (!currentOee || !currentBatch || !endBatch) {
+    if (!selectedOee || !currentBatch || !endBatch) {
       onCloseEndBatch();
       return;
     }
 
     try {
       const response = await axios.put(`/oee-batches/${currentBatch.id}/end`, null, {
-        params: { oeeId: currentOee.id },
+        params: { oeeId: selectedOee.id },
       });
 
       const { data: toBeStopped } = response;
@@ -83,20 +83,20 @@ export default function DashboardDetailsControlPanel() {
   };
 
   const handleContinueBatch = async () => {
-    if (!currentOee || !currentBatch) {
+    if (!selectedOee || !currentBatch) {
       return;
     }
 
     try {
       await axios.put(`/oee-batches/${currentBatch.id}/remove-planned-downtime`, null, {
-        params: { oeeId: currentOee.id },
+        params: { oeeId: selectedOee.id },
       });
     } catch (error) {
       console.log(error);
     }
   };
 
-  if (!currentOee) {
+  if (!selectedOee) {
     return <></>;
   }
 
@@ -149,7 +149,7 @@ export default function DashboardDetailsControlPanel() {
           {query.get('batchId') && (
             <Button
               onClick={() => {
-                window.location.href = `/dashboard/${currentOee.id}`;
+                window.location.href = `/dashboard/${selectedOee.id}`;
               }}
             >
               Go to latest batch
@@ -160,7 +160,7 @@ export default function DashboardDetailsControlPanel() {
 
           <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
 
-          <DashboardDetailsCreateBatchDialog oee={currentOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
+          <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
 
           <DashboardDetailsEnableEditingBatchDialog
             oeeBatch={currentBatch}
@@ -174,7 +174,7 @@ export default function DashboardDetailsControlPanel() {
     <Stack spacing={3}>
       <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
 
-      <DashboardDetailsCreateBatchDialog oee={currentOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
+      <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
     </Stack>
   );
 }

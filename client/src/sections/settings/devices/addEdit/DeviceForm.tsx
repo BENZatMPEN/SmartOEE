@@ -43,8 +43,6 @@ export default function DeviceForm({ isEdit }: Props) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
-
   const { currentDevice, saveError } = useSelector((state: RootState) => state.device);
 
   const [formState, setFormState] = useState<FormState>(new FormState(true));
@@ -105,12 +103,7 @@ export default function DeviceForm({ isEdit }: Props) {
     const device =
       isEdit && currentDevice
         ? await dispatch(updateDevice(currentDevice.id, data))
-        : await dispatch(
-            createDevice({
-              ...data,
-              siteId: selectedSite?.id,
-            }),
-          );
+        : await dispatch(createDevice(data));
 
     if (device) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');

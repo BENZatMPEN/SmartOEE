@@ -38,9 +38,10 @@ export class DashboardService {
     return this.dashboardRepository.findOne({ where: { id, siteId, deleted: false } });
   }
 
-  async create(createDto: CreateDashboardDto): Promise<DashboardEntity> {
+  async create(createDto: CreateDashboardDto, siteId: number): Promise<DashboardEntity> {
     return await this.dashboardRepository.save({
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

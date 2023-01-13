@@ -10,8 +10,4 @@ export class CreateProductDto {
 
   @IsString()
   readonly remark: string;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 }

@@ -25,7 +25,6 @@ export type EditDevice = {
   stopped: boolean;
   deviceModelId: number | null;
   tags: DeviceTag[];
-  siteId?: number;
 };
 
 export type FilterDevice = {

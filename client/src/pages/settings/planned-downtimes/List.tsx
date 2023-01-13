@@ -13,7 +13,7 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterPlannedDowntime, PlannedDowntime } from '../../../@types/plannedDowntime';
+import { FilterPlannedDowntime } from '../../../@types/plannedDowntime';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -21,12 +21,17 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
+import {
+  deletePlannedDowntime,
+  deletePlannedDowntimes,
+  getPlannedDowntimePagedList,
+} from '../../../redux/actions/plannedDowntimeAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import {
   PlannedDowntimeTableRow,
   PlannedDowntimeTableToolbar,
 } from '../../../sections/settings/planned-downtimes/list';
-import axios from '../../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },
@@ -34,11 +39,6 @@ const TABLE_HEAD = [
   { id: 'timing', label: 'Timing', align: 'left' },
   { id: '' },
 ];
-
-type PlannedDowntimePagedList = {
-  list: PlannedDowntime[];
-  count: number;
-};
 
 export default function PlannedDowntimeList() {
   const {
@@ -62,11 +62,11 @@ export default function PlannedDowntimeList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<PlannedDowntimePagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.plannedDowntime);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -76,25 +76,15 @@ export default function PlannedDowntimeList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterPlannedDowntime = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterPlannedDowntime = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<PlannedDowntimePagedList>('/planned-downtimes', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getPlannedDowntimePagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -107,24 +97,14 @@ export default function PlannedDowntimeList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/planned-downtimes/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deletePlannedDowntime(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/planned-downtimes`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deletePlannedDowntimes(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {

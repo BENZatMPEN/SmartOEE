@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Checkbox,
   Divider,
   Grid,
   IconButton,
@@ -14,48 +13,89 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Alarm, AlarmCondition, AlarmEmailDataItem, AlarmLineData, initAlarmCondition } from '../../../../@types/alarm';
-import { Oee } from '../../../../@types/oee';
+import {
+  AlarmCondition,
+  AlarmEmailDataItem,
+  AlarmLineData,
+  EditAlarm,
+  initAlarmCondition,
+} from '../../../../@types/alarm';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFSelect, RHFSwitch, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE } from '../../../../constants';
-import { RootState, useSelector } from '../../../../redux/store';
+import { createAlarm, updateAlarm } from '../../../../redux/actions/alarmAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
 import { getAlarmType } from '../../../../utils/formatText';
+import OeeSelect from './OeeSelect';
 
-interface FormValuesProps extends Partial<Alarm> {
+interface FormValuesProps extends EditAlarm {
   emails: AlarmEmailDataItem[];
   line: AlarmLineData;
 }
 
 type Props = {
   isEdit: boolean;
-  currentAlarm: Alarm | null;
 };
 
 const initLineData = {
   token: '',
 };
 
-type OptionItem = {
-  id: number;
-  name: string;
-};
+class FormState {
+  constructor(isOeeOptionLoading: boolean) {
+    this.isOeeOptionLoading = isOeeOptionLoading;
+  }
 
-export default function AlarmForm({ isEdit, currentAlarm }: Props) {
+  isOeeOptionLoading: boolean;
+
+  isReady(): boolean {
+    return !this.isOeeOptionLoading;
+  }
+}
+
+export default function AlarmForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
+
+  const { currentAlarm, saveError } = useSelector((state: RootState) => state.alarm);
+
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
-
   const { enqueueSnackbar } = useSnackbar();
+
+  const [formState, setFormState] = useState<FormState>(new FormState(true));
+
+  const [formValues, setFormValues] = useState<FormValuesProps | undefined>(undefined);
+
+  useEffect(() => {
+    if (formState.isReady()) {
+      setFormValues({
+        name: currentAlarm?.name || '',
+        type: currentAlarm?.type || ALARM_TYPE_EMAIL,
+        notify: currentAlarm ? currentAlarm.notify : true,
+        emails: currentAlarm
+          ? currentAlarm.type === ALARM_TYPE_EMAIL
+            ? (currentAlarm.data as AlarmEmailDataItem[])
+            : []
+          : [],
+        line: currentAlarm
+          ? currentAlarm.type === ALARM_TYPE_LINE
+            ? (currentAlarm.data as AlarmLineData)
+            : initLineData
+          : initLineData,
+        condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
+        data: null,
+      });
+    }
+  }, [formState, currentAlarm]);
 
   const NewAlarmSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -76,35 +116,20 @@ export default function AlarmForm({ isEdit, currentAlarm }: Props) {
     }),
   });
 
-  const defaultValues = useMemo(
-    () => ({
-      name: currentAlarm?.name || '',
-      type: currentAlarm?.type || ALARM_TYPE_EMAIL,
-      notify: currentAlarm ? currentAlarm.notify : true,
-      siteId: currentAlarm?.siteId || selectedSite?.id,
-      emails: currentAlarm
-        ? currentAlarm.type === ALARM_TYPE_EMAIL
-          ? (currentAlarm.data as AlarmEmailDataItem[])
-          : []
-        : [],
-      line: currentAlarm
-        ? currentAlarm.type === ALARM_TYPE_LINE
-          ? (currentAlarm.data as AlarmLineData)
-          : initLineData
-        : initLineData,
-      condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentAlarm],
-  );
-
   const methods = useForm<FormValuesProps>({
     resolver: yupResolver(NewAlarmSchema),
-    defaultValues,
+    defaultValues: {
+      name: '',
+      type: ALARM_TYPE_EMAIL,
+      notify: true,
+      emails: [],
+      line: initLineData,
+      condition: initAlarmCondition,
+    },
+    values: formValues,
   });
 
   const {
-    reset,
     watch,
     control,
     getValues,
@@ -120,63 +145,48 @@ export default function AlarmForm({ isEdit, currentAlarm }: Props) {
 
   const values = watch();
 
-  useEffect(() => {
-    if (isEdit && currentAlarm) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentAlarm]);
-
   const onSubmit = async (data: FormValuesProps) => {
     try {
       const { emails, line, ...dto } = data;
-      let alarm: Alarm;
-
       if (dto.type === ALARM_TYPE_EMAIL) {
         dto.data = emails;
       } else if (dto.type === ALARM_TYPE_LINE) {
         dto.data = line;
       }
 
-      if (isEdit && currentAlarm) {
-        await axios.put<Alarm>(`/alarms/${currentAlarm.id}`, dto);
-      } else {
-        await axios.post<Alarm>(`/alarms`, dto);
-      }
+      const alarm =
+        isEdit && currentAlarm ? await dispatch(updateAlarm(currentAlarm.id, dto)) : await dispatch(createAlarm(dto));
 
-      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      navigate(PATH_SETTINGS.alarms.root);
+      if (alarm) {
+        enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+        navigate(PATH_SETTINGS.alarms.root);
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
+
   const onTypeChanged = (type: string) => {
     setValue('type', type);
   };
-
-  const [oeeOpts, setOeeOpts] = useState<OptionItem[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await axios.get<Oee[]>(`/oees/all`);
-        const { data: oees } = response;
-
-        setOeeOpts(
-          oees.map((oee) => ({
-            id: oee.id,
-            name: oee.productionName,
-          })),
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-  }, []);
 
   const handleOEEsSelected = (values: number[]): void => {
     const condition = getValues('condition') as AlarmCondition;
@@ -266,43 +276,16 @@ export default function AlarmForm({ isEdit, currentAlarm }: Props) {
           </Grid>
 
           <Grid item md={12}>
-            <RHFSelect
+            <OeeSelect
               name="oees"
               label="Productions"
-              fullWidth
-              SelectProps={{
-                native: false,
-                multiple: true,
-                value: values.condition?.oees || [],
-                renderValue: (selected: any) => (
-                  <>
-                    {oeeOpts
-                      .filter((item) => selected.indexOf(item.id) > -1)
-                      .map((item) => item.name)
-                      .join(', ')}
-                  </>
-                ),
-                onChange: (event) => {
-                  handleOEEsSelected(event.target.value as number[]);
-                },
+              selectedValues={values.condition?.oees || []}
+              onSelected={(selectedIds) => handleOEEsSelected(selectedIds)}
+              onLoading={(isLoading) => {
+                formState.isOeeOptionLoading = isLoading;
+                setFormState(formState);
               }}
-            >
-              {oeeOpts.map((item) => (
-                <MenuItem
-                  key={item.id}
-                  value={item.id}
-                  sx={{
-                    mx: 1,
-                    my: 0.5,
-                    borderRadius: 0.75,
-                    typography: 'body2',
-                  }}
-                >
-                  <Checkbox checked={(values.condition?.oees || []).indexOf(item.id) > -1} />
-                  {item.name}
-                </MenuItem>
-              ))}
-            </RHFSelect>
+            />
           </Grid>
 
           <Grid item md={12}>

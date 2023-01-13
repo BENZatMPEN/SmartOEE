@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateDeviceModelDto } from './dto/create-device-model.dto';
 import { FilterDeviceModelDto } from './dto/filter-device-model.dto';
 import { UpdateDeviceModelDto } from './dto/update-device-model.dto';
@@ -56,10 +56,11 @@ export class DeviceModelService {
     });
   }
 
-  async create(createDto: CreateDeviceModelDto): Promise<DeviceModelEntity> {
+  async create(createDto: CreateDeviceModelDto, siteId: number): Promise<DeviceModelEntity> {
     const { tags, ...dto } = createDto;
     const createdModel = await this.deviceModelRepository.save({
       ...dto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

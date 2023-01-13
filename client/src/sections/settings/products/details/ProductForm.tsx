@@ -1,34 +1,32 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Grid, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditProduct, Product } from '../../../../@types/product';
+import { EditProduct } from '../../../../@types/product';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFEditor, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
-import { RootState, useSelector } from '../../../../redux/store';
+import { createProduct, updateProduct } from '../../../../redux/actions/productAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
 import { getFileUrl } from '../../../../utils/imageHelper';
 
 type Props = {
   isEdit: boolean;
-  currentProduct: Product | null;
 };
 
-export default function ProductForm({ isEdit, currentProduct }: Props) {
-  const theme = useTheme();
-
+export default function ProductForm({ isEdit }: Props) {
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const dispatch = useDispatch();
+
+  const { currentProduct, saveError } = useSelector((state: RootState) => state.product);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -60,43 +58,71 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
   } = methods;
 
   const onSubmit = async (data: EditProduct) => {
-    try {
-      if (isEdit && currentProduct) {
-        await axios.put<Product>(`/products/${currentProduct.id}`, data, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } else {
-        await axios.post<Product>(
-          `/products`,
-          { ...data, siteId: selectedSite?.id },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
-      }
+    const product =
+      isEdit && currentProduct
+        ? await dispatch(updateProduct(currentProduct.id, data))
+        : await dispatch(createProduct(data));
 
+    if (product) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.products.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          if (Array.isArray(error.response?.data.message)) {
-            for (const item of error.response?.data.message) {
+    }
+
+    // try {
+    //   if (isEdit && currentProduct) {
+    //     await axios.put<Product>(`/products/${currentProduct.id}`, data, {
+    //       headers: {
+    //         'Content-Type': 'multipart/form-data',
+    //       },
+    //     });
+    //   } else {
+    //     await axios.post<Product>(
+    //       `/products`,
+    //       { ...data, siteId: selectedSite?.id },
+    //       {
+    //         headers: {
+    //           'Content-Type': 'multipart/form-data',
+    //         },
+    //       },
+    //     );
+    //   }
+    //
+    //   enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+    //   navigate(PATH_SETTINGS.products.root);
+    // } catch (error) {
+    //   if (error instanceof AxiosError) {
+    //     if ('message' in error.response?.data) {
+    //       if (Array.isArray(error.response?.data.message)) {
+    //         for (const item of error.response?.data.message) {
+    //           enqueueSnackbar(item, { variant: 'error' });
+    //         }
+    //       } else {
+    //         enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+    //       }
+    //       return;
+    //     }
+    //     enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+    //   }
+    // }
+  };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
               enqueueSnackbar(item, { variant: 'error' });
             }
           } else {
-            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
           }
-          return;
         }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
     }
-  };
+  }, [enqueueSnackbar, saveError]);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -131,8 +157,8 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
         }
       />
 
-      <Stack spacing={theme.spacing(3)}>
-        <Grid container spacing={theme.spacing(3)}>
+      <Stack spacing={3}>
+        <Grid container spacing={3}>
           <Grid item xs={4}>
             <RHFUploadSingleFile
               name="image"
@@ -144,9 +170,9 @@ export default function ProductForm({ isEdit, currentProduct }: Props) {
           </Grid>
 
           <Grid item xs={8}>
-            <Grid container spacing={theme.spacing(3)}>
+            <Grid container spacing={3}>
               <Grid item xs={6}>
-                <Stack spacing={theme.spacing(3)}>
+                <Stack spacing={3}>
                   <RHFTextField name="sku" label="SKU Code" />
                 </Stack>
               </Grid>

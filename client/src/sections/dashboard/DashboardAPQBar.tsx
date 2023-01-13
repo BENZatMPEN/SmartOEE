@@ -10,13 +10,14 @@ export default function DashboardAPQBar() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
   const percentSettings =
-    (currentOee?.useSitePercentSettings || true ? selectedSite?.defaultPercentSettings : currentOee?.percentSettings) ||
-    initialPercentSettings;
+    (selectedOee?.useSitePercentSettings || true
+      ? selectedSite?.defaultPercentSettings
+      : selectedOee?.percentSettings) || initialPercentSettings;
   const aPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_A)[0];
   const pPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_P)[0];
   const qPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_Q)[0];

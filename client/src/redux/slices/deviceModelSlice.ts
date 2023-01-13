@@ -3,11 +3,10 @@ import { DeviceModel, DeviceModelPagedList } from '../../@types/deviceModel';
 
 export type DeviceModelState = {
   isLoading: boolean;
-  error: any | string | null;
+  error: any | null;
   pagedList: DeviceModelPagedList;
-  isDetailsLoading: boolean;
   currentDeviceModel: DeviceModel | null;
-  detailsError: any | string | null;
+  saveError: any | null;
 };
 
 const initialState: DeviceModelState = {
@@ -17,9 +16,8 @@ const initialState: DeviceModelState = {
     list: [],
     count: 0,
   },
-  isDetailsLoading: false,
   currentDeviceModel: null,
-  detailsError: null,
+  saveError: null,
 };
 
 const deviceModelSlice = createSlice({
@@ -28,6 +26,7 @@ const deviceModelSlice = createSlice({
   reducers: {
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
     },
     hasError(state, action) {
       state.isLoading = false;
@@ -37,25 +36,17 @@ const deviceModelSlice = createSlice({
       state.isLoading = false;
       state.pagedList = action.payload;
     },
-    startDetailsLoading(state) {
-      state.isDetailsLoading = true;
+    startSavingError(state) {
+      state.saveError = null;
     },
-    hasDetailsError(state, action) {
-      state.isDetailsLoading = false;
-      state.detailsError = action.payload;
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
     emptyCurrentDeviceModel(state) {
       state.currentDeviceModel = null;
     },
     getDeviceModelDetailsSuccess(state, action) {
-      state.isDetailsLoading = false;
       state.currentDeviceModel = action.payload;
-    },
-    createDeviceModelSuccess(state) {
-      state.isDetailsLoading = false;
-    },
-    updateDeviceModelSuccess(state) {
-      state.isDetailsLoading = false;
     },
   },
 });

@@ -3,12 +3,10 @@ import { Dashboard, DashboardPagedList } from '../../@types/dashboard';
 
 export type DashboardState = {
   isLoading: boolean;
-  error: any | string | null;
+  error: any | null;
   pagedList: DashboardPagedList;
-  isDetailsLoading: boolean;
   currentDashboard: Dashboard | null;
-  detailsError: any | string | null;
-  allDashboard: Dashboard[];
+  saveError: any | null;
 };
 
 const initialState: DashboardState = {
@@ -18,10 +16,8 @@ const initialState: DashboardState = {
     list: [],
     count: 0,
   },
-  allDashboard: [],
-  isDetailsLoading: false,
   currentDashboard: null,
-  detailsError: null,
+  saveError: null,
 };
 
 const dashboardSlice = createSlice({
@@ -30,6 +26,7 @@ const dashboardSlice = createSlice({
   reducers: {
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
     },
     hasError(state, action) {
       state.isLoading = false;
@@ -39,36 +36,17 @@ const dashboardSlice = createSlice({
       state.isLoading = false;
       state.pagedList = action.payload;
     },
-    getAllDashboardsSuccess(state, action) {
-      state.isLoading = false;
-      state.allDashboard = action.payload;
+    startSavingError(state) {
+      state.saveError = null;
     },
-    startDetailsLoading(state) {
-      state.isDetailsLoading = true;
-    },
-    hasDetailsError(state, action) {
-      state.isDetailsLoading = false;
-      state.detailsError = action.payload;
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
     emptyCurrentDashboard(state) {
       state.currentDashboard = null;
     },
     getDashboardDetailsSuccess(state, action) {
-      state.isDetailsLoading = false;
       state.currentDashboard = action.payload;
-    },
-    createDashboardSuccess(state, action) {
-      state.isDetailsLoading = false;
-      state.allDashboard = [...state.allDashboard, action.payload];
-    },
-    updateDashboardSuccess(state, action) {
-      state.isDetailsLoading = false;
-
-      const { id } = action.payload;
-      const tmp = [...state.allDashboard];
-      const itemIdx = tmp.findIndex((item) => item.id === id);
-      tmp[itemIdx] = action.payload;
-      state.allDashboard = [...tmp];
     },
   },
 });

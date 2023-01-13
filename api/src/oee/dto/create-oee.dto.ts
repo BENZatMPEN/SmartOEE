@@ -29,10 +29,6 @@ export class CreateOeeDto {
   @Type(() => Number)
   readonly breakdownSeconds: number;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
-
   @IsArray()
   @Type(() => OeeTag)
   readonly tags: OeeTag[];

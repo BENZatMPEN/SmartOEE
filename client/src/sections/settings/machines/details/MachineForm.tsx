@@ -1,14 +1,13 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditMachine, Machine, MachineParameter } from '../../../../@types/machine';
+import { EditMachine, MachineParameter } from '../../../../@types/machine';
 import { Widget } from '../../../../@types/widget';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -17,7 +16,8 @@ import Iconify from '../../../../components/Iconify';
 import { LoadableWidget } from '../../../../components/widget/LoadableWidget';
 import { OEE_TYPE_A, OEE_TYPE_P, OEE_TYPE_Q } from '../../../../constants';
 import useToggle from '../../../../hooks/useToggle';
-import { RootState, useSelector } from '../../../../redux/store';
+import { createMachine, updateMachine } from '../../../../redux/actions/machineAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
 import { getFileUrl } from '../../../../utils/imageHelper';
@@ -26,25 +26,25 @@ import MachineParameterDialog from './MachineParameterDialog';
 import MachineParamPList from './MachineParamPList';
 import MachineParamQList from './MachineParamQList';
 
-interface FormValuesProps extends Partial<EditMachine> {
+interface FormValuesProps extends EditMachine {
   aParams: MachineParameter[];
   pParams: MachineParameter[];
   qParams: MachineParameter[];
+  widgets: Widget[];
 }
 
 type Props = {
   isEdit: boolean;
-  currentMachine: Machine | null;
 };
 
 const defaultWidget: Widget[] = [{ id: 0, type: 'image', data: null, deviceId: null, tagId: null } as Widget];
 
-export default function MachineForm({ isEdit, currentMachine }: Props) {
-  const theme = useTheme();
+export default function MachineForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
+
+  const { currentMachine, saveError } = useSelector((state: RootState) => state.machine);
 
   const navigate = useNavigate();
-
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -77,6 +77,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
       aParams: [],
       pParams: [],
       qParams: [],
+      parameters: [],
       widgets: defaultWidget,
       image: null,
     },
@@ -85,6 +86,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
       name: currentMachine?.name || '',
       location: currentMachine?.location || '',
       remark: currentMachine?.remark || '',
+      parameters: currentMachine?.parameters || [],
       aParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_A) || [],
       pParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_P) || [],
       qParams: currentMachine?.parameters?.filter((item) => item.oeeType === OEE_TYPE_Q) || [],
@@ -108,47 +110,39 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
   const values = watch();
 
   const onSubmit = async (data: FormValuesProps) => {
-    try {
-      const { aParams, pParams, qParams, widgets, ...dto } = data;
-      dto.parameters = [...aParams, ...pParams, ...qParams];
-      let machine: Machine;
+    const { aParams, pParams, qParams, widgets, ...dto } = data;
+    dto.parameters = [...aParams, ...pParams, ...qParams];
 
-      if (isEdit && currentMachine) {
-        const response = await axios.put<Machine>(`/machines/${currentMachine.id}`, dto, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        machine = response.data;
-      } else {
-        const response = await axios.post<Machine>(
-          `/machines`,
-          { ...dto, siteId: selectedSite?.id },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
-        machine = response.data;
-      }
+    const machine =
+      isEdit && currentMachine
+        ? await dispatch(updateMachine(currentMachine.id, dto))
+        : await dispatch(createMachine(dto));
 
+    if (machine) {
       await axios.post(`/machines/${machine.id}/widgets`, { machineId: machine.id, widgets });
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.machines.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          for (const item of error.response?.data.message) {
-            enqueueSnackbar(item, { variant: 'error' });
-          }
-          return;
-        }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
-      }
     }
   };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -261,7 +255,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
             <Grid item xs={8}>
               <Card>
                 <CardContent>
-                  <Grid container spacing={theme.spacing(3)}>
+                  <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                       <RHFTextField name="code" label="Machine Code" />
                     </Grid>
@@ -280,7 +274,7 @@ export default function MachineForm({ isEdit, currentMachine }: Props) {
                     </Grid>
 
                     <Grid item xs={12} md={6}>
-                      <Stack spacing={theme.spacing(3)}>
+                      <Stack spacing={3}>
                         <Button variant="contained" onClick={onOpenWidget}>
                           Set Machine Status Images
                         </Button>

@@ -20,7 +20,7 @@ const samplingOpts = [900, 1800, 3600];
 export default function DashboardOeeGraphRealtime() {
   const dispatch = useDispatch();
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch, batchStatsTime, batchStatsLine } = useSelector((state: RootState) => state.oeeBatch);
 
@@ -200,7 +200,7 @@ export default function DashboardOeeGraphRealtime() {
         ],
       },
       title: {
-        text: chartTitle(currentBatch, batchStatsTime, currentOee?.productionName || ''),
+        text: chartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
         align: 'center',
       },
     });
@@ -234,7 +234,7 @@ export default function DashboardOeeGraphRealtime() {
         categories: batchStatsLine.map((item) => item.timestamp.getTime()),
       },
       title: {
-        text: chartTitle(currentBatch, batchStatsTime, currentOee?.productionName || ''),
+        text: chartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
         align: 'center',
       },
     });

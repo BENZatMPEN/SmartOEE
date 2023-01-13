@@ -21,7 +21,7 @@ export class DeviceTagDto {
   readonly updateInterval: string;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   readonly record: boolean;
 
   @IsNumber()

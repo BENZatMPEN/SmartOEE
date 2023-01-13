@@ -39,7 +39,7 @@ export default function History() {
 
   const dispatch = useDispatch();
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { batchPagedList } = useSelector((state: RootState) => state.oeeBatch);
 
@@ -55,28 +55,22 @@ export default function History() {
   const refreshData = async () => {
     setIsLoading(true);
 
-    if (!currentOee) {
+    if (!selectedOee) {
       setPage(0);
       setIsLoading(false);
       return;
     }
 
-    try {
-      const filter: FilterOeeBatch = {
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-        oeeId: currentOee.id,
-      };
+    const filter: FilterOeeBatch = {
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+      oeeId: selectedOee.id,
+    };
 
-      await dispatch(getOeeBatchPagedList(filter));
-      setIsLoading(false);
-    } catch (error) {
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getOeeBatchPagedList(filter));
+    setIsLoading(false);
   };
 
   const handleExportRow = async (id: number) => {

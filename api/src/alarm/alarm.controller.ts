@@ -42,8 +42,8 @@ export class AlarmController {
   }
 
   @Post()
-  create(@Body() createDto: CreateAlarmDto): Promise<AlarmEntity> {
-    return this.alarmService.create(createDto);
+  create(@Body() createDto: CreateAlarmDto, @Query('siteId') siteId: number): Promise<AlarmEntity> {
+    return this.alarmService.create(createDto, siteId);
   }
 
   @Put(':id')

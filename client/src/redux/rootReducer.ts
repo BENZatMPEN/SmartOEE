@@ -1,17 +1,22 @@
 import { combineReducers } from 'redux';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import alarmReducer from './reducers/alarmReducer';
 import analyticReducer from './reducers/analyticReducer';
 import authReducer from './reducers/authReducer';
 import dashboardReducer from './reducers/dashboardReducer';
 import deviceModelReducer from './reducers/deviceModelReducer';
 import deviceReducer from './reducers/deviceReducer';
+import machineReducer from './reducers/machineReducer';
 import oeeBatchReducer from './reducers/oeeBatchReducer';
+import oeeDashboardReducer from './reducers/oeeDashboardReducer';
 import oeeReducer from './reducers/oeeReducer';
+import plannedDowntimeReducer from './reducers/plannedDowntimeReducer';
+import productReducer from './reducers/productReducer';
 import roleReducer from './reducers/roleReducer';
-import userSiteReducer from './reducers/userSiteReducer';
-import userReducer from './reducers/userReducer';
 import siteReducer from './reducers/siteReducer';
+import userReducer from './reducers/userReducer';
+import userSiteReducer from './reducers/userSiteReducer';
 import calendarReducer from './slices/calendar';
 
 const rootPersistConfig = {
@@ -75,6 +80,11 @@ const rootReducer = combineReducers({
   oee: oeeReducer,
   oeeBatch: oeeBatchReducer,
   analytic: analyticReducer,
+  plannedDowntime: plannedDowntimeReducer,
+  alarm: alarmReducer,
+  product: productReducer,
+  machine: machineReducer,
+  oeeDashboard: oeeDashboardReducer,
   calendar: calendarReducer,
 });
 

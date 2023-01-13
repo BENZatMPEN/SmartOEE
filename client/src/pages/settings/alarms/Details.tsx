@@ -1,13 +1,21 @@
 import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Alarm } from '../../../@types/alarm';
 import Page from '../../../components/Page';
+import { emptyCurrentAlarm, getAlarm } from '../../../redux/actions/alarmAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import AlarmForm from '../../../sections/settings/alarms/details/AlarmForm';
-import axios from '../../../utils/axios';
 
 export default function AlarmDetails() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentAlarm, error } = useSelector((state: RootState) => state.alarm);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,29 +26,33 @@ export default function AlarmDetails() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<Alarm | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<Alarm>(`/alarms/${id}`);
-          setModel(response.data);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
+      if (isEdit || isDuplicate) {
+        await dispatch(getAlarm(Number(id)));
+      }
+    })();
+
+    return () => {
+      dispatch(emptyCurrentAlarm());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
           navigate(PATH_SETTINGS.alarms.root);
         }
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={model ? 'Alarm Settings: Edit Alarm' : 'Alarm Settings: Create Alarm'}>
+    <Page title={currentAlarm ? 'Alarm Settings: Edit Alarm' : 'Alarm Settings: Create Alarm'}>
       <Container maxWidth={false}>
-        <AlarmForm isEdit={isEdit} currentAlarm={model} />
+        <AlarmForm isEdit={isEdit} />
       </Container>
     </Page>
   );

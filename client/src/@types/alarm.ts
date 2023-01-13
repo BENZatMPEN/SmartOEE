@@ -10,6 +10,14 @@ export type Alarm = {
   updatedAt: Date;
 };
 
+export interface EditAlarm {
+  type: string;
+  name: string;
+  notify: boolean;
+  data: any | null;
+  condition: AlarmCondition;
+}
+
 export type FilterAlarm = {
   search: string;
   order: string;
@@ -48,4 +56,9 @@ export type AlarmEmailDataItem = {
 
 export type AlarmLineData = {
   token: string;
+};
+
+export type AlarmPagedList = {
+  list: Alarm[];
+  count: number;
 };

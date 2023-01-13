@@ -28,8 +28,8 @@ export class DeviceModelController {
   }
 
   @Post()
-  create(@Body() createDto: CreateDeviceModelDto): Promise<DeviceModelEntity> {
-    return this.deviceModelService.create(createDto);
+  create(@Body() createDto: CreateDeviceModelDto, @Query('siteId') siteId: number): Promise<DeviceModelEntity> {
+    return this.deviceModelService.create(createDto, siteId);
   }
 
   @Put(':id')

@@ -19,9 +19,9 @@ export default function DashboardApgGraphQ() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { useSitePercentSettings, percentSettings } = currentOee || {
+  const { useSitePercentSettings, percentSettings } = selectedOee || {
     useSitePercentSettings: true,
   };
 

@@ -22,16 +22,14 @@ export type MachineParameter = {
   tagId: number | null;
 };
 
-export type EditMachine = {
+export interface EditMachine {
   code: string;
   name: string;
   location: string;
   remark: string;
   image: File | null;
   parameters: MachineParameter[];
-  widgets: Widget[];
-  siteId?: number;
-};
+}
 
 export type FilterMachine = {
   search: string;
@@ -40,4 +38,9 @@ export type FilterMachine = {
   page: number;
   rowsPerPage: number;
   siteId?: number;
+};
+
+export type MachinePagedList = {
+  list: Machine[];
+  count: number;
 };

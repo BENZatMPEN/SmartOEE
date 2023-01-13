@@ -1,7 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Box, Card, CardContent, Grid, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
@@ -25,23 +24,22 @@ import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicke
 import Iconify from '../../../../components/Iconify';
 import { GOOGLE_MAPS_KEY } from '../../../../config';
 import { defaultMaps, initialPercentSettings } from '../../../../constants';
-import axios from '../../../../utils/axios';
+import { updateSite } from '../../../../redux/actions/siteAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import SitePercentSettings from './SitePercentSettings';
-
-interface Props {
-  currentSite: Site;
-}
 
 interface MapProps {
   map: any;
   maps: any;
 }
 
-export default function SiteForm({ currentSite }: Props) {
-  const theme = useTheme();
+export default function SiteForm() {
+  const dispatch = useDispatch();
 
   const { enqueueSnackbar } = useSnackbar();
+
+  const { currentSite, saveError } = useSelector((state: RootState) => state.site);
 
   const [mapApi, setMapApi] = useState<MapProps>({ map: null, maps: null });
 
@@ -94,41 +92,40 @@ export default function SiteForm({ currentSite }: Props) {
   const values = watch();
 
   useEffect(() => {
-    console.log(currentSite);
     handleLocationChange();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSite]);
 
   const onSubmit = async (data: EditSite) => {
-    data.cutoffTime = dayjs(data.cutoffTime).startOf('m').toDate();
-    try {
-      await axios.request<Site>({
-        method: 'put',
-        url: `/sites/${currentSite?.id}`,
-        data: data,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    let site: Site | null = null;
 
+    if (currentSite) {
+      site = await dispatch(updateSite(currentSite.id, data));
+    }
+
+    if (site) {
       enqueueSnackbar('Update success!');
       window.location.reload();
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          if (Array.isArray(error.response?.data.message)) {
-            for (const item of error.response?.data.message) {
+    }
+  };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
               enqueueSnackbar(item, { variant: 'error' });
             }
           } else {
-            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
           }
-          return;
         }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
     }
-  };
+  }, [enqueueSnackbar, saveError]);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -230,7 +227,7 @@ export default function SiteForm({ currentSite }: Props) {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Stack spacing={theme.spacing(3)}>
+          <Stack spacing={3}>
             <Card>
               <CardContent>
                 <Grid container spacing={3}>
@@ -266,7 +263,7 @@ export default function SiteForm({ currentSite }: Props) {
 
             <Card>
               <CardContent>
-                <Stack spacing={theme.spacing(2)}>
+                <Stack spacing={2}>
                   {values.defaultPercentSettings.map((percentSetting) => (
                     <SitePercentSettings
                       key={percentSetting.type}
@@ -280,7 +277,7 @@ export default function SiteForm({ currentSite }: Props) {
 
             <Card>
               <CardContent>
-                <Grid container spacing={theme.spacing(3)}>
+                <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
                     <RHFTextField
                       type="number"

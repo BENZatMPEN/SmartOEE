@@ -7,8 +7,4 @@ export class CreateDashboardDto {
 
   @IsString()
   readonly link: string;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 }

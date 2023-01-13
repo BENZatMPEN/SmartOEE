@@ -52,8 +52,12 @@ export class ProductController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(@Body() createDto: CreateProductDto, @UploadedFile(FileSavePipe) image: string): Promise<ProductEntity> {
-    return this.productService.create(createDto, image);
+  create(
+    @Body() createDto: CreateProductDto,
+    @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
+  ): Promise<ProductEntity> {
+    return this.productService.create(createDto, image, siteId);
   }
 
   @Put(':id')
@@ -62,17 +66,21 @@ export class ProductController {
     @Param('id') id: number,
     @Body() updateDto: UpdateProductDto,
     @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
   ): Promise<ProductEntity> {
-    return this.productService.update(id, updateDto, image);
+    return this.productService.update(id, updateDto, image, siteId);
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: number): Promise<void> {
-    await this.productService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.productService.delete(id, siteId);
   }
 
   @Delete()
-  async deleteMany(@Query('ids', new ParseArrayPipe({ items: Number })) ids: number[]): Promise<void> {
-    await this.productService.deleteMany(ids);
+  async deleteMany(
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.productService.deleteMany(ids, siteId);
   }
 }

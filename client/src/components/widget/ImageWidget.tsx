@@ -24,7 +24,7 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
 
   const { setWidgetDialog } = useWidgetDialog();
 
-  const [tagValue, setTagValue] = useState<string>('');
+  const [tagValue, setTagValue] = useState<string>('0');
 
   const canOpenDialog = canEdit && open && onClose && onSave;
 
@@ -51,6 +51,7 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
     };
 
     const emitter = Emitter.on(`tagReads_${widget.tagId}`, mapRead);
+
     return () => {
       emitter.off(`tagReads_${widget.tagId}`, mapRead);
     };
@@ -77,9 +78,10 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
     <>
       {widgetProps.imageValues
         .filter((item) => item.value === tagValue)
-        .map((item) => (
-          <Image key={item.value} src={`data:image/jpeg;base64,${item.image}`} {...other} />
-        ))}
+        .map((item) => {
+          // TODO: change to proper mime
+          return <Image key={item.value} src={`data:image/jpeg;base64,${item.image}`} {...other} />;
+        })}
     </>
   );
 }

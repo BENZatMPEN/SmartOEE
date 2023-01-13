@@ -1,6 +1,6 @@
 import { DeviceTagDto } from './device-tag.dto';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class CreateDeviceDto {
   @IsString()
@@ -26,12 +26,8 @@ export class CreateDeviceDto {
   readonly port: number;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   readonly stopped: boolean;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 
   @IsArray()
   @Type(() => DeviceTagDto)

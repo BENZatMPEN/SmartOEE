@@ -13,17 +13,17 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterOee, Oee, OeePagedList } from '../../../@types/oee';
+import { FilterOee } from '../../../@types/oee';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
 import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import useTable from '../../../hooks/useTable';
-import { RootState, useSelector } from '../../../redux/store';
+import { deleteOee, deleteOees, getOeePagedList } from '../../../redux/actions/oeeAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { OEETableRow, OEETableToolbar } from '../../../sections/settings/oee/list';
-import axios from '../../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'oeeCode', label: 'OEE Code', align: 'left' },
@@ -56,11 +56,11 @@ export default function OEEList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<OeePagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.oee);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -70,24 +70,15 @@ export default function OEEList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterOee = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
-      const response = await axios.get<OeePagedList>('/oees', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    const filter: FilterOee = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
+
+    await dispatch(getOeePagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -100,24 +91,14 @@ export default function OEEList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/oees/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteOee(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/oees`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteOees(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {

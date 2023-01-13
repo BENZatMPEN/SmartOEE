@@ -11,7 +11,7 @@ import DashboardDetailsStatus from './DashboardDetailsStatus';
 export default function DashboardDetailsPanel() {
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
@@ -23,11 +23,11 @@ export default function DashboardDetailsPanel() {
     () =>
       getPercentSettingsByType(
         selectedSite,
-        currentOee?.percentSettings || [],
-        currentOee?.useSitePercentSettings || true,
+        selectedOee?.percentSettings || [],
+        selectedOee?.useSitePercentSettings || true,
         OEE_TYPE_OEE,
       ),
-    [selectedSite, currentOee],
+    [selectedSite, selectedOee],
   );
 
   return (

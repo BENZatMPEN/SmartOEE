@@ -64,11 +64,12 @@ export class MachineService {
   //   return null;
   // }
 
-  async create(createDto: CreateMachineDto, imageName: string): Promise<MachineEntity> {
+  async create(createDto: CreateMachineDto, imageName: string, siteId: number): Promise<MachineEntity> {
     const { parameters, ...dto } = createDto;
     const machine = await this.machineRepository.save({
       ...dto,
       imageName,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

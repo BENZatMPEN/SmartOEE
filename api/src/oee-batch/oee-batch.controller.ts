@@ -18,9 +18,6 @@ import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorators/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id.pipe';
-import { SiteEntity } from '../common/entities/site-entity';
 import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
 import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
 import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
@@ -32,7 +29,6 @@ import * as XLSX from 'xlsx';
 import { OEE_BATCH_HISTORY_TYPE_EDIT, OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../common/constant';
 import { OeeBatchHistoryEdit } from '../common/type/oee-batch-history-edit';
 import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history-entity';
-import * as dayjs from 'dayjs';
 import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
 import { fNumber2 } from '../common/utils/formatNumber';
 import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
@@ -45,16 +41,12 @@ export class OeeBatchController {
   constructor(private readonly oeeBatchService: OeeBatchService) {}
 
   @Get()
-  findPagedList(
-    @Query() filterDto: FilterOeeBatchDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<OeeBatchEntity>> {
+  findPagedList(@Query() filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatchEntity>> {
     return this.oeeBatchService.findPagedList(filterDto);
   }
 
   @Get('options')
-  findAllOee(@ReqDec(SiteIdPipe) siteId: number): Promise<OptionItem[]> {
+  findAllOee(@Query('siteId') siteId: number): Promise<OptionItem[]> {
     return this.oeeBatchService.findOptions(siteId);
   }
 
@@ -67,8 +59,7 @@ export class OeeBatchController {
   async create(
     @Query('oeeId') oeeId: string,
     @Body() createDto: CreateOeeBatchDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('siteId') siteId: number,
   ): Promise<OeeBatchEntity> {
     return this.oeeBatchService.create(Number(oeeId), createDto);
   }
@@ -109,8 +100,6 @@ export class OeeBatchController {
   async setPlannedDowntime(
     @Param('id') id: string,
     @Body() plannedDowntimeDto: OeeBatchPlannedDowntimeDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
   ): Promise<void> {
     const batchId = Number(id);
     await this.oeeBatchService.createPlannedDowntime(batchId, plannedDowntimeDto);

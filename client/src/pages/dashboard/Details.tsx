@@ -6,7 +6,6 @@ import { NavSectionHorizontal } from '../../components/nav-section';
 import Page from '../../components/Page';
 import useQuery from '../../hooks/useQuery';
 import useWebSocket from '../../hooks/useWebSocket';
-import { getOee, resetOee } from '../../redux/actions/oeeAction';
 import {
   getOeeBatch,
   getOeeBatchAs,
@@ -21,6 +20,7 @@ import {
   updateBatchParamQs,
   updateBatchTimeline,
 } from '../../redux/actions/oeeBatchAction';
+import { emptySelectedOee, getOee } from '../../redux/actions/oeeDashboardAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import DashboardDetailsHeader from '../../sections/dashboard/details/DashboardDetailsHeader';
@@ -98,11 +98,11 @@ export default function Details() {
 
   const dispatch = useDispatch();
 
-  const { currentOee, isDetailsLoading } = useSelector((state: RootState) => state.oee);
+  const { selectedOee, isLoading } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { productionName } = currentOee ?? {};
+  const { productionName } = selectedOee ?? {};
 
   const { id: currentBatchId } = currentBatch || {};
 
@@ -118,7 +118,7 @@ export default function Details() {
     })();
 
     return () => {
-      dispatch(resetOee());
+      dispatch(emptySelectedOee());
     };
   }, [dispatch, oeeId]);
 
@@ -230,12 +230,12 @@ export default function Details() {
     };
   }, [socket, currentBatchId, dispatch]);
 
-  const isNotFound = !isDetailsLoading && !currentOee;
+  const isNotFound = !isLoading && !selectedOee;
 
   return (
     <Page title={title}>
       <Container maxWidth={false}>
-        {isDetailsLoading ? (
+        {isLoading ? (
           <>Loading...</>
         ) : isNotFound ? (
           <>Not found</>

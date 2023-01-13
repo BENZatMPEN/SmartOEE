@@ -3,10 +3,9 @@ import { DashboardService } from './dashboard.service';
 import { DashboardController } from './dashboard.controller';
 import { DashboardEntity } from '../common/entities/dashboard-entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SiteEntity } from '../common/entities/site-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DashboardEntity, SiteEntity])],
+  imports: [TypeOrmModule.forFeature([DashboardEntity])],
   controllers: [DashboardController],
   providers: [DashboardService],
   exports: [DashboardService],

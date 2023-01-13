@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import Iconify from '../../../../components/Iconify';
 import { emptyRoleOptions, getRoleOptions } from '../../../../redux/actions/roleAction';
-import { emptySiteOptions, getSiteOptions } from '../../../../redux/actions/siteAction';
+// import { emptySiteOptions, getSiteOptions } from '../../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 
 export default function UserSiteRoleList() {
   const dispatch = useDispatch();
 
-  const { siteOptions } = useSelector((state: RootState) => state.site);
+  // const { siteOptions } = useSelector((state: RootState) => state.site);
 
   const { roleOptions } = useSelector((state: RootState) => state.role);
 
@@ -28,11 +28,11 @@ export default function UserSiteRoleList() {
 
   useEffect(() => {
     (async () => {
-      await dispatch(getSiteOptions());
+      // await dispatch(getSiteOptions());
     })();
 
     return () => {
-      dispatch(emptySiteOptions());
+      // dispatch(emptySiteOptions());
       dispatch(emptyRoleOptions());
     };
   }, [dispatch]);
@@ -45,7 +45,7 @@ export default function UserSiteRoleList() {
   const handleAdd = () => {
     if (selectedSiteId > -1 && selectedRoleId > -1) {
       append({
-        site: siteOptions.filter((item) => item.id === selectedSiteId)[0],
+        // site: siteOptions.filter((item) => item.id === selectedSiteId)[0],
         role: roleOptions.filter((item) => item.id === selectedRoleId)[0],
       });
     }
@@ -89,20 +89,20 @@ export default function UserSiteRoleList() {
 
               <Divider />
 
-              {(siteOptions || []).map((item) => (
-                <MenuItem
-                  key={item.id}
-                  value={item.id}
-                  sx={{
-                    mx: 1,
-                    my: 0.5,
-                    borderRadius: 0.75,
-                    typography: 'body1',
-                  }}
-                >
-                  {item.name}
-                </MenuItem>
-              ))}
+              {/*{(siteOptions || []).map((item) => (*/}
+              {/*  <MenuItem*/}
+              {/*    key={item.id}*/}
+              {/*    value={item.id}*/}
+              {/*    sx={{*/}
+              {/*      mx: 1,*/}
+              {/*      my: 0.5,*/}
+              {/*      borderRadius: 0.75,*/}
+              {/*      typography: 'body1',*/}
+              {/*    }}*/}
+              {/*  >*/}
+              {/*    {item.name}*/}
+              {/*  </MenuItem>*/}
+              {/*))}*/}
             </TextField>
           </Grid>
 

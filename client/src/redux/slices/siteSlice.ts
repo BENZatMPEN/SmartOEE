@@ -1,24 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { OptionItem } from '../../@types/option';
 import { Site, SitePagedList } from '../../@types/site';
 
 export type SiteState = {
   isLoading: boolean;
-  siteOptions: OptionItem[];
+  error: any | null;
   pagedList: SitePagedList;
-  isDetailsLoading: boolean;
   currentSite: Site | null;
+  saveError: any | null;
 };
 
 const initialState: SiteState = {
   isLoading: false,
-  siteOptions: [],
+  error: null,
   pagedList: {
     list: [],
     count: 0,
   },
-  isDetailsLoading: false,
   currentSite: null,
+  saveError: null,
 };
 
 const siteSlice = createSlice({
@@ -27,33 +26,27 @@ const siteSlice = createSlice({
   reducers: {
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
     },
-    getSiteOptionsSuccess(state, action) {
+    hasError(state, action) {
       state.isLoading = false;
-      state.siteOptions = action.payload;
-    },
-    emptySiteOptions(state) {
-      state.siteOptions = [];
+      state.error = action.payload;
     },
     getSitePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
-    startDetailsLoading(state) {
-      state.isDetailsLoading = true;
+    startSavingError(state) {
+      state.saveError = null;
+    },
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
     emptyCurrentSite(state) {
       state.currentSite = null;
     },
-    getSiteSuccess(state, action) {
-      state.isDetailsLoading = false;
+    getSiteDetailsSuccess(state, action) {
       state.currentSite = action.payload;
-    },
-    createSiteSuccess(state) {
-      state.isDetailsLoading = false;
-    },
-    updateSiteSuccess(state) {
-      state.isDetailsLoading = false;
     },
   },
 });

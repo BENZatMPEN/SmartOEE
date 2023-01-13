@@ -1,36 +1,35 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, Grid, MenuItem } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { PlannedDowntime } from '../../../../@types/plannedDowntime';
+import { EditPlannedDowntime } from '../../../../@types/plannedDowntime';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFSelect, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import { DOWNTIME_TIMINGS, DOWNTIME_TYPES } from '../../../../constants';
-import { RootState, useSelector } from '../../../../redux/store';
+import { createPlannedDowntime, updatePlannedDowntime } from '../../../../redux/actions/plannedDowntimeAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
 
-interface FormValuesProps extends Partial<PlannedDowntime> {
+interface FormValuesProps extends EditPlannedDowntime {
   minutes: number;
 }
 
-type Props = {
+interface Props {
   isEdit: boolean;
-  currentPlannedDowntime: PlannedDowntime | null;
-};
+}
 
-export default function PlannedDowntimeForm({ isEdit, currentPlannedDowntime }: Props) {
-  const theme = useTheme();
+export default function PlannedDowntimeForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const { currentPlannedDowntime, saveError } = useSelector((state: RootState) => state.plannedDowntime);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -38,65 +37,65 @@ export default function PlannedDowntimeForm({ isEdit, currentPlannedDowntime }: 
     name: Yup.string().required('Name is required'),
   });
 
-  const defaultValues = useMemo(
-    () => ({
+  const methods = useForm<FormValuesProps>({
+    resolver: yupResolver(NewPlannedDowntimeSchema),
+    defaultValues: {
+      name: '',
+      type: DOWNTIME_TYPES[0],
+      timing: DOWNTIME_TIMINGS[0],
+      seconds: 0,
+      minutes: 0,
+    },
+    values: {
       name: currentPlannedDowntime?.name || '',
       type: currentPlannedDowntime?.type || DOWNTIME_TYPES[0],
       timing: currentPlannedDowntime?.timing || DOWNTIME_TIMINGS[0],
       seconds: currentPlannedDowntime?.seconds || 0,
       minutes: currentPlannedDowntime ? (currentPlannedDowntime?.seconds || 0) / 60 : 0,
-      siteId: currentPlannedDowntime?.siteId || selectedSite?.id,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentPlannedDowntime],
-  );
-
-  const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(NewPlannedDowntimeSchema),
-    defaultValues,
+    },
   });
 
   const {
-    reset,
-    watch,
-    setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  useEffect(() => {
-    if (isEdit && currentPlannedDowntime) {
-      reset(defaultValues);
-    }
-    if (!isEdit) {
-      reset(defaultValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, currentPlannedDowntime]);
-
   const onSubmit = async (data: FormValuesProps) => {
     try {
       const { minutes, ...dto } = data;
-      const seconds = minutes * 60;
+      dto.seconds = minutes * 60;
 
-      if (isEdit && currentPlannedDowntime) {
-        await axios.put<PlannedDowntime>(`/planned-downtimes/${currentPlannedDowntime.id}`, {
-          ...dto,
-          seconds,
-        });
-      } else {
-        await axios.post<PlannedDowntime>(`/planned-downtimes`, {
-          ...dto,
-          seconds,
-        });
+      const plannedDowntime =
+        isEdit && currentPlannedDowntime
+          ? await dispatch(updatePlannedDowntime(currentPlannedDowntime.id, dto))
+          : await dispatch(createPlannedDowntime(dto));
+
+      if (plannedDowntime) {
+        enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+        navigate(PATH_SETTINGS.plannedDowntimes.root);
       }
-
-      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      navigate(PATH_SETTINGS.plannedDowntimes.root);
     } catch (error) {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
@@ -119,7 +118,7 @@ export default function PlannedDowntimeForm({ isEdit, currentPlannedDowntime }: 
         }
       />
 
-      <Card sx={{ px: theme.spacing(2), py: theme.spacing(3), mb: theme.spacing(3) }}>
+      <Card sx={{ px: 2, py: 3, mb: 3 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={8}>
             <RHFTextField name="name" label="Name" />

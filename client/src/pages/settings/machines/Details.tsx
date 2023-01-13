@@ -1,13 +1,21 @@
 import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Machine } from '../../../@types/machine';
 import Page from '../../../components/Page';
+import { emptyCurrentMachine, getMachine } from '../../../redux/actions/machineAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import MachineForm from '../../../sections/settings/machines/details/MachineForm';
-import axios from '../../../utils/axios';
 
 export default function MachineDetails() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentMachine, error } = useSelector((state: RootState) => state.machine);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,30 +26,33 @@ export default function MachineDetails() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<Machine | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<Machine>(`/machines/${id}`);
-          const machine = response.data;
-          setModel(machine);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
+      if (isEdit || isDuplicate) {
+        await dispatch(getMachine(Number(id)));
+      }
+    })();
+
+    return () => {
+      dispatch(emptyCurrentMachine());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
           navigate(PATH_SETTINGS.machines.root);
         }
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={model ? 'Machine Settings: Edit Machine' : 'Machine Settings: Create Machine'}>
+    <Page title={currentMachine ? 'Machine Settings: Edit Machine' : 'Machine Settings: Create Machine'}>
       <Container maxWidth={false}>
-        <MachineForm isEdit={isEdit} currentMachine={model} />
+        <MachineForm isEdit={isEdit} />
       </Container>
     </Page>
   );

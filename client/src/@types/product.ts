@@ -14,7 +14,6 @@ export type EditProduct = {
   name: string;
   remark: string;
   image: File | null;
-  siteId?: number;
 };
 
 export type FilterProduct = {
@@ -24,4 +23,9 @@ export type FilterProduct = {
   page: number;
   rowsPerPage: number;
   siteId?: number;
+};
+
+export type ProductPagedList = {
+  list: Product[];
+  count: number;
 };

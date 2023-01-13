@@ -1,37 +1,36 @@
 import { Card, CardContent, Container } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Site } from '../../../@types/site';
+import { useEffect } from 'react';
 import Page from '../../../components/Page';
-import { RootState, useSelector } from '../../../redux/store';
+import { emptyCurrentSite, getSite } from '../../../redux/actions/siteAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import SiteForm from '../../../sections/settings/site/details/SiteForm';
-import axios from '../../../utils/axios';
 
 export default function SiteDetails() {
+  const dispatch = useDispatch();
+
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const [model, setModel] = useState<Site | null>(null);
+  const { currentSite, error } = useSelector((state: RootState) => state.site);
 
   useEffect(() => {
     (async () => {
       if (!selectedSite) {
-        setModel(null);
         return;
       }
 
-      try {
-        const response = await axios.get<Site>(`/sites/${selectedSite.id}`);
-        setModel(response.data);
-      } catch (error) {
-        console.log(error);
-      }
+      await dispatch(getSite(selectedSite.id));
+
+      return () => {
+        dispatch(emptyCurrentSite());
+      };
     })();
-  }, [selectedSite]);
+  }, [dispatch, selectedSite]);
 
   return (
     <Page title="Site Settings">
       <Container maxWidth={false}>
-        {model ? (
-          <SiteForm currentSite={model} />
+        {currentSite ? (
+          <SiteForm />
         ) : (
           <Card>
             <CardContent>Not found</CardContent>

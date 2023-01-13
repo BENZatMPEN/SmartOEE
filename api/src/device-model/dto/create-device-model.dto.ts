@@ -1,5 +1,5 @@
 import { DeviceModelTagDto } from './device-model-tag.dto';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateDeviceModelDto {
@@ -14,10 +14,6 @@ export class CreateDeviceModelDto {
 
   @IsString()
   readonly connectionType: string;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 
   @IsArray()
   @Type(() => DeviceModelTagDto)

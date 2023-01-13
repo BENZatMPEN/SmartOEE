@@ -10,7 +10,8 @@ export class FileService {
   async saveFile(file: Express.Multer.File): Promise<string> {
     const folderName = './uploads';
     const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const filePath = path.join(folderName, `${Date.now()}-${originalName}`);
+    const fileName = `${Date.now()}-${originalName}`;
+    const filePath = path.resolve(path.join(folderName, `${fileName}`));
 
     if (file.mimetype.match(/^image/)) {
       await sharp(file.buffer, { animated: true }).toFile(filePath);
@@ -18,14 +19,14 @@ export class FileService {
       await fsPromises.writeFile(filePath, file.stream);
     }
 
-    return originalName;
+    return fileName;
   }
 
   async saveFileInfo(file: Express.Multer.File): Promise<FileInfo> {
     const folderName = './uploads';
     const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const fileName = `${Date.now()}-${originalName}`;
-    const filePath = path.join(folderName, `${fileName}`);
+    const filePath = path.resolve(path.join(folderName, `${fileName}`));
 
     if (file.mimetype.match(/^image/)) {
       await sharp(file.buffer, { animated: true }).toFile(filePath);
@@ -42,7 +43,7 @@ export class FileService {
   }
 
   async deleteFile(imageName: string): Promise<void> {
-    const imagePath = path.join('./uploads', imageName);
+    const imagePath = path.resolve(path.join('./uploads', imageName));
     try {
       if (existsSync(imagePath)) {
         await fsPromises.unlink(imagePath);

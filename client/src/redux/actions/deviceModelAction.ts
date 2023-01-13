@@ -8,53 +8,79 @@ export const { emptyCurrentDeviceModel } = deviceModelSlice.actions;
 export function getDeviceModelPagedList(filter: FilterDeviceModel) {
   return async () => {
     dispatch(deviceModelSlice.actions.startLoading());
-    const response = await axios.get<DeviceModelPagedList>(`/device-models`, { params: filter });
-    dispatch(deviceModelSlice.actions.getDeviceModelsSuccess(response.data));
+
+    try {
+      const response = await axios.get<DeviceModelPagedList>(`/device-models`, { params: filter });
+      dispatch(deviceModelSlice.actions.getDeviceModelsSuccess(response.data));
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasError(error));
+    }
   };
 }
 
 export function getDeviceModel(id: number) {
   return async () => {
-    dispatch(deviceModelSlice.actions.startDetailsLoading());
-    const response = await axios.get<DeviceModel>(`/device-models/${id}`);
-    dispatch(deviceModelSlice.actions.getDeviceModelDetailsSuccess(response.data));
+    dispatch(deviceModelSlice.actions.startLoading());
+
+    try {
+      const response = await axios.get<DeviceModel>(`/device-models/${id}`);
+      dispatch(deviceModelSlice.actions.getDeviceModelDetailsSuccess(response.data));
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasError(error));
+    }
   };
 }
 
 export function createDeviceModel(dto: EditDeviceModel) {
   return async () => {
-    dispatch(deviceModelSlice.actions.startDetailsLoading());
-    const response = await axios.post<DeviceModel>(`/device-models`, dto);
-    const { data } = response;
-    dispatch(deviceModelSlice.actions.createDeviceModelSuccess());
-    dispatch(deviceModelSlice.actions.emptyCurrentDeviceModel());
-    return data;
+    dispatch(deviceModelSlice.actions.startSavingError());
+
+    try {
+      const response = await axios.post<DeviceModel>(`/device-models`, dto);
+      return response.data;
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasSaveError(error));
+      return null;
+    }
   };
 }
 
 export function updateDeviceModel(id: number, dto: EditDeviceModel) {
   return async () => {
-    dispatch(deviceModelSlice.actions.startDetailsLoading());
-    const response = await axios.put<DeviceModel>(`/device-models/${id}`, dto);
-    const { data } = response;
-    dispatch(deviceModelSlice.actions.updateDeviceModelSuccess());
-    dispatch(deviceModelSlice.actions.emptyCurrentDeviceModel());
-    return data;
+    dispatch(deviceModelSlice.actions.startSavingError());
+
+    try {
+      const response = await axios.put<DeviceModel>(`/device-models/${id}`, dto);
+      return response.data;
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasSaveError(error));
+      return null;
+    }
   };
 }
 
 export function deleteDeviceModel(id: number) {
   return async () => {
     dispatch(deviceModelSlice.actions.startLoading());
-    await axios.delete(`/device-models/${id}`);
+
+    try {
+      await axios.delete(`/device-models/${id}`);
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasError(error));
+    }
   };
 }
 
 export function deleteDeviceModels(selectedIds: number[]) {
   return async () => {
     dispatch(deviceModelSlice.actions.startLoading());
-    await axios.delete(`/device-models`, {
-      params: { ids: selectedIds },
-    });
+
+    try {
+      await axios.delete(`/device-models`, {
+        params: { ids: selectedIds },
+      });
+    } catch (error) {
+      dispatch(deviceModelSlice.actions.hasError(error));
+    }
   };
 }

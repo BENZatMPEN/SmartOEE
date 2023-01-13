@@ -1,8 +1,10 @@
 import { Container } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
-import { getDashboard } from '../../../redux/actions/dashboardAction';
+import { emptyCurrentDashboard, getDashboard } from '../../../redux/actions/dashboardAction';
 import { emptyCurrentDevice } from '../../../redux/actions/deviceAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
@@ -11,7 +13,9 @@ import DashboardForm from '../../../sections/settings/dashboard/details/Dashboar
 export default function DashboardDetails() {
   const dispatch = useDispatch();
 
-  const { currentDashboard, detailsError } = useSelector((state: RootState) => state.dashboard);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentDashboard, error } = useSelector((state: RootState) => state.dashboard);
 
   const { pathname } = useLocation();
 
@@ -27,18 +31,24 @@ export default function DashboardDetails() {
     (async () => {
       if (isEdit || isDuplicate) {
         await dispatch(getDashboard(Number(id)));
-
-        if (detailsError && detailsError.statusCode === 404) {
-          navigate(PATH_SETTINGS.dashboard.root);
-        }
       }
     })();
 
     return () => {
-      dispatch(emptyCurrentDevice());
+      dispatch(emptyCurrentDashboard());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]);
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.dashboard.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
     <Page title={currentDashboard ? 'Dashboard Settings: Edit Dashboard' : 'Dashboard Settings: Create Dashboard'}>

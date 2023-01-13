@@ -1,13 +1,21 @@
 import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PlannedDowntime } from '../../../@types/plannedDowntime';
 import Page from '../../../components/Page';
+import { emptyCurrentPlannedDowntime, getPlannedDowntime } from '../../../redux/actions/plannedDowntimeAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import PlannedDowntimeForm from '../../../sections/settings/planned-downtimes/details/PlannedDowntimeForm';
-import axios from '../../../utils/axios';
 
 export default function PlannedDowntimeDetails() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentPlannedDowntime, error } = useSelector((state: RootState) => state.plannedDowntime);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,29 +26,39 @@ export default function PlannedDowntimeDetails() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<PlannedDowntime | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<PlannedDowntime>(`/planned-downtimes/${id}`);
-          setModel(response.data);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
+      if (isEdit || isDuplicate) {
+        await dispatch(getPlannedDowntime(Number(id)));
+      }
+    })();
+
+    return () => {
+      dispatch(emptyCurrentPlannedDowntime());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
           navigate(PATH_SETTINGS.plannedDowntimes.root);
         }
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={model ? 'Planned Downtime Settings: Edit Planned Downtime' : 'OEE Settings: Create Planned Downtime'}>
+    <Page
+      title={
+        currentPlannedDowntime
+          ? 'Planned Downtime Settings: Edit Planned Downtime'
+          : 'Planned Downtime Settings: Create Planned Downtime'
+      }
+    >
       <Container maxWidth={false}>
-        <PlannedDowntimeForm isEdit={isEdit} currentPlannedDowntime={model} />
+        <PlannedDowntimeForm isEdit={isEdit} />
       </Container>
     </Page>
   );

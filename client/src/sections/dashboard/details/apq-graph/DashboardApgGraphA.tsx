@@ -9,7 +9,6 @@ import { getOeeBatchParetoA, updateBatchParetoA } from '../../../../redux/action
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
 import { chartTitle, getTimeUnitShortText, getTimeUnitText } from '../../../../utils/formatText';
-import { fDateTime, fShortDateTime } from '../../../../utils/formatTime';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
@@ -21,9 +20,9 @@ export default function DashboardApgGraphA() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { timeUnit, useSitePercentSettings, percentSettings } = currentOee || {
+  const { timeUnit, useSitePercentSettings, percentSettings } = selectedOee || {
     timeUnit: '',
     useSitePercentSettings: true,
   };

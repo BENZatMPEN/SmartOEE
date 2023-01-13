@@ -16,7 +16,6 @@ export type EditDeviceModel = {
   modelType: string;
   connectionType: string;
   tags: DeviceModelTag[];
-  siteId?: number;
 };
 
 export type FilterDeviceModel = {

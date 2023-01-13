@@ -1,5 +1,5 @@
 import { AlarmCondition } from '../../common/type/alarm';
-import { IsBoolean, IsNumber, IsObject, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class CreateAlarmDto {
@@ -10,15 +10,11 @@ export class CreateAlarmDto {
   readonly type: string;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   readonly notify: boolean;
 
-  @IsObject()
+  @IsOptional()
   readonly data: any;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 
   @IsObject()
   @Type(() => AlarmCondition)

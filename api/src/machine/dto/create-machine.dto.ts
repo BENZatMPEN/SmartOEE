@@ -15,10 +15,6 @@ export class CreateMachineDto {
   @IsString()
   readonly remark: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
-
   @IsArray()
   @Type(() => MachineParameterDto)
   readonly parameters: MachineParameterDto[];

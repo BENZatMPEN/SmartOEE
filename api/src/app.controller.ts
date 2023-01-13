@@ -227,6 +227,7 @@ export class AppController {
           defaultPercentSettings: defaultPercentSettings,
           oeeLimit: -1,
           userLimit: -1,
+          cutoffTime: new Date(),
         },
         null,
       );
@@ -283,207 +284,211 @@ export class AppController {
     const devices = [] as DeviceEntity[];
 
     // real device
-    const realDeviceModel = await this.deviceModelService.create({
-      name: 'PLC_1',
-      remark: 'PLC Machine',
-      connectionType: 'tpc',
-      modelType: 'modbus',
-      siteId: sites[0].id,
-      tags: [
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'Machine State',
-          address: 0,
-          length: 1,
-          dataType: 'int16u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'Total',
-          address: 1,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'Total NG',
-          address: 3,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 1',
-          address: 5,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 2',
-          address: 7,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 3',
-          address: 9,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 4',
-          address: 11,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 5',
-          address: 13,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 6',
-          address: 15,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 7',
-          address: 17,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 8',
-          address: 19,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 9',
-          address: 21,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-        {
-          id: 0,
-          deviceModelId: 0,
-          name: 'NG 10',
-          address: 23,
-          length: 2,
-          dataType: 'int32u',
-          readFunc: 3,
-          writeState: false,
-          writeFunc: 0,
-          factor: 1,
-          compensation: 0,
-        },
-      ],
-    });
+    const realDeviceModel = await this.deviceModelService.create(
+      {
+        name: 'PLC_1',
+        remark: 'PLC Machine',
+        connectionType: 'tpc',
+        modelType: 'modbus',
+        tags: [
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'Machine State',
+            address: 0,
+            length: 1,
+            dataType: 'int16u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'Total',
+            address: 1,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'Total NG',
+            address: 3,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 1',
+            address: 5,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 2',
+            address: 7,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 3',
+            address: 9,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 4',
+            address: 11,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 5',
+            address: 13,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 6',
+            address: 15,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 7',
+            address: 17,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 8',
+            address: 19,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 9',
+            address: 21,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+          {
+            id: 0,
+            deviceModelId: 0,
+            name: 'NG 10',
+            address: 23,
+            length: 2,
+            dataType: 'int32u',
+            readFunc: 3,
+            writeState: false,
+            writeFunc: 0,
+            factor: 1,
+            compensation: 0,
+          },
+        ],
+      },
+      sites[0].id,
+    );
 
     const reloadRealDeviceModel = await this.deviceModelService.findById(realDeviceModel.id, realDeviceModel.siteId);
-    const realDevice = await this.deviceService.create({
-      name: 'PLC_200',
-      remark: 'PLC 192.168.0.200',
-      address: '192.168.0.200',
-      port: 503,
-      deviceId: 1,
-      deviceModelId: reloadRealDeviceModel.id,
-      stopped: false,
-      siteId: reloadRealDeviceModel.siteId,
-      tags: reloadRealDeviceModel.tags.map((deviceModelTag) => {
-        return {
-          id: 0,
-          name: deviceModelTag.name,
-          deviceModelTagId: deviceModelTag.id,
-          spLow: 0,
-          spHigh: 0,
-          record: true,
-          updateInterval: '0/5 * * * * *',
-        } as DeviceTagDto;
-      }),
-    });
+    const realDevice = await this.deviceService.create(
+      {
+        name: 'PLC_200',
+        remark: 'PLC 192.168.0.200',
+        address: '192.168.0.200',
+        port: 503,
+        deviceId: 1,
+        deviceModelId: reloadRealDeviceModel.id,
+        stopped: false,
+        tags: reloadRealDeviceModel.tags.map((deviceModelTag) => {
+          return {
+            id: 0,
+            name: deviceModelTag.name,
+            deviceModelTagId: deviceModelTag.id,
+            spLow: 0,
+            spHigh: 0,
+            record: true,
+            updateInterval: '0/5 * * * * *',
+          } as DeviceTagDto;
+        }),
+      },
+      reloadRealDeviceModel.siteId,
+    );
 
     const reloadRealDevice = await this.deviceService.findById(realDevice.id, realDevice.siteId);
     const realMc = await this.machineService.create(
@@ -492,7 +497,6 @@ export class AppController {
         code: 'MC001',
         location: 'Bangkok',
         remark: faker.commerce.productDescription(),
-        siteId: sites[0].id,
         parameters: [
           // a
           ...reloadRealDevice.tags
@@ -538,6 +542,7 @@ export class AppController {
         ] as MachineParameterDto[],
       },
       null,
+      sites[0].id,
     );
 
     const realPd1 = await this.productService.create(
@@ -545,9 +550,9 @@ export class AppController {
         sku: 'SKU001',
         name: 'Product 1',
         remark: faker.commerce.productDescription(),
-        siteId: sites[0].id,
       },
       null,
+      sites[0].id,
     );
 
     const realPd2 = await this.productService.create(
@@ -555,9 +560,9 @@ export class AppController {
         sku: 'SKU002',
         name: 'Product 2',
         remark: faker.commerce.productDescription(),
-        siteId: sites[0].id,
       },
       null,
+      sites[0].id,
     );
 
     const realPd3 = await this.productService.create(
@@ -565,9 +570,9 @@ export class AppController {
         sku: 'SKU003',
         name: 'Product 3',
         remark: faker.commerce.productDescription(),
-        siteId: sites[0].id,
       },
       null,
+      sites[0].id,
     );
 
     await this.oeeService.create(
@@ -576,7 +581,6 @@ export class AppController {
         oeeType: OEE_TYPE_STANDALONE,
         minorStopSeconds: 10,
         breakdownSeconds: 15,
-        siteId: sites[0].id,
         location: faker.address.city(),
         productionName: faker.commerce.productName(),
         remark: faker.commerce.productDescription(),
@@ -628,85 +632,98 @@ export class AppController {
         ],
       },
       null,
+      sites[0].id,
     );
 
-    await this.plannedDowntimeService.create({
-      name: 'ประชุม (auto)',
-      type: PLANNED_DOWNTIME_TYPE_PLANNED,
-      timing: PLANNED_DOWNTIME_TIMING_AUTO,
-      seconds: 0,
-      siteId: sites[0].id,
-    });
+    await this.plannedDowntimeService.create(
+      {
+        name: 'ประชุม (auto)',
+        type: PLANNED_DOWNTIME_TYPE_PLANNED,
+        timing: PLANNED_DOWNTIME_TIMING_AUTO,
+        seconds: 0,
+      },
+      sites[0].id,
+    );
 
-    await this.plannedDowntimeService.create({
-      name: 'พักเที่ยง (manual)',
-      type: PLANNED_DOWNTIME_TYPE_PLANNED,
-      timing: PLANNED_DOWNTIME_TIMING_MANUAL,
-      seconds: 0,
-      siteId: sites[0].id,
-    });
+    await this.plannedDowntimeService.create(
+      {
+        name: 'พักเที่ยง (manual)',
+        type: PLANNED_DOWNTIME_TYPE_PLANNED,
+        timing: PLANNED_DOWNTIME_TIMING_MANUAL,
+        seconds: 0,
+      },
+      sites[0].id,
+    );
 
-    await this.plannedDowntimeService.create({
-      name: 'เปลี่ยน Mold (mc_setup & timer 30 นาที)',
-      type: PLANNED_DOWNTIME_TYPE_MC_SETUP,
-      timing: PLANNED_DOWNTIME_TIMING_TIMER,
-      seconds: 60 * 30,
-      siteId: sites[0].id,
-    });
+    await this.plannedDowntimeService.create(
+      {
+        name: 'เปลี่ยน Mold (mc_setup & timer 30 นาที)',
+        type: PLANNED_DOWNTIME_TYPE_MC_SETUP,
+        timing: PLANNED_DOWNTIME_TIMING_TIMER,
+        seconds: 60 * 30,
+      },
+      sites[0].id,
+    );
 
-    await this.plannedDowntimeService.create({
-      name: 'อัพเดทงาน (timer 15 นาที)',
-      type: PLANNED_DOWNTIME_TYPE_PLANNED,
-      timing: PLANNED_DOWNTIME_TIMING_TIMER,
-      seconds: 60 * 15,
-      siteId: sites[0].id,
-    });
+    await this.plannedDowntimeService.create(
+      {
+        name: 'อัพเดทงาน (timer 15 นาที)',
+        type: PLANNED_DOWNTIME_TYPE_PLANNED,
+        timing: PLANNED_DOWNTIME_TIMING_TIMER,
+        seconds: 60 * 15,
+      },
+      sites[0].id,
+    );
 
     //-----------------------------------------------------
 
     for (let i = 0; i < 20; i++) {
-      const deviceModel = await this.deviceModelService.create({
-        name: faker.company.catchPhrase(),
-        remark: faker.commerce.productDescription(),
-        connectionType: connectionTypes[faker.datatype.number({ min: 0, max: 1 })],
-        modelType: modelTypes[faker.datatype.number({ min: 0, max: 1 })],
-        siteId: sites[1].id,
-        tags: [...Array(5)].map(() => {
-          return {
-            name: faker.commerce.productMaterial(),
-            address: faker.datatype.number({ min: 0, max: 20 }),
-            length: lengths[faker.datatype.number({ min: 0, max: 1 })],
-            dataType: dataTypes[faker.datatype.number({ min: 0, max: 6 })],
-            readFunc: faker.datatype.number({ min: 3, max: 16 }),
-            writeState: false,
-            writeFunc: 0,
-            factor: 0,
-            compensation: 0,
-          } as DeviceModelTagDto;
-        }),
-      });
+      const deviceModel = await this.deviceModelService.create(
+        {
+          name: faker.company.catchPhrase(),
+          remark: faker.commerce.productDescription(),
+          connectionType: connectionTypes[faker.datatype.number({ min: 0, max: 1 })],
+          modelType: modelTypes[faker.datatype.number({ min: 0, max: 1 })],
+          tags: [...Array(5)].map(() => {
+            return {
+              name: faker.commerce.productMaterial(),
+              address: faker.datatype.number({ min: 0, max: 20 }),
+              length: lengths[faker.datatype.number({ min: 0, max: 1 })],
+              dataType: dataTypes[faker.datatype.number({ min: 0, max: 6 })],
+              readFunc: faker.datatype.number({ min: 3, max: 16 }),
+              writeState: false,
+              writeFunc: 0,
+              factor: 0,
+              compensation: 0,
+            } as DeviceModelTagDto;
+          }),
+        },
+        sites[1].id,
+      );
 
       const reloadDeviceModel = await this.deviceModelService.findById(deviceModel.id, deviceModel.siteId);
-      const device = await this.deviceService.create({
-        name: reloadDeviceModel.name,
-        remark: reloadDeviceModel.remark,
-        address: '',
-        port: 0,
-        deviceId: 0,
-        deviceModelId: reloadDeviceModel.id,
-        stopped: false,
-        siteId: reloadDeviceModel.siteId,
-        tags: reloadDeviceModel.tags.map((deviceModelTag) => {
-          return {
-            name: deviceModelTag.name,
-            deviceModelTagId: deviceModelTag.id,
-            spLow: 0,
-            spHigh: 0,
-            record: true,
-            updateInterval: '0/5 * * * * *',
-          } as DeviceTagDto;
-        }),
-      });
+      const device = await this.deviceService.create(
+        {
+          name: reloadDeviceModel.name,
+          remark: reloadDeviceModel.remark,
+          address: '',
+          port: 0,
+          deviceId: 0,
+          deviceModelId: reloadDeviceModel.id,
+          stopped: false,
+          tags: reloadDeviceModel.tags.map((deviceModelTag) => {
+            return {
+              name: deviceModelTag.name,
+              deviceModelTagId: deviceModelTag.id,
+              spLow: 0,
+              spHigh: 0,
+              record: true,
+              updateInterval: '0/5 * * * * *',
+            } as DeviceTagDto;
+          }),
+        },
+        reloadDeviceModel.siteId,
+      );
 
       devices.push(await this.deviceService.findById(device.id, device.siteId));
     }
@@ -719,9 +736,9 @@ export class AppController {
           sku: 'S' + faker.datatype.number({ min: 100000, max: 999999 }),
           name: faker.commerce.productName(),
           remark: faker.commerce.productDescription(),
-          siteId: sites[1].id,
         },
         null,
+        sites[1].id,
       );
 
       products.push(product);
@@ -740,7 +757,6 @@ export class AppController {
           code: 'MC' + faker.datatype.number({ min: 10000, max: 99999 }),
           location: faker.address.city(),
           remark: faker.commerce.productDescription(),
-          siteId: sites[1].id,
           parameters: [
             ...[...Array(10)].map((item, idx) => {
               const deviceTag = deviceTags[10 * i + idx];
@@ -762,6 +778,7 @@ export class AppController {
           ],
         },
         null,
+        sites[1].id,
       );
 
       machines.push(machine);
@@ -786,7 +803,6 @@ export class AppController {
               timeUnit == OEE_TIME_UNIT_MINUTE
                 ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
                 : faker.datatype.number({ min: 1, max: 200 }),
-            siteId: sites[1].id,
             location: faker.address.city(),
             productionName: faker.commerce.productName(),
             remark: faker.commerce.productDescription(),
@@ -808,6 +824,7 @@ export class AppController {
             ],
           },
           null,
+          sites[1].id,
         ),
       );
     }
@@ -905,13 +922,15 @@ export class AppController {
 
     for (let i = 0; i < 15; i++) {
       const timing = downtimeTimings[faker.datatype.number({ min: 0, max: downtimeTimings.length - 1 })];
-      await this.plannedDowntimeService.create({
-        name: faker.commerce.productName(),
-        type: downtimeTypes[faker.datatype.number({ min: 0, max: downtimeTypes.length - 1 })],
-        timing: timing,
-        seconds: timing === PLANNED_DOWNTIME_TIMING_TIMER ? faker.datatype.number({ min: 60, max: 300 }) * 60 : 0,
-        siteId: sites[1].id,
-      });
+      await this.plannedDowntimeService.create(
+        {
+          name: faker.commerce.productName(),
+          type: downtimeTypes[faker.datatype.number({ min: 0, max: downtimeTypes.length - 1 })],
+          timing: timing,
+          seconds: timing === PLANNED_DOWNTIME_TIMING_TIMER ? faker.datatype.number({ min: 60, max: 300 }) * 60 : 0,
+        },
+        sites[1].id,
+      );
     }
 
     return 'Hello, World!';
@@ -932,6 +951,7 @@ export class AppController {
         defaultPercentSettings: defaultPercentSettings,
         oeeLimit: -1,
         userLimit: -1,
+        cutoffTime: new Date(),
       },
       null,
     );

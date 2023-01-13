@@ -22,6 +22,13 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
+import {
+  deleteDeviceModel,
+  deleteDeviceModels,
+  getDeviceModelPagedList,
+} from '../../../redux/actions/deviceModelAction';
+import { deleteProduct, deleteProducts, getProductPagedList } from '../../../redux/actions/productAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { ProductTableRow, ProductTableToolbar } from '../../../sections/settings/products/list';
 import axios from '../../../utils/axios';
@@ -31,11 +38,6 @@ const TABLE_HEAD = [
   { id: 'name', label: 'Product Name', align: 'left' },
   { id: '' },
 ];
-
-type ProductPagedList = {
-  list: Product[];
-  count: number;
-};
 
 export default function ProductList() {
   const {
@@ -59,11 +61,11 @@ export default function ProductList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<ProductPagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.product);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -73,25 +75,15 @@ export default function ProductList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterProduct = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterProduct = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<ProductPagedList>('/products', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getProductPagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -104,24 +96,14 @@ export default function ProductList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/products/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteProduct(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/products`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteProducts(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {

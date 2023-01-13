@@ -30,6 +30,11 @@ export class AuthService {
       //   sites: true,
       // },
     });
+
+    if (!user) {
+      return null;
+    }
+
     const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
     if (user && isPasswordMatch) {
       return user;

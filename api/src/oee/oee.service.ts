@@ -233,8 +233,8 @@ export class OeeService {
     });
   }
 
-  async create(createDto: CreateOeeDto, imageName: string): Promise<OeeEntity> {
-    const site = await this.siteRepository.findOneBy({ id: createDto.siteId });
+  async create(createDto: CreateOeeDto, imageName: string, siteId: number): Promise<OeeEntity> {
+    const site = await this.siteRepository.findOneBy({ id: siteId });
     const countOee = await this.oeeRepository.countBy({ siteId: site.id });
     if (site.oeeLimit > -1 && countOee >= site.oeeLimit) {
       throw new BadRequestException(`Number of OEE has reached the limit (${site.oeeLimit})`);
@@ -244,6 +244,7 @@ export class OeeService {
     const oee = await this.oeeRepository.save({
       ...dto,
       imageName,
+      siteId: site.id,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -288,7 +289,9 @@ export class OeeService {
       updatedAt: new Date(),
     });
 
-    const deletingProductIds = (oeeProducts || []).map((oeeProduct) => oeeProduct.id);
+    const deletingProductIds = (oeeProducts || [])
+      .filter((oeeProduct) => oeeProduct.id)
+      .map((oeeProduct) => oeeProduct.id);
     if (deletingProductIds.length > 0) {
       await this.oeeProductRepository
         .createQueryBuilder()
@@ -304,7 +307,11 @@ export class OeeService {
         .execute();
     }
 
-    const deletingMachineIds = (oeeMachines || []).map((oeeMachine) => oeeMachine.id);
+    const deletingMachineIds = (oeeMachines || [])
+      .filter((oeeMachine) => oeeMachine.id)
+      .map((oeeMachine) => oeeMachine.id);
+    console.log(deletingMachineIds);
+
     if (deletingMachineIds.length > 0) {
       await this.oeeMachineRepository
         .createQueryBuilder()

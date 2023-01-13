@@ -10,6 +10,8 @@ export default function DashboardDetailsStatus() {
 
   const { product, startDate, endDate, status } = currentBatch || {};
 
+  console.log(status);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: theme.spacing(3) }}>
       <Grid container spacing={theme.spacing(2)}>

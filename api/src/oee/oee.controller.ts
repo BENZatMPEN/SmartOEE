@@ -61,8 +61,12 @@ export class OeeController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(@Body() createDto: CreateOeeDto, @UploadedFile(FileSavePipe) image: string): Promise<OeeEntity> {
-    return this.oeeService.create(createDto, image);
+  create(
+    @Body() createDto: CreateOeeDto,
+    @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
+  ): Promise<OeeEntity> {
+    return this.oeeService.create(createDto, image, siteId);
   }
 
   @Put(':id')

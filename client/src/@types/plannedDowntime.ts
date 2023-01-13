@@ -9,6 +9,13 @@ export type PlannedDowntime = {
   updatedAt: Date;
 };
 
+export interface EditPlannedDowntime {
+  name: string;
+  type: string;
+  timing: string;
+  seconds: number;
+}
+
 export type FilterPlannedDowntime = {
   search: string;
   order: string;
@@ -16,4 +23,9 @@ export type FilterPlannedDowntime = {
   page: number;
   rowsPerPage: number;
   siteId?: number;
+};
+
+export type PlannedDowntimePagedList = {
+  list: PlannedDowntime[];
+  count: number;
 };

@@ -3,6 +3,7 @@ import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -23,16 +24,14 @@ import { PATH_SETTINGS } from '../../../../routes/paths';
 import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
 import DeviceModelTagList from './DeviceModelTagList';
 
-type Props = {
+interface Props {
   isEdit: boolean;
-};
+}
 
 export default function DeviceModelForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
-  const { currentDeviceModel } = useSelector((state: RootState) => state.deviceModel);
-
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const { currentDeviceModel, saveError } = useSelector((state: RootState) => state.deviceModel);
 
   const navigate = useNavigate();
 
@@ -74,31 +73,34 @@ export default function DeviceModelForm({ isEdit }: Props) {
   } = methods;
 
   const onSubmit = async (data: EditDeviceModel) => {
-    try {
-      if (isEdit && currentDeviceModel) {
-        await dispatch(updateDeviceModel(currentDeviceModel.id, data));
-      } else {
-        await dispatch(createDeviceModel({ ...data, siteId: selectedSite?.id }));
-      }
+    const deviceModel =
+      isEdit && currentDeviceModel
+        ? await dispatch(updateDeviceModel(currentDeviceModel.id, data))
+        : await dispatch(createDeviceModel(data));
 
+    if (deviceModel) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.deviceModels.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          if (Array.isArray(error.response?.data.message)) {
-            for (const item of error.response?.data.message) {
+    }
+  };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
               enqueueSnackbar(item, { variant: 'error' });
             }
           } else {
-            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
           }
-          return;
         }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
     }
-  };
+  }, [enqueueSnackbar, saveError]);
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>

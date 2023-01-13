@@ -7,7 +7,7 @@ import { SiteIdPipe } from '../common/pipe/site-id.pipe';
 import { SiteEntity } from '../common/entities/site-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PlannedDowntimeEntity, SiteEntity])],
+  imports: [TypeOrmModule.forFeature([PlannedDowntimeEntity])],
   controllers: [PlannedDowntimeController],
   providers: [PlannedDowntimeService, SiteIdPipe],
 })

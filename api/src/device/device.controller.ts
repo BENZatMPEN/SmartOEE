@@ -20,7 +20,6 @@ import { FilterDeviceDto } from './dto/filter-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { DeviceEntity } from '../common/entities/device-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { authorize } from 'passport';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,8 +47,8 @@ export class DeviceController {
   }
 
   @Post()
-  create(@Body() createDto: CreateDeviceDto): Promise<DeviceEntity> {
-    return this.deviceService.create(createDto);
+  create(@Body() createDto: CreateDeviceDto, @Query('siteId') siteId: number): Promise<DeviceEntity> {
+    return this.deviceService.create(createDto, siteId);
   }
 
   @Put(':id')

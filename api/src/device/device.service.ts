@@ -53,10 +53,11 @@ export class DeviceService {
     });
   }
 
-  async create(createDto: CreateDeviceDto): Promise<DeviceEntity> {
+  async create(createDto: CreateDeviceDto, siteId: number): Promise<DeviceEntity> {
     const { tags, ...dto } = createDto;
     const createdDevice = await this.deviceRepository.save({
       ...dto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

@@ -88,7 +88,7 @@ export function RHFTimePicker({ name, label, size }: DateTimePickerProps) {
             label={label}
             value={field.value}
             onChange={(newValue: any) => {
-              field.onChange(newValue);
+              field.onChange(newValue.year(2000).month(0).date(1).toDate());
             }}
             renderInput={(params: any) => (
               <TextField {...params} size={size} fullWidth error={!!error} helperText={error?.message} />

@@ -6,7 +6,6 @@ import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { PlannedDowntimeEntity } from '../common/entities/planned-downtime-entity';
-import * as _ from 'lodash';
 
 @Injectable()
 export class PlannedDowntimeService {
@@ -38,31 +37,33 @@ export class PlannedDowntimeService {
     return this.plannedDowntimeRepository.findOneBy({ id, siteId, deleted: false });
   }
 
-  create(createDto: CreatePlannedDowntimeDto): Promise<PlannedDowntimeEntity> {
+  create(createDto: CreatePlannedDowntimeDto, siteId: number): Promise<PlannedDowntimeEntity> {
     return this.plannedDowntimeRepository.save({
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdatePlannedDowntimeDto): Promise<PlannedDowntimeEntity> {
-    const updatingPlannedDowntime = await this.plannedDowntimeRepository.findOneBy({ id });
+  async update(id: number, updateDto: UpdatePlannedDowntimeDto, siteId: number): Promise<PlannedDowntimeEntity> {
+    const updatingPlannedDowntime = await this.plannedDowntimeRepository.findOneBy({ id, siteId });
     return this.plannedDowntimeRepository.save({
-      ..._.assign(updatingPlannedDowntime, updateDto),
+      ...updatingPlannedDowntime,
+      ...updateDto,
       updatedAt: new Date(),
     });
   }
 
-  async delete(id: number): Promise<void> {
-    const plannedDowntime = await this.plannedDowntimeRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const plannedDowntime = await this.plannedDowntimeRepository.findOneBy({ id, siteId });
     plannedDowntime.deleted = true;
     plannedDowntime.updatedAt = new Date();
     await this.plannedDowntimeRepository.save(plannedDowntime);
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const plannedDowntimes = await this.plannedDowntimeRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const plannedDowntimes = await this.plannedDowntimeRepository.findBy({ id: In(ids), siteId });
     await this.plannedDowntimeRepository.save(
       plannedDowntimes.map((plannedDowntime) => {
         plannedDowntime.deleted = true;

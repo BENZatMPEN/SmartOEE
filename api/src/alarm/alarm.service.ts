@@ -41,9 +41,10 @@ export class AlarmService {
     });
   }
 
-  create(createDto: CreateAlarmDto): Promise<AlarmEntity> {
+  create(createDto: CreateAlarmDto, siteId: number): Promise<AlarmEntity> {
     return this.alarmRepository.save({
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

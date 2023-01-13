@@ -1,13 +1,21 @@
 import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Product } from '../../../@types/product';
 import Page from '../../../components/Page';
+import { emptyCurrentProduct, getProduct } from '../../../redux/actions/productAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import ProductForm from '../../../sections/settings/products/details/ProductForm';
-import axios from '../../../utils/axios';
 
 export default function ProductDetails() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentProduct, error } = useSelector((state: RootState) => state.product);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,30 +26,33 @@ export default function ProductDetails() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<Product | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<Product>(`/products/${id}`);
-          const product = response.data;
-          setModel(product);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
+      if (isEdit || isDuplicate) {
+        await dispatch(getProduct(Number(id)));
+      }
+    })();
+
+    return () => {
+      dispatch(emptyCurrentProduct());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
           navigate(PATH_SETTINGS.products.root);
         }
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={model ? 'Product Settings: Edit Product' : 'Product Settings: Create Product'}>
+    <Page title={currentProduct ? 'Product Settings: Edit Product' : 'Product Settings: Create Product'}>
       <Container maxWidth={false}>
-        <ProductForm isEdit={isEdit} currentProduct={model} />
+        <ProductForm isEdit={isEdit} />
       </Container>
     </Page>
   );

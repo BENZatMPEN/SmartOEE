@@ -1,5 +1,5 @@
 import { PercentSetting } from '../../common/type/percent-settings';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class UpdateSiteDto {
@@ -45,4 +45,8 @@ export class UpdateSiteDto {
   @Type(() => Number)
   @IsOptional()
   readonly userLimit?: number;
+
+  @IsDate()
+  @Type(() => Date)
+  readonly cutoffTime: Date;
 }

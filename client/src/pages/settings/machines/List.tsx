@@ -13,7 +13,7 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterMachine, Machine } from '../../../@types/machine';
+import { FilterMachine } from '../../../@types/machine';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -21,9 +21,10 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
+import { deleteMachine, deleteMachines, getMachinePagedList } from '../../../redux/actions/machineAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { MachineTableRow, MachineTableToolbar } from '../../../sections/settings/machines/list';
-import axios from '../../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'code', label: 'M/C Code', align: 'left' },
@@ -31,11 +32,6 @@ const TABLE_HEAD = [
   { id: 'location', label: 'Location', align: 'left' },
   { id: '' },
 ];
-
-type MachinePagedList = {
-  list: Machine[];
-  count: number;
-};
 
 export default function MachineList() {
   const {
@@ -59,11 +55,11 @@ export default function MachineList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<MachinePagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.machine);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -73,25 +69,15 @@ export default function MachineList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterMachine = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterMachine = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<MachinePagedList>('/machines', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getMachinePagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -104,24 +90,14 @@ export default function MachineList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/machines/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteMachine(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/machines`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteMachines(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {

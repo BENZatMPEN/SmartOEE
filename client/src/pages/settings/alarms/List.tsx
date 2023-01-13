@@ -21,6 +21,13 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
+import { deleteAlarm, deleteAlarms, getAlarmPagedList } from '../../../redux/actions/alarmAction';
+import {
+  deleteDeviceModel,
+  deleteDeviceModels,
+  getDeviceModelPagedList,
+} from '../../../redux/actions/deviceModelAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { AlarmTableRow, AlarmTableToolbar } from '../../../sections/settings/alarms/list';
 import axios from '../../../utils/axios';
@@ -31,11 +38,6 @@ const TABLE_HEAD = [
   { id: 'notify', label: 'Notify', align: 'center' },
   { id: '' },
 ];
-
-type AlarmPagedList = {
-  list: Alarm[];
-  count: number;
-};
 
 export default function AlarmList() {
   const {
@@ -59,11 +61,11 @@ export default function AlarmList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<AlarmPagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.alarm);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -73,25 +75,15 @@ export default function AlarmList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterAlarm = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterAlarm = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<AlarmPagedList>('/alarms', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getAlarmPagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -104,24 +96,14 @@ export default function AlarmList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/alarms/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteAlarm(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/alarms`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteAlarms(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {

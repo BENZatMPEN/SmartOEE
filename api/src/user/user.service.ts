@@ -23,7 +23,7 @@ export class UserService {
     private roleRepository: Repository<RoleEntity>,
   ) {}
 
-  private readonly saltOrRounds = 42;
+  private readonly saltOrRounds = 10;
 
   async findPagedList(filterDto: FilterUserDto, siteId: number): Promise<PagedLisDto<UserEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;

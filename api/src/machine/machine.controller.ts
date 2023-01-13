@@ -47,9 +47,13 @@ export class MachineController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(@Body() createDto: CreateMachineDto, @UploadedFile(FileSavePipe) image: string): Promise<MachineEntity> {
+  create(
+    @Body() createDto: CreateMachineDto,
+    @UploadedFile(FileSavePipe) image: string,
+    @Query('siteId') siteId: number,
+  ): Promise<MachineEntity> {
     console.log(createDto);
-    return this.machineService.create(createDto, image);
+    return this.machineService.create(createDto, image, siteId);
   }
 
   @Put(':id')

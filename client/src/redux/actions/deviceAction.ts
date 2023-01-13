@@ -34,6 +34,7 @@ export function getDevice(id: number) {
 export function createDevice(dto: EditDevice) {
   return async () => {
     dispatch(deviceSlice.actions.startSavingError());
+
     try {
       const response = await axios.post<Device>(`/devices`, dto);
       return response.data;
@@ -47,6 +48,7 @@ export function createDevice(dto: EditDevice) {
 export function updateDevice(id: number, dto: EditDevice) {
   return async () => {
     dispatch(deviceSlice.actions.startSavingError());
+
     try {
       const response = await axios.put<Device>(`/devices/${id}`, dto);
       return response.data;

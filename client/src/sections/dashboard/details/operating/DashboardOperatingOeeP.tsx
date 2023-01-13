@@ -37,11 +37,11 @@ export default function DashboardOperatingOeeP() {
 
   const dispatch = useDispatch();
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const { currentBatch, canEditBatch, batchParamPs } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { timeUnit } = currentOee || { timeUnit: '' };
+  const { timeUnit } = selectedOee || { timeUnit: '' };
 
   const { oeeStats, machines } = currentBatch || { machines: [] };
 

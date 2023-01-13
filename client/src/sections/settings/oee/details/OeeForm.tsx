@@ -1,14 +1,13 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditOee, Oee, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
+import { EditOee, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
 import { PercentSetting } from '../../../../@types/percentSetting';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -23,9 +22,9 @@ import {
 import Iconify from '../../../../components/Iconify';
 import { initialOeeTags, initialPercentSettings, OEE_TYPE_OPTIONS, TIME_UNIT_OPTIONS } from '../../../../constants';
 import useToggle from '../../../../hooks/useToggle';
-import { RootState, useSelector } from '../../../../redux/store';
+import { createOee, updateOee } from '../../../../redux/actions/oeeAction';
+import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import axios from '../../../../utils/axios';
 import { getTimeUnitText } from '../../../../utils/formatText';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
@@ -44,15 +43,14 @@ type SelectedItem<T> = {
 
 type Props = {
   isEdit: boolean;
-  currentOee: Oee | null;
 };
 
-export default function OeeForm({ isEdit, currentOee }: Props) {
-  const theme = useTheme();
+export default function OeeForm({ isEdit }: Props) {
+  const dispatch = useDispatch();
+
+  const { currentOee, saveError } = useSelector((state: RootState) => state.oee);
 
   const navigate = useNavigate();
-
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -104,8 +102,10 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
       oeeMachines: currentOee?.oeeMachines || [],
       oeeProducts: currentOee
         ? (currentOee.oeeProducts || []).map((item) => {
-            item.standardSpeedSeconds = convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit);
-            return item;
+            return {
+              ...item,
+              standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
+            };
           })
         : [],
       timeUnit: currentOee?.timeUnit || TIME_UNIT_OPTIONS[0],
@@ -132,54 +132,41 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
   const values = watch();
 
   const onSubmit = async (data: EditOee) => {
-    try {
-      if (data.timeUnit === 'minute') {
-        data.minorStopSeconds = Number(data.minorStopSeconds) * 60;
-        data.breakdownSeconds = Number(data.breakdownSeconds) * 60;
-        data.oeeProducts = (data.oeeProducts || []).map((item) => {
-          item.standardSpeedSeconds = item.standardSpeedSeconds * 60;
-          return item;
-        });
-      }
+    data.percentSettings = data.useSitePercentSettings ? null : data.percentSettings;
+    if (data.timeUnit === 'minute') {
+      data.minorStopSeconds = Number(data.minorStopSeconds) * 60;
+      data.breakdownSeconds = Number(data.breakdownSeconds) * 60;
+      data.oeeProducts = (data.oeeProducts || []).map((item) => {
+        item.standardSpeedSeconds = item.standardSpeedSeconds * 60;
+        return item;
+      });
+    }
 
-      data.percentSettings = data.useSitePercentSettings ? null : data.percentSettings;
+    const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
 
-      if (isEdit && currentOee) {
-        await axios.put<Oee>(`/oees/${currentOee.id}`, data, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } else {
-        await axios.post<Oee>(
-          `/oees`,
-          { ...data, siteId: selectedSite?.id },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
-      }
-
+    if (oee) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.oees.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          if (Array.isArray(error.response?.data.message)) {
-            for (const item of error.response?.data.message) {
+    }
+  };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
               enqueueSnackbar(item, { variant: 'error' });
             }
           } else {
-            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
           }
-          return;
         }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
     }
-  };
+  }, [enqueueSnackbar, saveError]);
 
   const handleProductAdd = () => {
     setEditingProduct(null);
@@ -250,7 +237,7 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
       return;
     }
 
-    const oeeMachines = getValues('oeeMachines') as OeeMachine[];
+    const oeeMachines = getValues('oeeMachines');
     if (editingMachine) {
       const temp = oeeMachines[editingMachine.index];
       oeeMachines[editingMachine.index] = {
@@ -324,8 +311,8 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
           }
         />
 
-        <Stack spacing={theme.spacing(3)}>
-          <Grid container spacing={theme.spacing(3)}>
+        <Stack spacing={3}>
+          <Grid container spacing={3}>
             <Grid item xs={4}>
               <Card>
                 <CardContent>
@@ -433,8 +420,8 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
               <RHFCheckbox name="useSitePercentSettings" label="Use default percent settings" />
 
               {!values.useSitePercentSettings && (
-                <Stack spacing={theme.spacing(2)} sx={{ mt: theme.spacing(2) }}>
-                  {(getValues('percentSettings') || []).map((percentSetting) => (
+                <Stack spacing={2} sx={{ mt: 2 }}>
+                  {(values.percentSettings || []).map((percentSetting) => (
                     <OeePercentSettings
                       key={percentSetting.type}
                       percentSetting={percentSetting}
@@ -450,7 +437,7 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
             <CardContent>
               <OeeProductTable
                 editingOee={values}
-                oeeProducts={getValues('oeeProducts') || []}
+                oeeProducts={values.oeeProducts || []}
                 onAdd={() => handleProductAdd()}
                 onEdit={(index) => handleProductEdit(index)}
                 onDelete={(index) => handleProductDelete(index)}
@@ -461,7 +448,7 @@ export default function OeeForm({ isEdit, currentOee }: Props) {
           <Card>
             <CardContent>
               <OeeMachineTable
-                oeeMachines={getValues('oeeMachines') || []}
+                oeeMachines={values.oeeMachines || []}
                 onAdd={() => handleMachineAdd()}
                 onEdit={(index) => handleMachineEdit(index)}
                 onDelete={(index) => handleMachineDelete(index)}

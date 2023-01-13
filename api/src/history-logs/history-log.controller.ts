@@ -12,9 +12,6 @@ import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { HistoryLogService } from './history-log.service';
 import { FilterHistoryLogDto } from './dto/filter-history-log.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorators/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id.pipe';
-import { SiteEntity } from '../common/entities/site-entity';
 import { HistoryLogEntity } from '../common/entities/history-log-entity';
 import { Response } from 'express';
 import * as XLSX from 'xlsx';
@@ -27,11 +24,7 @@ export class HistoryLogController {
   constructor(private readonly historyLogService: HistoryLogService) {}
 
   @Get()
-  findFilter(
-    @Query() filterDto: FilterHistoryLogDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PagedLisDto<HistoryLogEntity>> {
+  findFilter(@Query() filterDto: FilterHistoryLogDto): Promise<PagedLisDto<HistoryLogEntity>> {
     return this.historyLogService.findPagedList(filterDto);
   }
 

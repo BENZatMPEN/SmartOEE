@@ -43,8 +43,8 @@ export class DashboardController {
   }
 
   @Post()
-  async create(@Body() createDto: CreateDashboardDto): Promise<DashboardEntity> {
-    return this.dashboardService.create(createDto);
+  async create(@Body() createDto: CreateDashboardDto, @Query('siteId') siteId: number): Promise<DashboardEntity> {
+    return this.dashboardService.create(createDto, siteId);
   }
 
   @Put(':id')

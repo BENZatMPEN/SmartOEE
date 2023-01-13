@@ -1,33 +1,33 @@
 import { IsArray, IsBoolean, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class AlarmCondition {
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   aParams: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   pParams: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   qParams: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   aLow: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   pLow: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   qLow: boolean;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   oeeLow: boolean;
 
   @IsArray()

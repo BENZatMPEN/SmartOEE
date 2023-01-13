@@ -20,9 +20,9 @@ export default function DashboardApgGraphP() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentOee } = useSelector((state: RootState) => state.oee);
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { timeUnit, useSitePercentSettings, percentSettings } = currentOee || {
+  const { timeUnit, useSitePercentSettings, percentSettings } = selectedOee || {
     timeUnit: '',
     useSitePercentSettings: true,
   };

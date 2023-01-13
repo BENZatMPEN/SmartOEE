@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { Dashboard } from '../../@types/dashboard';
 import { Site } from '../../@types/site';
 
 export type SiteState = {
@@ -7,6 +8,7 @@ export type SiteState = {
   selectedSiteId: number | null;
   selectedSite: Site | null;
   ganttView: boolean;
+  allDashboard: Dashboard[];
 };
 
 const initialState: SiteState = {
@@ -15,6 +17,7 @@ const initialState: SiteState = {
   selectedSiteId: null,
   selectedSite: null,
   ganttView: false,
+  allDashboard: [],
 };
 
 const userSiteSlice = createSlice({
@@ -38,6 +41,10 @@ const userSiteSlice = createSlice({
     },
     setGanttView(state, action) {
       state.ganttView = action.payload;
+    },
+    getAllDashboardsSuccess(state, action) {
+      state.isLoading = false;
+      state.allDashboard = action.payload;
     },
   },
 });

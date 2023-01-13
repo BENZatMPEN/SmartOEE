@@ -26,7 +26,7 @@ export class UpdateDeviceDto {
   readonly port: number;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   readonly stopped: boolean;
 
   @IsArray()
