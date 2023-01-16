@@ -15,6 +15,14 @@ services:
     volumes:
       - ./data/mysql:/var/lib/mysql
 
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+    ports:
+      - "3030:80"
+
   api:
     build:
       dockerfile: Dockerfile
@@ -62,7 +70,7 @@ services:
       BASE_API_URL: http://api:3000
       READ_INTERVAL: "0/3 * * * * *"
       SYNC_INTERVAL: "0/3 * * * * *"
-      API_USER: admin@user.com
+      API_USER: poller@user.com
       API_PASS: P@ssword1
       NODE_TLS_REJECT_UNAUTHORIZED: 0
     volumes:
