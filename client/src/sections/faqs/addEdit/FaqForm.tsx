@@ -3,13 +3,16 @@ import { LoadingButton } from '@mui/lab';
 import { Box, Button, Card, Divider, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditFaq, Faq, FaqAttachment } from '../../../@types/faq';
+import { EditFaq, FaqAttachment } from '../../../@types/faq';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 import { User } from '../../../@types/user';
+import { AbilityContext } from '../../../caslContext';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import { EditorLabelStyle } from '../../../components/EditorLabelStyle';
 import FormHeader from '../../../components/FormHeader';
@@ -22,14 +25,20 @@ import {
 } from '../../../components/hook-form';
 import Iconify from '../../../components/Iconify';
 import Label from '../../../components/Label';
-import { FAQ_PROCESS_STATUS } from '../../../constants';
-import { RootState, useSelector } from '../../../redux/store';
+import {
+  FAQ_PROCESS_STATUS_APPROVED,
+  FAQ_PROCESS_STATUS_COMPLETED,
+  FAQ_PROCESS_STATUS_ON_PROCESS,
+  FAQ_PROCESS_STATUS_WAITING,
+} from '../../../constants';
+import { createFaq, updateFaq } from '../../../redux/actions/faqAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_FAQS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
 import { getFaqProcessStatusText } from '../../../utils/formatText';
 import { getFileUrl } from '../../../utils/imageHelper';
 
-interface FormValuesProps extends Partial<EditFaq> {
+interface FormValuesProps extends EditFaq {
   attachments: FaqAttachment[];
   viewingImages: (File | string)[];
   viewingFiles: string[];
@@ -37,17 +46,78 @@ interface FormValuesProps extends Partial<EditFaq> {
 
 type Props = {
   isEdit: boolean;
-  currentFaq: Faq | null;
 };
 
-export default function FaqForm({ isEdit, currentFaq }: Props) {
+export default function FaqForm({ isEdit }: Props) {
   const theme = useTheme();
+
+  const ability = useContext(AbilityContext);
+
+  const canApprove = ability.can(RoleAction.Approve, RoleSubject.Faqs);
+  const statusOpts = canApprove
+    ? [
+        FAQ_PROCESS_STATUS_ON_PROCESS,
+        FAQ_PROCESS_STATUS_WAITING,
+        FAQ_PROCESS_STATUS_COMPLETED,
+        FAQ_PROCESS_STATUS_APPROVED,
+      ]
+    : [FAQ_PROCESS_STATUS_ON_PROCESS, FAQ_PROCESS_STATUS_WAITING, FAQ_PROCESS_STATUS_COMPLETED];
 
   const navigate = useNavigate();
 
+  const dispatch = useDispatch();
+
+  const { currentFaq, saveError } = useSelector((state: RootState) => state.faq);
+
   const { enqueueSnackbar } = useSnackbar();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const [formValues, setFormValues] = useState<FormValuesProps | undefined>(undefined);
+
+  useEffect(() => {
+    (async () => {
+      await getUsers();
+
+      setFormValues({
+        topic: currentFaq?.topic || '',
+        description: currentFaq?.description || '',
+        status: currentFaq?.status || FAQ_PROCESS_STATUS_ON_PROCESS,
+        remark: currentFaq?.remark || '',
+        createdByUserId: currentFaq?.createdByUserId || -1,
+        approvedByUserId: currentFaq?.approvedByUserId || -1,
+        date: currentFaq?.date || new Date(),
+        startDate: currentFaq?.startDate || new Date(),
+        endDate: currentFaq?.endDate || new Date(),
+        attachments: currentFaq?.attachments || [],
+        viewingImages: isEdit
+          ? (currentFaq?.attachments || [])
+              .filter((item) => item.groupName === 'images')
+              .map((item) => `${getFileUrl(item.attachment.fileName)}`)
+          : [],
+        viewingFiles: isEdit
+          ? (currentFaq?.attachments || [])
+              .filter((item) => item.groupName === 'attachments')
+              .map((attachment) => attachment.attachment.name)
+          : [],
+        images: [],
+        files: [],
+        deletingAttachments: [],
+      });
+    })();
+    return () => {
+      setUsers([]);
+    };
+  }, [currentFaq]);
+
+  const [users, setUsers] = useState<User[]>([]);
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get<User[]>('/users/all');
+      setUsers(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const NewFaqSchema = Yup.object().shape({
     topic: Yup.string().required('Topic is required'),
@@ -59,7 +129,7 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
     defaultValues: {
       topic: '',
       description: '',
-      status: FAQ_PROCESS_STATUS[0],
+      status: FAQ_PROCESS_STATUS_ON_PROCESS,
       remark: '',
       createdByUserId: -1,
       approvedByUserId: -1,
@@ -73,27 +143,7 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
       files: [],
       deletingAttachments: [],
     },
-    values: {
-      topic: currentFaq?.topic || '',
-      description: currentFaq?.description || '',
-      status: currentFaq?.status || FAQ_PROCESS_STATUS[0],
-      remark: currentFaq?.remark || '',
-      createdByUserId: currentFaq?.createdByUserId || -1,
-      approvedByUserId: currentFaq?.approvedByUserId || -1,
-      date: currentFaq?.date || new Date(),
-      startDate: currentFaq?.startDate || new Date(),
-      endDate: currentFaq?.endDate || new Date(),
-      attachments: currentFaq?.attachments || [],
-      viewingImages: (currentFaq?.attachments || [])
-        .filter((item) => item.groupName === 'images')
-        .map((item) => `${getFileUrl(item.attachment.fileName)}`),
-      viewingFiles: (currentFaq?.attachments || [])
-        .filter((item) => item.groupName === 'attachments')
-        .map((attachment) => attachment.attachment.name),
-      images: [],
-      files: [],
-      deletingAttachments: [],
-    },
+    values: formValues,
   });
 
   const {
@@ -111,28 +161,37 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { viewingImages, attachments, viewingFiles, ...dto } = data;
-      dto.approvedByUserId = dto.approvedByUserId === -1 ? null : dto.approvedByUserId;
       dto.images = (viewingImages || []).filter((file) => file instanceof File) as File[];
-      if (!isEdit && selectedSite) {
-        dto.siteId = selectedSite.id;
+
+      const faq = isEdit && currentFaq ? await dispatch(updateFaq(currentFaq.id, dto)) : await dispatch(createFaq(dto));
+
+      if (faq) {
+        enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+        navigate(PATH_FAQS.root);
       }
-
-      await axios.request<Faq>({
-        method: isEdit ? 'put' : 'post',
-        url: isEdit ? `/faqs/${currentFaq?.id}` : '/faqs',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        data: dto,
-      });
-
-      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      navigate(PATH_FAQS.root);
       console.log(dto);
     } catch (error) {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
 
   const handleImageDrop = useCallback(
     (acceptedFiles) => {
@@ -219,33 +278,6 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
     );
   };
 
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        await getUsers();
-
-        if (currentFaq) {
-          setValue('createdByUserId', currentFaq.createdByUserId || -1);
-          setValue('approvedByUserId', currentFaq.approvedByUserId || -1);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFaq]);
-
-  const getUsers = async () => {
-    try {
-      const response = await axios.get<User[]>('/users/all');
-      setUsers(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <FormHeader
@@ -293,7 +325,7 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
                 InputLabelProps={{ shrink: true }}
                 SelectProps={{ native: false }}
               >
-                {FAQ_PROCESS_STATUS.map((option) => (
+                {statusOpts.map((option) => (
                   <MenuItem
                     key={option}
                     value={option}
@@ -412,7 +444,7 @@ export default function FaqForm({ isEdit, currentFaq }: Props) {
                 name="approvedByUserId"
                 label="Approved By"
                 InputLabelProps={{ shrink: true }}
-                SelectProps={{ native: false }}
+                SelectProps={{ native: false, disabled: !canApprove }}
               >
                 <MenuItem
                   value={-1}

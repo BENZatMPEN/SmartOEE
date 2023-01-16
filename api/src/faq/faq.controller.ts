@@ -53,11 +53,15 @@ export class FaqController {
 
   @Post()
   @UseInterceptors(AnyFilesInterceptor())
-  async create(@Body() createDto: CreateFaqDto, @UploadedFiles() files: Express.Multer.File[]): Promise<FaqEntity> {
+  async create(
+    @Body() createDto: CreateFaqDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Query('siteId') siteId: number,
+  ): Promise<FaqEntity> {
     const imageInfoList = await this.saveFileInfoList('images[]', files);
     const fileInfoList = await this.saveFileInfoList('files[]', files);
 
-    return this.faqService.create(createDto, imageInfoList, fileInfoList);
+    return this.faqService.create(createDto, siteId, imageInfoList, fileInfoList);
   }
 
   @Put(':id')

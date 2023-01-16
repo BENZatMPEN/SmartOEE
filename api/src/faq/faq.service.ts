@@ -78,9 +78,17 @@ export class FaqService {
       .getOne();
   }
 
-  async create(createDto: CreateFaqDto, imageInfoList: FileInfo[], fileInfoList: FileInfo[]): Promise<FaqEntity> {
+  async create(
+    createDto: CreateFaqDto,
+    siteId: number,
+    imageInfoList: FileInfo[],
+    fileInfoList: FileInfo[],
+  ): Promise<FaqEntity> {
+    const { approvedByUserId, ...dto } = createDto;
     const faq = await this.faqRepository.save({
-      ...createDto,
+      ...dto,
+      siteId,
+      approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -97,11 +105,12 @@ export class FaqService {
     imageInfoList: FileInfo[],
     fileInfoList: FileInfo[],
   ): Promise<FaqEntity> {
-    const { deletingAttachments, ...dto } = updateDto;
+    const { approvedByUserId, deletingAttachments, ...dto } = updateDto;
     const updatingFaq = await this.faqRepository.findOneBy({ id, siteId });
     const faq = await this.faqRepository.save({
       ...updatingFaq,
       ...dto,
+      approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
       updatedAt: new Date(),
     });
 

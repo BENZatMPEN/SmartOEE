@@ -1,13 +1,21 @@
-import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, Container } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Faq } from '../../@types/faq';
 import Page from '../../components/Page';
-import { PATH_FAQS } from '../../routes/paths';
+import { emptyCurrentFaq, getFaq } from '../../redux/actions/faqAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
+import { PATH_SETTINGS } from '../../routes/paths';
 import FaqForm from '../../sections/faqs/addEdit/FaqForm';
-import axios from '../../utils/axios';
 
 export default function FaqAddEdit() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentFaq, error, isLoading } = useSelector((state: RootState) => state.faq);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,35 +26,39 @@ export default function FaqAddEdit() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<Faq | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<Faq>(`/faqs/${id}`);
-          const faq = response.data;
-          if (isDuplicate) {
-            faq.attachments = [];
-          }
-          setModel(faq);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
-          navigate(PATH_FAQS.root);
-        }
+      if (isEdit || isDuplicate) {
+        await dispatch(getFaq(Number(id)));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      dispatch(emptyCurrentFaq());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.products.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page
-      title={model ? 'Knowledge and FAQs: Edit Knowledge and FAQs' : 'Knowledge and FAQs: Create Knowledge and FAQs'}
-    >
+    <Page title={`Knowledge and FAQs: ${currentFaq ? 'Edit Knowledge and FAQs' : 'Create Knowledge and FAQs'}`}>
       <Container maxWidth={false}>
-        <FaqForm isEdit={isEdit} currentFaq={model} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <FaqForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

@@ -783,7 +783,7 @@ export class AppController {
           remark: faker.commerce.productDescription(),
           date: new Date(),
           headProjectUserId: null,
-          approveByUserId: null,
+          approvedByUserId: null,
           oeeId: null,
           startDate: new Date(),
           endDate: new Date(),
@@ -809,8 +809,8 @@ export class AppController {
           startDate: new Date(),
           endDate: new Date(),
           status: projectStatus[faker.datatype.number({ min: 0, max: projectStatus.length - 1 })],
-          siteId: sites[1].id,
         },
+        sites[1].id,
         null,
         null,
       );

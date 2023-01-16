@@ -9,17 +9,18 @@ import authReducer from './reducers/authReducer';
 import dashboardReducer from './reducers/dashboardReducer';
 import deviceModelReducer from './reducers/deviceModelReducer';
 import deviceReducer from './reducers/deviceReducer';
+import faqReducer from './reducers/faqReducer';
 import machineReducer from './reducers/machineReducer';
 import oeeBatchReducer from './reducers/oeeBatchReducer';
 import oeeDashboardReducer from './reducers/oeeDashboardReducer';
 import oeeReducer from './reducers/oeeReducer';
 import plannedDowntimeReducer from './reducers/plannedDowntimeReducer';
+import problemSolutionReducer from './reducers/problemSolutionReducer';
 import productReducer from './reducers/productReducer';
 import roleReducer from './reducers/roleReducer';
 import siteReducer from './reducers/siteReducer';
 import userReducer from './reducers/userReducer';
 import userSiteReducer from './reducers/userSiteReducer';
-import problemSolutionReducer from './reducers/problemSolutionReducer';
 import calendarReducer from './slices/calendar';
 
 const rootPersistConfig = {
@@ -89,6 +90,7 @@ const rootReducer = combineReducers({
   machine: machineReducer,
   oeeDashboard: oeeDashboardReducer,
   problemSolution: problemSolutionReducer,
+  faq: faqReducer,
   adminUser: adminUserReducer,
   adminSite: adminSiteReducer,
   calendar: calendarReducer,

@@ -19,7 +19,12 @@ export type Faq = {
   attachments: FaqAttachment[];
 };
 
-export type EditFaq = {
+export type FaqPagedList = {
+  list: Faq[];
+  count: number;
+};
+
+export interface EditFaq {
   topic: string;
   description: string;
   remark: string;
@@ -27,13 +32,13 @@ export type EditFaq = {
   startDate: Date;
   endDate: Date;
   createdByUserId: number;
-  approvedByUserId: number | null;
+  approvedByUserId: number;
   siteId?: number;
   status: string;
   images: File[] | null;
   files: File[] | null;
   deletingAttachments: number[];
-};
+}
 
 type FaqUser = {
   id: number;

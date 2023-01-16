@@ -1,4 +1,4 @@
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateFaqDto {
@@ -23,7 +23,6 @@ export class CreateFaqDto {
 
   @IsNumber()
   @Type(() => Number)
-  @IsOptional()
   readonly approvedByUserId: number;
 
   @IsString()
@@ -31,10 +30,6 @@ export class CreateFaqDto {
 
   @IsString()
   readonly remark: string;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 
   @IsString()
   readonly status: string;

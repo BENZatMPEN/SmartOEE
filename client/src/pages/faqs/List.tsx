@@ -13,7 +13,8 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Faq, FilterFaq } from '../../@types/faq';
+import { FilterFaq } from '../../@types/faq';
+import DeleteConfirmationDialog from '../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Iconify from '../../components/Iconify';
 import Page from '../../components/Page';
@@ -21,10 +22,10 @@ import Scrollbar from '../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../constants';
 import useTable from '../../hooks/useTable';
-import { RootState, useSelector } from '../../redux/store';
+import { deleteFaq, deleteFaqs, getFaqPagedList } from '../../redux/actions/faqAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { PATH_FAQS } from '../../routes/paths';
 import { FaqTableRow, FaqTableToolbar } from '../../sections/faqs/list';
-import axios from '../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'id', label: 'Code', align: 'left' },
@@ -34,11 +35,6 @@ const TABLE_HEAD = [
   { id: 'status', label: 'Status', align: 'left' },
   { id: '' },
 ];
-
-type FaqPagedList = {
-  list: Faq[];
-  count: number;
-};
 
 export default function FaqList() {
   const {
@@ -62,13 +58,11 @@ export default function FaqList() {
 
   const navigate = useNavigate();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const dispatch = useDispatch();
 
-  const [pagedList, setPagedList] = useState<FaqPagedList>({ list: [], count: 0 });
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.faq);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -78,25 +72,15 @@ export default function FaqList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterFaq = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterFaq = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<FaqPagedList>('/faqs', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getFaqPagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -109,24 +93,14 @@ export default function FaqList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/faqs/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteFaq(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/faqs`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteFaqs(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleDetailRow = (id: number) => {
@@ -139,6 +113,30 @@ export default function FaqList() {
 
   const handleDuplicateRow = (id: number) => {
     navigate(PATH_FAQS.item.duplicate(paramCase(id.toString())));
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    if (deletingItems.length === 1 && selected.length === 0) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    setOpenDeleteDialog(false);
   };
 
   const denseHeight = dense ? 60 : 80;
@@ -185,7 +183,7 @@ export default function FaqList() {
                   }
                   actions={
                     <Tooltip title="Delete">
-                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                      <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                         <Iconify icon={'eva:trash-2-outline'} />
                       </IconButton>
                     </Tooltip>
@@ -217,7 +215,7 @@ export default function FaqList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                         onDetailsRow={() => handleDetailRow(row.id)}
@@ -245,6 +243,15 @@ export default function FaqList() {
             />
           </Box>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

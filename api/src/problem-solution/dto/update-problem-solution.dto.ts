@@ -23,8 +23,7 @@ export class UpdateProblemSolutionDto {
 
   @IsNumber()
   @Type(() => Number)
-  @IsOptional()
-  readonly approveByUserId: number;
+  readonly approvedByUserId: number;
 
   @IsNumber()
   @Type(() => Number)

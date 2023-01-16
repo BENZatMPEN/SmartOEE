@@ -20,17 +20,11 @@ export class FaqEntity {
   @Column({ type: 'datetime' })
   endDate: Date;
 
-  @Column({ type: 'varchar', length: 500 })
-  createdByUserEmail: string;
-
   @Column({ type: 'int', nullable: true })
   createdByUserId: number;
 
   @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
   createdByUser: UserEntity;
-
-  @Column({ type: 'varchar', length: 500 })
-  approvedByUserEmail: string;
 
   @Column({ type: 'int', nullable: true })
   approvedByUserId: number;

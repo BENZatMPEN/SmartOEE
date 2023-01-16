@@ -1,4 +1,4 @@
-import { IsArray, IsDate, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateFaqDto {
@@ -22,7 +22,6 @@ export class UpdateFaqDto {
   readonly createdByUserId: number;
 
   @IsNumber()
-  @IsOptional()
   @Type(() => Number)
   readonly approvedByUserId: number;
 

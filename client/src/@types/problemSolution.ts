@@ -46,7 +46,7 @@ export interface EditProblemSolution {
   startDate: Date;
   endDate: Date;
   headProjectUserId: number;
-  approvedByUserId: number | null;
+  approvedByUserId: number;
   oeeId: number;
   status: string;
   deletingAttachments: number[];

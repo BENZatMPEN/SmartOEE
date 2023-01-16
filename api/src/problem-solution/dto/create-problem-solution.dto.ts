@@ -1,4 +1,4 @@
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateProblemSolutionDto {
@@ -23,8 +23,7 @@ export class CreateProblemSolutionDto {
 
   @IsNumber()
   @Type(() => Number)
-  @IsOptional()
-  readonly approveByUserId: number;
+  readonly approvedByUserId: number;
 
   @IsNumber()
   @Type(() => Number)

@@ -133,7 +133,7 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
       setOees([]);
       setUsers([]);
     };
-  }, [currentProblemSolution]);
+  }, [currentProblemSolution, isEdit]);
 
   const [oees, setOees] = useState<Oee[]>([]);
 
@@ -205,7 +205,6 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
         ...dto
       } = data;
 
-      dto.approvedByUserId = dto.approvedByUserId === -1 ? null : dto.approvedByUserId;
       dto.beforeProjectChartImages = (viewingBeforeProjectChartImages || []).filter(
         (file) => file instanceof File,
       ) as File[];
@@ -563,47 +562,45 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
               </RHFSelect>
             </Grid>
 
-            {canApprove && (
-              <Grid item md={4}>
-                <RHFSelect
-                  name="approvedByUserId"
-                  label="Approved By"
-                  InputLabelProps={{ shrink: true }}
-                  SelectProps={{ native: false }}
+            <Grid item md={4}>
+              <RHFSelect
+                name="approvedByUserId"
+                label="Approved By"
+                InputLabelProps={{ shrink: true }}
+                SelectProps={{ native: false, disabled: !canApprove }}
+              >
+                <MenuItem
+                  value={-1}
+                  sx={{
+                    mx: 1,
+                    borderRadius: 0.75,
+                    typography: 'body2',
+                    fontStyle: 'italic',
+                    color: 'text.secondary',
+                  }}
                 >
+                  None
+                </MenuItem>
+
+                <Divider />
+
+                {users.map((user) => (
                   <MenuItem
-                    value={-1}
+                    key={user.id}
+                    value={user.id}
                     sx={{
                       mx: 1,
+                      my: 0.5,
                       borderRadius: 0.75,
                       typography: 'body2',
-                      fontStyle: 'italic',
-                      color: 'text.secondary',
+                      textTransform: 'capitalize',
                     }}
                   >
-                    None
+                    {user.firstName} {user.lastName}
                   </MenuItem>
-
-                  <Divider />
-
-                  {users.map((user) => (
-                    <MenuItem
-                      key={user.id}
-                      value={user.id}
-                      sx={{
-                        mx: 1,
-                        my: 0.5,
-                        borderRadius: 0.75,
-                        typography: 'body2',
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {user.firstName} {user.lastName}
-                    </MenuItem>
-                  ))}
-                </RHFSelect>
-              </Grid>
-            )}
+                ))}
+              </RHFSelect>
+            </Grid>
 
             <Grid item md={4}>
               <RHFSelect

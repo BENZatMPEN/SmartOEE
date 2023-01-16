@@ -99,9 +99,11 @@ export class ProblemSolutionService {
     afterProjectChartImageInfoList: FileInfo[],
     afterProjectImageInfoList: FileInfo[],
   ): Promise<ProblemSolutionEntity> {
+    const { approvedByUserId, ...dto } = createDto;
     const problemSolution = await this.problemSolutionRepository.save({
-      ...createDto,
+      ...dto,
       siteId,
+      approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -123,11 +125,12 @@ export class ProblemSolutionService {
     afterProjectChartImageInfoList: FileInfo[],
     afterProjectImageInfoList: FileInfo[],
   ): Promise<ProblemSolutionEntity> {
-    const { deletingAttachments, ...dto } = updateDto;
+    const { approvedByUserId, deletingAttachments, ...dto } = updateDto;
     const updatingProblemSolution = await this.problemSolutionRepository.findOneBy({ id, siteId });
     const problemSolution = await this.problemSolutionRepository.save({
       ...updatingProblemSolution,
       ...dto,
+      approvedByUserId: approvedByUserId === -1 ? null : approvedByUserId,
       updatedAt: new Date(),
     });
 
