@@ -1,38 +1,51 @@
-import { Box, Container, Grid } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Box, Card, CardContent, Container, Grid } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ProblemSolution } from '../../@types/problemSolution';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Page from '../../components/Page';
-import { PATH_PROBLEMS_SOLUTIONS } from '../../routes/paths';
+import { emptyCurrentProblemSolution, getProblemSolution } from '../../redux/actions/problemSolutionAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
+import { PATH_PROBLEMS_SOLUTIONS, PATH_SETTINGS } from '../../routes/paths';
 import ProblemSolutionCarousel from '../../sections/problems-solutions/details/ProblemSolutionCarousel';
 import ProblemSolutionSummary from '../../sections/problems-solutions/details/ProblemSolutionSummary';
-import axios from '../../utils/axios';
 import { getFileUrl } from '../../utils/imageHelper';
 
 export default function ProblemSolutionDetails() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentProblemSolution, error, isLoading } = useSelector((state: RootState) => state.problemSolution);
+
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  const [model, setModel] = useState<ProblemSolution | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        const response = await axios.get<ProblemSolution>(`/problems-solutions/${id}`);
-        setModel(response.data);
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
-          navigate(PATH_PROBLEMS_SOLUTIONS.root);
+      await dispatch(getProblemSolution(Number(id)));
+    })();
+
+    return () => {
+      dispatch(emptyCurrentProblemSolution());
+    };
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.products.root);
         }
       }
-    })();
-  }, []);
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   const getImageUrls = (groupName: string): string[] => {
-    return (model?.attachments || [])
+    return (currentProblemSolution?.attachments || [])
       .filter((item) => item.groupName === groupName)
       .map((item) => getFileUrl(item.attachment.fileName) || '');
   };
@@ -41,14 +54,14 @@ export default function ProblemSolutionDetails() {
     <Page title="Problems & Solutions">
       <Container maxWidth={false}>
         <HeaderBreadcrumbs
-          heading={'Problems & Solutions - ' + model?.name || ''}
+          heading={'Problems & Solutions - ' + currentProblemSolution?.name || ''}
           links={[
             { name: 'Home', href: '/' },
             {
               name: 'Problems & Solutions',
               href: PATH_PROBLEMS_SOLUTIONS.root,
             },
-            { name: model?.name || '' },
+            { name: currentProblemSolution?.name || '' },
           ]}
           // action={
           //   <Button
@@ -62,28 +75,42 @@ export default function ProblemSolutionDetails() {
           // }
         />
 
-        {model && (
-          <Box>
-            <ProblemSolutionSummary problemSolution={model} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <>
+            {currentProblemSolution && (
+              <Box>
+                <ProblemSolutionSummary problemSolution={currentProblemSolution} />
 
-            <Grid container spacing={3}>
-              <Grid item xs={12} lg={6}>
-                <ProblemSolutionCarousel title={'Before - Charts'} images={getImageUrls('beforeProjectChartImages')} />
-              </Grid>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} lg={6}>
+                    <ProblemSolutionCarousel
+                      title={'Before - Charts'}
+                      images={getImageUrls('beforeProjectChartImages')}
+                    />
+                  </Grid>
 
-              <Grid item xs={12} lg={6}>
-                <ProblemSolutionCarousel title={'Before - Photos'} images={getImageUrls('beforeProjectImages')} />
-              </Grid>
+                  <Grid item xs={12} lg={6}>
+                    <ProblemSolutionCarousel title={'Before - Photos'} images={getImageUrls('beforeProjectImages')} />
+                  </Grid>
 
-              <Grid item xs={12} lg={6}>
-                <ProblemSolutionCarousel title={'After - Charts'} images={getImageUrls('afterProjectChartImages')} />
-              </Grid>
+                  <Grid item xs={12} lg={6}>
+                    <ProblemSolutionCarousel
+                      title={'After - Charts'}
+                      images={getImageUrls('afterProjectChartImages')}
+                    />
+                  </Grid>
 
-              <Grid item xs={12} lg={6}>
-                <ProblemSolutionCarousel title={'After - Photos'} images={getImageUrls('afterProjectImages')} />
-              </Grid>
-            </Grid>
-          </Box>
+                  <Grid item xs={12} lg={6}>
+                    <ProblemSolutionCarousel title={'After - Photos'} images={getImageUrls('afterProjectImages')} />
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+          </>
         )}
       </Container>
     </Page>

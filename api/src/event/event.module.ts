@@ -10,12 +10,13 @@ import { UserEntity } from '../common/entities/user-entity';
 import { RoleEntity } from '../common/entities/role-entity';
 import { UserService } from '../user/user.service';
 import { FileService } from '../common/services/file.service';
+import { SiteService } from '../site/site.service';
 
 @Module({
   imports: [
     ConfigModule.forFeature(configuration),
     TypeOrmModule.forFeature([SiteEntity, UserEntity, RoleEntity, TagReadEntity]),
   ],
-  providers: [EventGateway, WsStrategy, UserService, FileService],
+  providers: [EventGateway, WsStrategy, UserService, SiteService, FileService],
 })
 export class EventModule {}

@@ -40,7 +40,6 @@ export default function DeviceForm({ isEdit }: Props) {
     (async () => {
       const response = await axios.get<DeviceModel[]>(`/device-models/all`);
       setDeviceModels(response.data);
-      console.log(currentDevice);
       setFormValues({
         name: currentDevice?.name || '',
         remark: currentDevice?.remark || '',

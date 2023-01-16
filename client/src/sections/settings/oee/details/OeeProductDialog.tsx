@@ -28,15 +28,13 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
     },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
+  const { reset, handleSubmit } = methods;
 
   const onSubmit = async (data: FormValuesProps) => {
-    console.log(data);
+    setSearchTerm(data.searchTerm || '');
   };
+
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const [selectedProduct, setSelectedProduct] = useState<OeeProduct>({} as OeeProduct);
 
@@ -71,6 +69,11 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
         }
       }
     })();
+
+    return () => {
+      setSearchTerm('');
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleSelectOeeProduct = () => {
@@ -136,25 +139,32 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
           />
 
           <Scrollbar sx={{ maxHeight: 400 }}>
-            {(products || []).map((product) => (
-              <ListItemButton
-                key={product.id}
-                selected={selectedProduct?.productId === product.id}
-                onClick={() => handleSelectItem(product)}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <Typography variant="subtitle2">{product.name}</Typography>
+            {(products || [])
+              .filter(
+                (product) =>
+                  searchTerm.length === 0 ||
+                  product.sku.indexOf(searchTerm) >= 0 ||
+                  product.name.indexOf(searchTerm) >= 0,
+              )
+              .map((product) => (
+                <ListItemButton
+                  key={product.id}
+                  selected={selectedProduct?.productId === product.id}
+                  onClick={() => handleSelectItem(product)}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1,
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Typography variant="subtitle2">{product.name}</Typography>
 
-                <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
-                  {product.sku}
-                </Typography>
-              </ListItemButton>
-            ))}
+                  <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
+                    {product.sku}
+                  </Typography>
+                </ListItemButton>
+              ))}
           </Scrollbar>
         </Stack>
       </Stack>

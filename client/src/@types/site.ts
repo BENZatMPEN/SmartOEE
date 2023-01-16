@@ -19,7 +19,7 @@ export type Site = {
   userLimit: number;
 };
 
-export type EditSite = {
+export interface EditSite {
   name: string;
   branch: string;
   address: string;
@@ -33,7 +33,7 @@ export type EditSite = {
   image: File | null;
   oeeLimit?: number;
   userLimit?: number;
-};
+}
 
 export type FilterSite = {
   search: string;

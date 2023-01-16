@@ -1,5 +1,5 @@
 import { MachineParameterDto } from './machine-parameter.dto';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateMachineDto {
@@ -17,5 +17,6 @@ export class CreateMachineDto {
 
   @IsArray()
   @Type(() => MachineParameterDto)
+  @IsOptional()
   readonly parameters: MachineParameterDto[];
 }

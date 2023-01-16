@@ -23,7 +23,7 @@ export type Oee = {
   updatedAt: Date;
 };
 
-export type EditOee = {
+export interface EditOee {
   oeeCode: string;
   oeeType: string;
   location: string;
@@ -39,7 +39,7 @@ export type EditOee = {
   percentSettings: PercentSetting[] | null;
   useSitePercentSettings: boolean;
   timeUnit: string;
-};
+}
 
 export type FilterOee = {
   search: string;

@@ -63,13 +63,13 @@ export default function DashboardLayout() {
   useEffect(() => {
     if (selectedSiteId) {
       axios.defaults.params = { siteId: selectedSiteId };
-    }
 
-    (async () => {
-      await dispatch(getUserInfo());
-      await dispatch(getGroupAnalytics());
-      await dispatch(getAllDashboard());
-    })();
+      (async () => {
+        await dispatch(getUserInfo());
+        await dispatch(getGroupAnalytics());
+        await dispatch(getAllDashboard());
+      })();
+    }
   }, [dispatch, selectedSiteId]);
 
   const isNotFound = !isLoading && !selectedSite;

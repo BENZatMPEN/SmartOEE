@@ -119,6 +119,10 @@ export default function MachineForm({ isEdit }: Props) {
         : await dispatch(createMachine(dto));
 
     if (machine) {
+      if (!isEdit) {
+        (widgets || []).forEach((item) => (item.id = null));
+      }
+
       await axios.post(`/machines/${machine.id}/widgets`, { machineId: machine.id, widgets });
 
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');

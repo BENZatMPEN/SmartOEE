@@ -108,13 +108,19 @@ export class OeeBatchService {
 
   async findOptions(siteId: number): Promise<OptionItem[]> {
     const list = await this.oeeBatchRepository.find({
-      select: ['id', 'startDate', 'lotNumber'],
+      select: ['id', 'startDate', 'product', 'lotNumber'],
       where: { siteId },
     });
 
     return list.map((item) => {
-      const lotName = `${dayjs(item.startDate).format('YYYYMMDD')}_${fLotNumber(item.id)}`;
-      return { id: item.id, name: lotName };
+      const lotName: string[] = [];
+      lotName.push(item.product.name);
+      if (item.lotNumber) {
+        lotName.push(item.lotNumber);
+      }
+      lotName.push(dayjs(item.startDate).format('DDMMYYYY'));
+      lotName.push(fLotNumber(item.id));
+      return { id: item.id, name: lotName.join('_') };
     });
   }
 
@@ -179,6 +185,14 @@ export class OeeBatchService {
     );
 
     return oeeBatch;
+  }
+
+  async delete(id: number, siteId: number): Promise<void> {
+    await this.oeeBatchRepository
+      .createQueryBuilder()
+      .delete()
+      .where('id = :id and siteId = :siteId', { id, siteId })
+      .execute();
   }
 
   async update(id: number, dto: any): Promise<void> {

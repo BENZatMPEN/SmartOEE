@@ -8,6 +8,7 @@ import Label from '../../../components/Label';
 import { PS_PROCESS_STATUS_APPROVED, PS_PROCESS_STATUS_COMPLETED, PS_PROCESS_STATUS_WAITING } from '../../../constants';
 import { getPsProcessStatusText } from '../../../utils/formatText';
 import { fDate } from '../../../utils/formatTime';
+import { getFileUrl } from '../../../utils/imageHelper';
 
 const RootStyle = styled('div')(({ theme }) => ({
   // padding: theme.spacing(3),
@@ -79,20 +80,22 @@ export default function ProblemSolutionSummary({ problemSolution, ...other }: Pr
             </Typography>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <Typography variant="subtitle1" gutterBottom sx={{ color: 'text.disabled' }}>
-              Approved By
-            </Typography>
-            <Typography variant="body2">
-              {approvedByUser ? `${approvedByUser.firstName} ${approvedByUser.lastName}` : '-'}
-            </Typography>
-          </Grid>
+          {approvedByUser && (
+            <Grid item xs={12} sm={4}>
+              <Typography variant="subtitle1" gutterBottom sx={{ color: 'text.disabled' }}>
+                Approved By
+              </Typography>
+              <Typography variant="body2">
+                {approvedByUser ? `${approvedByUser.firstName} ${approvedByUser.lastName}` : '-'}
+              </Typography>
+            </Grid>
+          )}
 
           <Grid item xs={12} sm={4}>
             <Typography variant="subtitle1" gutterBottom sx={{ color: 'text.disabled' }}>
               Production
             </Typography>
-            <Typography variant="body2">{oee ? `${oee.productionName} ${approvedByUser.lastName}` : '-'}</Typography>
+            <Typography variant="body2">{oee ? `${oee.productionName}` : '-'}</Typography>
           </Grid>
 
           <Grid item xs={12}>
@@ -174,7 +177,7 @@ export default function ProblemSolutionSummary({ problemSolution, ...other }: Pr
                             sx={{ py: 1.8, fontSize: '0.85rem' }}
                           >
                             <Link
-                              href={item.attachment.fileName}
+                              href={getFileUrl(item.attachment.fileName)}
                               underline="none"
                               target="_blank"
                               rel="noopener noreferrer"

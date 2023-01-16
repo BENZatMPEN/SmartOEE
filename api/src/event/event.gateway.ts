@@ -21,6 +21,7 @@ import { TagReadEntity } from '../common/entities/tag-read-entity';
 import configuration from '../configuration';
 import { ConfigType } from '@nestjs/config';
 import { UserService } from '../user/user.service';
+import { SiteService } from '../site/site.service';
 
 @UseGuards(WsAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,6 +34,7 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   constructor(
     @Inject(configuration.KEY)
     private readonly config: ConfigType<typeof configuration>,
+    private readonly siteService: SiteService,
     private readonly userService: UserService,
     private readonly socketService: SocketService,
     @InjectRepository(TagReadEntity)
@@ -57,7 +59,8 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     try {
       const authUser = jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
       const user = await this.userService.findById(authUser.id);
-      (user.sites || []).forEach((site) => {
+      const sites = user.isAdmin ? await this.siteService.findAll() : user.sites;
+      (sites || []).forEach((site) => {
         client.join(`site_${site.id}`);
       });
 

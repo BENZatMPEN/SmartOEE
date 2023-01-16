@@ -75,6 +75,7 @@ export class DeviceService {
       }),
     );
 
+    await this.setSiteSync(siteId);
     return createdDevice;
   }
 
@@ -110,12 +111,7 @@ export class DeviceService {
       updatedAt: new Date(),
     });
 
-    // tell the poller to sync the new tags
-    await this.siteRepository.save({
-      id: updatedDevice.siteId,
-      sync: true,
-    });
-
+    await this.setSiteSync(siteId);
     return updatedDevice;
   }
 
@@ -124,6 +120,8 @@ export class DeviceService {
     device.deleted = true;
     device.updatedAt = new Date();
     await this.deviceRepository.save(device);
+
+    await this.setSiteSync(siteId);
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {
@@ -135,5 +133,14 @@ export class DeviceService {
         return device;
       }),
     );
+
+    await this.setSiteSync(siteId);
+  }
+
+  private async setSiteSync(siteId: number): Promise<void> {
+    await this.siteRepository.save({
+      id: siteId,
+      sync: true,
+    });
   }
 }

@@ -118,7 +118,7 @@ export default function RoleList() {
       return;
     }
 
-    if (deletingItems.length === 1) {
+    if (deletingItems.length === 1 && selected.length === 0) {
       await handleDeleteRow(deletingItems[0]);
     } else {
       await handleDeleteRows(deletingItems);
@@ -211,7 +211,7 @@ export default function RoleList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                       />

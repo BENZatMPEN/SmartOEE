@@ -1,7 +1,7 @@
 import { DeviceTag } from './device';
 
 export type Widget = {
-  id: number;
+  id: number | null;
   type: string;
   data: any | null;
   deviceId: number | null;

@@ -18,13 +18,14 @@ type FormValuesProps = {
 };
 
 type Props = {
+  title: string;
   open: boolean;
   onClose: VoidFunction;
   onSave: (oeeTag: OeeTag) => void;
   editingTag: OeeTag | null;
 };
 
-export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Props) {
+export default function OeeTagDialog({ title, open, onClose, onSave, editingTag }: Props) {
   const theme = useTheme();
 
   const tagSchema = Yup.object().shape({
@@ -136,7 +137,7 @@ export default function OeeTagDialog({ open, onClose, onSave, editingTag }: Prop
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={theme.spacing(3)} sx={{ m: theme.spacing(3) }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">Set Image Widget</Typography>
+            <Typography variant="h6">{title}</Typography>
 
             <LoadingButton
               type="submit"

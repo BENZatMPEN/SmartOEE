@@ -12,12 +12,13 @@ import {
 import { saveAs } from 'file-saver';
 import { useEffect, useState } from 'react';
 import { FilterOeeBatch } from '../../../@types/oeeBatch';
+import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import Page from '../../../components/Page';
 import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
-import { getOeeBatchPagedList } from '../../../redux/actions/oeeBatchAction';
+import { deleteBatch, getOeeBatchPagedList } from '../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import DashboardHistoryTableRow from '../../../sections/dashboard/details/history/list/DashboardHistoryTableRow';
 import axios from '../../../utils/axios';
@@ -83,6 +84,30 @@ export default function History() {
     saveAs(new Blob([response.data]), `oee-batch-${id}-logs.xlsx`);
   };
 
+  const handleDeleteRow = async (id: number) => {
+    await dispatch(deleteBatch(id));
+    await refreshData();
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    await handleDeleteRow(deletingItems[0]);
+    setOpenDeleteDialog(false);
+  };
+
   const denseHeight = dense ? 60 : 80;
 
   const isNotFound = !isLoading && !batchPagedList.list.length;
@@ -114,6 +139,7 @@ export default function History() {
                         <DashboardHistoryTableRow
                           key={'row_' + row.id}
                           row={row}
+                          onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                           selected={selected.includes(row.id)}
                           onExportRow={() => handleExportRow(row.id)}
                         />
@@ -141,6 +167,15 @@ export default function History() {
             </Box>
           </CardContent>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

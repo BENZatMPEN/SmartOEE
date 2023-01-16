@@ -170,3 +170,11 @@ export function getOeeBatchStatsLine(batchId: number) {
     }
   };
 }
+
+export function deleteBatch(id: number) {
+  return async () => {
+    try {
+      await axios.delete(`/oee-batches/${id}`);
+    } catch {}
+  };
+}

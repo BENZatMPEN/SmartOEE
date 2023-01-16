@@ -24,6 +24,21 @@ import {
   OEE_BATCH_STATUS_PLANNED,
   OEE_BATCH_STATUS_RUNNING,
   OEE_BATCH_STATUS_STANDBY,
+  OEE_TAG_MC_STATE,
+  OEE_TAG_OUT_A,
+  OEE_TAG_OUT_BATCH_STATUS,
+  OEE_TAG_OUT_BREAKING_TIME,
+  OEE_TAG_OUT_CYCLE_TIME,
+  OEE_TAG_OUT_OEE,
+  OEE_TAG_OUT_OPERATING_TIME,
+  OEE_TAG_OUT_P,
+  OEE_TAG_OUT_PLANNED_DOWNTIME,
+  OEE_TAG_OUT_PLANNED_QUANTITY,
+  OEE_TAG_OUT_Q,
+  OEE_TAG_OUT_RESET,
+  OEE_TAG_OUT_TOTAL_NG,
+  OEE_TAG_TOTAL,
+  OEE_TAG_TOTAL_NG,
   PS_PROCESS_STATUS_APPROVED,
   PS_PROCESS_STATUS_COMPLETED,
   PS_PROCESS_STATUS_ON_PROCESS,
@@ -374,4 +389,56 @@ export function chartTitle(batch: OeeBatch | null, batchStatsTime: OeeBatchStats
 
 export function analyticChartTitle(title: string, fromDate: Date, toDate: Date) {
   return `${title} ${fShortDateTime(fromDate)} - ${fShortDateTime(toDate)}`;
+}
+
+export function getOeeTabLabel(key: string): string {
+  switch (key) {
+    case OEE_TAG_MC_STATE:
+      return 'M/C State';
+
+    case OEE_TAG_TOTAL:
+      return 'Total';
+
+    case OEE_TAG_TOTAL_NG:
+      return 'Total NG';
+
+    case OEE_TAG_OUT_BATCH_STATUS:
+      return 'Batch Status (Out)';
+
+    case OEE_TAG_OUT_RESET:
+      return 'Reset (Out)';
+
+    case OEE_TAG_OUT_OEE:
+      return 'OEE (Out)';
+
+    case OEE_TAG_OUT_A:
+      return 'A% (Out)';
+
+    case OEE_TAG_OUT_P:
+      return 'P% (Out)';
+
+    case OEE_TAG_OUT_Q:
+      return 'Q% (Out)';
+
+    case OEE_TAG_OUT_OPERATING_TIME:
+      return 'Operating Time (Out)';
+
+    case OEE_TAG_OUT_PLANNED_DOWNTIME:
+      return 'Planed Downtime (Out)';
+
+    case OEE_TAG_OUT_BREAKING_TIME:
+      return 'Breakdown Time (Out)';
+
+    case OEE_TAG_OUT_TOTAL_NG:
+      return 'Total NG (Out)';
+
+    case OEE_TAG_OUT_CYCLE_TIME:
+      return 'Standard Cycle Time (Out)';
+
+    case OEE_TAG_OUT_PLANNED_QUANTITY:
+      return 'Planned Quantity (Out)';
+
+    default:
+      return '';
+  }
 }

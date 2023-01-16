@@ -19,6 +19,7 @@ import roleReducer from './reducers/roleReducer';
 import siteReducer from './reducers/siteReducer';
 import userReducer from './reducers/userReducer';
 import userSiteReducer from './reducers/userSiteReducer';
+import problemSolutionReducer from './reducers/problemSolutionReducer';
 import calendarReducer from './slices/calendar';
 
 const rootPersistConfig = {
@@ -87,6 +88,7 @@ const rootReducer = combineReducers({
   product: productReducer,
   machine: machineReducer,
   oeeDashboard: oeeDashboardReducer,
+  problemSolution: problemSolutionReducer,
   adminUser: adminUserReducer,
   adminSite: adminSiteReducer,
   calendar: calendarReducer,

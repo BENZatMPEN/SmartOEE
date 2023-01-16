@@ -13,7 +13,8 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterProblemSolution, ProblemSolution } from '../../@types/problemSolution';
+import { FilterProblemSolution } from '../../@types/problemSolution';
+import DeleteConfirmationDialog from '../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Iconify from '../../components/Iconify';
 import Page from '../../components/Page';
@@ -21,9 +22,14 @@ import Scrollbar from '../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../constants';
 import useTable from '../../hooks/useTable';
+import {
+  deleteProblemSolution,
+  deleteProblemSolutions,
+  getProblemSolutionPagedList,
+} from '../../redux/actions/problemSolutionAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { PATH_PROBLEMS_SOLUTIONS } from '../../routes/paths';
 import { ProblemSolutionTableRow, ProblemSolutionTableToolbar } from '../../sections/problems-solutions/list';
-import axios from '../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'id', label: 'Project Code', align: 'left' },
@@ -34,11 +40,6 @@ const TABLE_HEAD = [
   { id: 'status', label: 'Project Status', align: 'left' },
   { id: '' },
 ];
-
-type ProblemSolutionPagedList = {
-  list: ProblemSolution[];
-  count: number;
-};
 
 export default function ProblemSolutionList() {
   const {
@@ -62,11 +63,11 @@ export default function ProblemSolutionList() {
 
   const navigate = useNavigate();
 
-  const [pagedList, setPagedList] = useState<ProblemSolutionPagedList>({ list: [], count: 0 });
+  const dispatch = useDispatch();
+
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.problemSolution);
 
   const [filterName, setFilterName] = useState('');
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -76,25 +77,15 @@ export default function ProblemSolutionList() {
   }, [order, orderBy, page, rowsPerPage]);
 
   const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const params: FilterProblemSolution = {
-        search: filterName,
-        order: order,
-        orderBy: orderBy,
-        page: page,
-        rowsPerPage: rowsPerPage,
-      };
+    const filter: FilterProblemSolution = {
+      search: filterName,
+      order: order,
+      orderBy: orderBy,
+      page: page,
+      rowsPerPage: rowsPerPage,
+    };
 
-      const response = await axios.get<ProblemSolutionPagedList>('/problems-solutions', { params });
-      setPagedList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      setPagedList({ list: [], count: 0 });
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+    await dispatch(getProblemSolutionPagedList(filter));
   };
 
   const handleFilterName = (filterName: string) => {
@@ -107,24 +98,14 @@ export default function ProblemSolutionList() {
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/problems-solutions/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteProblemSolution(id));
+    await refreshData();
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/problems-solutions`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deleteProblemSolutions(selectedIds));
+    await refreshData();
+    setSelected([]);
   };
 
   const handleDetailRow = (id: number) => {
@@ -137,6 +118,30 @@ export default function ProblemSolutionList() {
 
   const handleDuplicateRow = (id: number) => {
     navigate(PATH_PROBLEMS_SOLUTIONS.item.duplicate(paramCase(id.toString())));
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    if (deletingItems.length === 1 && selected.length === 0) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    setOpenDeleteDialog(false);
   };
 
   const denseHeight = dense ? 60 : 80;
@@ -187,7 +192,7 @@ export default function ProblemSolutionList() {
                   }
                   actions={
                     <Tooltip title="Delete">
-                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                      <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                         <Iconify icon={'eva:trash-2-outline'} />
                       </IconButton>
                     </Tooltip>
@@ -219,7 +224,7 @@ export default function ProblemSolutionList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                         onDetailsRow={() => handleDetailRow(row.id)}
@@ -247,6 +252,15 @@ export default function ProblemSolutionList() {
             />
           </Box>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

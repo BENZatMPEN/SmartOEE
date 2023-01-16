@@ -22,6 +22,11 @@ export type ProblemSolution = {
   tasks: ProblemSolutionTask[];
 };
 
+export type ProblemSolutionPagedList = {
+  list: ProblemSolution[];
+  count: number;
+};
+
 type ProblemSolutionUser = {
   id: number;
   firstName: string;
@@ -34,7 +39,7 @@ type ProblemSolutionOee = {
   productionName: string;
 };
 
-export type EditProblemSolution = {
+export interface EditProblemSolution {
   name: string;
   remark: string;
   date: Date;
@@ -43,14 +48,13 @@ export type EditProblemSolution = {
   headProjectUserId: number;
   approvedByUserId: number | null;
   oeeId: number;
-  siteId?: number;
   status: string;
   deletingAttachments: number[];
   beforeProjectChartImages: File[] | null;
   beforeProjectImages: File[] | null;
   afterProjectChartImages: File[] | null;
   afterProjectImages: File[] | null;
-};
+}
 
 export type FilterProblemSolution = {
   search: string;
@@ -83,7 +87,7 @@ export type ProblemSolutionTask = {
 };
 
 export type EditProblemSolutionTask = {
-  id?: number;
+  id: number | null;
   title: string;
   assigneeUserId: number | null;
   startDate: Date;

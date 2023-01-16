@@ -1,13 +1,21 @@
-import { Container } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, Container } from '@mui/material';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ProblemSolution } from '../../@types/problemSolution';
 import Page from '../../components/Page';
-import { PATH_PROBLEMS_SOLUTIONS } from '../../routes/paths';
+import { emptyCurrentProblemSolution, getProblemSolution } from '../../redux/actions/problemSolutionAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
+import { PATH_SETTINGS } from '../../routes/paths';
 import ProblemSolutionForm from '../../sections/problems-solutions/addEdit/ProblemSolutionForm';
-import axios from '../../utils/axios';
 
 export default function ProblemSolutionAddEdit() {
+  const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { currentProblemSolution, error, isLoading } = useSelector((state: RootState) => state.problemSolution);
+
   const { pathname } = useLocation();
 
   const { id } = useParams();
@@ -18,37 +26,43 @@ export default function ProblemSolutionAddEdit() {
 
   const isDuplicate = pathname.includes('duplicate');
 
-  const [model, setModel] = useState<ProblemSolution | null>(null);
-
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          const response = await axios.get<ProblemSolution>(`/problems-solutions/${id}`);
-          const problemSolution = response.data;
-          if (isDuplicate) {
-            problemSolution.attachments = [];
-          }
-          setModel(problemSolution);
-        }
-      } catch (error) {
-        console.log(error);
-        if (error.statusCode === 404) {
-          navigate(PATH_PROBLEMS_SOLUTIONS.root);
-        }
+      if (isEdit || isDuplicate) {
+        await dispatch(getProblemSolution(Number(id)));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      dispatch(emptyCurrentProblemSolution());
+    };
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.products.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
     <Page
-      title={
-        model ? 'Problems & Solutions: Edit Problems & Solutions' : 'Problems & Solutions: Create Problems & Solutions'
-      }
+      title={`Problems & Solutions: ${
+        currentProblemSolution ? 'Edit Problems & Solutions' : 'Create Problems & Solutions'
+      }`}
     >
       <Container maxWidth={false}>
-        <ProblemSolutionForm isEdit={isEdit} currentProblemSolution={model} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <ProblemSolutionForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

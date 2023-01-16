@@ -33,10 +33,6 @@ export class CreateProblemSolutionDto {
   @IsString()
   readonly remark: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
-
   @IsString()
   readonly status: string;
 }

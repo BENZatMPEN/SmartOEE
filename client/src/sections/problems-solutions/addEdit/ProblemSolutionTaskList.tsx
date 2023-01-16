@@ -1,23 +1,36 @@
 import { Box, Button, Divider, Grid, MenuItem, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useContext } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 import { User } from '../../../@types/user';
+import { AbilityContext } from '../../../caslContext';
 import { RHFSelect, RHFTextField } from '../../../components/hook-form';
 import { RHFDatePicker } from '../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../components/Iconify';
 import Label from '../../../components/Label';
-import { PS_PROCESS_STATUS, PS_PROCESS_STATUS_ON_PROCESS } from '../../../constants';
+import {
+  PS_PROCESS_STATUS_APPROVED,
+  PS_PROCESS_STATUS_COMPLETED,
+  PS_PROCESS_STATUS_ON_PROCESS,
+  PS_PROCESS_STATUS_WAITING,
+} from '../../../constants';
 import { getPsProcessStatusText } from '../../../utils/formatText';
 import { ProblemSolutionFormValuesProps } from './ProblemSolutionForm';
 
 interface Props {
   users: User[];
-  onDeleteTask: (taskId?: number) => void;
+  onDeleteTask: (taskId: number | null) => void;
 }
 
 export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) {
   const theme = useTheme();
+
+  const ability = useContext(AbilityContext);
+
+  const statusOpts = ability.can(RoleAction.Approve, RoleSubject.ProblemsAndSolutions)
+    ? [PS_PROCESS_STATUS_ON_PROCESS, PS_PROCESS_STATUS_WAITING, PS_PROCESS_STATUS_COMPLETED, PS_PROCESS_STATUS_APPROVED]
+    : [PS_PROCESS_STATUS_ON_PROCESS, PS_PROCESS_STATUS_WAITING, PS_PROCESS_STATUS_COMPLETED];
 
   const { control, getValues, watch } = useFormContext<ProblemSolutionFormValuesProps>();
 
@@ -30,6 +43,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
 
   const handleAdd = () => {
     append({
+      id: null,
       title: '',
       assigneeUserId: -1,
       startDate: new Date(),
@@ -189,7 +203,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
                   InputLabelProps={{ shrink: true }}
                   SelectProps={{ native: false }}
                 >
-                  {PS_PROCESS_STATUS.map((option) => (
+                  {statusOpts.map((option) => (
                     <MenuItem
                       key={option}
                       value={option}

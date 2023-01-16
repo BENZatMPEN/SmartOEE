@@ -9,12 +9,12 @@ export type Product = {
   siteId: number;
 };
 
-export type EditProduct = {
+export interface EditProduct {
   sku: string;
   name: string;
   remark: string;
   image: File | null;
-};
+}
 
 export type FilterProduct = {
   search: string;

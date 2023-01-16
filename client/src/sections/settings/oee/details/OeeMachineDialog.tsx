@@ -26,15 +26,13 @@ export default function OeeMachineDialog({ open, onClose, editingMachine, onSele
     },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
+  const { reset, handleSubmit } = methods;
 
   const onSubmit = async (data: FormValuesProps) => {
-    console.log(data);
+    setSearchTerm(data.searchTerm);
   };
+
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const [selectedMachine, setSelectedMachine] = useState<OeeMachine | undefined>(undefined);
 
@@ -62,6 +60,10 @@ export default function OeeMachineDialog({ open, onClose, editingMachine, onSele
         setSelectedMachine(editingMachine);
       }
     })();
+
+    return () => {
+      setSearchTerm('');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -117,25 +119,32 @@ export default function OeeMachineDialog({ open, onClose, editingMachine, onSele
 
         <Stack spacing={2}>
           <Scrollbar sx={{ maxHeight: 400 }}>
-            {(machines || []).map((machine) => (
-              <ListItemButton
-                key={machine.id}
-                selected={selectedMachine?.machineId === machine.id}
-                onClick={() => handleSelectItem(machine.id)}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <Typography variant="subtitle2">{machine.name}</Typography>
+            {(machines || [])
+              .filter(
+                (machine) =>
+                  searchTerm.length === 0 ||
+                  machine.name.indexOf(searchTerm) >= 0 ||
+                  machine.code.indexOf(searchTerm) >= 0,
+              )
+              .map((machine) => (
+                <ListItemButton
+                  key={machine.id}
+                  selected={selectedMachine?.machineId === machine.id}
+                  onClick={() => handleSelectItem(machine.id)}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1,
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Typography variant="subtitle2">{machine.name}</Typography>
 
-                <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
-                  {machine.code}
-                </Typography>
-              </ListItemButton>
-            ))}
+                  <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
+                    {machine.code}
+                  </Typography>
+                </ListItemButton>
+              ))}
           </Scrollbar>
         </Stack>
       </Stack>

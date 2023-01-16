@@ -1,4 +1,4 @@
-import { MenuItem, TableCell, TableRow } from '@mui/material';
+import { Divider, MenuItem, TableCell, TableRow } from '@mui/material';
 import { useState } from 'react';
 import { OeeBatch } from '../../../../../@types/oeeBatch';
 import Iconify from '../../../../../components/Iconify';
@@ -9,10 +9,11 @@ import { fDateTime } from '../../../../../utils/formatTime';
 type Props = {
   row: OeeBatch;
   selected: boolean;
+  onDeleteRow: VoidFunction;
   onExportRow: VoidFunction;
 };
 
-export default function DashboardHistoryTableRow({ row, selected, onExportRow }: Props) {
+export default function DashboardHistoryTableRow({ row, selected, onDeleteRow, onExportRow }: Props) {
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
   const { product, lotNumber, batchStoppedDate, batchStartedDate } = row;
@@ -64,6 +65,23 @@ export default function DashboardHistoryTableRow({ row, selected, onExportRow }:
                 <Iconify icon={'tabler:file-export'} />
                 Export
               </MenuItem>
+
+              {batchStoppedDate && (
+                <>
+                  <Divider sx={{ borderStyle: 'dashed' }} />
+
+                  <MenuItem
+                    onClick={() => {
+                      onDeleteRow();
+                      handleCloseMenu();
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Iconify icon={'eva:trash-2-outline'} />
+                    Delete
+                  </MenuItem>
+                </>
+              )}
             </>
           }
         />

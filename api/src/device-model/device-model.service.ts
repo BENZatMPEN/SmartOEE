@@ -120,6 +120,15 @@ export class DeviceModelService {
 
     // add the new tags into the associated devices
     for (const device of devices) {
+      if (deletingTagIds.length > 0) {
+        await this.deviceTagRepository
+          .createQueryBuilder()
+          .delete()
+          .where('deviceId = :deviceId', { deviceId: device.id })
+          .andWhere('deviceModelTagId not in (:ids)', { ids: deletingTagIds })
+          .execute();
+      }
+
       await this.deviceTagRepository.save(
         createdTags.map((tag) => {
           const { id: deviceModelTagId, name } = tag;

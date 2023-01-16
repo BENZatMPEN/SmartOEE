@@ -3,8 +3,9 @@ import { LoadingButton } from '@mui/lab';
 import { Box, Button, Card, Divider, Grid, MenuItem, TextField } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers';
+import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -12,11 +13,12 @@ import { Oee } from '../../../@types/oee';
 import {
   EditProblemSolution,
   EditProblemSolutionTask,
-  ProblemSolution,
   ProblemSolutionAttachment,
   ProblemSolutionTask,
 } from '../../../@types/problemSolution';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 import { User } from '../../../@types/user';
+import { AbilityContext } from '../../../caslContext';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import { EditorLabelStyle } from '../../../components/EditorLabelStyle';
 import FormHeader from '../../../components/FormHeader';
@@ -28,15 +30,21 @@ import {
   RHFTextField,
 } from '../../../components/hook-form';
 import Iconify from '../../../components/Iconify';
-import { PS_PROCESS_STATUS, PS_PROCESS_STATUS_ON_PROCESS } from '../../../constants';
-import { RootState, useSelector } from '../../../redux/store';
+import {
+  PS_PROCESS_STATUS_APPROVED,
+  PS_PROCESS_STATUS_COMPLETED,
+  PS_PROCESS_STATUS_ON_PROCESS,
+  PS_PROCESS_STATUS_WAITING,
+} from '../../../constants';
+import { createProblemSolution, updateProblemSolution } from '../../../redux/actions/problemSolutionAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_PROBLEMS_SOLUTIONS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
 import { getPsProcessStatusText } from '../../../utils/formatText';
 import { getFileUrl } from '../../../utils/imageHelper';
 import ProblemSolutionTaskList from './ProblemSolutionTaskList';
 
-export interface ProblemSolutionFormValuesProps extends Partial<EditProblemSolution> {
+export interface ProblemSolutionFormValuesProps extends EditProblemSolution {
   viewingBeforeProjectChartImages: (File | string)[];
   viewingBeforeProjectImages: (File | string)[];
   viewingAfterProjectChartImages: (File | string)[];
@@ -47,17 +55,107 @@ export interface ProblemSolutionFormValuesProps extends Partial<EditProblemSolut
 
 type Props = {
   isEdit: boolean;
-  currentProblemSolution: ProblemSolution | null;
 };
 
-export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: Props) {
+export default function ProblemSolutionForm({ isEdit }: Props) {
   const theme = useTheme();
+
+  const ability = useContext(AbilityContext);
+
+  const canApprove = ability.can(RoleAction.Approve, RoleSubject.ProblemsAndSolutions);
+  const statusOpts = canApprove
+    ? [PS_PROCESS_STATUS_ON_PROCESS, PS_PROCESS_STATUS_WAITING, PS_PROCESS_STATUS_COMPLETED, PS_PROCESS_STATUS_APPROVED]
+    : [PS_PROCESS_STATUS_ON_PROCESS, PS_PROCESS_STATUS_WAITING, PS_PROCESS_STATUS_COMPLETED];
 
   const navigate = useNavigate();
 
+  const dispatch = useDispatch();
+
+  const { currentProblemSolution, saveError } = useSelector((state: RootState) => state.problemSolution);
+
   const { enqueueSnackbar } = useSnackbar();
 
-  const { selectedSite } = useSelector((state: RootState) => state.userSite);
+  const [formValues, setFormValues] = useState<ProblemSolutionFormValuesProps | undefined>(undefined);
+
+  useEffect(() => {
+    (async () => {
+      await getOees();
+      await getUsers();
+
+      setFormValues({
+        name: currentProblemSolution?.name || '',
+        status: currentProblemSolution?.status || PS_PROCESS_STATUS_ON_PROCESS,
+        remark: currentProblemSolution?.remark || '',
+        date: currentProblemSolution?.date || new Date(),
+        headProjectUserId: currentProblemSolution?.headProjectUserId || -1,
+        approvedByUserId: currentProblemSolution?.approvedByUserId || -1,
+        oeeId: currentProblemSolution?.oeeId || -1,
+        startDate: currentProblemSolution?.startDate || new Date(),
+        endDate: currentProblemSolution?.endDate || new Date(),
+        attachments: currentProblemSolution?.attachments || [],
+        beforeProjectChartImages: null,
+        beforeProjectImages: null,
+        afterProjectChartImages: null,
+        afterProjectImages: null,
+        viewingBeforeProjectChartImages: (currentProblemSolution?.attachments || [])
+          .filter((item) => item.groupName === 'beforeProjectChartImages')
+          .map((item) => getFileUrl(item.attachment.fileName) || ''),
+        viewingBeforeProjectImages: (currentProblemSolution?.attachments || [])
+          .filter((item) => item.groupName === 'beforeProjectImages')
+          .map((item) => getFileUrl(item.attachment.fileName) || ''),
+        viewingAfterProjectChartImages: (currentProblemSolution?.attachments || [])
+          .filter((item) => item.groupName === 'afterProjectChartImages')
+          .map((item) => getFileUrl(item.attachment.fileName) || ''),
+        viewingAfterProjectImages: (currentProblemSolution?.attachments || [])
+          .filter((item) => item.groupName === 'afterProjectImages')
+          .map((item) => getFileUrl(item.attachment.fileName) || ''),
+        deletingAttachments: [],
+        tasks: (currentProblemSolution?.tasks || []).map((task) => {
+          return {
+            id: task?.id,
+            title: task?.title || '',
+            assigneeUserId: task?.assigneeUserId || -1,
+            startDate: task?.startDate || new Date(),
+            endDate: task?.endDate || new Date(),
+            status: task?.status || PS_PROCESS_STATUS_ON_PROCESS,
+            comment: task?.comment || '',
+            problemSolutionId: task?.problemSolutionId,
+            attachments: task?.attachments || [],
+            files: isEdit ? task?.attachments.map((attachment) => attachment.attachment.name) : [],
+            addingFiles: [],
+            deletingFiles: [],
+          };
+        }),
+      });
+    })();
+
+    return () => {
+      setOees([]);
+      setUsers([]);
+    };
+  }, [currentProblemSolution]);
+
+  const [oees, setOees] = useState<Oee[]>([]);
+
+  const [users, setUsers] = useState<User[]>([]);
+
+  const getOees = async () => {
+    try {
+      const response = await axios.get<Oee[]>('/oees/all');
+      setOees(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get<User[]>('/users/all');
+      setUsers(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const NewProblemSolutionSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -69,7 +167,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
     resolver: yupResolver(NewProblemSolutionSchema),
     defaultValues: {
       name: '',
-      status: PS_PROCESS_STATUS[0],
+      status: PS_PROCESS_STATUS_ON_PROCESS,
       remark: '',
       date: new Date(),
       headProjectUserId: -1,
@@ -85,47 +183,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
       deletingAttachments: [],
       tasks: [],
     },
-    values: {
-      name: currentProblemSolution?.name || '',
-      status: currentProblemSolution?.status || PS_PROCESS_STATUS[0],
-      remark: currentProblemSolution?.remark || '',
-      date: currentProblemSolution?.date || new Date(),
-      headProjectUserId: currentProblemSolution?.headProjectUserId || -1,
-      approvedByUserId: currentProblemSolution?.approvedByUserId || -1,
-      oeeId: currentProblemSolution?.oeeId || -1,
-      startDate: currentProblemSolution?.startDate || new Date(),
-      endDate: currentProblemSolution?.endDate || new Date(),
-      attachments: currentProblemSolution?.attachments || [],
-      viewingBeforeProjectChartImages: (currentProblemSolution?.attachments || [])
-        .filter((item) => item.groupName === 'beforeProjectChartImages')
-        .map((item) => getFileUrl(item.attachment.fileName) || ''),
-      viewingBeforeProjectImages: (currentProblemSolution?.attachments || [])
-        .filter((item) => item.groupName === 'beforeProjectImages')
-        .map((item) => getFileUrl(item.attachment.fileName) || ''),
-      viewingAfterProjectChartImages: (currentProblemSolution?.attachments || [])
-        .filter((item) => item.groupName === 'afterProjectChartImages')
-        .map((item) => getFileUrl(item.attachment.fileName) || ''),
-      viewingAfterProjectImages: (currentProblemSolution?.attachments || [])
-        .filter((item) => item.groupName === 'afterProjectImages')
-        .map((item) => getFileUrl(item.attachment.fileName) || ''),
-      deletingAttachments: [],
-      tasks: (currentProblemSolution?.tasks || []).map((task) => {
-        return {
-          id: task?.id,
-          title: task?.title || '',
-          assigneeUserId: task?.assigneeUserId || -1,
-          startDate: task?.startDate || new Date(),
-          endDate: task?.endDate || new Date(),
-          status: task?.status || PS_PROCESS_STATUS_ON_PROCESS,
-          comment: task?.comment || '',
-          problemSolutionId: task?.problemSolutionId,
-          attachments: task?.attachments || [],
-          files: task?.attachments.map((attachment) => attachment.attachment.name),
-          addingFiles: [],
-          deletingFiles: [],
-        };
-      }),
-    },
+    values: formValues,
   });
 
   const {
@@ -156,31 +214,46 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
         (file) => file instanceof File,
       ) as File[];
       dto.afterProjectImages = (viewingAfterProjectImages || []).filter((file) => file instanceof File) as File[];
-      if (!isEdit && selectedSite) {
-        dto.siteId = selectedSite.id;
+
+      const problemSolution =
+        isEdit && currentProblemSolution
+          ? await dispatch(updateProblemSolution(currentProblemSolution.id, dto))
+          : await dispatch(createProblemSolution(dto));
+
+      if (problemSolution) {
+        if (!isEdit) {
+          (tasks || []).forEach((item) => (item.id = null));
+        }
+        await createOrUpdateTasks(tasks || [], problemSolution.id);
+        if (deletingTasks.length > 0) {
+          await deleteTasks(deletingTasks, problemSolution.id);
+        }
+
+        enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+        navigate(PATH_PROBLEMS_SOLUTIONS.root);
       }
-
-      const response = await axios.request<ProblemSolution>({
-        method: isEdit ? 'put' : 'post',
-        url: isEdit ? `/problems-solutions/${currentProblemSolution?.id}` : '/problems-solutions',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        data: dto,
-      });
-
-      const { data: problemSolution } = response;
-      await createOrUpdateTasks(tasks || [], problemSolution.id);
-      if (deletingTasks.length > 0) {
-        await deleteTasks(deletingTasks, problemSolution.id);
-      }
-
-      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      navigate(PATH_PROBLEMS_SOLUTIONS.root);
     } catch (error) {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
 
   const createOrUpdateTasks = async (tasks: EditProblemSolutionTask[], problemSolutionId: number) => {
     for (let task of tasks) {
@@ -320,49 +393,9 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
     setValue('deletingAttachments', deletingAttachments);
   };
 
-  const [oees, setOees] = useState<Oee[]>([]);
-
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        await getOees();
-        await getUsers();
-
-        if (currentProblemSolution) {
-          setValue('oeeId', currentProblemSolution.oeeId || -1);
-          setValue('headProjectUserId', currentProblemSolution.headProjectUserId || -1);
-          setValue('approvedByUserId', currentProblemSolution.approvedByUserId || -1);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentProblemSolution]);
-
-  const getOees = async () => {
-    try {
-      const response = await axios.get<Oee[]>('/oees/all');
-      setOees(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getUsers = async () => {
-    try {
-      const response = await axios.get<User[]>('/users/all');
-      setUsers(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const [deletingTasks, setDeletingTasks] = useState<number[]>([]);
 
-  const onDeleteTask = (taskId?: number) => {
+  const onDeleteTask = (taskId: number | null) => {
     if (taskId) {
       deletingTasks.push(taskId);
       setDeletingTasks(deletingTasks);
@@ -416,7 +449,7 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
                 InputLabelProps={{ shrink: true }}
                 SelectProps={{ native: false }}
               >
-                {PS_PROCESS_STATUS.map((option) => (
+                {statusOpts.map((option) => (
                   <MenuItem
                     key={option}
                     value={option}
@@ -530,45 +563,47 @@ export default function ProblemSolutionForm({ isEdit, currentProblemSolution }: 
               </RHFSelect>
             </Grid>
 
-            <Grid item md={4}>
-              <RHFSelect
-                name="approvedByUserId"
-                label="Approved By"
-                InputLabelProps={{ shrink: true }}
-                SelectProps={{ native: false }}
-              >
-                <MenuItem
-                  value={-1}
-                  sx={{
-                    mx: 1,
-                    borderRadius: 0.75,
-                    typography: 'body2',
-                    fontStyle: 'italic',
-                    color: 'text.secondary',
-                  }}
+            {canApprove && (
+              <Grid item md={4}>
+                <RHFSelect
+                  name="approvedByUserId"
+                  label="Approved By"
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{ native: false }}
                 >
-                  None
-                </MenuItem>
-
-                <Divider />
-
-                {users.map((user) => (
                   <MenuItem
-                    key={user.id}
-                    value={user.id}
+                    value={-1}
                     sx={{
                       mx: 1,
-                      my: 0.5,
                       borderRadius: 0.75,
                       typography: 'body2',
-                      textTransform: 'capitalize',
+                      fontStyle: 'italic',
+                      color: 'text.secondary',
                     }}
                   >
-                    {user.firstName} {user.lastName}
+                    None
                   </MenuItem>
-                ))}
-              </RHFSelect>
-            </Grid>
+
+                  <Divider />
+
+                  {users.map((user) => (
+                    <MenuItem
+                      key={user.id}
+                      value={user.id}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body2',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {user.firstName} {user.lastName}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
+              </Grid>
+            )}
 
             <Grid item md={4}>
               <RHFSelect

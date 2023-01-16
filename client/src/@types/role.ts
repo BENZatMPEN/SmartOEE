@@ -8,12 +8,12 @@ export type Role = {
   siteId: number;
 };
 
-export type EditRole = {
+export interface EditRole {
   name: string;
   remark: string;
   roles: RoleSetting[];
   siteId?: number;
-};
+}
 
 export type FilterRole = {
   search: string;

@@ -13,6 +13,7 @@ import { defaultPercentSettings, initialRoles } from './common/constant';
 import { AdminSiteService } from './admin-site/admin-site.service';
 import { AdminUserService } from './admin-user/admin-user.service';
 import { UserService } from './user/user.service';
+import { RoleService } from './role/role.service';
 
 async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
@@ -75,6 +76,7 @@ async function seedInitialData(app: NestExpressApplication) {
   const adminSiteService = app.get(AdminSiteService);
   const adminUserService = app.get(AdminUserService);
   const userService = app.get(UserService);
+  const roleService = app.get(RoleService);
 
   const existingSite = await adminSiteService.findById(1);
   if (existingSite) {
@@ -89,7 +91,7 @@ async function seedInitialData(app: NestExpressApplication) {
       address: '',
       lng: 0,
       lat: 0,
-      active: false,
+      active: true,
       sync: false,
       defaultPercentSettings: defaultPercentSettings,
       oeeLimit: -1,
@@ -102,7 +104,7 @@ async function seedInitialData(app: NestExpressApplication) {
   // Super admin
   await adminUserService.create(
     {
-      email: 'superadmin@user.com',
+      email: 'admin@user.com',
       password: 'P@ssword1',
       firstName: 'Super',
       lastName: 'Admin',
@@ -112,7 +114,7 @@ async function seedInitialData(app: NestExpressApplication) {
     null,
   );
 
-  const pollerRole = await this.roleService.create(
+  const pollerRole = await roleService.create(
     {
       name: 'Poller',
       remark: '',

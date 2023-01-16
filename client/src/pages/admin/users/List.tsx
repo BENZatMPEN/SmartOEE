@@ -126,7 +126,7 @@ export default function UserList() {
       return;
     }
 
-    if (deletingItems.length === 1) {
+    if (deletingItems.length === 1 && selected.length === 0) {
       await handleDeleteRow(deletingItems[0]);
     } else {
       await handleDeleteRows(deletingItems);

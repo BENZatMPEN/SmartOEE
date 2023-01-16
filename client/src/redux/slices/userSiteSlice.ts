@@ -34,9 +34,14 @@ const userSiteSlice = createSlice({
       state.isLoading = false;
       state.userSites = action.payload;
 
-      if (state.selectedSiteId) {
-        const idx = state.userSites.findIndex((item) => item.id === state.selectedSiteId);
-        state.selectedSite = idx >= 0 ? state.userSites[idx] : null;
+      if (state.userSites.length > 0) {
+        if (state.selectedSiteId) {
+          const idx = state.userSites.findIndex((item) => item.id === state.selectedSiteId);
+          state.selectedSite = idx >= 0 ? state.userSites[idx] : null;
+        } else {
+          state.selectedSiteId = state.userSites[0].id;
+          state.selectedSite = state.userSites[0];
+        }
       }
     },
     setGanttView(state, action) {

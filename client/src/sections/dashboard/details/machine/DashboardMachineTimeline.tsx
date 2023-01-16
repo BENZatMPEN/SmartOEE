@@ -77,7 +77,7 @@ export default function DashboardMachineTimeline() {
         ...options,
         xaxis: {
           ...options.xaxis,
-          min: batchTimeline[0].fromDate.getTime(),
+          min: new Date(batchTimeline[0].fromDate).getTime(),
         },
       });
       setInitOpt(true);
@@ -87,16 +87,18 @@ export default function DashboardMachineTimeline() {
 
   useEffect(() => {
     setSeries(
-      batchTimeline.map((item) => ({
-        name: item.status,
-        data: [
-          {
-            fillColor: getColor(item.status),
-            x: oeeCode,
-            y: [item.fromDate.getTime(), item.toDate.getTime()],
-          },
-        ],
-      })),
+      batchTimeline.map((item) => {
+        return {
+          name: item.status,
+          data: [
+            {
+              fillColor: getColor(item.status),
+              x: oeeCode,
+              y: [new Date(item.fromDate).getTime(), new Date(item.toDate).getTime()],
+            },
+          ],
+        };
+      }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchTimeline]);

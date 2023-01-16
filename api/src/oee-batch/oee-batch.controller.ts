@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -79,6 +80,11 @@ export class OeeBatchController {
   //   // });
   //   // return null;
   // }
+
+  @Delete(':id')
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.oeeBatchService.delete(id, siteId);
+  }
 
   @Put(':id/start')
   start(@Param('id') id: number): Promise<Date> {

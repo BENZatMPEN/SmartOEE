@@ -14,6 +14,7 @@ import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { FilterOee } from '../../../@types/oee';
+import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -109,6 +110,30 @@ export default function OEEList() {
     navigate(PATH_SETTINGS.oees.duplicate(paramCase(id.toString())));
   };
 
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    if (deletingItems.length === 1 && selected.length === 0) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    setOpenDeleteDialog(false);
+  };
+
   const denseHeight = dense ? 60 : 80;
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
@@ -154,7 +179,7 @@ export default function OEEList() {
                   }
                   actions={
                     <Tooltip title="Delete">
-                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                      <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                         <Iconify icon={'eva:trash-2-outline'} />
                       </IconButton>
                     </Tooltip>
@@ -186,7 +211,7 @@ export default function OEEList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                       />
@@ -213,6 +238,15 @@ export default function OEEList() {
             />
           </Box>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

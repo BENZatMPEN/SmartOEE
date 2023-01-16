@@ -10,13 +10,13 @@ export type DeviceModel = {
   tags: DeviceModelTag[];
 };
 
-export type EditDeviceModel = {
+export interface EditDeviceModel {
   name: string;
   remark: string;
   modelType: string;
   connectionType: string;
   tags: DeviceModelTag[];
-};
+}
 
 export type FilterDeviceModel = {
   search: string;

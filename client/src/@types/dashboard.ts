@@ -7,11 +7,11 @@ export type Dashboard = {
   siteId: number;
 };
 
-export type EditDashboard = {
+export interface EditDashboard {
   title: string;
   link: string;
   siteId?: number;
-};
+}
 
 export type FilterDashboard = {
   search: string;

@@ -67,7 +67,7 @@ export default function UserForm({ isEdit }: Props) {
         confirmPassword: '',
         isNew: !isEdit,
         image: null,
-        siteIds: (currentUser?.sites || []).map((site) => site.id),
+        siteIds: currentUser?.sites ? (currentUser?.sites || []).map((site) => site.id) : [selectedSite?.id || 0],
         roleId: getCurrentRole(),
       });
     })();

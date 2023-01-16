@@ -25,7 +25,7 @@ import useToggle from '../../../../hooks/useToggle';
 import { createOee, updateOee } from '../../../../redux/actions/oeeAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import { getTimeUnitText } from '../../../../utils/formatText';
+import { getOeeTabLabel, getTimeUnitText } from '../../../../utils/formatText';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import OeeMachineDialog from './OeeMachineDialog';
@@ -473,7 +473,13 @@ export default function OeeForm({ isEdit }: Props) {
         onSelect={handleMachineSelected}
       />
 
-      <OeeTagDialog open={openTagForm} onClose={onCloseTagForm} editingTag={editingTag} onSave={handleTagSave} />
+      <OeeTagDialog
+        title={editingTag ? getOeeTabLabel(editingTag.key) : ''}
+        open={openTagForm}
+        onClose={onCloseTagForm}
+        editingTag={editingTag}
+        onSave={handleTagSave}
+      />
     </>
   );
 }

@@ -53,34 +53,7 @@ export class OeeService {
   }
 
   findAll(siteId: number): Promise<OeeEntity[]> {
-    return this.oeeRepository.find({
-      where: { siteId, deleted: false },
-      // relations: [
-      //   'oeeProducts',
-      //   'oeeProducts.product',
-      //   'oeeMachines',
-      //   'oeeMachines.machine',
-      //   'oeeMachines.machine.machineParameters',
-      // ],
-    });
-    // return this.oeeRepository.findAll({
-    //   // include: [
-    //   //   {
-    //   //     model: OeeProduct,
-    //   //     include: [Product],
-    //   //   },
-    //   //   {
-    //   //     model: OeeMachine,
-    //   //     include: [
-    //   //       {
-    //   //         model: Machine,
-    //   //         include: [MachineParameter],
-    //   //       },
-    //   //     ],
-    //   //   },
-    //   // ],
-    //   where: { deleted: false },
-    // });
+    return this.oeeRepository.findBy({ siteId, deleted: false });
   }
 
   async findOptions(siteId: number): Promise<OptionItem[]> {
@@ -251,8 +224,9 @@ export class OeeService {
 
     if (oeeProducts) {
       for (const product of oeeProducts) {
+        const { id, ...productDto } = product;
         await this.oeeProductRepository.save({
-          ...product,
+          ...productDto,
           oeeId: oee.id,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -262,8 +236,9 @@ export class OeeService {
 
     if (oeeMachines) {
       for (const machine of oeeMachines) {
+        const { id, ...machineDto } = machine;
         await this.oeeMachineRepository.save({
-          ...machine,
+          ...machineDto,
           oeeId: oee.id,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -292,6 +267,7 @@ export class OeeService {
     const deletingProductIds = (oeeProducts || [])
       .filter((oeeProduct) => oeeProduct.id)
       .map((oeeProduct) => oeeProduct.id);
+
     if (deletingProductIds.length > 0) {
       await this.oeeProductRepository
         .createQueryBuilder()

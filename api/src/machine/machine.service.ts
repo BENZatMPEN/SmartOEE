@@ -74,16 +74,19 @@ export class MachineService {
       updatedAt: new Date(),
     });
 
-    await this.machineParameterRepository.save(
-      parameters.map((paramDto) => {
-        return {
-          ...paramDto,
-          machineId: machine.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-      }),
-    );
+    if (parameters) {
+      await this.machineParameterRepository.save(
+        parameters.map((param) => {
+          const { id, ...paramDto } = param;
+          return {
+            ...paramDto,
+            machineId: machine.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }),
+      );
+    }
 
     return machine;
   }
@@ -103,25 +106,33 @@ export class MachineService {
       updatedAt: new Date(),
     });
 
-    await this.machineParameterRepository
-      .createQueryBuilder()
-      .delete()
-      .where('machineId = :machineId', { machineId: machine.id })
-      .andWhere('id not in (:ids)', { ids: parameters.map((param) => param.id) })
-      .execute();
+    if (parameters && parameters.length >= 0) {
+      await this.machineParameterRepository
+        .createQueryBuilder()
+        .delete()
+        .where('machineId = :machineId', { machineId: machine.id })
+        .andWhere('id not in (:ids)', { ids: parameters.map((param) => param.id) })
+        .execute();
 
-    for (const paramDto of parameters) {
-      if (paramDto.id) {
-        const updatingMachineParam = await this.machineParameterRepository.findOneBy({ id: paramDto.id });
-        await this.machineParameterRepository.save({ ...updatingMachineParam, ...paramDto, updatedAt: new Date() });
-      } else {
-        await this.machineParameterRepository.save({
-          ...paramDto,
-          machineId: machine.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+      for (const paramDto of parameters) {
+        if (paramDto.id) {
+          const updatingMachineParam = await this.machineParameterRepository.findOneBy({ id: paramDto.id });
+          await this.machineParameterRepository.save({ ...updatingMachineParam, ...paramDto, updatedAt: new Date() });
+        } else {
+          await this.machineParameterRepository.save({
+            ...paramDto,
+            machineId: machine.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
       }
+    } else {
+      await this.machineParameterRepository
+        .createQueryBuilder()
+        .delete()
+        .where('machineId = :machineId', { machineId: machine.id })
+        .execute();
     }
 
     return machine;

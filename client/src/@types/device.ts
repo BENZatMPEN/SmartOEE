@@ -16,7 +16,7 @@ export type Device = {
   siteId: number;
 };
 
-export type EditDevice = {
+export interface EditDevice {
   name: string;
   remark: string;
   deviceId: number;
@@ -25,7 +25,7 @@ export type EditDevice = {
   stopped: boolean;
   deviceModelId: number | null;
   tags: DeviceTag[];
-};
+}
 
 export type FilterDevice = {
   search: string;

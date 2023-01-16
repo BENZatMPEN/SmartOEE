@@ -55,6 +55,7 @@ export class ProblemSolutionController {
   async create(
     @Body() createDto: CreateProblemSolutionDto,
     @UploadedFiles() files: Express.Multer.File[],
+    @Query('siteId') siteId: number,
   ): Promise<ProblemSolutionEntity> {
     const beforeProjectChartImageInfoList = await this.saveFileInfoList('beforeProjectChartImages[]', files);
     const beforeProjectImageInfoList = await this.saveFileInfoList('beforeProjectImages[]', files);
@@ -63,6 +64,7 @@ export class ProblemSolutionController {
 
     return this.problemSolutionService.create(
       createDto,
+      siteId,
       beforeProjectChartImageInfoList,
       beforeProjectImageInfoList,
       afterProjectChartImageInfoList,

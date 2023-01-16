@@ -93,6 +93,7 @@ export class ProblemSolutionService {
 
   async create(
     createDto: CreateProblemSolutionDto,
+    siteId: number,
     beforeProjectChartImageInfoList: FileInfo[],
     beforeProjectImageInfoList: FileInfo[],
     afterProjectChartImageInfoList: FileInfo[],
@@ -100,6 +101,7 @@ export class ProblemSolutionService {
   ): Promise<ProblemSolutionEntity> {
     const problemSolution = await this.problemSolutionRepository.save({
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
