@@ -29,6 +29,7 @@ import {
   OEE_TYPE_P,
   OEE_TYPE_Q,
   PLANNED_DOWNTIME_TIMING_AUTO,
+  PLANNED_DOWNTIME_TIMING_MANUAL,
   PLANNED_DOWNTIME_TIMING_TIMER,
   PLANNED_DOWNTIME_TYPE_MC_SETUP,
   PLANNED_DOWNTIME_TYPE_PLANNED,
@@ -51,6 +52,7 @@ import {
   AnalyticPParamUpdateEvent,
   AnalyticQParamUpdateEvent,
 } from '../events/analytic.event';
+import { OeeBatchPlannedDowntimeEntity } from '../entities/oee-batch-planned-downtime-entity';
 
 @Injectable()
 export class BatchOeeCalculateListener {
@@ -219,7 +221,7 @@ export class BatchOeeCalculateListener {
       const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
       if (tagOutBatchStatus !== null) {
         const tagBatchStatusData: OeeTagOutBatchStatus = tagOutBatchStatus.data;
-        const outVal = this.getTagBatchStatus(currentMcState.batchStatus, tagBatchStatusData);
+        const outVal = this.getTagBatchStatus(currentMcState.batchStatus, activePD, tagBatchStatusData);
         if (outVal !== '') {
           this.socketService.socket.to(`site_${batch.siteId}`).emit(`tag_out`, {
             tagId: tagOutBatchStatus.tagId,
@@ -267,7 +269,7 @@ export class BatchOeeCalculateListener {
     }
   }
 
-  getTagBatchStatus(batchStatus: string, data: OeeTagOutBatchStatus): string {
+  getTagBatchStatus(batchStatus: string, activePD: OeeBatchPlannedDowntimeEntity, data: OeeTagOutBatchStatus): string {
     switch (batchStatus) {
       case OEE_BATCH_STATUS_RUNNING:
         return data.running;
@@ -279,7 +281,12 @@ export class BatchOeeCalculateListener {
         return data.breakdown;
 
       case OEE_BATCH_STATUS_PLANNED:
-        return data.plannedDowntime;
+        if (activePD.timing === PLANNED_DOWNTIME_TIMING_AUTO) {
+          return data.plannedDowntimeAuto;
+        } else if (activePD.timing === PLANNED_DOWNTIME_TIMING_MANUAL) {
+          return data.plannedDowntimeManual;
+        }
+        return '';
 
       case OEE_BATCH_STATUS_MC_SETUP:
         return data.mcSetup;

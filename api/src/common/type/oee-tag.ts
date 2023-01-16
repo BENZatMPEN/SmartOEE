@@ -26,7 +26,8 @@ export type OeeTagOutBatchStatus = {
   standby: string;
   running: string;
   breakdown: string;
-  plannedDowntime: string;
+  plannedDowntimeManual: string;
+  plannedDowntimeAuto: string;
   mcSetup: string;
 };
 
