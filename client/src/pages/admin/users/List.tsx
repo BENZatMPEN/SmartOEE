@@ -22,7 +22,7 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
-import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/userAction';
+import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../routes/paths';
 import { UserTableRow, UserTableToolbar } from '../../../sections/admin/users/list';
@@ -59,7 +59,7 @@ export default function UserList() {
 
   const dispatch = useDispatch();
 
-  const { pagedList, isLoading } = useSelector((state: RootState) => state.user);
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.adminUser);
 
   const [filterName, setFilterName] = useState('');
 

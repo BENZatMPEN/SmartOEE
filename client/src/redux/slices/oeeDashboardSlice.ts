@@ -41,7 +41,7 @@ const oeeDashboardSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getOeeDetailsSuccess(state, action) {
+    getOeeSuccess(state, action) {
       state.isLoading = false;
       state.selectedOee = action.payload;
     },

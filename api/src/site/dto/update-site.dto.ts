@@ -27,24 +27,9 @@ export class UpdateSiteDto {
   @Transform(({ value }) => value === 'true')
   readonly sync: boolean;
 
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true')
-  @IsOptional()
-  readonly active?: boolean;
-
   @IsArray()
   @Type(() => PercentSetting)
   readonly defaultPercentSettings: PercentSetting[];
-
-  @IsNumber()
-  @Type(() => Number)
-  @IsOptional()
-  readonly oeeLimit?: number;
-
-  @IsNumber()
-  @Type(() => Number)
-  @IsOptional()
-  readonly userLimit?: number;
 
   @IsDate()
   @Type(() => Date)

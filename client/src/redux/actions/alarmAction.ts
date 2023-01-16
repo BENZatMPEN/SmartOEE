@@ -11,7 +11,7 @@ export function getAlarmPagedList(filter: FilterAlarm) {
 
     try {
       const response = await axios.get<AlarmPagedList>(`/alarms`, { params: filter });
-      dispatch(alarmSlice.actions.getAlarmsSuccess(response.data));
+      dispatch(alarmSlice.actions.getAlarmPagedListSuccess(response.data));
     } catch (error) {
       dispatch(alarmSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getAlarm(id: number) {
 
     try {
       const response = await axios.get<Alarm>(`/alarms/${id}`);
-      dispatch(alarmSlice.actions.getAlarmDetailsSuccess(response.data));
+      dispatch(alarmSlice.actions.getAlarmSuccess(response.data));
     } catch (error) {
       dispatch(alarmSlice.actions.hasError(error));
     }

@@ -35,6 +35,4 @@ export type Token = {
 export type AuthUser = null | {
   id: number;
   email: string;
-  firstName: string;
-  lastName: string;
 };

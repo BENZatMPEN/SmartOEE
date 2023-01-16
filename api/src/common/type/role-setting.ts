@@ -9,6 +9,7 @@ export enum RoleAction {
   Read = 'r',
   Update = 'u',
   Delete = 'd',
+  Approve = 'a',
 }
 
 export enum RoleSubject {
@@ -27,7 +28,6 @@ export enum RoleSubject {
   DashboardSettings = 'dashboardSettings',
   AlarmSettings = 'alarmSettings',
   SiteSettings = 'siteSettings',
-  AdminSites = 'adminSites',
-  AdminUsers = 'adminUsers',
-  AdminRoles = 'adminRoles',
+  UserSettings = 'userSettings',
+  RoleSettings = 'roleSettings',
 }

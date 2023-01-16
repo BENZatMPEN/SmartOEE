@@ -16,7 +16,7 @@ export function getPlannedDowntimePagedList(filter: FilterPlannedDowntime) {
 
     try {
       const response = await axios.get<PlannedDowntimePagedList>(`/planned-downtimes`, { params: filter });
-      dispatch(plannedDowntimeSlice.actions.getPlannedDowntimesSuccess(response.data));
+      dispatch(plannedDowntimeSlice.actions.getPlannedDowntimePagedListSuccess(response.data));
     } catch (error) {
       dispatch(plannedDowntimeSlice.actions.hasError(error));
     }
@@ -29,7 +29,7 @@ export function getPlannedDowntime(id: number) {
 
     try {
       const response = await axios.get<PlannedDowntime>(`/planned-downtimes/${id}`);
-      dispatch(plannedDowntimeSlice.actions.getPlannedDowntimeDetailsSuccess(response.data));
+      dispatch(plannedDowntimeSlice.actions.getPlannedDowntimeSuccess(response.data));
     } catch (error) {
       dispatch(plannedDowntimeSlice.actions.hasError(error));
     }

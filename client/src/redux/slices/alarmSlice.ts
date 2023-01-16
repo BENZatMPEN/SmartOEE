@@ -32,7 +32,7 @@ const alarmSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getAlarmsSuccess(state, action) {
+    getAlarmPagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const alarmSlice = createSlice({
     emptyCurrentAlarm(state) {
       state.currentAlarm = null;
     },
-    getAlarmDetailsSuccess(state, action) {
+    getAlarmSuccess(state, action) {
+      state.isLoading = false;
       state.currentAlarm = action.payload;
     },
   },

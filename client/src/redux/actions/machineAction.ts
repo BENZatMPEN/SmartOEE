@@ -11,7 +11,7 @@ export function getMachinePagedList(filter: FilterMachine) {
 
     try {
       const response = await axios.get<MachinePagedList>(`/machines`, { params: filter });
-      dispatch(machineSlice.actions.getMachinesSuccess(response.data));
+      dispatch(machineSlice.actions.getMachinePagedListSuccess(response.data));
     } catch (error) {
       dispatch(machineSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getMachine(id: number) {
 
     try {
       const response = await axios.get<Machine>(`/machines/${id}`);
-      dispatch(machineSlice.actions.getMachineDetailsSuccess(response.data));
+      dispatch(machineSlice.actions.getMachineSuccess(response.data));
     } catch (error) {
       dispatch(machineSlice.actions.hasError(error));
     }

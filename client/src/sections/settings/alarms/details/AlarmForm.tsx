@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Checkbox,
   Divider,
   Grid,
   IconButton,
@@ -16,16 +17,12 @@ import {
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import {
-  AlarmCondition,
-  AlarmEmailDataItem,
-  AlarmLineData,
-  EditAlarm,
-  initAlarmCondition,
-} from '../../../../@types/alarm';
+import { AlarmEmailDataItem, AlarmLineData, EditAlarm, initAlarmCondition } from '../../../../@types/alarm';
+import { Oee } from '../../../../@types/oee';
+import { OptionItem } from '../../../../@types/option';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFSelect, RHFSwitch, RHFTextField } from '../../../../components/hook-form';
@@ -34,8 +31,8 @@ import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE } from '../../../../constants';
 import { createAlarm, updateAlarm } from '../../../../redux/actions/alarmAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
+import axios from '../../../../utils/axios';
 import { getAlarmType } from '../../../../utils/formatText';
-import OeeSelect from './OeeSelect';
 
 interface FormValuesProps extends EditAlarm {
   emails: AlarmEmailDataItem[];
@@ -50,18 +47,6 @@ const initLineData = {
   token: '',
 };
 
-class FormState {
-  constructor(isOeeOptionLoading: boolean) {
-    this.isOeeOptionLoading = isOeeOptionLoading;
-  }
-
-  isOeeOptionLoading: boolean;
-
-  isReady(): boolean {
-    return !this.isOeeOptionLoading;
-  }
-}
-
 export default function AlarmForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
@@ -71,31 +56,29 @@ export default function AlarmForm({ isEdit }: Props) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [formState, setFormState] = useState<FormState>(new FormState(true));
-
-  const [formValues, setFormValues] = useState<FormValuesProps | undefined>(undefined);
+  const [oeeOpts, setOeeOpts] = useState<OptionItem[]>([]);
 
   useEffect(() => {
-    if (formState.isReady()) {
-      setFormValues({
-        name: currentAlarm?.name || '',
-        type: currentAlarm?.type || ALARM_TYPE_EMAIL,
-        notify: currentAlarm ? currentAlarm.notify : true,
-        emails: currentAlarm
-          ? currentAlarm.type === ALARM_TYPE_EMAIL
-            ? (currentAlarm.data as AlarmEmailDataItem[])
-            : []
-          : [],
-        line: currentAlarm
-          ? currentAlarm.type === ALARM_TYPE_LINE
-            ? (currentAlarm.data as AlarmLineData)
-            : initLineData
-          : initLineData,
-        condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
-        data: null,
+    axios
+      .get<Oee[]>(`/oees/all`)
+      .then((response) => {
+        const { data: oees } = response;
+        setOeeOpts(
+          oees.map((oee) => ({
+            id: oee.id,
+            name: oee.productionName,
+          })),
+        );
+      })
+      .catch((error) => {
+        console.error(error);
       });
-    }
-  }, [formState, currentAlarm]);
+
+    return () => {
+      setOeeOpts([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const NewAlarmSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -126,43 +109,49 @@ export default function AlarmForm({ isEdit }: Props) {
       line: initLineData,
       condition: initAlarmCondition,
     },
-    values: formValues,
+    values: {
+      name: currentAlarm?.name || '',
+      type: currentAlarm?.type || ALARM_TYPE_EMAIL,
+      notify: currentAlarm ? currentAlarm.notify : true,
+      emails: currentAlarm
+        ? currentAlarm.type === ALARM_TYPE_EMAIL
+          ? (currentAlarm.data as AlarmEmailDataItem[])
+          : []
+        : [],
+      line: currentAlarm
+        ? currentAlarm.type === ALARM_TYPE_LINE
+          ? (currentAlarm.data as AlarmLineData)
+          : initLineData
+        : initLineData,
+      condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
+      data: null,
+    },
   });
 
   const {
     watch,
-    control,
     getValues,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'emails',
-  });
-
   const values = watch();
 
   const onSubmit = async (data: FormValuesProps) => {
-    try {
-      const { emails, line, ...dto } = data;
-      if (dto.type === ALARM_TYPE_EMAIL) {
-        dto.data = emails;
-      } else if (dto.type === ALARM_TYPE_LINE) {
-        dto.data = line;
-      }
+    const { emails, line, ...dto } = data;
+    if (dto.type === ALARM_TYPE_EMAIL) {
+      dto.data = emails;
+    } else if (dto.type === ALARM_TYPE_LINE) {
+      dto.data = line;
+    }
 
-      const alarm =
-        isEdit && currentAlarm ? await dispatch(updateAlarm(currentAlarm.id, dto)) : await dispatch(createAlarm(dto));
+    const alarm =
+      isEdit && currentAlarm ? await dispatch(updateAlarm(currentAlarm.id, dto)) : await dispatch(createAlarm(dto));
 
-      if (alarm) {
-        enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-        navigate(PATH_SETTINGS.alarms.root);
-      }
-    } catch (error) {
-      console.error(error);
+    if (alarm) {
+      enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
+      navigate(PATH_SETTINGS.alarms.root);
     }
   };
 
@@ -188,12 +177,16 @@ export default function AlarmForm({ isEdit }: Props) {
     setValue('type', type);
   };
 
-  const handleOEEsSelected = (values: number[]): void => {
-    const condition = getValues('condition') as AlarmCondition;
-    setValue('condition', {
-      ...condition,
-      oees: values,
-    });
+  const handleEmailAdd = (): void => {
+    const emails = getValues('emails');
+    emails.push({ name: '', email: '' });
+    setValue('emails', emails);
+  };
+
+  const handleEmailRemove = (index: number): void => {
+    const emails = getValues('emails');
+    emails.splice(index, 1);
+    setValue('emails', emails);
   };
 
   return (
@@ -276,16 +269,40 @@ export default function AlarmForm({ isEdit }: Props) {
           </Grid>
 
           <Grid item md={12}>
-            <OeeSelect
+            <RHFSelect
               name="oees"
               label="Productions"
-              selectedValues={values.condition?.oees || []}
-              onSelected={(selectedIds) => handleOEEsSelected(selectedIds)}
-              onLoading={(isLoading) => {
-                formState.isOeeOptionLoading = isLoading;
-                setFormState(formState);
+              fullWidth
+              SelectProps={{
+                native: false,
+                multiple: true,
+                value: values.condition?.oees || [],
+                renderValue: (selected: any) => (
+                  <>
+                    {oeeOpts
+                      .filter((item) => selected.indexOf(item.id) > -1)
+                      .map((item) => item.name)
+                      .join(', ')}
+                  </>
+                ),
               }}
-            />
+            >
+              {oeeOpts.map((item) => (
+                <MenuItem
+                  key={item.id}
+                  value={item.id}
+                  sx={{
+                    mx: 1,
+                    my: 0.5,
+                    borderRadius: 0.75,
+                    typography: 'body2',
+                  }}
+                >
+                  <Checkbox checked={(values.condition?.oees || []).indexOf(item.id) > -1} />
+                  {item.name}
+                </MenuItem>
+              ))}
+            </RHFSelect>
           </Grid>
 
           <Grid item md={12}>
@@ -310,10 +327,6 @@ export default function AlarmForm({ isEdit }: Props) {
               </CardContent>
             </Card>
           </Grid>
-
-          <Grid item md={4}>
-            <Stack direction="row"></Stack>
-          </Grid>
         </Grid>
 
         {values.type === ALARM_TYPE_EMAIL && (
@@ -323,8 +336,8 @@ export default function AlarmForm({ isEdit }: Props) {
             </Typography>
 
             <Stack spacing={3}>
-              {fields.map((item, index) => (
-                <Box key={item.id}>
+              {values.emails.map((item, index) => (
+                <Box key={index}>
                   <Grid container spacing={3}>
                     <Grid item md={5}>
                       <RHFTextField
@@ -349,7 +362,7 @@ export default function AlarmForm({ isEdit }: Props) {
                         size="medium"
                         color="error"
                         onClick={() => {
-                          remove(index);
+                          handleEmailRemove(index);
                         }}
                       >
                         <Iconify icon="eva:trash-2-outline" />
@@ -363,13 +376,7 @@ export default function AlarmForm({ isEdit }: Props) {
             <Divider sx={{ my: 3, borderStyle: 'dashed' }} />
 
             <Stack spacing={3} direction="row" justifyContent="right">
-              <Button
-                size={'medium'}
-                startIcon={<Iconify icon="eva:plus-fill" />}
-                onClick={() => {
-                  append({ name: '', email: '' });
-                }}
-              >
+              <Button size={'medium'} startIcon={<Iconify icon="eva:plus-fill" />} onClick={handleEmailAdd}>
                 Add Email
               </Button>
             </Stack>

@@ -1,6 +1,7 @@
 import { Card, CardContent, Container, Grid, Stack } from '@mui/material';
 import { useContext, useEffect } from 'react';
 import { OeeStatus } from '../../@types/oee';
+import { RoleAction, RoleSubject } from '../../@types/role';
 import { AbilityContext } from '../../caslContext';
 import Page from '../../components/Page';
 import useWebSocket from '../../hooks/useWebSocket';
@@ -15,7 +16,7 @@ export default function List() {
 
   const { ganttView } = useSelector((state: RootState) => state.userSite);
 
-  const { oeeStatus } = useSelector((state: RootState) => state.oeeDashboard);
+  const { oeeStatus, isLoading } = useSelector((state: RootState) => state.oeeDashboard);
 
   const dispatch = useDispatch();
 
@@ -50,13 +51,15 @@ export default function List() {
   return (
     <Page title="Dashboard">
       <Container maxWidth={false}>
-        {/*{ability.can(RoleAction.Read, RoleSubject.Dashboard) && <div>Can Read</div>}*/}
-
         {/*{ability.can(RoleAction.Update, RoleSubject.Dashboard) && <div>Can Update</div>}*/}
 
         <DashboardHeader />
 
-        {ganttView ? (
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : ganttView ? (
           <Card sx={{ mt: 3 }}>
             <CardContent>
               <Stack>

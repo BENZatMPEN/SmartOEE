@@ -47,7 +47,6 @@ export type FilterOee = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type OeeProduct = {

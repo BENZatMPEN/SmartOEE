@@ -9,85 +9,17 @@ import {
   Typography,
 } from '@mui/material';
 import { RoleAction, RoleSetting, RoleSubject } from '../../../../@types/role';
+import { initialRoles } from '../../../../constants';
 import { getRoleActionText, getRoleSubjectText } from '../../../../utils/formatText';
 
-export const roleMaps: RoleSetting[] = [
-  {
-    subject: RoleSubject.Dashboard,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update],
-  },
-  {
-    subject: RoleSubject.Analytics,
-    actions: [RoleAction.Read],
-  },
-  {
-    subject: RoleSubject.ProblemsAndSolutions,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.Faqs,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.Plannings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.OeeSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.MachineSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.ProductSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.DeviceSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.ModelSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.PlannedDowntimeSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.DashboardSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AlarmSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.SiteSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminSites,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminUsers,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminRoles,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-];
+export const roleMaps: RoleSetting[] = initialRoles;
 
-interface IProps {
+interface Props {
   roles: RoleSetting[];
   onUpdated: (subject: RoleSubject, action: RoleAction, checked: boolean) => void;
 }
 
-export function RolePermissionForm({ roles, onUpdated }: IProps) {
+export function RolePermissionForm({ roles, onUpdated }: Props) {
   const handleSettingChange = (subject: RoleSubject, action: RoleAction, checked: boolean) => {
     onUpdated(subject, action, checked);
   };
@@ -120,7 +52,7 @@ export function RolePermissionForm({ roles, onUpdated }: IProps) {
                   />
                 </TableCell>
               ))}
-              {[...Array(4 - roleMap.actions.length)].map((value, index, array) => (
+              {[...Array(5 - roleMap.actions.length)].map((value, index, array) => (
                 <TableCell key={'cell_' + index}></TableCell>
               ))}
             </TableRow>

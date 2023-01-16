@@ -13,6 +13,8 @@ import { SiteEntity } from '../common/entities/site-entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration, { Config } from '../configuration';
 import { RoleEntity } from '../common/entities/role-entity';
+import { UserService } from '../user/user.service';
+import { FileService } from '../common/services/file.service';
 
 @Module({
   imports: [
@@ -32,7 +34,7 @@ import { RoleEntity } from '../common/entities/role-entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LogService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, UserService, FileService, LogService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

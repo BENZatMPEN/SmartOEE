@@ -32,39 +32,40 @@ export class RoleController {
     return this.roleService.findPagedList(filterDto);
   }
 
-  // @Get('all')
-  // async findAll(): Promise<RoleEntity[]> {
-  //   return this.roleService.findAll();
-  // }
-
   @Get('options')
   findAllOee(@Query('siteId') siteId: number): Promise<OptionItem[]> {
-    console.log('siteId', siteId);
     return this.roleService.findOptions(siteId);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number): Promise<RoleEntity> {
-    return this.roleService.findById(id);
+  async findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<RoleEntity> {
+    return this.roleService.findById(id, siteId);
   }
 
   @Post()
-  async create(@Body() createDto: CreateRoleDto): Promise<RoleEntity> {
-    return this.roleService.create(createDto);
+  async create(@Body() createDto: CreateRoleDto, @Query('siteId') siteId: number): Promise<RoleEntity> {
+    return this.roleService.create(createDto, siteId);
   }
 
   @Put(':id')
-  async update(@Param('id') id: number, @Body() updateDto: UpdateRoleDto): Promise<RoleEntity> {
-    return this.roleService.update(id, updateDto);
+  async update(
+    @Param('id') id: number,
+    @Body() updateDto: UpdateRoleDto,
+    @Query('siteId') siteId: number,
+  ): Promise<RoleEntity> {
+    return this.roleService.update(id, updateDto, siteId);
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: number): Promise<void> {
-    await this.roleService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.roleService.delete(id, siteId);
   }
 
   @Delete()
-  async deleteMany(@Query('ids', new ParseArrayPipe({ items: Number })) ids: number[]): Promise<void> {
-    await this.roleService.deleteMany(ids);
+  async deleteMany(
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.roleService.deleteMany(ids, siteId);
   }
 }

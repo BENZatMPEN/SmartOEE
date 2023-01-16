@@ -22,7 +22,7 @@ import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
-import { deleteSite, deleteSites, getSitePagedList } from '../../../redux/actions/siteAction';
+import { deleteSite, deleteSites, getSitePagedList } from '../../../redux/actions/adminSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../routes/paths';
 import { SiteTableRow, SiteTableToolbar } from '../../../sections/admin/sites/list';
@@ -60,7 +60,7 @@ export default function SiteList() {
 
   const dispatch = useDispatch();
 
-  const { pagedList, isLoading } = useSelector((state: RootState) => state.site);
+  const { pagedList, isLoading } = useSelector((state: RootState) => state.adminSite);
 
   const [filterName, setFilterName] = useState('');
 

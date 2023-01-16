@@ -73,8 +73,6 @@ type AuthProviderProps = {
 };
 
 function AuthProvider({ children }: AuthProviderProps) {
-  // const { enqueueSnackbar } = useSnackbar();
-
   const [state, dispatch] = useReducer(JwtReducer, initialState);
 
   const isValidToken = (accessToken: string) => {

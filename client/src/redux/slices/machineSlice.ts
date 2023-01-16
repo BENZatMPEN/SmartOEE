@@ -32,7 +32,7 @@ const machineSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getMachinesSuccess(state, action) {
+    getMachinePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const machineSlice = createSlice({
     emptyCurrentMachine(state) {
       state.currentMachine = null;
     },
-    getMachineDetailsSuccess(state, action) {
+    getMachineSuccess(state, action) {
+      state.isLoading = false;
       state.currentMachine = action.payload;
     },
   },

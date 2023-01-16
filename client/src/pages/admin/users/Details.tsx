@@ -4,7 +4,7 @@ import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
-import { emptyCurrentUser, getUser } from '../../../redux/actions/userAction';
+import { emptyCurrentUser, getUser } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../routes/paths';
 import UserForm from '../../../sections/admin/users/details/UserForm';
@@ -16,7 +16,7 @@ export default function UserDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentUser } = useSelector((state: RootState) => state.user);
+  const { currentUser } = useSelector((state: RootState) => state.adminUser);
 
   const { pathname } = useLocation();
 

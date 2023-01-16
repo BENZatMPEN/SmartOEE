@@ -12,8 +12,4 @@ export class CreateRoleDto {
   @IsArray()
   @Type(() => RoleSetting)
   readonly roles: RoleSetting[];
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 }

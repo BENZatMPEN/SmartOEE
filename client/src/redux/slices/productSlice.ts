@@ -32,7 +32,7 @@ const productSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getProductsSuccess(state, action) {
+    getProductPagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const productSlice = createSlice({
     emptyCurrentProduct(state) {
       state.currentProduct = null;
     },
-    getProductDetailsSuccess(state, action) {
+    getProductSuccess(state, action) {
+      state.isLoading = false;
       state.currentProduct = action.payload;
     },
   },

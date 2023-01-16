@@ -67,43 +67,6 @@ export default function ProductForm({ isEdit }: Props) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.products.root);
     }
-
-    // try {
-    //   if (isEdit && currentProduct) {
-    //     await axios.put<Product>(`/products/${currentProduct.id}`, data, {
-    //       headers: {
-    //         'Content-Type': 'multipart/form-data',
-    //       },
-    //     });
-    //   } else {
-    //     await axios.post<Product>(
-    //       `/products`,
-    //       { ...data, siteId: selectedSite?.id },
-    //       {
-    //         headers: {
-    //           'Content-Type': 'multipart/form-data',
-    //         },
-    //       },
-    //     );
-    //   }
-    //
-    //   enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-    //   navigate(PATH_SETTINGS.products.root);
-    // } catch (error) {
-    //   if (error instanceof AxiosError) {
-    //     if ('message' in error.response?.data) {
-    //       if (Array.isArray(error.response?.data.message)) {
-    //         for (const item of error.response?.data.message) {
-    //           enqueueSnackbar(item, { variant: 'error' });
-    //         }
-    //       } else {
-    //         enqueueSnackbar(error.response?.data.message, { variant: 'error' });
-    //       }
-    //       return;
-    //     }
-    //     enqueueSnackbar(error.response?.data.error, { variant: 'error' });
-    //   }
-    // }
   };
 
   useEffect(() => {

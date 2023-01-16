@@ -1,11 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { Controller, Get } from '@nestjs/common';
 import { SiteEntity } from './common/entities/site-entity';
-import { SiteService } from './site/site.service';
 import { EntityManager } from 'typeorm';
 import { UserService } from './user/user.service';
 import { RoleService } from './role/role.service';
 import {
+  defaultPercentSettings,
+  initialRoles,
   OEE_PARAM_TYPE_A,
   OEE_PARAM_TYPE_P,
   OEE_PARAM_TYPE_Q,
@@ -21,7 +22,6 @@ import {
   PLANNED_DOWNTIME_TIMING_TIMER,
   PLANNED_DOWNTIME_TYPE_MC_SETUP,
   PLANNED_DOWNTIME_TYPE_PLANNED,
-  ROLE_OWNER,
   TASK_STATUS_ON_APPROVED,
   TASK_STATUS_ON_COMPLETE,
   TASK_STATUS_ON_PROCESS,
@@ -44,102 +44,12 @@ import { OeeMachineEntity } from './common/entities/oee-machine-entity';
 import { OeeService } from './oee/oee.service';
 import { FaqService } from './faq/faq.service';
 import { ProblemSolutionService } from './problem-solution/problem-solution.service';
-import { PercentSetting } from './common/type/percent-settings';
 import { OeeEntity } from './common/entities/oee-entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
 import * as dayjs from 'dayjs';
-import { RoleAction, RoleSetting, RoleSubject } from './common/type/role-setting';
 import { AnalyticService } from './analytic/analytic.service';
-
-const defaultPercentSettings: PercentSetting[] = [
-  {
-    type: 'oee',
-    settings: { high: 80, medium: 60, low: 50 },
-  },
-  {
-    type: 'a',
-    settings: { high: 80, medium: 60, low: 50 },
-  },
-  {
-    type: 'p',
-    settings: { high: 80, medium: 60, low: 50 },
-  },
-  {
-    type: 'q',
-    settings: { high: 80, medium: 60, low: 50 },
-  },
-];
-
-export const initialRoles: RoleSetting[] = [
-  {
-    subject: RoleSubject.Dashboard,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update],
-  },
-  {
-    subject: RoleSubject.Analytics,
-    actions: [RoleAction.Read],
-  },
-  {
-    subject: RoleSubject.ProblemsAndSolutions,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.Faqs,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.Plannings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.OeeSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.MachineSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.ProductSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.DeviceSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.ModelSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.PlannedDowntimeSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.DashboardSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AlarmSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.SiteSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminSites,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminUsers,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminRoles,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-];
+import { AdminUserService } from './admin-user/admin-user.service';
+import { AdminSiteService } from './admin-site/admin-site.service';
 
 @Controller()
 export class AppController {
@@ -153,7 +63,8 @@ export class AppController {
     private readonly problemSolutionService: ProblemSolutionService,
     private readonly productService: ProductService,
     private readonly machineService: MachineService,
-    private readonly siteService: SiteService,
+    private readonly adminSiteService: AdminSiteService,
+    private readonly adminUserService: AdminUserService,
     private readonly userService: UserService,
     private readonly roleService: RoleService,
     private readonly analyticService: AnalyticService,
@@ -214,7 +125,7 @@ export class AppController {
     const sites = [] as SiteEntity[];
 
     for (let i = 0; i < 5; i++) {
-      const site = await this.siteService.create(
+      const site = await this.adminSiteService.create(
         {
           name: faker.company.catchPhrase(),
           remark: faker.commerce.productDescription(),
@@ -235,46 +146,38 @@ export class AppController {
       sites.push(site);
     }
 
-    const ownerRole = await this.roleService.create({
-      name: ROLE_OWNER,
-      remark: '',
-      roles: initialRoles,
-      siteId: sites[0].id,
-    });
-
-    const adminRole = await this.roleService.create({
-      name: 'Admin',
-      remark: '',
-      roles: initialRoles,
-      siteId: sites[0].id,
-    });
-
-    await this.userService.create(
+    await this.adminUserService.create(
       {
-        email: 'admin@user.com',
+        email: 'superadmin@user.com',
         password: 'P@ssword1',
         firstName: 'Super',
         lastName: 'Admin',
         isAdmin: true,
-        // roleId: ownerRole.id,
-        // siteId: sites[0].id,
-        // roleIds: [ownerRole.id],
+        siteIds: [],
       },
       null,
-      null,
+    );
+
+    const pollerRole = await this.roleService.create(
+      {
+        name: 'Poller',
+        remark: '',
+        roles: initialRoles,
+      },
+      sites[0].id,
     );
 
     await this.userService.create(
       {
-        email: 'user1@user.com',
+        email: 'poller@user.com',
         password: 'P@ssword1',
-        firstName: 'User',
-        lastName: '1',
-        isAdmin: false,
-        // roleId: adminRole.id,
+        firstName: 'Poller',
+        lastName: 'User',
+        siteIds: [sites[0].id],
+        roleId: pollerRole.id,
       },
       null,
-      null,
+      sites[0].id,
     );
 
     const modelTypes = ['opcua', 'modbus'];
@@ -934,73 +837,5 @@ export class AppController {
     }
 
     return 'Hello, World!';
-  }
-
-  @Get('init-data')
-  async initData(): Promise<string> {
-    const site = await this.siteService.create(
-      {
-        name: 'Main Site',
-        remark: '',
-        branch: '',
-        address: '',
-        lng: 0,
-        lat: 0,
-        active: false,
-        sync: false,
-        defaultPercentSettings: defaultPercentSettings,
-        oeeLimit: -1,
-        userLimit: -1,
-        cutoffTime: new Date(),
-      },
-      null,
-    );
-
-    // const sites = [site];
-    // const ownerRole = await this.roleService.create({
-    //   name: ROLE_OWNER,
-    //   remark: '',
-    //   roles: initialRoles,
-    //   siteId: sites[0].id,
-    // });
-    //
-    // const adminRole = await this.roleService.create({
-    //   name: 'Admin',
-    //   remark: '',
-    //   roles: initialRoles,
-    //   siteId: sites[0].id,
-    // });
-
-    await this.userService.create(
-      {
-        email: 'admin@user.com',
-        password: 'P@ssword1',
-        firstName: 'Super',
-        lastName: 'Admin',
-        isAdmin: true,
-        // roleId: ownerRole.id,
-        // siteId: sites[0].id,
-        // roleIds: [ownerRole.id],
-      },
-      null,
-      null,
-    );
-
-    await this.userService.create(
-      {
-        email: 'user1@user.com',
-        password: 'P@ssword1',
-        firstName: 'User',
-        lastName: '1',
-        isAdmin: false,
-        // roleId: adminRole.id,
-        // siteId: sites[0].id,
-        // roleIds: [adminRole.id],
-      },
-      null,
-      site.id,
-    );
-
-    return 'Data has been initialized!';
   }
 }

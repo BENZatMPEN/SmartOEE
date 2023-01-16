@@ -11,7 +11,7 @@ export function getDeviceModelPagedList(filter: FilterDeviceModel) {
 
     try {
       const response = await axios.get<DeviceModelPagedList>(`/device-models`, { params: filter });
-      dispatch(deviceModelSlice.actions.getDeviceModelsSuccess(response.data));
+      dispatch(deviceModelSlice.actions.getDeviceModelPagedListSuccess(response.data));
     } catch (error) {
       dispatch(deviceModelSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getDeviceModel(id: number) {
 
     try {
       const response = await axios.get<DeviceModel>(`/device-models/${id}`);
-      dispatch(deviceModelSlice.actions.getDeviceModelDetailsSuccess(response.data));
+      dispatch(deviceModelSlice.actions.getDeviceModelSuccess(response.data));
     } catch (error) {
       dispatch(deviceModelSlice.actions.hasError(error));
     }

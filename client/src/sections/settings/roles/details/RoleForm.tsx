@@ -3,8 +3,9 @@ import { LoadingButton } from '@mui/lab';
 import { Button, Card, CardContent, Grid, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { EditRole, RoleAction, RoleSubject } from '../../../../@types/role';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
@@ -14,7 +15,7 @@ import Iconify from '../../../../components/Iconify';
 import { initialRoles } from '../../../../constants';
 import { createRole, updateRole } from '../../../../redux/actions/roleAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { PATH_ADMINISTRATOR, PATH_SETTINGS } from '../../../../routes/paths';
+import { PATH_SETTINGS } from '../../../../routes/paths';
 import { RolePermissionForm } from './RolePermissionForm';
 
 type Props = {
@@ -24,13 +25,9 @@ type Props = {
 export default function RoleForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
-  const { currentRole } = useSelector((state: RootState) => state.role);
-
-  const { currentSite } = useSelector((state: RootState) => state.site);
+  const { currentRole, saveError } = useSelector((state: RootState) => state.role);
 
   const navigate = useNavigate();
-
-  const { siteId } = useParams();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -63,30 +60,35 @@ export default function RoleForm({ isEdit }: Props) {
   const values = watch();
 
   const onSubmit = async (data: EditRole) => {
-    try {
-      if (isEdit && currentRole) {
-        await dispatch(updateRole(currentRole.id, data));
-      } else {
-        await dispatch(createRole({ ...data, siteId: currentSite?.id }));
-      }
+    const role =
+      isEdit && currentRole ? await dispatch(updateRole(currentRole.id, data)) : await dispatch(createRole(data));
 
+    if (role) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.roles.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          for (const item of error.response?.data.message) {
-            enqueueSnackbar(item, { variant: 'error' });
-          }
-          return;
-        }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
-      }
     }
   };
 
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
+
   const handleRulesUpdated = (subject: RoleSubject, action: RoleAction, checked: boolean): void => {
-    const roles = getValues('roles') || initialRoles;
+    const roles = getValues('roles');
     const subjectIndex = roles.findIndex((role) => role.subject === subject);
 
     if (checked) {
@@ -149,7 +151,7 @@ export default function RoleForm({ isEdit }: Props) {
 
         <Card>
           <CardContent>
-            <RolePermissionForm roles={values.roles || initialRoles} onUpdated={handleRulesUpdated} />
+            <RolePermissionForm roles={values.roles} onUpdated={handleRulesUpdated} />
           </CardContent>
         </Card>
       </Stack>

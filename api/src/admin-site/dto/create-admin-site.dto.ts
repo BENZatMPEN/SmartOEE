@@ -2,7 +2,7 @@ import { PercentSetting } from '../../common/type/percent-settings';
 import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
-export class CreateSiteDto {
+export class CreateAdminSiteDto {
   @IsString()
   readonly name: string;
 
@@ -24,11 +24,11 @@ export class CreateSiteDto {
   readonly lng: number;
 
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   readonly sync: boolean;
 
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true')
   @IsOptional()
   readonly active?: boolean;
 
@@ -38,13 +38,11 @@ export class CreateSiteDto {
 
   @IsNumber()
   @Type(() => Number)
-  @IsOptional()
-  readonly oeeLimit?: number;
+  readonly oeeLimit: number;
 
   @IsNumber()
   @Type(() => Number)
-  @IsOptional()
-  readonly userLimit?: number;
+  readonly userLimit: number;
 
   @IsDate()
   @Type(() => Date)

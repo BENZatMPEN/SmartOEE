@@ -38,7 +38,6 @@ export type FilterOeeBatch = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
   oeeId: number;
 };
 

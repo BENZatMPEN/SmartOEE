@@ -1,10 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Site, SitePagedList } from '../../@types/site';
+import { Site } from '../../@types/site';
 
 export type SiteState = {
   isLoading: boolean;
   error: any | null;
-  pagedList: SitePagedList;
   currentSite: Site | null;
   saveError: any | null;
 };
@@ -12,10 +11,6 @@ export type SiteState = {
 const initialState: SiteState = {
   isLoading: false,
   error: null,
-  pagedList: {
-    list: [],
-    count: 0,
-  },
   currentSite: null,
   saveError: null,
 };
@@ -32,10 +27,6 @@ const siteSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getSitePagedListSuccess(state, action) {
-      state.isLoading = false;
-      state.pagedList = action.payload;
-    },
     startSavingError(state) {
       state.saveError = null;
     },
@@ -45,7 +36,8 @@ const siteSlice = createSlice({
     emptyCurrentSite(state) {
       state.currentSite = null;
     },
-    getSiteDetailsSuccess(state, action) {
+    getSiteSuccess(state, action) {
+      state.isLoading = false;
       state.currentSite = action.payload;
     },
   },

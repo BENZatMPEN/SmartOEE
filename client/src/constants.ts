@@ -255,15 +255,15 @@ export const initialRoles: RoleSetting[] = [
   },
   {
     subject: RoleSubject.Analytics,
-    actions: [RoleAction.Read],
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
   {
     subject: RoleSubject.ProblemsAndSolutions,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete, RoleAction.Approve],
   },
   {
     subject: RoleSubject.Faqs,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete, RoleAction.Approve],
   },
   {
     subject: RoleSubject.Plannings,
@@ -306,15 +306,11 @@ export const initialRoles: RoleSetting[] = [
     actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
   {
-    subject: RoleSubject.AdminSites,
+    subject: RoleSubject.UserSettings,
     actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
   {
-    subject: RoleSubject.AdminUsers,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
-  },
-  {
-    subject: RoleSubject.AdminRoles,
+    subject: RoleSubject.RoleSettings,
     actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
 ];

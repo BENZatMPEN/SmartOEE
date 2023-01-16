@@ -1,6 +1,8 @@
 // @mui
 import { Box, List, ListSubheader } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Fragment } from 'react';
+import { RootState, useSelector } from '../../../redux/store';
 // type
 import { NavSectionProps } from '../type';
 //
@@ -24,24 +26,51 @@ export const ListSubheaderStyle = styled((props) => <ListSubheader disableSticky
 // ----------------------------------------------------------------------
 
 export default function NavSectionVertical({ navConfig, isCollapse = false, ...other }: NavSectionProps) {
+  const { userInfo } = useSelector((state: RootState) => state.auth);
+
   return (
     <Box {...other}>
-      {navConfig.map((group) => (
-        <List key={group.subheader} disablePadding sx={{ px: 2 }}>
-          {/*<ListSubheaderStyle*/}
-          {/*  sx={{*/}
-          {/*    ...(isCollapse && {*/}
-          {/*      opacity: 0,*/}
-          {/*    }),*/}
-          {/*  }}*/}
-          {/*>*/}
-          {/*  {group.subheader}*/}
-          {/*</ListSubheaderStyle>*/}
-          {group.items.map((list) => (
-            <NavListRoot key={list.title} list={list} isCollapse={isCollapse} />
-          ))}
-        </List>
-      ))}
+      {navConfig.map((group) => {
+        if (group.subheader === 'Administrator') {
+          if (userInfo && userInfo.isAdmin) {
+            return (
+              <List key={group.subheader} disablePadding sx={{ px: 2 }}>
+                {/*<ListSubheaderStyle*/}
+                {/*  sx={{*/}
+                {/*    ...(isCollapse && {*/}
+                {/*      opacity: 0,*/}
+                {/*    }),*/}
+                {/*  }}*/}
+                {/*>*/}
+                {/*  {group.subheader}*/}
+                {/*</ListSubheaderStyle>*/}
+                {group.items.map((list) => (
+                  <NavListRoot key={list.title} list={list} isCollapse={isCollapse} />
+                ))}
+              </List>
+            );
+          } else {
+            return <Fragment key={group.subheader}></Fragment>;
+          }
+        } else {
+          return (
+            <List key={group.subheader} disablePadding sx={{ px: 2 }}>
+              {/*<ListSubheaderStyle*/}
+              {/*  sx={{*/}
+              {/*    ...(isCollapse && {*/}
+              {/*      opacity: 0,*/}
+              {/*    }),*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  {group.subheader}*/}
+              {/*</ListSubheaderStyle>*/}
+              {group.items.map((list) => (
+                <NavListRoot key={list.title} list={list} isCollapse={isCollapse} />
+              ))}
+            </List>
+          );
+        }
+      })}
     </Box>
   );
 }

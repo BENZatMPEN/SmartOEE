@@ -49,7 +49,6 @@ export class PlannedDowntimeController {
 
   @Post()
   create(@Body() createDto: CreatePlannedDowntimeDto, @Query('siteId') siteId: number): Promise<PlannedDowntimeEntity> {
-    console.log(createDto);
     return this.plannedDowntimeService.create(createDto, siteId);
   }
 

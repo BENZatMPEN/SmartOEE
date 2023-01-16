@@ -328,14 +328,11 @@ export function getRoleSubjectText(val: string) {
     case RoleSubject.SiteSettings:
       return 'Settings - Site';
 
-    case RoleSubject.AdminSites:
-      return 'Administrator - Sites';
+    case RoleSubject.UserSettings:
+      return 'Settings - Users';
 
-    case RoleSubject.AdminUsers:
-      return 'Administrator - Users';
-
-    case RoleSubject.AdminRoles:
-      return 'Administrator - Roles';
+    case RoleSubject.RoleSettings:
+      return 'Settings - Roles';
   }
 }
 
@@ -352,6 +349,9 @@ export function getRoleActionText(val: string) {
 
     case RoleAction.Delete:
       return 'Delete';
+
+    case RoleAction.Approve:
+      return 'Approve';
   }
 }
 

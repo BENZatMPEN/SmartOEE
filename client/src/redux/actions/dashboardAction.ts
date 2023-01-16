@@ -11,7 +11,7 @@ export function getDashboardPagedList(filter: FilterDashboard) {
 
     try {
       const response = await axios.get<DashboardPagedList>(`/dashboard`, { params: filter });
-      dispatch(dashboardSlice.actions.getDashboardsSuccess(response.data));
+      dispatch(dashboardSlice.actions.getDashboardPagedListSuccess(response.data));
     } catch (error) {
       dispatch(dashboardSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getDashboard(id: number) {
 
     try {
       const response = await axios.get<Dashboard>(`/dashboard/${id}`);
-      dispatch(dashboardSlice.actions.getDashboardDetailsSuccess(response.data));
+      dispatch(dashboardSlice.actions.getDashboardSuccess(response.data));
     } catch (error) {
       dispatch(dashboardSlice.actions.hasError(error));
     }

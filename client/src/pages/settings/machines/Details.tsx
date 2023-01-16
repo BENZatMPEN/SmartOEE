@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function MachineDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentMachine, error } = useSelector((state: RootState) => state.machine);
+  const { currentMachine, error, isLoading } = useSelector((state: RootState) => state.machine);
 
   const { pathname } = useLocation();
 
@@ -50,9 +50,15 @@ export default function MachineDetails() {
   }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={currentMachine ? 'Machine Settings: Edit Machine' : 'Machine Settings: Create Machine'}>
+    <Page title={`Machine Settings: ${currentMachine ? 'Edit Machine' : 'Create Machine'}`}>
       <Container maxWidth={false}>
-        <MachineForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <MachineForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

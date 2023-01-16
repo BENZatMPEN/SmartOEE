@@ -18,7 +18,8 @@ import { PersistGate } from 'redux-persist/lib/integration/react';
 import 'simplebar/src/simplebar.css';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
-import { Role, RoleAction, RoleSubject } from './@types/role';
+import { RoleAction, RoleSubject } from './@types/role';
+import { User } from './@types/user';
 import App from './App';
 import { buildAbilityFor } from './caslConfig';
 import { AbilityContext } from './caslContext';
@@ -36,8 +37,8 @@ dayjs.extend(buddhistEra);
 const ability = buildAbilityFor([]);
 
 store.subscribe(() => {
-  const auth = store.getState().auth;
-  const role = auth?.role as Role;
+  const authState = store.getState().auth;
+  const user = authState?.userInfo as User;
 
   // if (!user) {
   //   cannot(RoleAction.Manage, RoleSubject.All);
@@ -47,12 +48,19 @@ store.subscribe(() => {
   // if (user.isAdmin) {
   //   can([RoleAction.Manage], RoleSubject.All);
   // } else {
-  if (!role) {
+
+  // TODO: if no role cannot do anything
+
+  if (!user) {
+    return;
+  }
+
+  if (user.isAdmin) {
     ability.update([{ action: [RoleAction.Manage], subject: RoleSubject.All }]);
-  } else {
+  } else if ((user.roles || []).length >= 0) {
+    const role = user.roles[0];
     ability.update(role.roles.map((sub) => ({ action: sub.actions, subject: sub.subject })));
   }
-  // }
 });
 
 ReactDOM.render(

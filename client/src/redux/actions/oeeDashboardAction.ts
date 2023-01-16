@@ -11,7 +11,7 @@ export function getOee(id: number) {
 
     try {
       const response = await axios.get<Oee>(`/oees/${id}`);
-      dispatch(oeeDashboardSlice.actions.getOeeDetailsSuccess(response.data));
+      dispatch(oeeDashboardSlice.actions.getOeeSuccess(response.data));
     } catch (error) {
       dispatch(oeeDashboardSlice.actions.hasError(error));
     }

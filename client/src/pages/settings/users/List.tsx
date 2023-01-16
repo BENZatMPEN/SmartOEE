@@ -24,7 +24,7 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
+import { PATH_SETTINGS } from '../../../routes/paths';
 import { UserTableRow, UserTableToolbar } from '../../../sections/admin/users/list';
 
 const TABLE_HEAD = [
@@ -104,11 +104,11 @@ export default function UserList() {
   };
 
   const handleEditRow = (id: number) => {
-    navigate(PATH_ADMINISTRATOR.users.edit(paramCase(id.toString())));
+    navigate(PATH_SETTINGS.users.edit(paramCase(id.toString())));
   };
 
   const handleDuplicateRow = (id: number) => {
-    navigate(PATH_ADMINISTRATOR.users.duplicate(paramCase(id.toString())));
+    navigate(PATH_SETTINGS.users.duplicate(paramCase(id.toString())));
   };
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
@@ -155,7 +155,7 @@ export default function UserList() {
               variant="contained"
               startIcon={<Iconify icon="eva:plus-fill" />}
               component={RouterLink}
-              to={PATH_ADMINISTRATOR.users.new}
+              to={PATH_SETTINGS.users.new}
             >
               New
             </Button>

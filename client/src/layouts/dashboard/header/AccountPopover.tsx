@@ -8,6 +8,7 @@ import { IconButtonAnimate } from '../../../components/animate';
 import MenuPopover from '../../../components/MenuPopover';
 import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from '../../../hooks/useIsMountedRef';
+import { RootState, useSelector } from '../../../redux/store';
 import { PATH_AUTH } from '../../../routes/paths';
 
 const MENU_OPTIONS = [
@@ -28,7 +29,9 @@ const MENU_OPTIONS = [
 export default function AccountPopover() {
   const navigate = useNavigate();
 
-  const { user, logout } = useAuth();
+  const { userInfo } = useSelector((state: RootState) => state.auth);
+
+  const { logout } = useAuth();
 
   const isMountedRef = useIsMountedRef();
 
@@ -59,11 +62,11 @@ export default function AccountPopover() {
   };
 
   return (
-    user && (
+    userInfo && (
       <>
         <Box sx={{ my: 1.5, px: 2 }}>
           <Typography variant="subtitle2" sx={{ color: 'text.secondary' }} noWrap>
-            {user.firstName} {user.lastName}
+            {userInfo.firstName} {userInfo.lastName}
           </Typography>
         </Box>
 
@@ -84,7 +87,7 @@ export default function AccountPopover() {
             }),
           }}
         >
-          <Avatar src={defaultUser} alt={user.email} />
+          <Avatar src={defaultUser} alt={userInfo.email} />
         </IconButtonAnimate>
 
         <MenuPopover
@@ -103,7 +106,7 @@ export default function AccountPopover() {
         >
           <Box sx={{ my: 1.5, px: 2.5 }}>
             <Typography variant="subtitle2" noWrap>
-              {user.email}
+              {userInfo.email}
             </Typography>
             {/*<Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>*/}
             {/*  {user1@user.com}*/}

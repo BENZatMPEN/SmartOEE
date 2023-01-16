@@ -52,7 +52,6 @@ export class MachineController {
     @UploadedFile(FileSavePipe) image: string,
     @Query('siteId') siteId: number,
   ): Promise<MachineEntity> {
-    console.log(createDto);
     return this.machineService.create(createDto, image, siteId);
   }
 

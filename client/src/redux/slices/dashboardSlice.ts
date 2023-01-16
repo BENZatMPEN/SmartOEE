@@ -32,7 +32,7 @@ const dashboardSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getDashboardsSuccess(state, action) {
+    getDashboardPagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const dashboardSlice = createSlice({
     emptyCurrentDashboard(state) {
       state.currentDashboard = null;
     },
-    getDashboardDetailsSuccess(state, action) {
+    getDashboardSuccess(state, action) {
+      state.isLoading = false;
       state.currentDashboard = action.payload;
     },
   },

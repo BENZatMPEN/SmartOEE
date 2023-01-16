@@ -22,7 +22,6 @@ export type FilterProduct = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type ProductPagedList = {

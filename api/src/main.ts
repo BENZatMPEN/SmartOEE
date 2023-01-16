@@ -9,6 +9,10 @@ import { ValidationPipe } from '@nestjs/common';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
+import { defaultPercentSettings, initialRoles } from './common/constant';
+import { AdminSiteService } from './admin-site/admin-site.service';
+import { AdminUserService } from './admin-user/admin-user.service';
+import { UserService } from './user/user.service';
 
 async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
@@ -62,7 +66,74 @@ async function bootstrap() {
     }),
   );
 
+  await seedInitialData(app);
+
   await app.listen(port);
+}
+
+async function seedInitialData(app: NestExpressApplication) {
+  const adminSiteService = app.get(AdminSiteService);
+  const adminUserService = app.get(AdminUserService);
+  const userService = app.get(UserService);
+
+  const existingSite = await adminSiteService.findById(1);
+  if (existingSite) {
+    return;
+  }
+
+  const site = await adminSiteService.create(
+    {
+      name: 'Main Site',
+      remark: '',
+      branch: '',
+      address: '',
+      lng: 0,
+      lat: 0,
+      active: false,
+      sync: false,
+      defaultPercentSettings: defaultPercentSettings,
+      oeeLimit: -1,
+      userLimit: -1,
+      cutoffTime: new Date(),
+    },
+    null,
+  );
+
+  // Super admin
+  await adminUserService.create(
+    {
+      email: 'superadmin@user.com',
+      password: 'P@ssword1',
+      firstName: 'Super',
+      lastName: 'Admin',
+      isAdmin: true,
+      siteIds: [],
+    },
+    null,
+  );
+
+  const pollerRole = await this.roleService.create(
+    {
+      name: 'Poller',
+      remark: '',
+      roles: initialRoles,
+    },
+    site.id,
+  );
+
+  // For poller
+  await userService.create(
+    {
+      email: 'poller@user.com',
+      password: 'P@ssword1',
+      firstName: 'Poller',
+      lastName: 'User',
+      siteIds: [site.id],
+      roleId: pollerRole.id,
+    },
+    null,
+    site.id,
+  );
 }
 
 bootstrap()

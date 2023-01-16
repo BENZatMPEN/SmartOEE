@@ -7,12 +7,11 @@ import useCollapseDrawer from '../../hooks/useCollapseDrawer';
 import useResponsive from '../../hooks/useResponsive';
 import useSettings from '../../hooks/useSettings';
 import { getGroupAnalytics } from '../../redux/actions/analyticAction';
-import { getAuthRole } from '../../redux/actions/authAction';
-import { getUserSites, getAllDashboard } from '../../redux/actions/userSiteAction';
+import { getUserInfo } from '../../redux/actions/authAction';
+import { getAllDashboard, getUserSites } from '../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import axios from '../../utils/axios';
 import DashboardHeader from './header';
-import NavbarHorizontal from './navbar/NavbarHorizontal';
 import NavbarVertical from './navbar/NavbarVertical';
 
 type MainStyleProps = {
@@ -67,7 +66,7 @@ export default function DashboardLayout() {
     }
 
     (async () => {
-      await dispatch(getAuthRole());
+      await dispatch(getUserInfo());
       await dispatch(getGroupAnalytics());
       await dispatch(getAllDashboard());
     })();
@@ -80,11 +79,12 @@ export default function DashboardLayout() {
       <>
         <DashboardHeader onOpenSidebar={() => setOpen(true)} verticalLayout={verticalLayout} />
 
-        {isDesktop ? (
-          <NavbarHorizontal />
-        ) : (
-          <NavbarVertical isOpenSidebar={open} onCloseSidebar={() => setOpen(false)} />
-        )}
+        <NavbarVertical isOpenSidebar={open} onCloseSidebar={() => setOpen(false)} />
+        {/*{isDesktop ? (*/}
+        {/*  <NavbarHorizontal />*/}
+        {/*) : (*/}
+        {/*  <NavbarVertical isOpenSidebar={open} onCloseSidebar={() => setOpen(false)} />*/}
+        {/*)}*/}
 
         <Box
           component="main"

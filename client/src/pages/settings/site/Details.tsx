@@ -10,7 +10,7 @@ export default function SiteDetails() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { currentSite, error } = useSelector((state: RootState) => state.site);
+  const { isLoading } = useSelector((state: RootState) => state.site);
 
   useEffect(() => {
     (async () => {
@@ -29,12 +29,12 @@ export default function SiteDetails() {
   return (
     <Page title="Site Settings">
       <Container maxWidth={false}>
-        {currentSite ? (
-          <SiteForm />
-        ) : (
+        {isLoading ? (
           <Card>
-            <CardContent>Not found</CardContent>
+            <CardContent>Loading...</CardContent>
           </Card>
+        ) : (
+          <SiteForm />
         )}
       </Container>
     </Page>

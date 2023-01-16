@@ -1,6 +1,8 @@
 import { combineReducers } from 'redux';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import adminSiteReducer from './reducers/adminSiteReducer';
+import adminUserReducer from './reducers/adminUserReducer';
 import alarmReducer from './reducers/alarmReducer';
 import analyticReducer from './reducers/analyticReducer';
 import authReducer from './reducers/authReducer';
@@ -85,6 +87,8 @@ const rootReducer = combineReducers({
   product: productReducer,
   machine: machineReducer,
   oeeDashboard: oeeDashboardReducer,
+  adminUser: adminUserReducer,
+  adminSite: adminSiteReducer,
   calendar: calendarReducer,
 });
 

@@ -82,28 +82,26 @@ export class DeviceService {
     const { tags, ...dto } = updateDto;
     const updatingDevice = await this.deviceRepository.findOneBy({ id, siteId });
 
-    if ((tags || []).length > 0) {
-      if (tags.every((tag) => tag.id)) {
-        // update tags
-        await this.deviceTagRepository.save(
-          tags.filter((tag) => tag.id).map((tag) => ({ ...tag, updatedAt: new Date() })),
-        );
-      } else {
-        // create tags
-        await this.deviceTagRepository.delete({ deviceId: id });
-        await this.deviceTagRepository.save(
-          tags.map((tag) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id: noId, ...tagDto } = tag;
-            return {
-              ...tagDto,
-              deviceId: id,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-          }),
-        );
-      }
+    if ((tags || []).length > 0 && tags.every((tag) => tag.id)) {
+      // update tags
+      await this.deviceTagRepository.save(
+        tags.filter((tag) => tag.id).map((tag) => ({ ...tag, updatedAt: new Date() })),
+      );
+    } else {
+      // create tags
+      await this.deviceTagRepository.delete({ deviceId: id });
+      await this.deviceTagRepository.save(
+        tags.map((tag) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id: noId, ...tagDto } = tag;
+          return {
+            ...tagDto,
+            deviceId: id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }),
+      );
     }
 
     const updatedDevice = await this.deviceRepository.save({

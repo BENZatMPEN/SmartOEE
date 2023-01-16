@@ -13,7 +13,6 @@ import {
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fPercent } from '../../../../utils/formatNumber';
 import { chartTitle } from '../../../../utils/formatText';
-import { fDateTime } from '../../../../utils/formatTime';
 
 const samplingOpts = [900, 1800, 3600];
 
@@ -80,6 +79,7 @@ export default function DashboardOeeGraphRealtime() {
       // },
     },
     yaxis: {
+      min: 0,
       max: 100,
       labels: {
         formatter(val: number, opts?: any): string | string[] {
@@ -137,6 +137,8 @@ export default function DashboardOeeGraphRealtime() {
       },
     },
     yaxis: {
+      min: 0,
+      max: 100,
       labels: {
         formatter(val: number, opts?: any): string | string[] {
           return fPercent(val);

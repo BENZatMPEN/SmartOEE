@@ -1,3 +1,6 @@
+import { PercentSetting } from './type/percent-settings';
+import { RoleAction, RoleSetting, RoleSubject } from './type/role-setting';
+
 export const ROLE_OWNER = 'Owner';
 
 export const OEE_TYPE_STANDALONE = 'standalone';
@@ -58,3 +61,89 @@ export const ALARM_TYPE_LINE = 'line';
 
 export const HISTORY_LOG_TYPE_ACTION = 'action';
 export const HISTORY_LOG_TYPE_ALARM = 'alarm';
+
+export const defaultPercentSettings: PercentSetting[] = [
+  {
+    type: 'oee',
+    settings: { high: 80, medium: 60, low: 50 },
+  },
+  {
+    type: 'a',
+    settings: { high: 80, medium: 60, low: 50 },
+  },
+  {
+    type: 'p',
+    settings: { high: 80, medium: 60, low: 50 },
+  },
+  {
+    type: 'q',
+    settings: { high: 80, medium: 60, low: 50 },
+  },
+];
+
+export const initialRoles: RoleSetting[] = [
+  {
+    subject: RoleSubject.Dashboard,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update],
+  },
+  {
+    subject: RoleSubject.Analytics,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.ProblemsAndSolutions,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete, RoleAction.Approve],
+  },
+  {
+    subject: RoleSubject.Faqs,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete, RoleAction.Approve],
+  },
+  {
+    subject: RoleSubject.Plannings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.OeeSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.MachineSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.ProductSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.DeviceSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.ModelSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.PlannedDowntimeSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.DashboardSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.AlarmSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.SiteSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.UserSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+  {
+    subject: RoleSubject.RoleSettings,
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+  },
+];

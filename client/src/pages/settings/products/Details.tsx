@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function ProductDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentProduct, error } = useSelector((state: RootState) => state.product);
+  const { currentProduct, error, isLoading } = useSelector((state: RootState) => state.product);
 
   const { pathname } = useLocation();
 
@@ -50,9 +50,15 @@ export default function ProductDetails() {
   }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={currentProduct ? 'Product Settings: Edit Product' : 'Product Settings: Create Product'}>
+    <Page title={`Product Settings: ${currentProduct ? 'Edit Product' : 'Create Product'}`}>
       <Container maxWidth={false}>
-        <ProductForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <ProductForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
 import { useSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -25,7 +25,7 @@ import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicke
 import Iconify from '../../../../components/Iconify';
 import { GOOGLE_MAPS_KEY } from '../../../../config';
 import { defaultMaps, initialPercentSettings } from '../../../../constants';
-import { createSite, updateSite } from '../../../../redux/actions/siteAction';
+import { createSite, updateSite } from '../../../../redux/actions/adminSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
 import { getFileUrl } from '../../../../utils/imageHelper';
@@ -45,7 +45,7 @@ export default function SiteForm({ isEdit }: Props) {
 
   const navigate = useNavigate();
 
-  const { currentSite } = useSelector((state: RootState) => state.site);
+  const { currentSite, saveError } = useSelector((state: RootState) => state.adminSite);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -105,32 +105,32 @@ export default function SiteForm({ isEdit }: Props) {
 
   const onSubmit = async (data: EditSite) => {
     data.cutoffTime = dayjs(data.cutoffTime).startOf('m').toDate();
+    const site =
+      isEdit && currentSite ? await dispatch(updateSite(currentSite.id, data)) : await dispatch(createSite(data));
 
-    try {
-      if (isEdit && currentSite) {
-        await dispatch(updateSite(currentSite.id, data));
-      } else {
-        await dispatch(createSite(data));
-      }
-
+    if (site) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_ADMINISTRATOR.sites.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          if (Array.isArray(error.response?.data.message)) {
-            for (const item of error.response?.data.message) {
+    }
+  };
+
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
               enqueueSnackbar(item, { variant: 'error' });
             }
           } else {
-            enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
           }
-          return;
         }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
       }
     }
-  };
+  }, [enqueueSnackbar, saveError]);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {

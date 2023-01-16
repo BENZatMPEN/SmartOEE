@@ -1,8 +1,10 @@
 // @mui
 import { Collapse, List } from '@mui/material';
-import { useState } from 'react';
+import { Fragment, useContext, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getActive } from '..';
+import { RoleAction, RoleSubject } from '../../../@types/role';
+import { AbilityContext } from '../../../caslContext';
 // type
 import { NavListProps } from '../type';
 //
@@ -16,6 +18,8 @@ type NavListRootProps = {
 };
 
 export function NavListRoot({ list, isCollapse }: NavListRootProps) {
+  const ability = useContext(AbilityContext);
+
   const { pathname } = useLocation();
 
   const active = getActive(list.path, pathname);
@@ -24,28 +28,64 @@ export function NavListRoot({ list, isCollapse }: NavListRootProps) {
 
   const hasChildren = list.children;
 
-  if (hasChildren) {
-    return (
-      <>
-        <NavItemRoot item={list} isCollapse={isCollapse} active={active} open={open} onOpen={() => setOpen(!open)} />
+  const hasSettings =
+    ability.can(RoleAction.Read, RoleSubject.OeeSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.MachineSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.ProductSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.DeviceSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.ModelSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.PlannedDowntimeSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.DashboardSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.AlarmSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.SiteSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.UserSettings) ||
+    ability.can(RoleAction.Read, RoleSubject.RoleSettings);
 
-        {!isCollapse && (
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {(list.children || []).map((item, idx) => (
-                <NavListSub key={`${item.title}_${idx}`} list={item} />
-              ))}
-            </List>
-          </Collapse>
-        )}
-      </>
-    );
+  if (hasChildren) {
+    if (
+      (list.title === 'Settings' && hasSettings) ||
+      (list.roleSubject && ability.can(RoleAction.Read, list.roleSubject))
+    ) {
+      return (
+        <>
+          <NavItemRoot item={list} isCollapse={isCollapse} active={active} open={open} onOpen={() => setOpen(!open)} />
+
+          {!isCollapse && (
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {(list.children || []).map((item, idx) => {
+                  if (list.title === 'Settings') {
+                    return item.roleSubject && ability.can(RoleAction.Read, item.roleSubject) ? (
+                      <NavListSub key={`${item.title}_${idx}`} list={item} />
+                    ) : (
+                      <Fragment key={`${item.title}_${idx}`}></Fragment>
+                    );
+                  } else {
+                    return <NavListSub key={`${item.title}_${idx}`} list={item} />;
+                  }
+                })}
+              </List>
+            </Collapse>
+          )}
+        </>
+      );
+    } else {
+      return <></>;
+    }
   }
 
-  return <NavItemRoot item={list} active={active} isCollapse={isCollapse} />;
-}
+  if (list.roleSubject && ability.can(RoleAction.Read, list.roleSubject)) {
+    return <NavItemRoot item={list} active={active} isCollapse={isCollapse} />;
+  } else {
+    return <></>;
+  }
 
-// ----------------------------------------------------------------------
+  // if (isAdmin || (list.roleSubject && ability.can(RoleAction.Read, list.roleSubject))) {
+  //   return <NavItemRoot item={list} active={active} isCollapse={isCollapse} />;
+  // } else {
+  //   return <></>;
+  // }
+}
 
 type NavListSubProps = {
   list: NavListProps;

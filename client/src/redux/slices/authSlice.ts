@@ -1,19 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Role } from '../../@types/role';
+import { User } from '../../@types/user';
 
 export type AuthState = {
   isLoading: boolean;
   error: any | string | null;
-  role: Role | null;
+  userInfo: User | null;
 };
 
 const initialState: AuthState = {
   isLoading: false,
   error: null,
-  role: null,
+  userInfo: null,
 };
 
-const deviceSlice = createSlice({
+const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
@@ -25,11 +25,11 @@ const deviceSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getRoleSuccess(state, action) {
+    getUserInfoSuccess(state, action) {
       state.isLoading = false;
-      state.role = action.payload;
+      state.userInfo = action.payload;
     },
   },
 });
 
-export default deviceSlice;
+export default authSlice;

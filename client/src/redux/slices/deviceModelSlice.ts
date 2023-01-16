@@ -32,7 +32,7 @@ const deviceModelSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getDeviceModelsSuccess(state, action) {
+    getDeviceModelPagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const deviceModelSlice = createSlice({
     emptyCurrentDeviceModel(state) {
       state.currentDeviceModel = null;
     },
-    getDeviceModelDetailsSuccess(state, action) {
+    getDeviceModelSuccess(state, action) {
+      state.isLoading = false;
       state.currentDeviceModel = action.payload;
     },
   },

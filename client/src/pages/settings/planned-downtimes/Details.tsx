@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function PlannedDowntimeDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentPlannedDowntime, error } = useSelector((state: RootState) => state.plannedDowntime);
+  const { currentPlannedDowntime, error, isLoading } = useSelector((state: RootState) => state.plannedDowntime);
 
   const { pathname } = useLocation();
 
@@ -51,14 +51,18 @@ export default function PlannedDowntimeDetails() {
 
   return (
     <Page
-      title={
-        currentPlannedDowntime
-          ? 'Planned Downtime Settings: Edit Planned Downtime'
-          : 'Planned Downtime Settings: Create Planned Downtime'
-      }
+      title={`Planned Downtime Settings: ${
+        currentPlannedDowntime ? 'Edit Planned Downtime' : 'Create Planned Downtime'
+      }`}
     >
       <Container maxWidth={false}>
-        <PlannedDowntimeForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <PlannedDowntimeForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

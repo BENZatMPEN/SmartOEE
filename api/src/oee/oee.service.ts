@@ -310,7 +310,6 @@ export class OeeService {
     const deletingMachineIds = (oeeMachines || [])
       .filter((oeeMachine) => oeeMachine.id)
       .map((oeeMachine) => oeeMachine.id);
-    console.log(deletingMachineIds);
 
     if (deletingMachineIds.length > 0) {
       await this.oeeMachineRepository

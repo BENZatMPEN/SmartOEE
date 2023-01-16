@@ -28,5 +28,4 @@ export type FilterPlanning = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };

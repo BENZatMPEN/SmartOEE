@@ -1,30 +1,25 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Button, Card, CardContent, Grid, Stack } from '@mui/material';
+import { Button, Card, CardContent, Checkbox, Divider, Grid, MenuItem, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { OptionItem } from '../../../../@types/option';
 import { EditUser, EditUserPassword } from '../../../../@types/user';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
-import { FormProvider, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
+import { FormProvider, RHFSelect, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
-import { PS_PROCESS_STATUS_ON_PROCESS } from '../../../../constants';
-import { emptyRoleOptions } from '../../../../redux/actions/roleAction';
-// import { emptySiteOptions, getSiteOptions } from '../../../../redux/actions/siteAction';
 import { createUser, updateUser } from '../../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
+import { PATH_SETTINGS } from '../../../../routes/paths';
+import axios from '../../../../utils/axios';
 import { getFileUrl } from '../../../../utils/imageHelper';
-import UserSiteRoleList from './UserSiteRoleList';
 
-type UserProps = EditUser & EditUserPassword;
-
-interface FormValuesProps extends UserProps {
+interface FormValuesProps extends EditUser, EditUserPassword {
   isNew: boolean; // use for validation
 }
 
@@ -37,9 +32,76 @@ export default function UserForm({ isEdit }: Props) {
 
   const navigate = useNavigate();
 
-  const { currentUser } = useSelector((state: RootState) => state.user);
+  const { currentUser, saveError } = useSelector((state: RootState) => state.user);
+
+  const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { enqueueSnackbar } = useSnackbar();
+
+  const [siteOptions, setSiteOptions] = useState<OptionItem[]>([]);
+
+  const [roleOptions, setRoleOptions] = useState<OptionItem[]>([]);
+
+  const [formValues, setFormValues] = useState<FormValuesProps | undefined>(undefined);
+
+  const getSiteOptions = async () => {
+    const response = await axios.get<OptionItem[]>(`/sites/options`);
+    setSiteOptions(response.data);
+  };
+
+  const getRoleOptions = async () => {
+    const response = await axios.get<OptionItem[]>(`/roles/options`);
+    setRoleOptions(response.data);
+  };
+
+  useEffect(() => {
+    (async () => {
+      await getSiteOptions();
+      await getRoleOptions();
+
+      setFormValues({
+        firstName: currentUser?.firstName || '',
+        lastName: currentUser?.lastName || '',
+        email: currentUser?.email || '',
+        password: '',
+        confirmPassword: '',
+        isNew: !isEdit,
+        image: null,
+        siteIds: (currentUser?.sites || []).map((site) => site.id),
+        roleId: getCurrentRole(),
+      });
+    })();
+
+    // axios
+    //   .get<OptionItem[]>(`/sites/options`)
+    //   .then((response) => {
+    //     const { data } = response;
+    //     setSiteOptions(data);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
+
+    return () => {
+      setSiteOptions([]);
+      setRoleOptions([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, isEdit]);
+
+  // useEffect(() => {
+  //   axios
+  //     .get<OptionItem[]>(`/roles/options`)
+  //     .then((response) => {
+  //       const { data } = response;
+  //       setRoleOptions(data);
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //     });
+  //
+  //   return () => {};
+  // }, []);
 
   const NewUserSchema = Yup.object().shape({
     isNew: Yup.boolean(),
@@ -55,6 +117,19 @@ export default function UserForm({ isEdit }: Props) {
     roleId: Yup.number().min(1, 'Role must be selected'),
   });
 
+  const getCurrentRole = (): number => {
+    if (!selectedSite) {
+      return -1;
+    }
+
+    const filtered = (currentUser?.roles || []).filter((role) => role.siteId === selectedSite?.id);
+    if (filtered.length === 0) {
+      return -1;
+    }
+
+    return filtered[0].id;
+  };
+
   const methods = useForm<FormValuesProps>({
     resolver: yupResolver(NewUserSchema),
     defaultValues: {
@@ -65,62 +140,48 @@ export default function UserForm({ isEdit }: Props) {
       confirmPassword: '',
       isNew: false,
       image: null,
+      siteIds: [],
+      roleId: -1,
     },
-    values: {
-      firstName: currentUser?.firstName || '',
-      lastName: currentUser?.lastName || '',
-      email: currentUser?.email || '',
-      password: '',
-      confirmPassword: '',
-      isNew: !isEdit,
-      image: null,
-    },
+    values: formValues,
   });
 
   const {
-    control,
+    watch,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = async (data: FormValuesProps) => {
-    try {
-      if (isEdit && currentUser) {
-        await dispatch(updateUser(currentUser.id, data));
-      } else {
-        await dispatch(createUser(data));
-      }
+  const values = watch();
 
+  const onSubmit = async (data: FormValuesProps) => {
+    const user =
+      isEdit && currentUser ? await dispatch(updateUser(currentUser.id, data)) : await dispatch(createUser(data));
+
+    if (user) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
-      navigate(PATH_ADMINISTRATOR.users.root);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if ('message' in error.response?.data) {
-          for (const item of error.response?.data.message) {
-            enqueueSnackbar(item, { variant: 'error' });
-          }
-          return;
-        }
-        enqueueSnackbar(error.response?.data.error, { variant: 'error' });
-      }
+      navigate(PATH_SETTINGS.users.root);
     }
   };
 
-  // const handleAdd = () => {
-  //   append({
-  //     // title: '',
-  //     // assigneeUserId: -1,
-  //     // startDate: new Date(),
-  //     // endDate: new Date(),
-  //     // status: PS_PROCESS_STATUS_ON_PROCESS,
-  //     // comment: '',
-  //     // attachments: [],
-  //     // files: [],
-  //     // addingFiles: [],
-  //     // deletingFiles: [],
-  //   });
-  // };
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -144,7 +205,7 @@ export default function UserForm({ isEdit }: Props) {
               { name: 'Home', href: '/' },
               {
                 name: 'Users',
-                href: PATH_ADMINISTRATOR.users.root,
+                href: PATH_SETTINGS.users.root,
               },
               { name: isEdit ? 'Edit' : 'Create' },
             ]}
@@ -161,14 +222,14 @@ export default function UserForm({ isEdit }: Props) {
           </LoadingButton>
         }
         cancel={
-          <Button variant="contained" component={RouterLink} to={PATH_ADMINISTRATOR.users.root}>
+          <Button variant="contained" component={RouterLink} to={PATH_SETTINGS.users.root}>
             Cancel
           </Button>
         }
       />
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <RHFUploadSingleFile
@@ -182,86 +243,119 @@ export default function UserForm({ isEdit }: Props) {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} sm={8}>
+          <Stack spacing={3}></Stack>
+
           <Card>
             <CardContent>
-              <Stack spacing={3}>
-                <Box>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <RHFTextField name="firstName" label="First Name" />
-                    </Grid>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <RHFTextField name="firstName" label="First Name" />
+                </Grid>
 
-                    <Grid item xs={12} md={6}>
-                      <RHFTextField name="lastName" label="Last Name" />
-                    </Grid>
+                <Grid item xs={12} sm={6}>
+                  <RHFTextField name="lastName" label="Last Name" />
+                </Grid>
 
-                    <Grid item xs={12} md={6}>
-                      <RHFTextField name="email" label="Email" />
-                    </Grid>
+                <Grid item xs={12} sm={6}>
+                  <RHFTextField name="email" label="Email" />
+                </Grid>
 
-                    {/*<Grid item xs={12} md={6}>*/}
-                    {/*  <RHFSelect*/}
-                    {/*    name="roleId"*/}
-                    {/*    label="Role"*/}
-                    {/*    InputLabelProps={{ shrink: true }}*/}
-                    {/*    SelectProps={{ native: false }}*/}
-                    {/*    // onChange={(event) => onDeviceModelChanged(Number(event.target.value))}*/}
-                    {/*  >*/}
-                    {/*    <MenuItem*/}
-                    {/*      value={-1}*/}
-                    {/*      sx={{*/}
-                    {/*        mx: 1,*/}
-                    {/*        borderRadius: 0.75,*/}
-                    {/*        typography: 'body1',*/}
-                    {/*        fontStyle: 'italic',*/}
-                    {/*        color: 'text.secondary',*/}
-                    {/*      }}*/}
-                    {/*    >*/}
-                    {/*      None*/}
-                    {/*    </MenuItem>*/}
+                <Grid item xs={12} sm={6}>
+                  <RHFSelect
+                    name="roleId"
+                    label="Role"
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{ native: false }}
+                    // onChange={(event) => onDeviceModelChanged(Number(event.target.value))}
+                  >
+                    <MenuItem
+                      value={-1}
+                      sx={{
+                        mx: 1,
+                        borderRadius: 0.75,
+                        typography: 'body1',
+                        fontStyle: 'italic',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      None
+                    </MenuItem>
 
-                    {/*    <Divider />*/}
+                    <Divider />
 
-                    {/*    {(roleOptions || []).map((item) => (*/}
-                    {/*      <MenuItem*/}
-                    {/*        key={item.id}*/}
-                    {/*        value={item.id}*/}
-                    {/*        sx={{*/}
-                    {/*          mx: 1,*/}
-                    {/*          my: 0.5,*/}
-                    {/*          borderRadius: 0.75,*/}
-                    {/*          typography: 'body1',*/}
-                    {/*        }}*/}
-                    {/*      >*/}
-                    {/*        {item.name}*/}
-                    {/*      </MenuItem>*/}
-                    {/*    ))}*/}
-                    {/*  </RHFSelect>*/}
-                    {/*</Grid>*/}
-                  </Grid>
-                </Box>
+                    {roleOptions.map((item) => (
+                      <MenuItem
+                        key={item.id}
+                        value={item.id}
+                        sx={{
+                          mx: 1,
+                          my: 0.5,
+                          borderRadius: 0.75,
+                          typography: 'body1',
+                        }}
+                      >
+                        {item.name}
+                      </MenuItem>
+                    ))}
+                  </RHFSelect>
+                </Grid>
 
-                {!isEdit && (
-                  <Box>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <RHFTextField type="password" name="password" label="Password" />
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <RHFTextField type="password" name="confirmPassword" label="Confirm Password" />
-                      </Grid>
-                    </Grid>
-                  </Box>
-                )}
-
-                <Box>
-                  <UserSiteRoleList />
-                </Box>
-              </Stack>
+                <Grid item xs={12}>
+                  <RHFSelect
+                    name="siteIds"
+                    label="Sites"
+                    fullWidth
+                    SelectProps={{
+                      native: false,
+                      multiple: true,
+                      value: values.siteIds,
+                      renderValue: (selected: any) => (
+                        <>
+                          {siteOptions
+                            .filter((item) => selected.indexOf(item.id) > -1)
+                            .map((item) => item.name)
+                            .join(', ')}
+                        </>
+                      ),
+                    }}
+                  >
+                    {siteOptions.map((item) => (
+                      <MenuItem
+                        key={item.id}
+                        value={item.id}
+                        sx={{
+                          mx: 1,
+                          my: 0.5,
+                          borderRadius: 0.75,
+                          typography: 'body2',
+                        }}
+                      >
+                        <Checkbox checked={values.siteIds.indexOf(item.id) > -1} />
+                        {item.name}
+                      </MenuItem>
+                    ))}
+                  </RHFSelect>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
+
+          {!isEdit && (
+            <Card>
+              <CardContent>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField type="password" name="password" label="Password" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField type="password" name="confirmPassword" label="Confirm Password" />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
       </Grid>
     </FormProvider>

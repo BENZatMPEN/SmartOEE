@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -6,8 +6,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentUser, getUser } from '../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
-import UserForm from '../../../sections/admin/users/details/UserForm';
+import { PATH_SETTINGS } from '../../../routes/paths';
+import UserForm from '../../../sections/settings/users/details/UserForm';
 
 export default function UserDetails() {
   const dispatch = useDispatch();
@@ -16,7 +16,7 @@ export default function UserDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentUser } = useSelector((state: RootState) => state.user);
+  const { currentUser, error, isLoading } = useSelector((state: RootState) => state.user);
 
   const { pathname } = useLocation();
 
@@ -28,32 +28,37 @@ export default function UserDetails() {
 
   useEffect(() => {
     (async () => {
-      try {
-        if (isEdit || isDuplicate) {
-          await dispatch(getUser(Number(id)));
-        }
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
-            enqueueSnackbar('Not found.', { variant: 'error' });
-          } else {
-            enqueueSnackbar(error.response?.data.error, { variant: 'error' });
-          }
-        }
-
-        navigate(PATH_ADMINISTRATOR.users.root);
+      if (isEdit || isDuplicate) {
+        await dispatch(getUser(Number(id)));
       }
     })();
 
     return () => {
       dispatch(emptyCurrentUser());
     };
-  }, [dispatch, enqueueSnackbar, id, isDuplicate, isEdit, navigate]);
+  }, [dispatch, id, isDuplicate, isEdit]);
+
+  useEffect(() => {
+    if (error) {
+      if (error instanceof AxiosError) {
+        if ('statusCode' in error.response?.data && error.response?.data.statusCode === 404) {
+          enqueueSnackbar('Not found', { variant: 'error' });
+          navigate(PATH_SETTINGS.users.root);
+        }
+      }
+    }
+  }, [error, enqueueSnackbar, navigate]);
 
   return (
     <Page title={`User Settings: ${currentUser ? 'Edit User' : 'Create User'}`}>
       <Container maxWidth={false}>
-        <UserForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <UserForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

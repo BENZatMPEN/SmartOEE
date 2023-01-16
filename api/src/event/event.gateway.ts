@@ -20,6 +20,7 @@ import { Repository } from 'typeorm';
 import { TagReadEntity } from '../common/entities/tag-read-entity';
 import configuration from '../configuration';
 import { ConfigType } from '@nestjs/config';
+import { UserService } from '../user/user.service';
 
 @UseGuards(WsAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,6 +33,7 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   constructor(
     @Inject(configuration.KEY)
     private readonly config: ConfigType<typeof configuration>,
+    private readonly userService: UserService,
     private readonly socketService: SocketService,
     @InjectRepository(TagReadEntity)
     private readonly tagReadRepository: Repository<TagReadEntity>,
@@ -46,16 +48,17 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     this.socketService.socket = server;
   }
 
-  handleConnection(client: any, ...args: any[]): any {
+  async handleConnection(client: any, ...args: any[]): Promise<any> {
     const authorization = client?.request.headers.authorization;
     if (!authorization) {
       return;
     }
 
     try {
-      const user = jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
-      (user.sites || []).forEach((id) => {
-        client.join(`site_${id}`);
+      const authUser = jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
+      const user = await this.userService.findById(authUser.id);
+      (user.sites || []).forEach((site) => {
+        client.join(`site_${site.id}`);
       });
 
       this.logger.log(`Client connected`);

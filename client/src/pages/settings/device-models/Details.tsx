@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function DeviceModelDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentDeviceModel, error } = useSelector((state: RootState) => state.deviceModel);
+  const { currentDeviceModel, error, isLoading } = useSelector((state: RootState) => state.deviceModel);
 
   const { pathname } = useLocation();
 
@@ -50,9 +50,15 @@ export default function DeviceModelDetails() {
   }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={currentDeviceModel ? 'Model Settings: Edit Model' : 'Model Settings: Create Model'}>
+    <Page title={`Model Settings: ${currentDeviceModel ? 'Edit Model' : 'Create Model'}`}>
       <Container maxWidth={false}>
-        <DeviceModelForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <DeviceModelForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

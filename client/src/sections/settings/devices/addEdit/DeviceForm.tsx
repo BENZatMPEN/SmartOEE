@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Button, Card, CardContent, Grid, Stack } from '@mui/material';
+import { Button, Card, CardContent, Divider, Grid, MenuItem, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -11,29 +11,16 @@ import { DeviceTag, EditDevice } from '../../../../@types/device';
 import { DeviceModel } from '../../../../@types/deviceModel';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
-import { FormProvider, RHFCheckbox, RHFTextField } from '../../../../components/hook-form';
+import { FormProvider, RHFCheckbox, RHFSelect, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import { createDevice, updateDevice } from '../../../../redux/actions/deviceAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
 import DeviceTagList from './DeviceTagList';
-import ModelSelect from './ModelSelect';
 
 interface Props {
   isEdit: boolean;
-}
-
-class FormState {
-  constructor(isModelOptionLoading: boolean) {
-    this.isModelOptionLoading = isModelOptionLoading;
-  }
-
-  isModelOptionLoading: boolean;
-
-  isReady(): boolean {
-    return !this.isModelOptionLoading;
-  }
 }
 
 export default function DeviceForm({ isEdit }: Props) {
@@ -45,12 +32,15 @@ export default function DeviceForm({ isEdit }: Props) {
 
   const { currentDevice, saveError } = useSelector((state: RootState) => state.device);
 
-  const [formState, setFormState] = useState<FormState>(new FormState(true));
+  const [deviceModels, setDeviceModels] = useState<DeviceModel[]>([]);
 
   const [formValues, setFormValues] = useState<EditDevice | undefined>(undefined);
 
   useEffect(() => {
-    if (formState.isReady()) {
+    (async () => {
+      const response = await axios.get<DeviceModel[]>(`/device-models/all`);
+      setDeviceModels(response.data);
+      console.log(currentDevice);
       setFormValues({
         name: currentDevice?.name || '',
         remark: currentDevice?.remark || '',
@@ -61,8 +51,12 @@ export default function DeviceForm({ isEdit }: Props) {
         stopped: currentDevice?.stopped || false,
         tags: currentDevice?.tags || [],
       });
-    }
-  }, [formState, currentDevice]);
+    })();
+
+    return () => {
+      setDeviceModels([]);
+    };
+  }, [currentDevice]);
 
   const NewDeviceSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -205,15 +199,43 @@ export default function DeviceForm({ isEdit }: Props) {
               </Grid>
 
               <Grid item xs={4}>
-                <ModelSelect
+                <RHFSelect
                   name="deviceModelId"
                   label="Model"
-                  onSelected={(selectedId) => onDeviceModelChanged(selectedId)}
-                  onLoading={(isLoading) => {
-                    formState.isModelOptionLoading = isLoading;
-                    setFormState(formState);
-                  }}
-                />
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{ native: false }}
+                  onChange={(event) => onDeviceModelChanged(Number(event.target.value))}
+                >
+                  <MenuItem
+                    value={-1}
+                    sx={{
+                      mx: 1,
+                      borderRadius: 0.75,
+                      typography: 'body1',
+                      fontStyle: 'italic',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    None
+                  </MenuItem>
+
+                  <Divider />
+
+                  {deviceModels.map((item) => (
+                    <MenuItem
+                      key={item.id}
+                      value={item.id}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body1',
+                      }}
+                    >
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
               </Grid>
 
               <Grid item xs={4}>

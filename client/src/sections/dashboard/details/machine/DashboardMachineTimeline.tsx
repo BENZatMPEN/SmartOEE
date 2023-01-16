@@ -61,7 +61,10 @@ export default function DashboardMachineTimeline() {
             return getBatchStatus(seriesName);
           },
         },
-        formatter(val: number, opts?: any): string {
+        formatter(val: any, opts?: any): string {
+          if (/^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/.test(val)) {
+            return val;
+          }
           return '';
         },
       },
@@ -74,7 +77,7 @@ export default function DashboardMachineTimeline() {
         ...options,
         xaxis: {
           ...options.xaxis,
-          min: new Date(batchTimeline[0].fromDate).getTime(),
+          min: batchTimeline[0].fromDate.getTime(),
         },
       });
       setInitOpt(true);
@@ -90,7 +93,7 @@ export default function DashboardMachineTimeline() {
           {
             fillColor: getColor(item.status),
             x: oeeCode,
-            y: [new Date(item.fromDate).getTime(), new Date(item.toDate).getTime()],
+            y: [item.fromDate.getTime(), item.toDate.getTime()],
           },
         ],
       })),

@@ -11,7 +11,7 @@ export function getOeePagedList(filter: FilterOee) {
 
     try {
       const response = await axios.get<OeePagedList>(`/oees`, { params: filter });
-      dispatch(oeeSlice.actions.getOeesSuccess(response.data));
+      dispatch(oeeSlice.actions.getOeePagedListSuccess(response.data));
     } catch (error) {
       dispatch(oeeSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getOee(id: number) {
 
     try {
       const response = await axios.get<Oee>(`/oees/${id}`);
-      dispatch(oeeSlice.actions.getOeeDetailsSuccess(response.data));
+      dispatch(oeeSlice.actions.getOeeSuccess(response.data));
     } catch (error) {
       dispatch(oeeSlice.actions.hasError(error));
     }

@@ -11,7 +11,7 @@ export function getProductPagedList(filter: FilterProduct) {
 
     try {
       const response = await axios.get<ProductPagedList>(`/products`, { params: filter });
-      dispatch(productSlice.actions.getProductsSuccess(response.data));
+      dispatch(productSlice.actions.getProductPagedListSuccess(response.data));
     } catch (error) {
       dispatch(productSlice.actions.hasError(error));
     }
@@ -24,7 +24,7 @@ export function getProduct(id: number) {
 
     try {
       const response = await axios.get<Product>(`/products/${id}`);
-      dispatch(productSlice.actions.getProductDetailsSuccess(response.data));
+      dispatch(productSlice.actions.getProductSuccess(response.data));
     } catch (error) {
       dispatch(productSlice.actions.hasError(error));
     }

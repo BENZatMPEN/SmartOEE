@@ -15,12 +15,6 @@ const bootstrap = async () => {
   // Prepare anything before the app running here
 };
 
-// TODO: Graceful Shutdown
-// process.on('SIGINT', function () {
-//   schedule.gracefulShutdown()
-//     .then(() => process.exit(0))
-// }
-
 type ReadItem = {
   tagId: number;
   read: string;
@@ -28,7 +22,7 @@ type ReadItem = {
 
 type WriteItem = {
   tagId: number;
-  value: number;
+  value: string;
 };
 
 type TagResult = {

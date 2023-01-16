@@ -37,7 +37,6 @@ export type FilterMachine = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type MachinePagedList = {

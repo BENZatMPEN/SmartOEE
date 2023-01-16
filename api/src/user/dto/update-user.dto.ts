@@ -1,6 +1,6 @@
-import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsArray, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { EmailExists } from '../../common/validations/email-exists.validator';
+import { Type } from 'class-transformer';
 import { REQUEST_PARAM_ID } from '../../common/interceptors/request-param.interceptor';
 
 export class UpdateUserDto {
@@ -17,10 +17,14 @@ export class UpdateUserDto {
 
   @IsNumber()
   @Type(() => Number)
-  [REQUEST_PARAM_ID]: number;
+  readonly roleId: number;
 
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @IsArray()
+  @Type(() => Number)
   @IsOptional()
-  readonly isAdmin?: boolean;
+  readonly siteIds: number[];
+
+  @IsNumber()
+  @Type(() => Number)
+  [REQUEST_PARAM_ID]: number;
 }

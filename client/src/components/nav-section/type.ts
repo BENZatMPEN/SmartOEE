@@ -1,5 +1,6 @@
 import { BoxProps } from '@mui/material';
 import { ReactElement } from 'react';
+import { RoleSubject } from '../../@types/role';
 
 // ----------------------------------------------------------------------
 
@@ -8,9 +9,11 @@ export type NavListProps = {
   path: string;
   icon?: ReactElement;
   info?: ReactElement;
+  roleSubject?: RoleSubject;
   children?: {
     title: string;
     path: string;
+    roleSubject?: RoleSubject;
     children?: { title: string; path: string }[];
   }[];
 };

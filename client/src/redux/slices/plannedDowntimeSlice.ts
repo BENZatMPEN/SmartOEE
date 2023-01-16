@@ -32,7 +32,7 @@ const plannedDowntimeSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getPlannedDowntimesSuccess(state, action) {
+    getPlannedDowntimePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const plannedDowntimeSlice = createSlice({
     emptyCurrentPlannedDowntime(state) {
       state.currentPlannedDowntime = null;
     },
-    getPlannedDowntimeDetailsSuccess(state, action) {
+    getPlannedDowntimeSuccess(state, action) {
+      state.isLoading = false;
       state.currentPlannedDowntime = action.payload;
     },
   },

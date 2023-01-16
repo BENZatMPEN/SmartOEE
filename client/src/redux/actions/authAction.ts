@@ -1,17 +1,17 @@
-import { Role } from '../../@types/role';
+import { User } from '../../@types/user';
 import axios from '../../utils/axios';
 import authSlice from '../slices/authSlice';
 import { dispatch } from '../store';
 
 export const { resetAuth } = authSlice.actions;
 
-export function getAuthRole() {
+export function getUserInfo() {
   return async () => {
     dispatch(authSlice.actions.startLoading());
 
     try {
-      const response = await axios.get<Role>(`/auth/role`);
-      dispatch(authSlice.actions.getRoleSuccess(response.data));
+      const response = await axios.get<User>(`/auth/user-info`);
+      dispatch(authSlice.actions.getUserInfoSuccess(response.data));
     } catch (error) {
       dispatch(authSlice.actions.hasError(error));
     }

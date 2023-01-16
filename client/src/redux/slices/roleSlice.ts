@@ -1,24 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { OptionItem } from '../../@types/option';
 import { Role, RolePagedList } from '../../@types/role';
 
 export type RoleState = {
   isLoading: boolean;
-  roleOptions: OptionItem[];
+  error: any | null;
   pagedList: RolePagedList;
-  isDetailsLoading: boolean;
   currentRole: Role | null;
+  saveError: any | null;
 };
 
 const initialState: RoleState = {
   isLoading: false,
-  roleOptions: [],
+  error: null,
   pagedList: {
     list: [],
     count: 0,
   },
-  isDetailsLoading: false,
   currentRole: null,
+  saveError: null,
 };
 
 const roleSlice = createSlice({
@@ -27,52 +26,28 @@ const roleSlice = createSlice({
   reducers: {
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
     },
-    getRoleOptionsSuccess(state, action) {
+    hasError(state, action) {
       state.isLoading = false;
-      state.roleOptions = action.payload;
+      state.error = action.payload;
     },
     getRolePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
-    startDetailsLoading(state) {
-      state.isDetailsLoading = true;
+    startSavingError(state) {
+      state.saveError = null;
+    },
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
     emptyCurrentRole(state) {
       state.currentRole = null;
     },
-    emptyRoleOptions(state) {
-      state.roleOptions = [];
-    },
-    updateRoleSettings(state, action) {
-      // const {roles} = state.currentRole;
-
-      console.log(action.payload);
-      // const newRoles = [...roles];
-      // for (const role of roles) {
-      //   if (role.role === roleName) {
-      //     for (const permission of role.permissions) {
-      //       if (permission.permission === permissionName) {
-      //         permission.allow = !permission.allow;
-      //         break;
-      //       }
-      //     }
-      //     break;
-      //   }
-      // }
-      //
-      // onUpdated(newRoles);
-    },
-    getRoleDetailsSuccess(state, action) {
-      state.isDetailsLoading = false;
+    getRoleSuccess(state, action) {
+      state.isLoading = false;
       state.currentRole = action.payload;
-    },
-    createRoleSuccess(state) {
-      state.isDetailsLoading = false;
-    },
-    updateRoleSuccess(state) {
-      state.isDetailsLoading = false;
     },
   },
 });

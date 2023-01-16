@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { FilterRole } from '../../../@types/role';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -22,7 +22,6 @@ import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } fro
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteRole, deleteRoles, getRolePagedList } from '../../../redux/actions/roleAction';
-import { getSite } from '../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR, PATH_SETTINGS } from '../../../routes/paths';
 import { RoleTableRow, RoleTableToolbar } from '../../../sections/settings/roles/list';
@@ -62,15 +61,7 @@ export default function RoleList() {
 
   const { currentSite } = useSelector((state: RootState) => state.site);
 
-  const { siteId } = useParams();
-
   const [filterName, setFilterName] = useState('');
-
-  useEffect(() => {
-    (async () => {
-      await dispatch(getSite(Number(siteId)));
-    })();
-  }, [dispatch, siteId]);
 
   useEffect(() => {
     (async () => {
@@ -86,7 +77,6 @@ export default function RoleList() {
       orderBy: orderBy,
       page: page,
       rowsPerPage: rowsPerPage,
-      siteId: Number(siteId),
     };
 
     await dispatch(getRolePagedList(filter));
@@ -156,10 +146,6 @@ export default function RoleList() {
           heading="Role List"
           links={[
             { name: 'Home', href: '/' },
-            {
-              name: currentSite?.name || '',
-              href: PATH_ADMINISTRATOR.sites.root,
-            },
             {
               name: 'Roles',
             },

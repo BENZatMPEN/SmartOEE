@@ -58,7 +58,6 @@ export type FilterProblemSolution = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type ProblemSolutionAttachment = {

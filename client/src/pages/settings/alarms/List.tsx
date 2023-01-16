@@ -13,7 +13,7 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Alarm, FilterAlarm } from '../../../@types/alarm';
+import { FilterAlarm } from '../../../@types/alarm';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -22,15 +22,9 @@ import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } fro
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteAlarm, deleteAlarms, getAlarmPagedList } from '../../../redux/actions/alarmAction';
-import {
-  deleteDeviceModel,
-  deleteDeviceModels,
-  getDeviceModelPagedList,
-} from '../../../redux/actions/deviceModelAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { AlarmTableRow, AlarmTableToolbar } from '../../../sections/settings/alarms/list';
-import axios from '../../../utils/axios';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },

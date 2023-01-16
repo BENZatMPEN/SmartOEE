@@ -48,7 +48,6 @@ export type FilterFaq = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type FaqAttachment = {

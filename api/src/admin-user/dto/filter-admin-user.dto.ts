@@ -1,7 +1,7 @@
-import { IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsNumber, IsString } from 'class-validator';
 
-export class FilterSiteDto {
+export class FilterAdminUserDto {
   @IsString()
   readonly search: string;
 

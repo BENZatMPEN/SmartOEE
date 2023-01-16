@@ -1,3 +1,6 @@
+import { Role } from './role';
+import { Site } from './site';
+
 export type User = {
   id: number;
   email: string;
@@ -5,24 +8,34 @@ export type User = {
   lastName: string;
   isAdmin: boolean;
   imageName: string;
-  roleId: number;
-  siteIds: number[];
+  roles: Role[];
+  sites: Site[];
   createdAt: Date;
   updatedAt: Date;
 };
 
-export type EditUser = {
+export interface EditUser {
   email: string;
   firstName: string;
   lastName: string;
   image: File | null;
-  isAdmin?: boolean;
-};
+  siteIds: number[];
+  roleId: number;
+}
 
-export type EditUserPassword = {
+export interface EditAdminUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+  image: File | null;
+  isAdmin: boolean;
+  siteIds: number[];
+}
+
+export interface EditUserPassword {
   password: string;
   confirmPassword: string;
-};
+}
 
 export type FilterUser = {
   search: string;

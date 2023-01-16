@@ -236,9 +236,13 @@ export default function Details() {
     <Page title={title}>
       <Container maxWidth={false}>
         {isLoading ? (
-          <>Loading...</>
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
         ) : isNotFound ? (
-          <>Not found</>
+          <Card>
+            <CardContent>Not Found</CardContent>
+          </Card>
         ) : (
           <Stack spacing={3}>
             <Card>

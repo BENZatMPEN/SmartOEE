@@ -32,7 +32,7 @@ const oeeSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getOeesSuccess(state, action) {
+    getOeePagedListSuccess(state, action) {
       state.isLoading = false;
       state.pagedList = action.payload;
     },
@@ -45,7 +45,8 @@ const oeeSlice = createSlice({
     emptyCurrentOee(state) {
       state.currentOee = null;
     },
-    getOeeDetailsSuccess(state, action) {
+    getOeeSuccess(state, action) {
+      state.isLoading = false;
       state.currentOee = action.payload;
     },
   },

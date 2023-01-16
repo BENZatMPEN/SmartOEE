@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function OEEDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentOee, error } = useSelector((state: RootState) => state.oee);
+  const { currentOee, error, isLoading } = useSelector((state: RootState) => state.oee);
 
   const { pathname } = useLocation();
 
@@ -50,9 +50,15 @@ export default function OEEDetails() {
   }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={currentOee ? 'OEE Settings: Edit OEE' : 'OEE Settings: Create OEE'}>
+    <Page title={`OEE Settings: ${currentOee ? 'Edit OEE' : 'Create OEE'}`}>
       <Container maxWidth={false}>
-        <OeeForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <OeeForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

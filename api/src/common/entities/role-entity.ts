@@ -18,10 +18,6 @@ export class RoleEntity {
   @Column({ type: 'json', nullable: true })
   roles: RoleSetting[];
 
-  @Exclude()
-  @Column({ default: false })
-  deleted: boolean;
-
   @Column({ type: 'int' })
   siteId: number;
 

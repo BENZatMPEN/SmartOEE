@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function AlarmDetails() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { currentAlarm, error } = useSelector((state: RootState) => state.alarm);
+  const { currentAlarm, error, isLoading } = useSelector((state: RootState) => state.alarm);
 
   const { pathname } = useLocation();
 
@@ -50,9 +50,15 @@ export default function AlarmDetails() {
   }, [error, enqueueSnackbar, navigate]);
 
   return (
-    <Page title={currentAlarm ? 'Alarm Settings: Edit Alarm' : 'Alarm Settings: Create Alarm'}>
+    <Page title={`Alarm Settings: ${currentAlarm ? 'Edit Alarm' : 'Create Alarm'}`}>
       <Container maxWidth={false}>
-        <AlarmForm isEdit={isEdit} />
+        {isLoading ? (
+          <Card>
+            <CardContent>Loading...</CardContent>
+          </Card>
+        ) : (
+          <AlarmForm isEdit={isEdit} />
+        )}
       </Container>
     </Page>
   );

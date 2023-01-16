@@ -18,4 +18,8 @@ export class FilterUserDto {
   @IsNumber()
   @Type(() => Number)
   readonly rowsPerPage: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  readonly siteId: number;
 }

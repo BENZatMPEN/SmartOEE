@@ -63,12 +63,13 @@ export class PoliciesGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const policyHandlers = this.reflector.get<PolicyHandler[]>(CHECK_POLICIES_KEY, context.getHandler()) || [];
     const { user, query } = context.switchToHttp().getRequest();
-    let role: RoleEntity = null;
+    const role: RoleEntity = null;
 
     // if (!user.isAdmin) {
     const { siteId } = query;
     if (siteId) {
-      role = await this.authService.findRoleByUserIdAndSiteId(user.id, Number(siteId));
+      // TODO: get user role
+      // role = await this.authService.findRoleByUserIdAndSiteId(user.id, Number(siteId));
     }
     // }
 

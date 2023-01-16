@@ -33,7 +33,6 @@ export type FilterDevice = {
   orderBy: string;
   page: number;
   rowsPerPage: number;
-  siteId?: number;
 };
 
 export type DeviceTag = {

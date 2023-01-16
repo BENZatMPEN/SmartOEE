@@ -87,6 +87,10 @@ import { DashboardEntity } from './common/entities/dashboard-entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { FileService } from './common/services/file.service';
+import { AdminUserService } from './admin-user/admin-user.service';
+import { AdminSiteService } from './admin-site/admin-site.service';
+import { AdminSiteModule } from './admin-site/admin-site.module';
+import { AdminUserModule } from './admin-user/admin-user.module';
 
 @Module({
   imports: [
@@ -251,6 +255,8 @@ import { FileService } from './common/services/file.service';
     SocketModule,
     NotificationModule,
     DashboardModule,
+    AdminSiteModule,
+    AdminUserModule,
   ],
   controllers: [AppController],
   providers: [
@@ -272,6 +278,8 @@ import { FileService } from './common/services/file.service';
     BatchOeeCalculateListener,
     AnalyticEventsListener,
     FileService,
+    AdminSiteService,
+    AdminUserService,
   ],
 })
 export class AppModule {}
