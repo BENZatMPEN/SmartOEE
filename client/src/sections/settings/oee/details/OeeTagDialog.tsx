@@ -29,8 +29,8 @@ export default function OeeTagDialog({ title, open, onClose, onSave, editingTag 
   const theme = useTheme();
 
   const tagSchema = Yup.object().shape({
-    deviceId: Yup.number().min(1, 'Device must be selected'),
-    tagId: Yup.number().min(1, 'Tag must be selected'),
+    // deviceId: Yup.number().min(1, 'Device must be selected'),
+    // tagId: Yup.number().min(1, 'Tag must be selected'),
   });
 
   const methods = useForm<FormValuesProps>({
