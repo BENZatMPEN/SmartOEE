@@ -34,7 +34,7 @@ export class OeeBatchEntity {
   @Column({ type: 'int', default: 0 })
   breakdownSeconds: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'double precision', default: 0 })
   standardSpeedSeconds: number;
 
   @Column({ type: 'int', default: 0 })
