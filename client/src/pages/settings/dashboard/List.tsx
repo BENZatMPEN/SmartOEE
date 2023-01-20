@@ -13,7 +13,8 @@ import {
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Dashboard, FilterDashboard } from '../../../@types/dashboard';
+import { FilterDashboard } from '../../../@types/dashboard';
+import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
 import Page from '../../../components/Page';
@@ -22,6 +23,7 @@ import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } fro
 import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteDashboard, deleteDashboards, getDashboardPagedList } from '../../../redux/actions/dashboardAction';
+import { getAllDashboard } from '../../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
 import { DashboardTableRow, DashboardTableToolbar } from '../../../sections/settings/dashboard/list';
@@ -108,6 +110,31 @@ export default function DashboardList() {
     navigate(PATH_SETTINGS.dashboard.duplicate(paramCase(id.toString())));
   };
 
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    if (deletingItems.length === 1 && selected.length === 0) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    await dispatch(getAllDashboard());
+    setOpenDeleteDialog(false);
+  };
+
   const denseHeight = dense ? 60 : 80;
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
@@ -152,7 +179,7 @@ export default function DashboardList() {
                   }
                   actions={
                     <Tooltip title="Delete">
-                      <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                      <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                         <Iconify icon={'eva:trash-2-outline'} />
                       </IconButton>
                     </Tooltip>
@@ -184,7 +211,7 @@ export default function DashboardList() {
                         row={row}
                         selected={selected.includes(row.id)}
                         onSelectRow={() => onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
                       />
@@ -211,6 +238,15 @@ export default function DashboardList() {
             />
           </Box>
         </Card>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
       </Container>
     </Page>
   );

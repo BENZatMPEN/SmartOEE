@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { DashboardEntity } from '../common/entities/dashboard-entity';
 import { FilterDashboardDto } from './dto/filter-dashboard.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
@@ -57,20 +57,10 @@ export class DashboardService {
   }
 
   async delete(id: number, siteId: number): Promise<void> {
-    const dashboard = await this.dashboardRepository.findOneBy({ id, siteId });
-    dashboard.deleted = true;
-    dashboard.updatedAt = new Date();
-    await this.dashboardRepository.save(dashboard);
+    await this.dashboardRepository.createQueryBuilder().delete().where('id = :id', { id }).execute();
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {
-    const dashboards = await this.dashboardRepository.findBy({ id: In(ids), siteId });
-    await this.dashboardRepository.save(
-      dashboards.map((dashboard) => {
-        dashboard.deleted = true;
-        dashboard.updatedAt = new Date();
-        return dashboard;
-      }),
-    );
+    await this.dashboardRepository.createQueryBuilder().delete().where('id in (:ids)', { ids }).execute();
   }
 }

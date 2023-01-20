@@ -138,7 +138,7 @@ REACT_APP_GOOGLE_MAPS_KEY=key
 
 ## 5. รัน docker-compose.yaml build
 
-ทุกครั้งที่มีการเปลี่ยนค่าใน docker-compose.yaml และ ./clinet/.env จะต้องทำการรัน docker compose build ทุกครั้ง
+ทุกครั้งที่มีการเปลี่ยนค่าใน docker-compose.yaml และ ./client/.env จะต้องทำการรัน docker compose build ทุกครั้ง
 
 ```
 # อยู่ใน folder ที่ clone มา (SmartOEE)

@@ -134,7 +134,7 @@ export class UserService {
       .createQueryBuilder('u')
       .innerJoin('u.sites', 'us', ':siteId is null or us.id = :siteId', { siteId })
       .delete()
-      .where('id = :id', { id })
+      .where('u.id = :id', { id })
       .execute();
   }
 
@@ -143,7 +143,7 @@ export class UserService {
       .createQueryBuilder('u')
       .innerJoin('u.sites', 'us', ':siteId is null or us.id = :siteId', { siteId })
       .delete()
-      .where('id in (:ids)', { ids })
+      .where('u.id in (:ids)', { ids })
       .execute();
   }
 

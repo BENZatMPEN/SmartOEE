@@ -14,7 +14,7 @@ export interface EditAlarm {
   type: string;
   name: string;
   notify: boolean;
-  data: any | null;
+  data?: any;
   condition: AlarmCondition;
 }
 

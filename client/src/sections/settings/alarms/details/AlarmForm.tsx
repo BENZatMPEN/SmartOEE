@@ -21,7 +21,6 @@ import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { AlarmEmailDataItem, AlarmLineData, EditAlarm, initAlarmCondition } from '../../../../@types/alarm';
-import { Oee } from '../../../../@types/oee';
 import { OptionItem } from '../../../../@types/option';
 import Breadcrumbs from '../../../../components/Breadcrumbs';
 import FormHeader from '../../../../components/FormHeader';
@@ -48,37 +47,49 @@ const initLineData = {
 };
 
 export default function AlarmForm({ isEdit }: Props) {
+  const navigate = useNavigate();
+
   const dispatch = useDispatch();
 
   const { currentAlarm, saveError } = useSelector((state: RootState) => state.alarm);
-
-  const navigate = useNavigate();
 
   const { enqueueSnackbar } = useSnackbar();
 
   const [oeeOpts, setOeeOpts] = useState<OptionItem[]>([]);
 
+  const [formValues, setFormValues] = useState<FormValuesProps | undefined>(undefined);
+
+  const getOeeOptions = async () => {
+    const response = await axios.get<OptionItem[]>(`/oees/options`);
+    setOeeOpts(response.data);
+  };
+
   useEffect(() => {
-    axios
-      .get<Oee[]>(`/oees/all`)
-      .then((response) => {
-        const { data: oees } = response;
-        setOeeOpts(
-          oees.map((oee) => ({
-            id: oee.id,
-            name: oee.productionName,
-          })),
-        );
-      })
-      .catch((error) => {
-        console.error(error);
+    (async () => {
+      await getOeeOptions();
+
+      setFormValues({
+        name: currentAlarm?.name || '',
+        type: currentAlarm?.type || ALARM_TYPE_EMAIL,
+        notify: currentAlarm ? currentAlarm.notify : true,
+        emails: currentAlarm
+          ? currentAlarm.type === ALARM_TYPE_EMAIL
+            ? (currentAlarm.data as AlarmEmailDataItem[])
+            : []
+          : [],
+        line: currentAlarm
+          ? currentAlarm.type === ALARM_TYPE_LINE
+            ? (currentAlarm.data as AlarmLineData)
+            : initLineData
+          : initLineData,
+        condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
       });
+    })();
 
     return () => {
       setOeeOpts([]);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentAlarm]);
 
   const NewAlarmSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -109,23 +120,7 @@ export default function AlarmForm({ isEdit }: Props) {
       line: initLineData,
       condition: initAlarmCondition,
     },
-    values: {
-      name: currentAlarm?.name || '',
-      type: currentAlarm?.type || ALARM_TYPE_EMAIL,
-      notify: currentAlarm ? currentAlarm.notify : true,
-      emails: currentAlarm
-        ? currentAlarm.type === ALARM_TYPE_EMAIL
-          ? (currentAlarm.data as AlarmEmailDataItem[])
-          : []
-        : [],
-      line: currentAlarm
-        ? currentAlarm.type === ALARM_TYPE_LINE
-          ? (currentAlarm.data as AlarmLineData)
-          : initLineData
-        : initLineData,
-      condition: currentAlarm ? currentAlarm.condition : initAlarmCondition,
-      data: null,
-    },
+    values: formValues,
   });
 
   const {
@@ -270,7 +265,7 @@ export default function AlarmForm({ isEdit }: Props) {
 
           <Grid item md={12}>
             <RHFSelect
-              name="oees"
+              name="condition.oees"
               label="Productions"
               fullWidth
               SelectProps={{
