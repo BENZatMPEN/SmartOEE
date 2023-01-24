@@ -49,6 +49,9 @@ const machineSlice = createSlice({
       state.isLoading = false;
       state.currentMachine = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

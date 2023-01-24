@@ -21,7 +21,7 @@ import roleReducer from './reducers/roleReducer';
 import siteReducer from './reducers/siteReducer';
 import userReducer from './reducers/userReducer';
 import userSiteReducer from './reducers/userSiteReducer';
-import calendarReducer from './slices/calendar';
+import calendarReducer from './reducers/calendarReducer';
 
 const rootPersistConfig = {
   key: 'root',

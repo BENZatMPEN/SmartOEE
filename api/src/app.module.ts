@@ -194,6 +194,7 @@ import { AdminUserModule } from './admin-user/admin-user.module';
       AnalyticStatsEntity,
       AnalyticStatsParamEntity,
       DashboardEntity,
+      PlanningEntity,
     ]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

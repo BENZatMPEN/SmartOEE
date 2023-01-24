@@ -15,15 +15,17 @@ import Iconify from '../../../components/Iconify';
 import { newBatch } from '../../../redux/actions/oeeBatchAction';
 import { useDispatch } from '../../../redux/store';
 import axios from '../../../utils/axios';
+import { Planning } from '../../../@types/planning';
 
-export type FormValuesProps = {
+interface NewOeeBatch {
   startDate: Date;
   endDate: Date;
   productId: number;
   oeeId: number;
+  planningId: number;
   plannedQuantity: number;
   lotNumber: string;
-};
+}
 
 type Props = {
   open: boolean;
@@ -41,11 +43,12 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
     plannedQuantity: Yup.number().min(1),
   });
 
-  const methods = useForm<FormValuesProps>({
+  const methods = useForm<NewOeeBatch>({
     resolver: yupResolver(NewOeeBatchSchema),
     defaultValues: {
       oeeId: oee.id,
       productId: -1,
+      planningId: -1,
       plannedQuantity: 0,
       lotNumber: '',
       startDate: dayjs().startOf('day').toDate(),
@@ -54,21 +57,45 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
   });
 
   const {
+    watch,
+    setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
+  const values = watch();
+
   const [products, setProducts] = useState<Product[]>([]);
 
+  const [plannings, setPlannings] = useState<Planning[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const getProducts = async () => {
+    try {
+      const response = await axios.get<Product[]>(`/oees/${oee.id}/products`);
+      setProducts(response.data);
+    } catch {
+      setProducts([]);
+    }
+  };
+
+  const getPlannings = async () => {
+    try {
+      const response = await axios.get<Planning[]>(`/oees/${oee.id}/plannings`);
+      setPlannings(response.data);
+    } catch {
+      setProducts([]);
+    }
+  };
 
   useEffect(() => {
     setIsLoading(true);
 
     (async () => {
       try {
-        const response = await axios.get<Product[]>(`/oees/${oee.id}/products`);
-        setProducts(response.data);
+        await getProducts();
+        await getPlannings();
         setIsLoading(false);
       } catch (error) {
         console.log(error);
@@ -83,7 +110,7 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmit = async (data: FormValuesProps) => {
+  const onSubmit = async (data: NewOeeBatch) => {
     data.startDate = dayjs(data.startDate).second(0).toDate();
     data.endDate = dayjs(data.endDate).second(0).toDate();
 
@@ -100,6 +127,22 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handlePlanningChange = (planningId: number): void => {
+    if (planningId === -1) {
+      setValue('planningId', -1);
+      setValue('productId', -1);
+      setValue('lotNumber', '');
+      setValue('plannedQuantity', 0);
+      return;
+    }
+
+    const planning = plannings.filter((item) => item.id === planningId)[0];
+    setValue('planningId', planning.id);
+    setValue('productId', planning.productId);
+    setValue('lotNumber', planning.lotNumber);
+    setValue('plannedQuantity', planning.plannedQuantity);
   };
 
   return (
@@ -123,8 +166,54 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
 
           <Box>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <RHFSelect name="productId" type="number" label="Product" size="small" SelectProps={{ native: false }}>
+              <Grid item xs={12} sm={6}>
+                <RHFSelect
+                  name="planningId"
+                  type="number"
+                  label="Planning"
+                  size="small"
+                  SelectProps={{ native: false }}
+                  onChange={(event) => {
+                    handlePlanningChange(Number(event.target.value));
+                  }}
+                >
+                  <MenuItem
+                    value="-1"
+                    sx={{
+                      mx: 1,
+                      my: 0.5,
+                      borderRadius: 0.75,
+                      typography: 'body2',
+                    }}
+                  >
+                    Please select
+                  </MenuItem>
+
+                  {plannings.map((planning) => (
+                    <MenuItem
+                      key={planning.id}
+                      value={planning.id}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body2',
+                      }}
+                    >
+                      {planning.title}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <RHFSelect
+                  name="productId"
+                  type="number"
+                  label="Product"
+                  size="small"
+                  SelectProps={{ native: false, disabled: values.planningId > -1 }}
+                >
                   <MenuItem
                     value="-1"
                     sx={{
@@ -154,12 +243,13 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
                 </RHFSelect>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <RHFTextField
                   type="number"
                   name="plannedQuantity"
                   size="small"
                   label="Planned Quantity"
+                  disabled={values.planningId > -1}
                   onFocus={(event) => {
                     event.target.select();
                   }}
@@ -167,12 +257,13 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <RHFTextField
                   type="text"
                   name="lotNumber"
                   size="small"
                   label="Lot Number"
+                  disabled={values.planningId > -1}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -181,11 +272,11 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
 
           <Box>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <RHFDateTimePicker name="startDate" size="small" label="Start Date" />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <RHFDateTimePicker name="endDate" size="small" label="End Date" />
               </Grid>
             </Grid>

@@ -3,17 +3,16 @@ import { ApexOptions } from 'apexcharts';
 import { useEffect, useMemo, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { OeeBatchParamParetoData } from '../../../../@types/oeeBatch';
-import { initialOeeStats, OEE_TYPE_P, TIME_UNIT_SECOND } from '../../../../constants';
+import { initialOeeStats, OEE_TYPE_Q } from '../../../../constants';
 import useWebSocket from '../../../../hooks/useWebSocket';
-import { getOeeBatchParetoP, updateBatchParetoP } from '../../../../redux/actions/oeeBatchAction';
+import { getOeeBatchParetoQ, updateBatchParetoQ } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
-import { chartTitle, getTimeUnitShortText, getTimeUnitText } from '../../../../utils/formatText';
+import { chartTitle } from '../../../../utils/formatText';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
-import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
 
-export default function DashboardApgGraphP() {
+export default function DashboardApqGraphQ() {
   const dispatch = useDispatch();
 
   const { socket } = useWebSocket();
@@ -22,25 +21,15 @@ export default function DashboardApgGraphP() {
 
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { timeUnit, useSitePercentSettings, percentSettings } = selectedOee || {
-    timeUnit: '',
+  const { useSitePercentSettings, percentSettings } = selectedOee || {
     useSitePercentSettings: true,
   };
 
-  const { currentBatch, batchStatsTime, batchParetoP } = useSelector((state: RootState) => state.oeeBatch);
+  const { currentBatch, batchStatsTime, batchParetoQ } = useSelector((state: RootState) => state.oeeBatch);
 
-  const {
-    id: batchId,
-    oeeStats,
-    standardSpeedSeconds,
-    plannedQuantity,
-  } = currentBatch || {
-    standardSpeedSeconds: 0,
-    plannedQuantity: 0,
-    targetQuantity: 0,
-  };
+  const { id: batchId, oeeStats } = currentBatch || {};
 
-  const { pPercent, totalCount, operatingSeconds, target } = oeeStats || initialOeeStats;
+  const { qPercent, totalCount, totalManualDefects, totalAutoDefects } = oeeStats || initialOeeStats;
 
   useEffect(() => {
     if (!socket || !batchId) {
@@ -48,13 +37,13 @@ export default function DashboardApgGraphP() {
     }
 
     const updatePareto = (data: OeeBatchParamParetoData) => {
-      dispatch(updateBatchParetoP(data));
+      dispatch(updateBatchParetoQ(data));
     };
 
-    socket.on(`p-pareto_${batchId}.updated`, updatePareto);
+    socket.on(`q-pareto_${batchId}.updated`, updatePareto);
 
     return () => {
-      socket.off(`p-pareto_${batchId}.updated`, updatePareto);
+      socket.off(`q-pareto_${batchId}.updated`, updatePareto);
     };
   }, [socket, batchId, dispatch]);
 
@@ -86,7 +75,7 @@ export default function DashboardApgGraphP() {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return timeUnit === TIME_UNIT_SECOND ? fNumber(val) : fNumber2(val);
+            return fNumber(val);
           },
         },
       },
@@ -112,13 +101,13 @@ export default function DashboardApgGraphP() {
     }
 
     (async () => {
-      await dispatch(getOeeBatchParetoP(batchId));
+      await dispatch(getOeeBatchParetoQ(batchId));
       //
     })();
   }, [dispatch, batchId]);
 
   useEffect(() => {
-    const { labels, counts, percents } = batchParetoP || { labels: [], counts: [], percents: [] };
+    const { labels, counts, percents } = batchParetoQ || { labels: [], counts: [], percents: [] };
     setOptions({
       ...options,
       labels: labels,
@@ -130,9 +119,9 @@ export default function DashboardApgGraphP() {
 
     setSeries([
       {
-        name: getTimeUnitText(timeUnit),
+        name: 'Count',
         type: 'column',
-        data: counts.map((item) => convertToUnit(item, timeUnit)),
+        data: counts,
       },
       {
         name: '%',
@@ -141,10 +130,10 @@ export default function DashboardApgGraphP() {
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchParetoP, batchStatsTime]);
+  }, [batchParetoQ, batchStatsTime]);
 
   const percents = useMemo(
-    () => getPercentSettingsByType(selectedSite, percentSettings || [], useSitePercentSettings, OEE_TYPE_P),
+    () => getPercentSettingsByType(selectedSite, percentSettings || [], useSitePercentSettings, OEE_TYPE_Q),
     [selectedSite, percentSettings, useSitePercentSettings],
   );
 
@@ -154,19 +143,19 @@ export default function DashboardApgGraphP() {
         <Grid container alignItems="center" spacing={3}>
           <Grid item xs={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, gap: 3 }}>
-              <Typography variant="h2">P</Typography>
+              <Typography variant="h2">Q</Typography>
 
               <Box>
                 <DashboardPieChart
                   high={percents.high}
                   medium={percents.medium}
                   low={percents.low}
-                  oeeType={OEE_TYPE_P}
-                  percent={pPercent}
+                  oeeType={OEE_TYPE_Q}
+                  percent={qPercent}
                 />
 
-                <Typography variant="subtitle1" sx={{ mt: 1, textAlign: 'center' }}>
-                  Performance
+                <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
+                  Quality
                 </Typography>
               </Box>
             </Box>
@@ -174,33 +163,15 @@ export default function DashboardApgGraphP() {
 
           <Grid item xs={4}>
             <Stack spacing={1}>
-              <Box>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={5}>
-                    <Typography variant="body1" textAlign="right">
-                      {`Cycle Time (${getTimeUnitShortText(timeUnit)} / pc.)`}
-                    </Typography>
-                  </Grid>
+              <ItemBox head="Total Product" value={fNumber(totalCount)} tail="pcs." />
 
-                  <Grid item xs={3.5} sx={{ textAlign: 'center' }}>
-                    <Typography variant="caption">Standard</Typography>
+              <ItemBox
+                head="Good Product"
+                value={fNumber(totalCount - totalAutoDefects + totalManualDefects)}
+                tail="pcs."
+              />
 
-                    <TextItem value={fNumber2(convertToUnit(standardSpeedSeconds, timeUnit))} />
-                  </Grid>
-
-                  <Grid item xs={3.5} sx={{ textAlign: 'center' }}>
-                    <Typography variant="caption">Current</Typography>
-
-                    <TextItem value={fNumber2(convertToUnit(operatingSeconds / totalCount, timeUnit))} />
-                  </Grid>
-                </Grid>
-              </Box>
-
-              <ItemBox head="Actual" value={fNumber(totalCount)} tail="pcs." />
-
-              <ItemBox head="Plan" value={fNumber(plannedQuantity)} tail="pcs." />
-
-              <ItemBox head="Target" value={fNumber(target)} tail="pcs." />
+              <ItemBox head="Defect Product" value={fNumber(totalAutoDefects + totalManualDefects)} tail="pcs." />
             </Stack>
           </Grid>
 
@@ -210,20 +181,6 @@ export default function DashboardApgGraphP() {
         </Grid>
       </CardContent>
     </Card>
-  );
-}
-
-type TextItemPros = {
-  value: string;
-};
-
-function TextItem({ value }: TextItemPros) {
-  return (
-    <Box sx={{ border: '1px solid rgba(0, 0, 0, 0.2)', borderRadius: '6px', p: 1 }}>
-      <Typography variant="body1" textAlign="center">
-        {value}
-      </Typography>
-    </Box>
   );
 }
 
@@ -244,7 +201,11 @@ function ItemBox({ head, value, tail }: ItemBoxPros) {
         </Grid>
 
         <Grid item xs={3.5}>
-          <TextItem value={value} />
+          <Box sx={{ border: '1px solid rgba(0, 0, 0, 0.2)', borderRadius: '6px', p: 1 }}>
+            <Typography variant="body1" textAlign="center">
+              {value}
+            </Typography>
+          </Box>
         </Grid>
 
         <Grid item xs={3.5}>

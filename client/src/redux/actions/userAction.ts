@@ -73,6 +73,7 @@ export function deleteUser(id: number) {
 
     try {
       await axios.delete(`/users/${id}`);
+      dispatch(userSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(userSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteUsers(selectedIds: number[]) {
       await axios.delete(`/users`, {
         params: { ids: selectedIds },
       });
+      dispatch(userSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(userSlice.actions.hasError(error));
     }

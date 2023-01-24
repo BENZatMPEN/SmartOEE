@@ -49,6 +49,9 @@ const alarmSlice = createSlice({
       state.isLoading = false;
       state.currentAlarm = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

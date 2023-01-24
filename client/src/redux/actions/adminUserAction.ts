@@ -1,4 +1,4 @@
-import { EditAdminUser, EditUser, EditUserPassword, FilterUser, User, UserPagedList } from '../../@types/user';
+import { EditAdminUser, EditUserPassword, FilterUser, User, UserPagedList } from '../../@types/user';
 import axios from '../../utils/axios';
 import adminUserSlice from '../slices/adminUserSlice';
 import { dispatch } from '../store';
@@ -73,6 +73,7 @@ export function deleteUser(id: number) {
 
     try {
       await axios.delete(`/admin/users/${id}`);
+      dispatch(adminUserSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(adminUserSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteUsers(selectedIds: number[]) {
       await axios.delete(`/admin/users`, {
         params: { ids: selectedIds },
       });
+      dispatch(adminUserSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(adminUserSlice.actions.hasError(error));
     }

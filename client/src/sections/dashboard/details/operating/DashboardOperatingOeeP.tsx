@@ -23,10 +23,8 @@ import useTable from '../../../../hooks/useTable';
 import useToggle from '../../../../hooks/useToggle';
 import { updateBatchParamP } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { fNumber2 } from '../../../../utils/formatNumber';
-import { getTimeUnitShortText } from '../../../../utils/formatText';
+import { fSeconds } from '../../../../utils/formatNumber';
 import { fDateTime } from '../../../../utils/formatTime';
-import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardOperatingOeePDialog from './DashboardOperatingOeePDialog';
 
 export default function DashboardOperatingOeeP() {
@@ -57,7 +55,7 @@ export default function DashboardOperatingOeeP() {
     { id: 'timestamp', label: 'Timestamp', align: 'left' },
     { id: 'machineId', label: 'Machine', align: 'left' },
     { id: 'machineParameterId', label: 'Cause', align: 'left' },
-    { id: 'seconds', label: `Duration (${getTimeUnitShortText(timeUnit)})`, align: 'left' },
+    { id: 'seconds', label: `Duration`, align: 'left' },
     { id: '' },
   ];
 
@@ -111,10 +109,7 @@ export default function DashboardOperatingOeeP() {
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Total Time:
               </Typography>
-              <Typography variant="subtitle1">
-                {fNumber2(convertToUnit(totalSpeedLossSeconds + totalMinorStopSeconds, timeUnit))}{' '}
-                {getTimeUnitShortText(timeUnit)}
-              </Typography>
+              <Typography variant="subtitle1">{fSeconds(totalSpeedLossSeconds + totalMinorStopSeconds)}</Typography>
             </Stack>
           </Stack>
         </Box>
@@ -140,7 +135,7 @@ export default function DashboardOperatingOeeP() {
 
                       <TableCell align="left">{getMachineParamName(row)}</TableCell>
 
-                      <TableCell align="left">{fNumber2(convertToUnit(row.seconds, timeUnit))}</TableCell>
+                      <TableCell align="left">{fSeconds(row.seconds)}</TableCell>
 
                       <TableCell align="left">
                         <Button

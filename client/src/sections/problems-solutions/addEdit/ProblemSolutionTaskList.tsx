@@ -189,6 +189,8 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
                 <RHFTextField
                   size="small"
                   type="text"
+                  multiline={true}
+                  rows={2}
                   name={`tasks[${index}].comment`}
                   label="Comment"
                   InputLabelProps={{ shrink: true }}

@@ -65,6 +65,7 @@ export function deleteDashboard(id: number) {
 
     try {
       await axios.delete(`/dashboard/${id}`);
+      dispatch(dashboardSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(dashboardSlice.actions.hasError(error));
     }
@@ -79,6 +80,7 @@ export function deleteDashboards(selectedIds: number[]) {
       await axios.delete(`/dashboard`, {
         params: { ids: selectedIds },
       });
+      dispatch(dashboardSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(dashboardSlice.actions.hasError(error));
     }

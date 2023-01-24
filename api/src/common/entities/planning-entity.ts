@@ -16,7 +16,7 @@ export class PlanningEntity {
   @Column({ type: 'varchar', length: 2000, default: '' })
   lotNumber: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   color: string;
 
   @Column({ type: 'datetime' })

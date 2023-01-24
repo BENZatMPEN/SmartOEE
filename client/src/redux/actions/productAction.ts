@@ -73,6 +73,7 @@ export function deleteProduct(id: number) {
 
     try {
       await axios.delete(`/products/${id}`);
+      dispatch(productSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(productSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteProducts(selectedIds: number[]) {
       await axios.delete(`/products`, {
         params: { ids: selectedIds },
       });
+      dispatch(productSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(productSlice.actions.hasError(error));
     }

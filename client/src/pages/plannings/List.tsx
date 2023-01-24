@@ -1,12 +1,12 @@
 import FullCalendar, { DateSelectArg, EventClickArg } from '@fullcalendar/react';
-import { EventInput } from '@fullcalendar/common';
-import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import timelinePlugin from '@fullcalendar/timeline';
-import interactionPlugin from '@fullcalendar/interaction';
 import {
   Box,
+  Button,
   Card,
   Container,
   DialogTitle,
@@ -20,10 +20,10 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CalendarView, DateRange } from '../../@types/calendar';
-import { Planning } from '../../@types/planning';
+import { FilterPlanning } from '../../@types/planning';
 import { DialogAnimate } from '../../components/animate';
+import DeleteConfirmationDialog from '../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Iconify from '../../components/Iconify';
 import Page from '../../components/Page';
@@ -31,15 +31,26 @@ import Scrollbar from '../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSelectedActions, TableSkeleton } from '../../components/table';
 import { ROWS_PER_PAGE_OPTIONS } from '../../constants';
 import useResponsive from '../../hooks/useResponsive';
-import useSettings from '../../hooks/useSettings';
 import useTable from '../../hooks/useTable';
+import {
+  closeModal,
+  deletePlanning,
+  deletePlannings,
+  filterPlannings,
+  getPlanningsByRange,
+  selectPlanning,
+  selectRange,
+  setPlanningFilterTerm,
+} from '../../redux/actions/calendarAction';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
 import {
   PlanningCalendarForm,
   PlanningCalendarStyle,
   PlanningCalendarToolbar,
 } from '../../sections/plannings/calendar';
-import { PlanningTableRow } from '../../sections/plannings/list';
-import axios from '../../utils/axios';
+import { PlanningTableRow, PlanningTableToolbar } from '../../sections/plannings/list';
+import dayjs from 'dayjs';
+import PlanningCalendarUploadDialog from '../../sections/plannings/calendar/PlanningCalendarUploadDialog';
 
 const TABLE_HEAD = [
   { id: 'startDate', label: 'Start', align: 'left' },
@@ -66,13 +77,13 @@ export default function PlanningList() {
     onChangeRowsPerPage,
   } = useTable();
 
-  const navigate = useNavigate();
-
   const { enqueueSnackbar } = useSnackbar();
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const dispatch = useDispatch();
 
-  const { themeStretch } = useSettings();
+  const { events, selectedRange, filteredPlannings, currentPlanning, isLoading, isOpenModal } = useSelector(
+    (state: RootState) => state.calendar,
+  );
 
   const isDesktop = useResponsive('up', 'sm');
 
@@ -82,117 +93,84 @@ export default function PlanningList() {
 
   const [view, setView] = useState<CalendarView>(isDesktop ? 'dayGridMonth' : 'listWeek');
 
-  const [plannings, setPlannings] = useState<Planning[]>([]);
-
-  const [events, setEvents] = useState<EventInput[]>([]);
-
-  const [selectedPlanning, setSelectedPlanning] = useState<Planning | null>(null);
-
-  const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
-
   const [viewRange, setViewRange] = useState<DateRange | null>(null);
 
-  const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
+  const [filterName, setFilterName] = useState<string>('');
 
   const refreshViewRange = (calendarEl: FullCalendar | null) => {
     if (!calendarEl) {
       return;
     }
 
-    setViewRange({
-      start: calendarEl.getApi().view.activeStart,
-      end: calendarEl.getApi().view.activeEnd,
-    });
+    const { currentStart } = calendarEl.getApi().view;
+    const range = {
+      start: dayjs(currentStart).startOf('M').toDate(),
+      end: dayjs(currentStart).endOf('M').toDate(),
+    };
+    setViewRange(range);
+    refreshData(range);
   };
 
   useEffect(() => {
     refreshViewRange(calendarRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!viewRange) {
+  const refreshData = (range: DateRange | null) => {
+    if (!range) {
       return;
     }
+
+    const { start, end } = range;
+    const filter: FilterPlanning = {
+      start,
+      end,
+    };
 
     (async () => {
-      await refreshData();
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewRange]);
-
-  const refreshData = async () => {
-    if (!viewRange) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { start, end } = viewRange;
-      const response = await axios.get<Planning[]>('/plannings', { params: { start, end } });
-      const { data: plannings } = response;
-      setPlannings(plannings);
-      setEvents(
-        plannings.map((planning) => {
-          return {
-            id: planning.id.toString(),
-            title: planning.title,
-            start: planning.startDate,
-            end: planning.endDate,
-            allDay: planning.allDay,
-            textColor: planning.color,
-          };
+      await dispatch(getPlanningsByRange(filter));
+      dispatch(
+        selectRange({
+          start: dayjs().startOf('d').toDate(),
+          end: dayjs().startOf('d').add(1, 'd').toDate(),
         }),
       );
-      setIsLoading(false);
-    } catch (error) {
-      setPlannings([]);
-      setEvents([]);
-      setPage(0);
-      setIsLoading(false);
-      console.log(error);
-    }
+      dispatch(filterPlannings());
+    })();
+  };
+
+  const handleFilterName = (filterName: string) => {
+    setFilterName(filterName);
+    dispatch(setPlanningFilterTerm(filterName));
+  };
+
+  const handleSearch = async () => {
+    setPage(0);
+    dispatch(filterPlannings());
   };
 
   const handleDeleteRow = async (id: number) => {
-    try {
-      await axios.delete(`/plannings/${id}`);
-      await refreshData();
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deletePlanning(id));
+    dispatch(filterPlannings());
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
-    try {
-      await axios.delete(`/plannings`, {
-        params: { ids: selectedIds },
-      });
-      await refreshData();
-      setSelected([]);
-    } catch (error) {
-      console.log(error);
-    }
+    await dispatch(deletePlannings(selectedIds));
+    dispatch(filterPlannings());
+    setSelected([]);
   };
 
   const handleEditRow = (id: number) => {
-    setSelectedRange(null);
-    setSelectedPlanning(plannings.filter((planning) => planning.id === id)[0]);
-    setIsOpenModal(true);
+    dispatch(selectPlanning({ id }));
   };
 
   const handleDuplicateRow = (id: number) => {
-    const duplicate = plannings.filter((planning) => planning.id === id)[0];
-    duplicate.id = -1;
-
-    setSelectedRange(null);
-    setSelectedPlanning(duplicate);
-    setIsOpenModal(true);
+    dispatch(selectPlanning({ id, isDuplicate: true }));
   };
 
   const denseHeight = dense ? 60 : 80;
 
-  const isNotFound = !isLoading && !plannings.length;
+  const isNotFound = !isLoading && !filteredPlannings.length;
 
   useEffect(() => {
     const calendarEl = calendarRef.current;
@@ -227,6 +205,8 @@ export default function PlanningList() {
     if (calendarEl) {
       const calendarApi = calendarEl.getApi();
       calendarApi.prev();
+
+      calendarApi.select(calendarApi.getDate());
       setDate(calendarApi.getDate());
       refreshViewRange(calendarEl);
     }
@@ -237,6 +217,8 @@ export default function PlanningList() {
     if (calendarEl) {
       const calendarApi = calendarEl.getApi();
       calendarApi.next();
+
+      calendarApi.select(calendarApi.getDate());
       setDate(calendarApi.getDate());
       refreshViewRange(calendarEl);
     }
@@ -245,40 +227,74 @@ export default function PlanningList() {
   const handleSelectDate = (arg: DateSelectArg) => {
     const calendarEl = calendarRef.current;
     if (calendarEl) {
-      const calendarApi = calendarEl.getApi();
-      calendarApi.unselect();
+      setDate(arg.start);
     }
 
-    setSelectedRange({ start: arg.start, end: arg.end });
-    setSelectedPlanning(null);
-    setIsOpenModal(true);
+    setPage(0);
+    dispatch(selectRange({ start: arg.start, end: arg.end }));
+    dispatch(filterPlannings());
+  };
+
+  const handleAdd = () => {
+    dispatch(selectPlanning({ id: null }));
   };
 
   const handleSelectEvent = (arg: EventClickArg) => {
     const id = Number(arg.event.id);
 
-    setSelectedRange(null);
-    setSelectedPlanning(plannings.filter((planning) => planning.id === id)[0]);
-    setIsOpenModal(true);
+    dispatch(selectPlanning({ id }));
   };
 
-  const handleCloseModal = async (refresh: boolean) => {
-    setIsOpenModal(false);
-    setSelectedRange(null);
-    setSelectedPlanning(null);
+  const handleCloseModal = (refresh: boolean) => {
+    dispatch(closeModal());
 
     if (refresh) {
-      await refreshData();
+      refreshData(viewRange);
     }
   };
 
   const handleDialogDelete = async () => {
-    if (!selectedPlanning) {
+    if (!currentPlanning) {
       return;
     }
 
-    await handleDeleteRow(selectedPlanning.id);
+    await handleDeleteRow(currentPlanning.id);
     enqueueSnackbar('Delete success!');
+  };
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+
+  const [deletingItems, setDeletingItems] = useState<number[]>([]);
+
+  const handleOpenDeleteDialog = async (ids: number[]) => {
+    setOpenDeleteDialog(true);
+    setDeletingItems(ids);
+  };
+
+  const handleConfirmDelete = async (confirm?: boolean) => {
+    if (!confirm) {
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    if (deletingItems.length === 1 && selected.length === 0) {
+      await handleDeleteRow(deletingItems[0]);
+    } else {
+      await handleDeleteRows(deletingItems);
+    }
+
+    setOpenDeleteDialog(false);
+  };
+
+  const [openUploadDialog, setOpenUploadDialog] = useState<boolean>(false);
+
+  const handleUploadClose = (success?: boolean) => {
+    if (success) {
+      refreshData(viewRange);
+      enqueueSnackbar('Upload completed');
+    }
+
+    setOpenUploadDialog(false);
   };
 
   return (
@@ -292,6 +308,17 @@ export default function PlanningList() {
               name: 'Plannings',
             },
           ]}
+          action={
+            <Stack spacing={1} direction="row">
+              <Button variant="outlined" component="label" onClick={() => setOpenUploadDialog(true)}>
+                Import Excel
+              </Button>
+
+              <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={() => handleAdd()}>
+                New
+              </Button>
+            </Stack>
+          }
         />
 
         <Stack spacing={3}>
@@ -310,6 +337,7 @@ export default function PlanningList() {
                 // editable
                 // droppable
                 selectable
+                unselectAuto={false}
                 events={events}
                 ref={calendarRef}
                 rerenderDelay={10}
@@ -331,22 +359,23 @@ export default function PlanningList() {
           </Card>
 
           <Card>
+            <PlanningTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
             <Scrollbar>
               <TableContainer sx={{ minWidth: 800, mt: 1 }}>
                 {selected.length > 0 && (
                   <TableSelectedActions
                     dense={dense}
                     numSelected={selected.length}
-                    rowCount={plannings.length}
+                    rowCount={filteredPlannings.length}
                     onSelectAllRows={(checked) =>
                       onSelectAllRows(
                         checked,
-                        plannings.map((row) => row.id),
+                        filteredPlannings.map((row) => row.id),
                       )
                     }
                     actions={
                       <Tooltip title="Delete">
-                        <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
+                        <IconButton color="primary" onClick={() => handleOpenDeleteDialog(selected)}>
                           <Iconify icon={'eva:trash-2-outline'} />
                         </IconButton>
                       </Tooltip>
@@ -359,33 +388,35 @@ export default function PlanningList() {
                     // order={order}
                     // orderBy={orderBy}
                     headLabel={TABLE_HEAD}
-                    rowCount={plannings.length}
+                    rowCount={filteredPlannings.length}
                     numSelected={selected.length}
                     // onSort={onSort}
                     onSelectAllRows={(checked) =>
                       onSelectAllRows(
                         checked,
-                        plannings.map((row) => row.id),
+                        filteredPlannings.map((row) => row.id),
                       )
                     }
                   />
 
                   <TableBody>
-                    {(isLoading ? [...Array(rowsPerPage)] : plannings).map((row, index) =>
-                      row ? (
-                        <PlanningTableRow
-                          key={'row_' + row.id}
-                          row={row}
-                          selected={selected.includes(row.id)}
-                          onSelectRow={() => onSelectRow(row.id)}
-                          onDeleteRow={() => handleDeleteRow(row.id)}
-                          onEditRow={() => handleEditRow(row.id)}
-                          onDuplicateRow={() => handleDuplicateRow(row.id)}
-                        />
-                      ) : (
-                        !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />
-                      ),
-                    )}
+                    {(isLoading ? [...Array(rowsPerPage)] : filteredPlannings)
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((row, index) =>
+                        row ? (
+                          <PlanningTableRow
+                            key={'row_' + row.id}
+                            row={row}
+                            selected={selected.includes(row.id)}
+                            onSelectRow={() => onSelectRow(row.id)}
+                            onDeleteRow={() => handleOpenDeleteDialog([row.id])}
+                            onEditRow={() => handleEditRow(row.id)}
+                            onDuplicateRow={() => handleDuplicateRow(row.id)}
+                          />
+                        ) : (
+                          !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />
+                        ),
+                      )}
 
                     <TableNoData key={'noData'} isNotFound={isNotFound} />
                   </TableBody>
@@ -397,7 +428,7 @@ export default function PlanningList() {
               <TablePagination
                 rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
-                count={plannings.length}
+                count={filteredPlannings.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={onChangePage}
@@ -408,15 +439,26 @@ export default function PlanningList() {
         </Stack>
 
         <DialogAnimate open={isOpenModal} onClose={() => handleCloseModal(false)}>
-          <DialogTitle>{selectedPlanning ? 'Edit Event' : 'Add Event'}</DialogTitle>
+          <DialogTitle>{currentPlanning ? 'Edit Event' : 'Add Event'}</DialogTitle>
 
           <PlanningCalendarForm
-            planning={selectedPlanning}
+            currentPlanning={currentPlanning}
             range={selectedRange}
             onDelete={handleDialogDelete}
-            onCancel={(refresh) => handleCloseModal(refresh)}
+            onClose={(refresh) => handleCloseModal(refresh)}
           />
         </DialogAnimate>
+
+        <DeleteConfirmationDialog
+          id="confirmDeleting"
+          title="Confirmation"
+          content="Do you want to delete?"
+          keepMounted
+          open={openDeleteDialog}
+          onClose={handleConfirmDelete}
+        />
+
+        <PlanningCalendarUploadDialog keepMounted open={openUploadDialog} onClose={handleUploadClose} />
       </Container>
     </Page>
   );

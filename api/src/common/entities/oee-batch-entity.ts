@@ -7,6 +7,7 @@ import { OeeBatchPEntity } from './oee-batch-p-entity';
 import { OeeStats } from '../type/oee-stats';
 import { MachineEntity } from './machine-entity';
 import { OeeBatchMcState } from '../type/oee-status';
+import { PlanningEntity } from './planning-entity';
 
 @Entity('oeeBatches')
 export class OeeBatchEntity {
@@ -60,6 +61,12 @@ export class OeeBatchEntity {
 
   @Column({ type: 'int' })
   siteId: number;
+
+  @Column({ type: 'int', nullable: true })
+  planningId: number;
+
+  @ManyToOne(() => PlanningEntity, { onDelete: 'SET NULL' })
+  planning: PlanningEntity;
 
   @Column({ type: 'int' })
   oeeId: number;

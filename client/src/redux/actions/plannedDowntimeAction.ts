@@ -69,6 +69,7 @@ export function deletePlannedDowntime(id: number) {
 
     try {
       await axios.delete(`/planned-downtimes/${id}`);
+      dispatch(plannedDowntimeSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(plannedDowntimeSlice.actions.hasError(error));
     }
@@ -83,6 +84,7 @@ export function deletePlannedDowntimes(selectedIds: number[]) {
       await axios.delete(`/planned-downtimes`, {
         params: { ids: selectedIds },
       });
+      dispatch(plannedDowntimeSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(plannedDowntimeSlice.actions.hasError(error));
     }

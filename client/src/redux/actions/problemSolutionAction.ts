@@ -78,6 +78,7 @@ export function deleteProblemSolution(id: number) {
 
     try {
       await axios.delete(`/problems-solutions/${id}`);
+      dispatch(problemSolutionSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(problemSolutionSlice.actions.hasError(error));
     }
@@ -92,6 +93,7 @@ export function deleteProblemSolutions(selectedIds: number[]) {
       await axios.delete(`/problems-solutions`, {
         params: { ids: selectedIds },
       });
+      dispatch(problemSolutionSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(problemSolutionSlice.actions.hasError(error));
     }

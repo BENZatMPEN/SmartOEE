@@ -3,8 +3,9 @@ import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
-import { merge } from 'lodash';
 import { PlanningEntity } from '../common/entities/planning-entity';
+import { FilterPlanningDto } from './dto/filter-planning.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class PlanningService {
@@ -13,9 +14,14 @@ export class PlanningService {
     private planningRepository: Repository<PlanningEntity>,
   ) {}
 
-  findByDateRange(siteId: number, start: Date, end: Date): Promise<PlanningEntity[]> {
+  findByDateRange(filterDto: FilterPlanningDto): Promise<PlanningEntity[]> {
     return this.planningRepository.find({
-      where: { deleted: false, siteId, startDate: MoreThanOrEqual(start), endDate: LessThanOrEqual(end) },
+      where: {
+        deleted: false,
+        siteId: filterDto.siteId,
+        startDate: MoreThanOrEqual(filterDto.start),
+        endDate: LessThanOrEqual(filterDto.end),
+      },
       order: { startDate: 'asc' },
       relations: ['oee', 'product', 'user'],
     });
@@ -27,34 +33,35 @@ export class PlanningService {
     });
   }
 
-  create(createDto: CreatePlanningDto): Promise<PlanningEntity> {
+  create(createDto: CreatePlanningDto, siteId: number): Promise<PlanningEntity> {
     return this.planningRepository.save({
-      oeeId: 1,
-      siteId: 1,
-      userId: 1,
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdatePlanningDto): Promise<PlanningEntity> {
-    const updatingAlarm = await this.planningRepository.findOneBy({ id });
+  async update(id: number, updateDto: UpdatePlanningDto, siteId: number): Promise<PlanningEntity> {
+    const updatingAlarm = await this.planningRepository.findOneBy({ id, siteId });
     return this.planningRepository.save({
-      ...merge({}, updatingAlarm, updateDto),
+      ...updatingAlarm,
+      ...updateDto,
       updatedAt: new Date(),
     });
   }
 
-  async delete(id: number): Promise<void> {
-    const alarm = await this.planningRepository.findOneBy({ id });
-    alarm.deleted = true;
-    alarm.updatedAt = new Date();
-    await this.planningRepository.save(alarm);
+  async delete(id: number, siteId: number): Promise<void> {
+    await this.planningRepository.save({
+      id,
+      siteId,
+      deleted: true,
+      updatedAt: new Date(),
+    });
   }
 
-  async deleteMany(ids: number[]): Promise<void> {
-    const alarms = await this.planningRepository.findBy({ id: In(ids) });
+  async deleteMany(ids: number[], siteId: number): Promise<void> {
+    const alarms = await this.planningRepository.findBy({ id: In(ids), siteId });
     await this.planningRepository.save(
       alarms.map((alarm) => {
         alarm.deleted = true;

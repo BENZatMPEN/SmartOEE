@@ -49,6 +49,9 @@ const faqSlice = createSlice({
       state.isLoading = false;
       state.currentFaq = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

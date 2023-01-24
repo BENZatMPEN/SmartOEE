@@ -22,10 +22,8 @@ import useTable from '../../../../hooks/useTable';
 import useToggle from '../../../../hooks/useToggle';
 import { updateBatchParamA } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { fNumber2 } from '../../../../utils/formatNumber';
-import { getTimeUnitShortText } from '../../../../utils/formatText';
+import { fSeconds } from '../../../../utils/formatNumber';
 import { fDateTime } from '../../../../utils/formatTime';
-import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardOperatingOeeADialog from './DashboardOperatingOeeADialog';
 
 export default function DashboardOperatingOeeA() {
@@ -36,11 +34,7 @@ export default function DashboardOperatingOeeA() {
 
   const dispatch = useDispatch();
 
-  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
-
   const { currentBatch, canEditBatch, batchParamAs } = useSelector((state: RootState) => state.oeeBatch);
-
-  const { timeUnit } = selectedOee || { timeUnit: '' };
 
   const { oeeStats, machines } = currentBatch || { machines: [] };
 
@@ -55,7 +49,7 @@ export default function DashboardOperatingOeeA() {
     { id: 'timestamp', label: 'Timestamp', align: 'left' },
     { id: 'machineId', label: 'Machine', align: 'left' },
     { id: 'machineParameterId', label: 'Cause', align: 'left' },
-    { id: 'seconds', label: `Duration (${getTimeUnitShortText(timeUnit)})`, align: 'left' },
+    { id: 'seconds', label: `Duration`, align: 'left' },
     { id: '' },
   ];
 
@@ -102,9 +96,7 @@ export default function DashboardOperatingOeeA() {
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Total Time:
               </Typography>
-              <Typography variant="subtitle1">
-                {fNumber2(convertToUnit(totalBreakdownSeconds, timeUnit))} {getTimeUnitShortText(timeUnit)}
-              </Typography>
+              <Typography variant="subtitle1">{fSeconds(totalBreakdownSeconds)}</Typography>
             </Stack>
           </Stack>
         </Box>
@@ -130,7 +122,7 @@ export default function DashboardOperatingOeeA() {
 
                       <TableCell align="left">{getMachineParamName(row)}</TableCell>
 
-                      <TableCell align="left">{fNumber2(convertToUnit(row.seconds, timeUnit))}</TableCell>
+                      <TableCell align="left">{fSeconds(row.seconds)}</TableCell>
 
                       <TableCell align="left">
                         <Button

@@ -1,4 +1,4 @@
-import { EditFaq, FilterFaq, Faq, FaqPagedList } from '../../@types/faq';
+import { EditFaq, Faq, FaqPagedList, FilterFaq } from '../../@types/faq';
 import axios from '../../utils/axios';
 import faqSlice from '../slices/faqSlice';
 import { dispatch } from '../store';
@@ -73,6 +73,7 @@ export function deleteFaq(id: number) {
 
     try {
       await axios.delete(`/faqs/${id}`);
+      dispatch(faqSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(faqSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteFaqs(selectedIds: number[]) {
       await axios.delete(`/faqs`, {
         params: { ids: selectedIds },
       });
+      dispatch(faqSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(faqSlice.actions.hasError(error));
     }

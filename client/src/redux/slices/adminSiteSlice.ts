@@ -49,6 +49,9 @@ const adminSiteSlice = createSlice({
       state.isLoading = false;
       state.currentSite = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

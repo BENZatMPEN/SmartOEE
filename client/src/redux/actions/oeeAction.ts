@@ -73,6 +73,7 @@ export function deleteOee(id: number) {
 
     try {
       await axios.delete(`/oees/${id}`);
+      dispatch(oeeSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(oeeSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteOees(selectedIds: number[]) {
       await axios.delete(`/oees`, {
         params: { ids: selectedIds },
       });
+      dispatch(oeeSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(oeeSlice.actions.hasError(error));
     }

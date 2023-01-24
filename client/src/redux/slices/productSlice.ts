@@ -49,6 +49,9 @@ const productSlice = createSlice({
       state.isLoading = false;
       state.currentProduct = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

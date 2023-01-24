@@ -65,6 +65,7 @@ export function deleteRole(id: number) {
 
     try {
       await axios.delete(`/roles/${id}`);
+      dispatch(roleSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(roleSlice.actions.hasError(error));
     }
@@ -79,6 +80,7 @@ export function deleteRoles(selectedIds: number[]) {
       await axios.delete(`/roles`, {
         params: { ids: selectedIds },
       });
+      dispatch(roleSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(roleSlice.actions.hasError(error));
     }

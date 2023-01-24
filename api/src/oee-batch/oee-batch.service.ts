@@ -125,7 +125,7 @@ export class OeeBatchService {
   }
 
   async create(oeeId: number, createDto: CreateOeeBatchDto): Promise<OeeBatchEntity> {
-    const { startDate, endDate, plannedQuantity, productId, lotNumber } = createDto;
+    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId } = createDto;
     const oee = await this.oeeRepository.findOneBy({ id: oeeId });
     const oeeProduct = await this.oeeProductRepository.findOne({
       where: { oeeId: oeeId, productId: productId },
@@ -153,6 +153,7 @@ export class OeeBatchService {
       targetQuantity,
       product,
       machines,
+      planningId: planningId && planningId === -1 ? null : planningId,
       siteId: oee.siteId,
       status: OEE_BATCH_STATUS_UNKNOWN,
       minorStopSeconds: oee.minorStopSeconds,

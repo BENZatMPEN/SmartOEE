@@ -49,6 +49,9 @@ const deviceSlice = createSlice({
       state.isLoading = false;
       state.currentDevice = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

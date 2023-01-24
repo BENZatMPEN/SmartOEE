@@ -1,4 +1,4 @@
-import { IsDate, IsNumber, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOeeBatchDto {
@@ -21,6 +21,11 @@ export class CreateOeeBatchDto {
   @IsNumber()
   @Type(() => Number)
   readonly productId: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  readonly planningId?: number;
 
   @IsString()
   readonly lotNumber: string;

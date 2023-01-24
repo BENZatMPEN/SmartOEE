@@ -49,6 +49,9 @@ const oeeSlice = createSlice({
       state.isLoading = false;
       state.currentOee = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

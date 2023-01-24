@@ -3,16 +3,17 @@ import { ApexOptions } from 'apexcharts';
 import { useEffect, useMemo, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { OeeBatchParamParetoData } from '../../../../@types/oeeBatch';
-import { initialOeeStats, OEE_TYPE_Q } from '../../../../constants';
+import { initialOeeStats, OEE_TYPE_A, TIME_UNIT_SECOND } from '../../../../constants';
 import useWebSocket from '../../../../hooks/useWebSocket';
-import { getOeeBatchParetoQ, updateBatchParetoQ } from '../../../../redux/actions/oeeBatchAction';
+import { getOeeBatchParetoA, updateBatchParetoA } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
-import { chartTitle } from '../../../../utils/formatText';
+import { fNumber, fNumber2, fPercent, fSeconds } from '../../../../utils/formatNumber';
+import { chartTitle, getTimeUnitText } from '../../../../utils/formatText';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
+import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
 
-export default function DashboardApgGraphQ() {
+export default function DashboardApqGraphA() {
   const dispatch = useDispatch();
 
   const { socket } = useWebSocket();
@@ -21,15 +22,20 @@ export default function DashboardApgGraphQ() {
 
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { useSitePercentSettings, percentSettings } = selectedOee || {
+  const { timeUnit, useSitePercentSettings, percentSettings } = selectedOee || {
+    timeUnit: '',
     useSitePercentSettings: true,
   };
 
-  const { currentBatch, batchStatsTime, batchParetoQ } = useSelector((state: RootState) => state.oeeBatch);
+  const { currentBatch, batchStatsTime, batchParetoA } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { id: batchId, oeeStats } = currentBatch || {};
+  const { id: batchId, oeeStats } = currentBatch || {
+    standardSpeedSeconds: 0,
+    plannedQuantity: 0,
+    targetQuantity: 0,
+  };
 
-  const { qPercent, totalCount, totalManualDefects, totalAutoDefects } = oeeStats || initialOeeStats;
+  const { aPercent, operatingSeconds, plannedDowntimeSeconds, totalBreakdownSeconds } = oeeStats || initialOeeStats;
 
   useEffect(() => {
     if (!socket || !batchId) {
@@ -37,13 +43,13 @@ export default function DashboardApgGraphQ() {
     }
 
     const updatePareto = (data: OeeBatchParamParetoData) => {
-      dispatch(updateBatchParetoQ(data));
+      dispatch(updateBatchParetoA(data));
     };
 
-    socket.on(`q-pareto_${batchId}.updated`, updatePareto);
+    socket.on(`a-pareto_${batchId}.updated`, updatePareto);
 
     return () => {
-      socket.off(`q-pareto_${batchId}.updated`, updatePareto);
+      socket.off(`a-pareto_${batchId}.updated`, updatePareto);
     };
   }, [socket, batchId, dispatch]);
 
@@ -75,7 +81,7 @@ export default function DashboardApgGraphQ() {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return fNumber(val);
+            return timeUnit === TIME_UNIT_SECOND ? fNumber(val) : fNumber2(val);
           },
         },
       },
@@ -101,13 +107,13 @@ export default function DashboardApgGraphQ() {
     }
 
     (async () => {
-      await dispatch(getOeeBatchParetoQ(batchId));
+      await dispatch(getOeeBatchParetoA(batchId));
       //
     })();
   }, [dispatch, batchId]);
 
   useEffect(() => {
-    const { labels, counts, percents } = batchParetoQ || { labels: [], counts: [], percents: [] };
+    const { labels, counts, percents } = batchParetoA || { labels: [], counts: [], percents: [] };
     setOptions({
       ...options,
       labels: labels,
@@ -119,9 +125,9 @@ export default function DashboardApgGraphQ() {
 
     setSeries([
       {
-        name: 'Count',
+        name: getTimeUnitText(timeUnit),
         type: 'column',
-        data: counts,
+        data: counts.map((item) => convertToUnit(item, timeUnit)),
       },
       {
         name: '%',
@@ -130,10 +136,10 @@ export default function DashboardApgGraphQ() {
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchParetoQ, batchStatsTime]);
+  }, [batchParetoA, batchStatsTime]);
 
   const percents = useMemo(
-    () => getPercentSettingsByType(selectedSite, percentSettings || [], useSitePercentSettings, OEE_TYPE_Q),
+    () => getPercentSettingsByType(selectedSite, percentSettings || [], useSitePercentSettings, OEE_TYPE_A),
     [selectedSite, percentSettings, useSitePercentSettings],
   );
 
@@ -143,19 +149,19 @@ export default function DashboardApgGraphQ() {
         <Grid container alignItems="center" spacing={3}>
           <Grid item xs={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, gap: 3 }}>
-              <Typography variant="h2">Q</Typography>
+              <Typography variant="h2">A</Typography>
 
               <Box>
                 <DashboardPieChart
                   high={percents.high}
                   medium={percents.medium}
                   low={percents.low}
-                  oeeType={OEE_TYPE_Q}
-                  percent={qPercent}
+                  oeeType={OEE_TYPE_A}
+                  percent={aPercent}
                 />
 
                 <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
-                  Quality
+                  Availability
                 </Typography>
               </Box>
             </Box>
@@ -163,15 +169,11 @@ export default function DashboardApgGraphQ() {
 
           <Grid item xs={4}>
             <Stack spacing={1}>
-              <ItemBox head="Total Product" value={fNumber(totalCount)} tail="pcs." />
+              <ItemBox head="Total Run Time" value={fSeconds(operatingSeconds)} />
 
-              <ItemBox
-                head="Good Product"
-                value={fNumber(totalCount - totalAutoDefects + totalManualDefects)}
-                tail="pcs."
-              />
+              <ItemBox head="Planned Downtime" value={fSeconds(plannedDowntimeSeconds)} />
 
-              <ItemBox head="Defect Product" value={fNumber(totalAutoDefects + totalManualDefects)} tail="pcs." />
+              <ItemBox head="Breakdown Time" value={fSeconds(totalBreakdownSeconds)} />
             </Stack>
           </Grid>
 
@@ -187,7 +189,7 @@ export default function DashboardApgGraphQ() {
 type ItemBoxPros = {
   head: string;
   value: string;
-  tail: string;
+  tail?: string;
 };
 
 function ItemBox({ head, value, tail }: ItemBoxPros) {

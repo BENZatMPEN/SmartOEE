@@ -1,14 +1,13 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import { Box, Button, DialogActions, Divider, IconButton, MenuItem, Stack, Tooltip } from '@mui/material';
-import merge from 'lodash/merge';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { DateRange } from '../../../@types/calendar';
 import { Oee } from '../../../@types/oee';
-import { Planning } from '../../../@types/planning';
+import { EditPlanning, Planning } from '../../../@types/planning';
 import { Product } from '../../../@types/product';
 import { User } from '../../../@types/user';
 import { ColorSinglePicker } from '../../../components/color-utils';
@@ -16,6 +15,10 @@ import { FormProvider, RHFSelect, RHFSwitch, RHFTextField } from '../../../compo
 import { RHFDatePicker, RHFDateTimePicker } from '../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../components/Iconify';
 import axios from '../../../utils/axios';
+import { createPlanning, updatePlanning } from '../../../redux/actions/calendarAction';
+import { RootState, useDispatch, useSelector } from '../../../redux/store';
+import { AxiosError } from 'axios';
+import dayjs from 'dayjs';
 
 const COLOR_OPTIONS = [
   '#00AB55', // theme.palette.primary.main,
@@ -27,43 +30,90 @@ const COLOR_OPTIONS = [
   '#7A0C2E', // theme.palette.error.darker
 ];
 
-const getInitialValues = (planning: Planning | null, range: DateRange | null) => {
-  const initialEvent = {
-    title: '',
-    remark: '',
-    lotNumber: '',
-    oeeId: -1,
-    productId: -1,
-    userId: -1,
-    plannedQuantity: 0,
-    color: '#00AB55',
-    allDay: false,
-    startDate: range ? new Date(range.start) : new Date(),
-    endDate: range ? new Date(range.end) : new Date(),
-  };
-
-  if (planning) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, oeeId, productId, userId, ...other } = planning;
-    return merge({}, initialEvent, other);
-  }
-
-  return initialEvent;
-};
-
-interface FormValuesProps extends Partial<Planning> {}
-
 type Props = {
-  planning: Planning | null;
+  currentPlanning: Planning | null;
   range: DateRange | null;
-  onCancel: (refresh: boolean) => void;
+  onClose: (refresh: boolean) => void;
   onDelete: VoidFunction;
 };
 
-export default function PlanningCalendarForm({ planning, range, onDelete, onCancel }: Props) {
+export default function PlanningCalendarForm({ currentPlanning, range, onDelete, onClose }: Props) {
   const { enqueueSnackbar } = useSnackbar();
 
-  const isEdit = planning !== null && planning.id > 0;
+  const dispatch = useDispatch();
+
+  const { saveError, isDuplicate } = useSelector((state: RootState) => state.calendar);
+
+  const isEdit = currentPlanning !== null && !isDuplicate;
+
+  const [oees, setOees] = useState<Oee[]>([]);
+
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const [users, setUsers] = useState<User[]>([]);
+
+  const [formValues, setFormValues] = useState<EditPlanning | undefined>(undefined);
+
+  useEffect(() => {
+    (async () => {
+      await getOees();
+      await getUsers();
+
+      if (currentPlanning) {
+        await getProducts(currentPlanning.oeeId);
+      }
+
+      setFormValues({
+        title: currentPlanning?.title || '',
+        remark: currentPlanning?.remark || '',
+        lotNumber: currentPlanning?.lotNumber || '',
+        oeeId: currentPlanning?.oeeId || -1,
+        productId: currentPlanning?.productId || -1,
+        userId: currentPlanning?.userId || -1,
+        plannedQuantity: currentPlanning?.plannedQuantity || 0,
+        color: currentPlanning?.color || '#00AB55',
+        allDay: currentPlanning ? currentPlanning.allDay : false,
+        startDate: currentPlanning?.startDate || (range ? new Date(range.start) : dayjs().startOf('d').toDate()),
+        endDate: currentPlanning?.endDate || (range ? new Date(range.end) : dayjs().endOf('d').toDate()),
+      });
+    })();
+
+    return () => {
+      setOees([]);
+      setProducts([]);
+      setUsers([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlanning]);
+
+  const getOees = async () => {
+    try {
+      const response = await axios.get<Oee[]>('/oees/all');
+      const { data: oees } = response;
+      setOees(oees);
+      setProducts([]);
+    } catch (error) {
+      setOees([]);
+    }
+  };
+
+  const getProducts = async (oeeId: number) => {
+    try {
+      const response = await axios.get<Product[]>(`/oees/${oeeId}/products`);
+      setProducts(response.data);
+    } catch (error) {
+      setProducts([]);
+    }
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get<User[]>('/users/all');
+      setUsers(response.data);
+    } catch (error) {
+      setUsers([]);
+    }
+  };
 
   const EventSchema = Yup.object().shape({
     title: Yup.string().max(255).required('Title is required'),
@@ -74,13 +124,25 @@ export default function PlanningCalendarForm({ planning, range, onDelete, onCanc
     // TODO: validate date range
   });
 
-  const methods = useForm({
+  const methods = useForm<EditPlanning>({
     resolver: yupResolver(EventSchema),
-    defaultValues: getInitialValues(planning, range),
+    defaultValues: {
+      title: '',
+      remark: '',
+      lotNumber: '',
+      oeeId: -1,
+      productId: -1,
+      userId: -1,
+      plannedQuantity: 0,
+      color: '#00AB55',
+      allDay: false,
+      startDate: range ? new Date(range.start) : dayjs().startOf('d').toDate(),
+      endDate: range ? new Date(range.end) : dayjs().add(1, 'd').startOf('d').toDate(),
+    },
+    values: formValues,
   });
 
   const {
-    reset,
     watch,
     control,
     setValue,
@@ -90,91 +152,45 @@ export default function PlanningCalendarForm({ planning, range, onDelete, onCanc
 
   const values = watch();
 
-  const [oees, setOees] = useState<Oee[]>([]);
-
-  const [products, setProducts] = useState<Product[]>([]);
-
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        await getOees();
-        await getUsers();
-
-        if (planning) {
-          await getProducts(planning.oeeId);
-
-          setValue('oeeId', planning.oeeId);
-          setValue('productId', planning.productId);
-          setValue('userId', planning.userId);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planning]);
-
-  const getOees = async () => {
-    try {
-      const response = await axios.get<Oee[]>('/oees/all');
-      const { data: oees } = response;
-      setOees(oees);
-      setProducts([]);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getProducts = async (oeeId: number) => {
-    try {
-      const response = await axios.get<Product[]>(`/oees/${oeeId}/products`);
-      setProducts(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getUsers = async () => {
-    try {
-      const response = await axios.get<User[]>('/users/all');
-      setUsers(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const handleOeeChanged = async (oeeId: number) => {
     setValue('oeeId', oeeId);
     setValue('productId', -1);
     await getProducts(oeeId);
   };
 
-  const onSubmit = async (data: FormValuesProps) => {
-    try {
-      const { id, ...dto } = data;
-      if (isEdit) {
-        await axios.put<Planning>(`/plannings/${planning.id}`, {
-          ...dto,
-          id,
-        });
-        enqueueSnackbar('Update success!');
-      } else {
-        await axios.post<Planning>(`/plannings`, dto);
-        enqueueSnackbar('Create success!');
-      }
+  const onSubmit = async (data: EditPlanning) => {
+    const planning =
+      isEdit && currentPlanning
+        ? await dispatch(updatePlanning(currentPlanning.id, data))
+        : await dispatch(createPlanning(data));
 
-      onCancel(true);
-      reset();
-    } catch (error) {
-      console.error(error);
+    if (planning) {
+      enqueueSnackbar('Update success!');
+      onClose(true);
     }
   };
 
+  useEffect(() => {
+    if (saveError) {
+      if (saveError instanceof AxiosError) {
+        if ('message' in saveError.response?.data) {
+          if (Array.isArray(saveError.response?.data.message)) {
+            for (const item of saveError.response?.data.message) {
+              enqueueSnackbar(item, { variant: 'error' });
+            }
+          } else {
+            enqueueSnackbar(saveError.response?.data.message, { variant: 'error' });
+          }
+        }
+      } else {
+        enqueueSnackbar(saveError.response?.data.error, { variant: 'error' });
+      }
+    }
+  }, [enqueueSnackbar, saveError]);
+
   const handleDelete = async () => {
     onDelete();
-    onCancel(false);
+    onClose(false);
   };
 
   return (
@@ -306,15 +322,15 @@ export default function PlanningCalendarForm({ planning, range, onDelete, onCanc
 
         {values.allDay ? (
           <>
-            <RHFDatePicker name="startDate" label="Start Date" size="small" />
+            <RHFDatePicker key="startDatePicker" name="startDate" label="Start Date" size="small" />
 
-            <RHFDatePicker name="endDate" label="End Date" size="small" />
+            <RHFDatePicker key="endDatePicker" name="endDate" label="End Date" size="small" />
           </>
         ) : (
           <>
-            <RHFDateTimePicker name="startDate" label="Start Date" size="small" />
+            <RHFDateTimePicker key="startDateTimePicker" name="startDate" label="Start Date" size="small" />
 
-            <RHFDateTimePicker name="endDate" label="End Date" size="small" />
+            <RHFDateTimePicker key="endDateTimePicker" name="endDate" label="End Date" size="small" />
           </>
         )}
 
@@ -340,7 +356,7 @@ export default function PlanningCalendarForm({ planning, range, onDelete, onCanc
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Button variant="outlined" color="inherit" onClick={() => onCancel(false)}>
+        <Button variant="outlined" color="inherit" onClick={() => onClose(false)}>
           Cancel
         </Button>
 

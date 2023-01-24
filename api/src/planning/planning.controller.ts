@@ -4,11 +4,12 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseArrayPipe,
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,10 +18,10 @@ import { PlanningService } from './planning.service';
 import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ReqDec } from '../common/decorators/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id.pipe';
-import { SiteEntity } from '../common/entities/site-entity';
 import { PlanningEntity } from '../common/entities/planning-entity';
+import { FilterPlanningDto } from './dto/filter-planning.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as XLSX from 'xlsx';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -28,59 +29,61 @@ import { PlanningEntity } from '../common/entities/planning-entity';
 export class PlanningController {
   constructor(private readonly planningService: PlanningService) {}
 
+  @Post('import')
+  async import(
+    @Body('items', new ParseArrayPipe({ items: CreatePlanningDto })) items: CreatePlanningDto[],
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    for (const createDto of items) {
+      await this.planningService.create(createDto, siteId);
+    }
+  }
+
+  @Post('import-excel')
+  @UseInterceptors(FileInterceptor('file'))
+  async importExcel(@UploadedFile('file') file: Express.Multer.File, @Query('siteId') siteId: number): Promise<void> {
+    const workBook = XLSX.read(file.buffer, { type: 'buffer' });
+    if (workBook.SheetNames.length < 0) {
+      return;
+    }
+
+    const items = XLSX.utils.sheet_to_json(workBook.Sheets[workBook.SheetNames[0]]);
+    for (const item of items) {
+      await this.planningService.create(item as CreatePlanningDto, siteId);
+    }
+  }
+
   @Get()
-  findAll(
-    @ReqDec(SiteIdPipe) siteId: number,
-    @Query('start') start: Date,
-    @Query('end') end: Date,
-  ): Promise<PlanningEntity[]> {
-    return this.planningService.findByDateRange(siteId, start || new Date(), end || new Date());
+  findAll(@Query() filter: FilterPlanningDto): Promise<PlanningEntity[]> {
+    return this.planningService.findByDateRange(filter);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<PlanningEntity> {
-    const planning = await this.planningService.findById(id, siteId);
-    if (!planning) {
-      throw new NotFoundException();
-    }
-
-    return planning;
+  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<PlanningEntity> {
+    return this.planningService.findById(id, siteId);
   }
 
   @Post()
-  create(
-    @Body() createDto: CreatePlanningDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<PlanningEntity> {
-    return this.planningService.create(createDto);
+  create(@Body() createDto: CreatePlanningDto, @Query('siteId') siteId: number): Promise<PlanningEntity> {
+    return this.planningService.create(createDto, siteId);
   }
 
   @Put(':id')
   update(
     @Param('id') id: number,
     @Body() updateDto: UpdatePlanningDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('siteId') siteId: number,
   ): Promise<PlanningEntity> {
-    return this.planningService.update(id, updateDto);
+    return this.planningService.update(id, updateDto, siteId);
   }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.planningService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.planningService.delete(id, siteId);
   }
 
   @Delete()
-  async deleteMany(
-    @Query() dto: IdListDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.planningService.deleteMany(dto.ids);
+  async deleteMany(@Query() dto: IdListDto, @Query('siteId') siteId: number): Promise<void> {
+    await this.planningService.deleteMany(dto.ids, siteId);
   }
 }

@@ -65,6 +65,7 @@ export function deleteDeviceModel(id: number) {
 
     try {
       await axios.delete(`/device-models/${id}`);
+      dispatch(deviceModelSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(deviceModelSlice.actions.hasError(error));
     }
@@ -79,6 +80,7 @@ export function deleteDeviceModels(selectedIds: number[]) {
       await axios.delete(`/device-models`, {
         params: { ids: selectedIds },
       });
+      dispatch(deviceModelSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(deviceModelSlice.actions.hasError(error));
     }

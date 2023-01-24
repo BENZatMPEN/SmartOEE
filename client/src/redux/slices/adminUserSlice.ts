@@ -49,6 +49,9 @@ const adminUserSlice = createSlice({
       state.isLoading = false;
       state.currentUser = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

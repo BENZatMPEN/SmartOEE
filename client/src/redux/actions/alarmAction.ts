@@ -65,6 +65,7 @@ export function deleteAlarm(id: number) {
 
     try {
       await axios.delete(`/alarms/${id}`);
+      dispatch(alarmSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(alarmSlice.actions.hasError(error));
     }
@@ -79,6 +80,7 @@ export function deleteAlarms(selectedIds: number[]) {
       await axios.delete(`/alarms`, {
         params: { ids: selectedIds },
       });
+      dispatch(alarmSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(alarmSlice.actions.hasError(error));
     }

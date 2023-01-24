@@ -73,6 +73,7 @@ export function deleteSite(id: number) {
 
     try {
       await axios.delete(`/admin/sites/${id}`);
+      dispatch(adminSiteSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(adminSiteSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteSites(selectedIds: number[]) {
       await axios.delete(`/admin/sites`, {
         params: { ids: selectedIds },
       });
+      dispatch(adminSiteSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(adminSiteSlice.actions.hasError(error));
     }

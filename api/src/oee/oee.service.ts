@@ -4,7 +4,7 @@ import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { OeeEntity } from 'src/common/entities/oee-entity';
 import { OeeProductEntity } from 'src/common/entities/oee-product-entity';
 import { OeeMachineEntity } from 'src/common/entities/oee-machine-entity';
@@ -14,6 +14,8 @@ import { initialOeeBatchStats } from '../common/type/oee-stats';
 import { OptionItem } from '../common/type/option-item';
 import { SiteEntity } from '../common/entities/site-entity';
 import { FileService } from '../common/services/file.service';
+import { PlanningEntity } from '../common/entities/planning-entity';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class OeeService {
@@ -28,6 +30,8 @@ export class OeeService {
     private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
     @InjectRepository(SiteEntity)
     private siteRepository: Repository<SiteEntity>,
+    @InjectRepository(PlanningEntity)
+    private planningRepository: Repository<PlanningEntity>,
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
   ) {}
@@ -481,5 +485,18 @@ export class OeeService {
         return oee;
       }),
     );
+  }
+
+  findPlanningsById(id: number, siteId: number): Promise<PlanningEntity[]> {
+    return this.planningRepository
+      .createQueryBuilder()
+      .where('deleted = false')
+      .andWhere('oeeId = :oeeId', { oeeId: id })
+      .andWhere('siteId = :siteId', { siteId })
+      .andWhere('startDate >= :startDate', { startDate: dayjs().startOf('d').toDate() })
+      .orderBy('startDate', 'ASC')
+      .skip(0)
+      .take(5)
+      .getMany();
   }
 }

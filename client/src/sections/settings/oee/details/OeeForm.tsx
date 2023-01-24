@@ -132,6 +132,13 @@ export default function OeeForm({ isEdit }: Props) {
   const values = watch();
 
   const onSubmit = async (data: EditOee) => {
+    data.oeeMachines = data.oeeMachines.map((item) => {
+      if (item.machine) {
+        item.machine.widgets = [];
+      }
+      return item;
+    });
+
     data.percentSettings = data.useSitePercentSettings ? null : data.percentSettings;
     if (data.timeUnit === 'minute') {
       data.minorStopSeconds = Number(data.minorStopSeconds) * 60;

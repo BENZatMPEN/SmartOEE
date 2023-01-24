@@ -49,6 +49,9 @@ const problemSolutionSlice = createSlice({
       state.isLoading = false;
       state.currentProblemSolution = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

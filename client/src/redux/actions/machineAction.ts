@@ -73,6 +73,7 @@ export function deleteMachine(id: number) {
 
     try {
       await axios.delete(`/machines/${id}`);
+      dispatch(machineSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(machineSlice.actions.hasError(error));
     }
@@ -87,6 +88,7 @@ export function deleteMachines(selectedIds: number[]) {
       await axios.delete(`/machines`, {
         params: { ids: selectedIds },
       });
+      dispatch(machineSlice.actions.deleteSuccess());
     } catch (error) {
       dispatch(machineSlice.actions.hasError(error));
     }

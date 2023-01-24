@@ -32,7 +32,7 @@ export default function Machine() {
         }
       }
     })();
-    // TODO: there will be multiple machine - use the machine from oeeBatch
+    // TODO: there will be multiple machine
   }, [selectedOee]);
 
   return (

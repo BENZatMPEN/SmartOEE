@@ -8,9 +8,19 @@ import { OeeMachineEntity } from '../common/entities/oee-machine-entity';
 import { SiteEntity } from '../common/entities/site-entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
 import { FileService } from '../common/services/file.service';
+import { PlanningEntity } from '../common/entities/planning-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OeeEntity, OeeProductEntity, OeeMachineEntity, OeeBatchEntity, SiteEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      OeeEntity,
+      OeeProductEntity,
+      OeeMachineEntity,
+      OeeBatchEntity,
+      SiteEntity,
+      PlanningEntity,
+    ]),
+  ],
   controllers: [OeeController],
   providers: [OeeService, FileService],
 })

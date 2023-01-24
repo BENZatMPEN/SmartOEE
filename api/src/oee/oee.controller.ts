@@ -27,6 +27,7 @@ import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
 import { OeeStatus } from '../common/type/oee-status';
 import { OptionItem } from '../common/type/option-item';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
+import { PlanningEntity } from '../common/entities/planning-entity';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -103,6 +104,11 @@ export class OeeController {
   async findMachinesById(@Param('id') id: number): Promise<MachineEntity[]> {
     const oeeMachines = await this.oeeService.findByIdIncludingMachines(id);
     return oeeMachines.map((oeeMachine) => oeeMachine.machine);
+  }
+
+  @Get(':id/plannings')
+  findByOee(@Param('id') id: number, @Query('siteId') siteId: number): Promise<PlanningEntity[]> {
+    return this.oeeService.findPlanningsById(id, siteId);
   }
 
   @Get(':id/latest-batch')

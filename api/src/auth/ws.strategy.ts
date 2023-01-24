@@ -21,9 +21,7 @@ export class WsStrategy extends PassportStrategy(Strategy, 'ws') {
 
   validate(req: Request, payload: any) {
     if ('handshake' in req) {
-      const { headers } = req['handshake'];
-      const { authorization } = headers;
-
+      const authorization = req['handshake']['headers']['authorization'];
       if (!authorization) {
         throw new WsException(this.invalidMessage);
       }

@@ -49,6 +49,9 @@ const plannedDowntimeSlice = createSlice({
       state.isLoading = false;
       state.currentPlannedDowntime = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

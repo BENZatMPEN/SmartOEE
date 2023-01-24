@@ -49,6 +49,9 @@ const roleSlice = createSlice({
       state.isLoading = false;
       state.currentRole = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 

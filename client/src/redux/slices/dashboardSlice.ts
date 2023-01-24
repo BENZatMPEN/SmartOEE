@@ -49,6 +49,9 @@ const dashboardSlice = createSlice({
       state.isLoading = false;
       state.currentDashboard = action.payload;
     },
+    deleteSuccess(state) {
+      state.isLoading = false;
+    },
   },
 });
 
