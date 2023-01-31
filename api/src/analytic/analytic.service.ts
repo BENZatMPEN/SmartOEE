@@ -109,24 +109,25 @@ export class AnalyticService {
     return this.analyticRepository.findOneBy({ id, siteId });
   }
 
-  create(createDto: CreateAnalyticDto): Promise<AnalyticEntity> {
+  create(createDto: CreateAnalyticDto, siteId: number): Promise<AnalyticEntity> {
     return this.analyticRepository.save({
       ...createDto,
+      siteId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
   }
 
-  async update(id: number, updateDto: UpdateAnalyticDto): Promise<AnalyticEntity> {
-    const updatingAnalytic = await this.analyticRepository.findOneBy({ id });
+  async update(id: number, updateDto: UpdateAnalyticDto, siteId: number): Promise<AnalyticEntity> {
+    const updatingAnalytic = await this.analyticRepository.findOneBy({ id, siteId });
     return this.analyticRepository.save({
       ..._.assign(updatingAnalytic, updateDto),
       updatedAt: new Date(),
     });
   }
 
-  async delete(id: number): Promise<void> {
-    const analytic = await this.analyticRepository.findOneBy({ id });
+  async delete(id: number, siteId: number): Promise<void> {
+    const analytic = await this.analyticRepository.findOneBy({ id, siteId });
     await this.analyticRepository.remove(analytic);
   }
 

@@ -26,7 +26,7 @@ import { OptionItem } from '../common/type/option-item';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('admin/sites')
+@Controller('api/admin/sites')
 export class AdminSiteController {
   constructor(private readonly siteService: AdminSiteService) {}
 

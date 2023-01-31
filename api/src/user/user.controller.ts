@@ -26,7 +26,7 @@ import { InjectParamIdTo } from '../common/decorators/request-interceptor.dector
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('users')
+@Controller('api/users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

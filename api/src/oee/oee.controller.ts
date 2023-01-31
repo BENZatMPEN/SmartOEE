@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -28,12 +29,16 @@ import { OeeStatus } from '../common/type/oee-status';
 import { OptionItem } from '../common/type/option-item';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { PlanningEntity } from '../common/entities/planning-entity';
+import { OEE_TYPE_CONTINUOUS, OEE_TYPE_STANDALONE } from '../common/constant';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('oees')
+@Controller('api/oees')
 export class OeeController {
   constructor(private readonly oeeService: OeeService) {}
+
+  readonly oeeCodeExistsMessage = 'Oee Code already exists';
+  readonly tooManyMachineMessage = 'OEE Standalone cannot have more than one machine';
 
   @Get()
   findPagedList(@Query() filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
@@ -62,22 +67,40 @@ export class OeeController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(
+  async create(
     @Body() createDto: CreateOeeDto,
     @UploadedFile(FileSavePipe) image: string,
     @Query('siteId') siteId: number,
   ): Promise<OeeEntity> {
+    const existingOee = await this.oeeService.findByOeeCode(createDto.oeeCode, siteId);
+    if (existingOee) {
+      throw new BadRequestException([this.oeeCodeExistsMessage]);
+    }
+
+    if (createDto.oeeType === OEE_TYPE_STANDALONE && createDto.oeeMachines.length > 1) {
+      throw new BadRequestException([this.tooManyMachineMessage]);
+    }
+
     return this.oeeService.create(createDto, image, siteId);
   }
 
   @Put(':id')
   @UseInterceptors(FileInterceptor('image'))
-  update(
+  async update(
     @Param('id') id: number,
     @Body() updateDto: UpdateOeeDto,
     @UploadedFile(FileSavePipe) image: string,
     @Query('siteId') siteId: number,
   ): Promise<OeeEntity> {
+    const existingOee = await this.oeeService.findByOeeCode(updateDto.oeeCode, siteId);
+    if (existingOee && existingOee.id !== id) {
+      throw new BadRequestException([this.oeeCodeExistsMessage]);
+    }
+
+    if (updateDto.oeeType === OEE_TYPE_STANDALONE && updateDto.oeeMachines.length > 1) {
+      throw new BadRequestException([this.tooManyMachineMessage]);
+    }
+
     return this.oeeService.update(id, updateDto, image, siteId);
   }
 

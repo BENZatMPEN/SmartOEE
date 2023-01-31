@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('devices')
+@Controller('api/devices')
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 

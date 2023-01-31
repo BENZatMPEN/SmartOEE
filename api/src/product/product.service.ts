@@ -48,9 +48,11 @@ export class ProductService {
   }
 
   findById(id: number, siteId: number): Promise<ProductEntity> {
-    return this.productRepository.findOne({
-      where: { id, siteId, deleted: false },
-    });
+    return this.productRepository.findOneBy({ id, siteId, deleted: false });
+  }
+
+  findBySku(sku: string, siteId: number): Promise<ProductEntity> {
+    return this.productRepository.findOneBy({ sku, siteId, deleted: false });
   }
 
   create(createDto: CreateProductDto, imageName: string, siteId: number): Promise<ProductEntity> {

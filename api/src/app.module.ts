@@ -91,11 +91,16 @@ import { AdminUserService } from './admin-user/admin-user.service';
 import { AdminSiteService } from './admin-site/admin-site.service';
 import { AdminSiteModule } from './admin-site/admin-site.module';
 import { AdminUserModule } from './admin-user/admin-user.module';
+import * as path from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'client'),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

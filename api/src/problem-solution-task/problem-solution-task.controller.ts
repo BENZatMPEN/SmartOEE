@@ -23,7 +23,7 @@ import { FileService } from '../common/services/file.service';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('problems-solution-tasks')
+@Controller('api/problems-solution-tasks')
 export class ProblemSolutionTaskController {
   constructor(
     private readonly problemSolutionTaskService: ProblemSolutionTaskService,

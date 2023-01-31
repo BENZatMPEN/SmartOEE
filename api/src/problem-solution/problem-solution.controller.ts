@@ -28,7 +28,7 @@ import { FileService } from '../common/services/file.service';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('problems-solutions')
+@Controller('api/problems-solutions')
 export class ProblemSolutionController {
   constructor(
     private readonly problemSolutionService: ProblemSolutionService,

@@ -1,5 +1,5 @@
-import { IsBoolean, IsNumber, IsObject, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsObject, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateAnalyticDto {
   @IsString()
@@ -9,10 +9,6 @@ export class CreateAnalyticDto {
   readonly data: any;
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Type(() => Boolean)
   readonly group: boolean;
-
-  @IsNumber()
-  @Type(() => Number)
-  readonly siteId: number;
 }

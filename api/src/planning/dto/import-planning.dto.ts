@@ -1,15 +1,12 @@
-import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdatePlanningDto {
+export class ImportPlanningDto {
   @IsString()
   readonly title: string;
 
   @IsString()
   readonly lotNumber: string;
-
-  @IsString()
-  readonly color: string;
 
   @IsDate()
   @Type(() => Date)
@@ -27,15 +24,12 @@ export class UpdatePlanningDto {
   @IsOptional()
   readonly remark: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly productId: number;
+  @IsString()
+  readonly productSku: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly oeeId: number;
+  @IsString()
+  readonly oeeCode: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly userId: number;
+  @IsString()
+  readonly userEmail: string;
 }

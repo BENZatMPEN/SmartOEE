@@ -6,8 +6,8 @@ export class ChartFilterDto {
   readonly type: string;
 
   @IsArray()
-  @Type(() => String)
-  readonly ids: string[];
+  @Type(() => Number)
+  readonly ids: number[];
 
   @IsString()
   readonly duration: string;

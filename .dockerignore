@@ -2,3 +2,5 @@ dist/
 buid/
 node_modules/
 certs/
+
+/data

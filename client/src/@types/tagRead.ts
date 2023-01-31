@@ -3,9 +3,13 @@ export type ReadItem = {
   read: string;
 };
 
+export type DeviceTagResult = {
+  readonly deviceId: number;
+  readonly reads: ReadItem[];
+};
+
 export type TagRead = {
   siteId: number;
-  deviceId: number;
   timestamp: Date;
-  reads: ReadItem[];
+  deviceReads: DeviceTagResult[];
 };

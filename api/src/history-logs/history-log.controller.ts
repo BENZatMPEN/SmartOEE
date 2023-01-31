@@ -19,7 +19,7 @@ import * as dayjs from 'dayjs';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('history-logs')
+@Controller('api/history-logs')
 export class HistoryLogController {
   constructor(private readonly historyLogService: HistoryLogService) {}
 

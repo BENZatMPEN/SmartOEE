@@ -244,118 +244,118 @@ export default function UserForm({ isEdit }: Props) {
         </Grid>
 
         <Grid item xs={12} sm={8}>
-          <Stack spacing={3}></Stack>
-
-          <Card>
-            <CardContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <RHFTextField name="firstName" label="First Name" />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <RHFTextField name="lastName" label="Last Name" />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <RHFTextField name="email" label="Email" />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <RHFSelect
-                    name="roleId"
-                    label="Role"
-                    InputLabelProps={{ shrink: true }}
-                    SelectProps={{ native: false }}
-                    // onChange={(event) => onDeviceModelChanged(Number(event.target.value))}
-                  >
-                    <MenuItem
-                      value={-1}
-                      sx={{
-                        mx: 1,
-                        borderRadius: 0.75,
-                        typography: 'body1',
-                        fontStyle: 'italic',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      None
-                    </MenuItem>
-
-                    <Divider />
-
-                    {roleOptions.map((item) => (
-                      <MenuItem
-                        key={item.id}
-                        value={item.id}
-                        sx={{
-                          mx: 1,
-                          my: 0.5,
-                          borderRadius: 0.75,
-                          typography: 'body1',
-                        }}
-                      >
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </RHFSelect>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <RHFSelect
-                    name="siteIds"
-                    label="Sites"
-                    fullWidth
-                    SelectProps={{
-                      native: false,
-                      multiple: true,
-                      value: values.siteIds,
-                      renderValue: (selected: any) => (
-                        <>
-                          {siteOptions
-                            .filter((item) => selected.indexOf(item.id) > -1)
-                            .map((item) => item.name)
-                            .join(', ')}
-                        </>
-                      ),
-                    }}
-                  >
-                    {siteOptions.map((item) => (
-                      <MenuItem
-                        key={item.id}
-                        value={item.id}
-                        sx={{
-                          mx: 1,
-                          my: 0.5,
-                          borderRadius: 0.75,
-                          typography: 'body2',
-                        }}
-                      >
-                        <Checkbox checked={values.siteIds.indexOf(item.id) > -1} />
-                        {item.name}
-                      </MenuItem>
-                    ))}
-                  </RHFSelect>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {!isEdit && (
+          <Stack spacing={3}>
             <Card>
               <CardContent>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6}>
-                    <RHFTextField type="password" name="password" label="Password" />
+                    <RHFTextField name="firstName" label="First Name" />
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
-                    <RHFTextField type="password" name="confirmPassword" label="Confirm Password" />
+                    <RHFTextField name="lastName" label="Last Name" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField name="email" label="Email" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFSelect
+                      name="roleId"
+                      label="Role"
+                      InputLabelProps={{ shrink: true }}
+                      SelectProps={{ native: false }}
+                      // onChange={(event) => onDeviceModelChanged(Number(event.target.value))}
+                    >
+                      <MenuItem
+                        value={-1}
+                        sx={{
+                          mx: 1,
+                          borderRadius: 0.75,
+                          typography: 'body1',
+                          fontStyle: 'italic',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        None
+                      </MenuItem>
+
+                      <Divider />
+
+                      {roleOptions.map((item) => (
+                        <MenuItem
+                          key={item.id}
+                          value={item.id}
+                          sx={{
+                            mx: 1,
+                            my: 0.5,
+                            borderRadius: 0.75,
+                            typography: 'body1',
+                          }}
+                        >
+                          {item.name}
+                        </MenuItem>
+                      ))}
+                    </RHFSelect>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <RHFSelect
+                      name="siteIds"
+                      label="Sites"
+                      fullWidth
+                      SelectProps={{
+                        native: false,
+                        multiple: true,
+                        value: values.siteIds,
+                        renderValue: (selected: any) => (
+                          <>
+                            {siteOptions
+                              .filter((item) => selected.indexOf(item.id) > -1)
+                              .map((item) => item.name)
+                              .join(', ')}
+                          </>
+                        ),
+                      }}
+                    >
+                      {siteOptions.map((item) => (
+                        <MenuItem
+                          key={item.id}
+                          value={item.id}
+                          sx={{
+                            mx: 1,
+                            my: 0.5,
+                            borderRadius: 0.75,
+                            typography: 'body2',
+                          }}
+                        >
+                          <Checkbox checked={values.siteIds.indexOf(item.id) > -1} />
+                          {item.name}
+                        </MenuItem>
+                      ))}
+                    </RHFSelect>
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
-          )}
+
+            {!isEdit && (
+              <Card>
+                <CardContent>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6}>
+                      <RHFTextField type="password" name="password" label="Password" />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <RHFTextField type="password" name="confirmPassword" label="Confirm Password" />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            )}
+          </Stack>
         </Grid>
       </Grid>
     </FormProvider>

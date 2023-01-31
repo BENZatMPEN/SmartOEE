@@ -37,7 +37,9 @@ export function RHFDateTimePicker({ name, label, size, ...others }: RHFDateTimeP
             label={label}
             value={field.value}
             onChange={(newValue: any) => {
-              field.onChange(newValue);
+              if (newValue) {
+                field.onChange(newValue);
+              }
             }}
             renderInput={(params: any) => (
               <TextField {...params} size={size} fullWidth error={!!error} helperText={error?.message} />
@@ -63,7 +65,9 @@ export function RHFDatePicker({ name, label, size, ...others }: RHFDatePickerPro
             label={label}
             value={field.value}
             onChange={(newValue: any) => {
-              field.onChange(newValue);
+              if (newValue) {
+                field.onChange(newValue);
+              }
             }}
             renderInput={(params: any) => (
               <TextField {...params} size={size} fullWidth error={!!error} helperText={error?.message} />
@@ -88,7 +92,9 @@ export function RHFTimePicker({ name, label, size }: DateTimePickerProps) {
             label={label}
             value={field.value}
             onChange={(newValue: any) => {
-              field.onChange(newValue.year(2000).month(0).date(1).toDate());
+              if (newValue) {
+                field.onChange(newValue.year(2000).startOf('y').toDate());
+              }
             }}
             renderInput={(params: any) => (
               <TextField {...params} size={size} fullWidth error={!!error} helperText={error?.message} />

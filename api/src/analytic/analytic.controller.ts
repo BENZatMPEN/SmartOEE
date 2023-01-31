@@ -14,24 +14,18 @@ import { AnalyticService } from './analytic.service';
 import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
 import { AnalyticEntity } from '../common/entities/analytic-entity';
-import { ReqDec } from '../common/decorators/req-dec';
-import { SiteIdPipe } from '../common/pipe/site-id.pipe';
 import { ChartFilterDto } from './dto/chart-filter-dto';
 
 // @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('analytics')
+@Controller('api/analytics')
 export class AnalyticController {
   constructor(private readonly analyticService: AnalyticService) {}
 
   @Get('oee')
-  async findOee(@ReqDec(SiteIdPipe) siteId: number, @Query() requestDto: ChartFilterDto): Promise<any> {
+  async findOee(@Query() requestDto: ChartFilterDto, @Query('siteId') siteId: number): Promise<any> {
     const { viewType, duration, type, ids, from, to } = requestDto;
-    const objectIds = (ids || []).map((id) => Number(id));
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    if (objectIds.length === 0) {
+    if ((ids || []).length === 0) {
       return {
         rows: [],
         sumRows: [],
@@ -39,9 +33,9 @@ export class AnalyticController {
     }
 
     if (viewType === 'object') {
-      return await this.analyticService.findOeeByObject(siteId, type, objectIds, fromDate, toDate);
+      return await this.analyticService.findOeeByObject(siteId, type, ids, from, to);
     } else if (viewType === 'time') {
-      return await this.analyticService.findOeeByTime(siteId, type, objectIds, duration, fromDate, toDate);
+      return await this.analyticService.findOeeByTime(siteId, type, ids, duration, from, to);
     } else {
       return {
         rows: [],
@@ -51,13 +45,9 @@ export class AnalyticController {
   }
 
   @Get('mc')
-  async findMc(@ReqDec(SiteIdPipe) siteId: number, @Query() requestDto: ChartFilterDto): Promise<any> {
+  async findMc(@Query() requestDto: ChartFilterDto, @Query('siteId') siteId: number): Promise<any> {
     const { viewType, duration, type, ids, from, to } = requestDto;
-    const objectIds = (ids || []).map((id) => Number(id));
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    if (objectIds.length === 0) {
+    if ((ids || []).length === 0) {
       return {
         rows: [],
         sumRows: [],
@@ -65,9 +55,9 @@ export class AnalyticController {
     }
 
     if (viewType === 'object') {
-      return await this.analyticService.findMcByObject(siteId, type, objectIds, fromDate, toDate);
+      return await this.analyticService.findMcByObject(siteId, type, ids, from, to);
     } else if (viewType === 'time') {
-      return await this.analyticService.findMcByTime(siteId, type, objectIds, duration, fromDate, toDate);
+      return await this.analyticService.findMcByTime(siteId, type, ids, duration, from, to);
     }
 
     return {
@@ -77,13 +67,9 @@ export class AnalyticController {
   }
 
   @Get('aParam')
-  async findAPareto(@ReqDec(SiteIdPipe) siteId: number, @Query() requestDto: ChartFilterDto): Promise<any> {
+  async findAPareto(@Query() requestDto: ChartFilterDto, @Query('siteId') siteId: number): Promise<any> {
     const { viewType, duration, type, ids, from, to } = requestDto;
-    const objectIds = (ids || []).map((id) => Number(id));
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    if (objectIds.length === 0) {
+    if ((ids || []).length === 0) {
       return {
         rows: [],
         sumRows: [],
@@ -92,10 +78,10 @@ export class AnalyticController {
 
     if (viewType === 'object') {
       // pareto
-      return await this.analyticService.findAPareto(type, objectIds, fromDate, toDate);
+      return await this.analyticService.findAPareto(type, ids, from, to);
     } else if (viewType === 'time') {
       // pie
-      return await this.analyticService.findAParams(siteId, type, objectIds, duration, fromDate, toDate);
+      return await this.analyticService.findAParams(siteId, type, ids, duration, from, to);
     }
 
     return {
@@ -105,13 +91,9 @@ export class AnalyticController {
   }
 
   @Get('pParam')
-  async findPPareto(@ReqDec(SiteIdPipe) siteId: number, @Query() requestDto: ChartFilterDto): Promise<any> {
+  async findPPareto(@Query() requestDto: ChartFilterDto, @Query('siteId') siteId: number): Promise<any> {
     const { viewType, duration, type, ids, from, to } = requestDto;
-    const objectIds = (ids || []).map((id) => Number(id));
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    if (objectIds.length === 0) {
+    if ((ids || []).length === 0) {
       return {
         rows: [],
         sumRows: [],
@@ -120,10 +102,10 @@ export class AnalyticController {
 
     if (viewType === 'object') {
       // pareto
-      return await this.analyticService.findPPareto(type, objectIds, fromDate, toDate);
+      return await this.analyticService.findPPareto(type, ids, from, to);
     } else if (viewType === 'time') {
       // pie
-      return await this.analyticService.findPParams(siteId, type, objectIds, duration, fromDate, toDate);
+      return await this.analyticService.findPParams(siteId, type, ids, duration, from, to);
     }
 
     return {
@@ -133,13 +115,9 @@ export class AnalyticController {
   }
 
   @Get('qParam')
-  async findQPareto(@ReqDec(SiteIdPipe) siteId: number, @Query() requestDto: ChartFilterDto): Promise<any> {
+  async findQPareto(@Query() requestDto: ChartFilterDto, @Query('siteId') siteId: number): Promise<any> {
     const { viewType, duration, type, ids, from, to } = requestDto;
-    const objectIds = (ids || []).map((id) => Number(id));
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    if (objectIds.length === 0) {
+    if ((ids || []).length === 0) {
       return {
         rows: [],
         sumRows: [],
@@ -148,10 +126,10 @@ export class AnalyticController {
 
     if (viewType === 'object') {
       // pareto
-      return await this.analyticService.findQPareto(type, objectIds, fromDate, toDate);
+      return await this.analyticService.findQPareto(type, ids, from, to);
     } else if (viewType === 'time') {
       // pie
-      return await this.analyticService.findQParams(siteId, type, objectIds, duration, fromDate, toDate);
+      return await this.analyticService.findQParams(siteId, type, ids, duration, from, to);
     }
 
     return {
@@ -161,40 +139,31 @@ export class AnalyticController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @ReqDec(SiteIdPipe) siteId: number): Promise<AnalyticEntity> {
+  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<AnalyticEntity> {
     return this.analyticService.findById(id, siteId);
   }
 
   @Post()
-  create(
-    @Body() createDto: CreateAnalyticDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<AnalyticEntity> {
-    return this.analyticService.create(createDto);
+  create(@Body() createDto: CreateAnalyticDto, @Query('siteId') siteId: number): Promise<AnalyticEntity> {
+    return this.analyticService.create(createDto, siteId);
   }
 
   @Put(':id')
   update(
     @Param('id') id: number,
     @Body() updateDto: UpdateAnalyticDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
+    @Query('siteId') siteId: number,
   ): Promise<AnalyticEntity> {
-    return this.analyticService.update(id, updateDto);
+    return this.analyticService.update(id, updateDto, siteId);
   }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @ReqDec(SiteIdPipe) siteId: number,
-  ): Promise<void> {
-    await this.analyticService.delete(id);
+  async delete(@Param('id') id: number, @Query('siteId') siteId: number): Promise<void> {
+    await this.analyticService.delete(id, siteId);
   }
 
   @Get()
-  findAll(@ReqDec(SiteIdPipe) siteId: number, @Query('group') group: string): Promise<AnalyticEntity[]> {
+  findAll(@Query('group') group: string, @Query('siteId') siteId: number): Promise<AnalyticEntity[]> {
     return this.analyticService.findAll(group === 'true', siteId);
   }
 }

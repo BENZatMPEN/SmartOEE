@@ -8,7 +8,7 @@ import { DeviceModelEntity } from '../common/entities/device-model-entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
-@Controller('device-models')
+@Controller('api/device-models')
 export class DeviceModelController {
   constructor(private readonly deviceModelService: DeviceModelService) {}
 

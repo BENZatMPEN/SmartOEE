@@ -16,6 +16,8 @@ import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-his
 import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
 import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
 import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs-entity';
+import { PlanningEntity } from '../common/entities/planning-entity';
+import { PlanningService } from '../planning/planning.service';
 
 @Module({
   imports: [
@@ -34,9 +36,10 @@ import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs-entity';
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
       TagReadEntity,
+      PlanningEntity,
     ]),
   ],
   controllers: [OeeBatchController],
-  providers: [OeeBatchService],
+  providers: [OeeBatchService, PlanningService],
 })
 export class OeeBatchModule {}

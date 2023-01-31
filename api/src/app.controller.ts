@@ -732,14 +732,18 @@ export class AppController {
       );
     }
 
-    const oeeBatch = await this.oeeBatchService.create(2, {
-      oeeId: 2,
-      productId: 4,
-      lotNumber: 'Test Lot',
-      plannedQuantity: 5000,
-      startDate: new Date(),
-      endDate: new Date(),
-    });
+    const oeeBatch = await this.oeeBatchService.create(
+      2,
+      {
+        oeeId: 2,
+        productId: 4,
+        lotNumber: 'Test Lot',
+        plannedQuantity: 5000,
+        startDate: new Date(),
+        endDate: new Date(),
+      },
+      'admin@user.com',
+    );
 
     await this.oeeBatchService.startBatch(oeeBatch.id);
     for (let i = 0; i < 24; i++) {

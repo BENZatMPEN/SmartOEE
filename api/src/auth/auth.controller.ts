@@ -17,7 +17,7 @@ import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
 import { UserService } from '../user/user.service';
 import { UserEntity } from '../common/entities/user-entity';
 
-@Controller('auth')
+@Controller('api/auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService, private readonly userService: UserService) {}

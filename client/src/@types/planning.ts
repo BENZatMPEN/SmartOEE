@@ -32,9 +32,13 @@ export interface EditPlanning {
   plannedQuantity: number;
   remark: string;
   productId: number;
-  allDay: boolean;
   oeeId: number;
   userId: number;
+}
+
+export interface ImportPlanningResult {
+  success: boolean;
+  invalidRows?: number[];
 }
 
 export type FilterPlanning = {

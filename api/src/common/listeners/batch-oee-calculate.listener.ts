@@ -43,7 +43,7 @@ import { OeeService } from '../../oee/oee.service';
 import { SocketService } from '../services/socket.service';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { Read, ReadItem } from '../type/read';
+import { ReadItem } from '../type/read';
 import { OeeTag, OeeTagMCStatus, OeeTagOutBatchStatus } from '../type/oee-tag';
 import { OeeBatchMcState } from '../type/oee-status';
 import { OeeBatchEntity } from '../entities/oee-batch-entity';
@@ -88,6 +88,7 @@ export class BatchOeeCalculateListener {
     try {
       const { batchId, tagRead } = event;
       const readTimestamp = new Date(tagRead.timestamp);
+      const allReads = tagRead.deviceReads.map((item) => item.reads).flat();
       const batch = await this.oeeBatchService.findById(batchId);
       const oee = await this.oeeService.findById(batch.oeeId);
       const oeeTags = oee.tags || [];
@@ -100,9 +101,9 @@ export class BatchOeeCalculateListener {
         return;
       }
 
-      const currentTagMcState = this.findRead(tagMcState.tagId, tagRead.reads);
-      const currentTagTotal = this.findRead(tagTotal.tagId, tagRead.reads);
-      const currentTagTotalNg = this.findRead(tagTotalNg.tagId, tagRead.reads);
+      const currentTagMcState = this.findRead(tagMcState.tagId, allReads);
+      const currentTagTotal = this.findRead(tagTotal.tagId, allReads);
+      const currentTagTotalNg = this.findRead(tagTotalNg.tagId, allReads);
 
       if (!currentTagMcState || !currentTagTotal || !currentTagTotalNg) {
         this.logger.log(`Tag read doesn't contain the required values.`);
@@ -224,6 +225,7 @@ export class BatchOeeCalculateListener {
         const outVal = this.getTagBatchStatus(currentMcState.batchStatus, activePD, tagBatchStatusData);
         if (outVal !== '') {
           this.socketService.socket.to(`site_${batch.siteId}`).emit(`tag_out`, {
+            deviceId: tagOutBatchStatus.deviceId,
             tagId: tagOutBatchStatus.tagId,
             value: outVal,
           });
@@ -251,16 +253,16 @@ export class BatchOeeCalculateListener {
       ) {
         if (previousMcState.stopSeconds >= batch.breakdownSeconds) {
           // A happens
-          await this.processA(batch, previousMcState, tagRead, readTimestamp);
+          await this.processA(batch, previousMcState, allReads, readTimestamp);
         } else {
           // P happens
-          await this.processP(batch, previousMcState, tagRead, readTimestamp);
+          await this.processP(batch, previousMcState, allReads, readTimestamp);
         }
       }
 
       // check Q
       if (currentMcState.totalNg > previousMcState.totalNg) {
-        await this.processQ(batch, tagRead);
+        await this.processQ(batch, allReads);
       }
 
       await this.handleBatchOeeCalculate(batch.id, previousMcState, currentMcState, oeeTags);
@@ -300,6 +302,7 @@ export class BatchOeeCalculateListener {
     const tagOut = this.findOeeTag(key, oeeTags);
     if (tagOut !== null) {
       this.socketService.socket.to(`site_${siteId}`).emit(`tag_out`, {
+        deviceId: tagOut.deviceId,
         tagId: tagOut.tagId,
         value: outVal,
       });
@@ -505,7 +508,7 @@ export class BatchOeeCalculateListener {
   private async processA(
     batch: OeeBatchEntity,
     previousMcState: OeeBatchMcState,
-    tagRead: Read,
+    reads: ReadItem[],
     readTimestamp: Date,
   ): Promise<void> {
     this.logger.log(`A - breakdown: ${previousMcState.stopSeconds}, (settings: ${batch.breakdownSeconds})`);
@@ -515,7 +518,7 @@ export class BatchOeeCalculateListener {
       .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_A && param.tagId))
       .flat();
     const updatingAs = mcParamAs.reduce((acc, param) => {
-      const idx = tagRead.reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
+      const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
       if (idx < 0) {
         return acc;
       }
@@ -581,7 +584,7 @@ export class BatchOeeCalculateListener {
   private async processP(
     batch: OeeBatchEntity,
     previousMcState: OeeBatchMcState,
-    tagRead: Read,
+    reads: ReadItem[],
     readTimestamp: Date,
   ): Promise<void> {
     if (previousMcState.stopSeconds >= batch.minorStopSeconds) {
@@ -593,7 +596,7 @@ export class BatchOeeCalculateListener {
         .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_P && param.tagId))
         .flat();
       const updatingPs = mcParamPs.reduce((acc, param) => {
-        const idx = tagRead.reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
+        const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
         if (idx < 0) {
           return acc;
         }
@@ -669,16 +672,16 @@ export class BatchOeeCalculateListener {
     }
   }
 
-  private async processQ(batch: OeeBatchEntity, tagRead: Read): Promise<void> {
+  private async processQ(batch: OeeBatchEntity, reads: ReadItem[]): Promise<void> {
     const { siteId, oeeId, product } = batch;
     const currentParams = await this.oeeBatchService.findBatchQsById(batch.id);
     const updatingParams = currentParams.reduce((acc, param) => {
-      const idx = tagRead.reads.findIndex((read) => read.tagId === param.tagId && Number(read.read) > param.autoAmount);
+      const idx = reads.findIndex((read) => read.tagId === param.tagId && Number(read.read) > param.autoAmount);
       if (idx < 0) {
         return acc;
       }
 
-      const newRead = Number(tagRead.reads[idx].read);
+      const newRead = Number(reads[idx].read);
       acc.push({
         id: param.id,
         autoAmount: newRead,

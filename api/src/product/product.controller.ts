@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -26,9 +27,11 @@ import { FileSavePipe } from '../common/pipe/file-save.pipe';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('products')
+@Controller('api/products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
+
+  readonly skuExistsMessage = 'SKU already exists';
 
   @Get()
   findFilter(@Query() filterDto: FilterProductDto): Promise<PagedLisDto<ProductEntity>> {
@@ -52,22 +55,32 @@ export class ProductController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(
+  async create(
     @Body() createDto: CreateProductDto,
     @UploadedFile(FileSavePipe) image: string,
     @Query('siteId') siteId: number,
   ): Promise<ProductEntity> {
+    const existingProduct = await this.productService.findBySku(createDto.sku, siteId);
+    if (existingProduct) {
+      throw new BadRequestException([this.skuExistsMessage]);
+    }
+
     return this.productService.create(createDto, image, siteId);
   }
 
   @Put(':id')
   @UseInterceptors(FileInterceptor('image'))
-  update(
+  async update(
     @Param('id') id: number,
     @Body() updateDto: UpdateProductDto,
     @UploadedFile(FileSavePipe) image: string,
     @Query('siteId') siteId: number,
   ): Promise<ProductEntity> {
+    const existingProduct = await this.productService.findBySku(updateDto.sku, siteId);
+    if (existingProduct && existingProduct.id !== id) {
+      throw new BadRequestException([this.skuExistsMessage]);
+    }
+
     return this.productService.update(id, updateDto, image, siteId);
   }
 

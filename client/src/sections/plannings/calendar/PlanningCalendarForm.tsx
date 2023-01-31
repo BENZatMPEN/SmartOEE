@@ -72,7 +72,6 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
         userId: currentPlanning?.userId || -1,
         plannedQuantity: currentPlanning?.plannedQuantity || 0,
         color: currentPlanning?.color || '#00AB55',
-        allDay: currentPlanning ? currentPlanning.allDay : false,
         startDate: currentPlanning?.startDate || (range ? new Date(range.start) : dayjs().startOf('d').toDate()),
         endDate: currentPlanning?.endDate || (range ? new Date(range.end) : dayjs().endOf('d').toDate()),
       });
@@ -135,7 +134,6 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
       userId: -1,
       plannedQuantity: 0,
       color: '#00AB55',
-      allDay: false,
       startDate: range ? new Date(range.start) : dayjs().startOf('d').toDate(),
       endDate: range ? new Date(range.end) : dayjs().add(1, 'd').startOf('d').toDate(),
     },
@@ -198,6 +196,8 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
       <Stack spacing={3} sx={{ p: 3 }}>
         <RHFTextField name="title" label="Title" size="small" InputLabelProps={{ shrink: true }} />
 
+        <RHFTextField name="lotNumber" label="Lot Number" size="small" InputLabelProps={{ shrink: true }} />
+
         <RHFTextField name="plannedQuantity" label="Planned Quantity" size="small" InputLabelProps={{ shrink: true }} />
 
         <RHFSelect
@@ -235,7 +235,7 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
                 textTransform: 'capitalize',
               }}
             >
-              {oee.productionName}
+              {oee.oeeCode} - {oee.productionName}
             </MenuItem>
           ))}
         </RHFSelect>
@@ -274,7 +274,7 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
                 textTransform: 'capitalize',
               }}
             >
-              {product.name}
+              {product.sku} - {product.name}
             </MenuItem>
           ))}
         </RHFSelect>
@@ -318,21 +318,9 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
           ))}
         </RHFSelect>
 
-        <RHFSwitch name="allDay" label="All day" />
+        <RHFDateTimePicker key="startDateTimePicker" name="startDate" label="Start Date" size="small" />
 
-        {values.allDay ? (
-          <>
-            <RHFDatePicker key="startDatePicker" name="startDate" label="Start Date" size="small" />
-
-            <RHFDatePicker key="endDatePicker" name="endDate" label="End Date" size="small" />
-          </>
-        ) : (
-          <>
-            <RHFDateTimePicker key="startDateTimePicker" name="startDate" label="Start Date" size="small" />
-
-            <RHFDateTimePicker key="endDateTimePicker" name="endDate" label="End Date" size="small" />
-          </>
-        )}
+        <RHFDateTimePicker key="endDateTimePicker" name="endDate" label="End Date" size="small" />
 
         <RHFTextField name="remark" label="Remark" multiline rows={4} size="small" InputLabelProps={{ shrink: true }} />
 

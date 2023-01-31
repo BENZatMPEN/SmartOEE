@@ -26,7 +26,7 @@ import { FileSavePipe } from '../common/pipe/file-save.pipe';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('machines')
+@Controller('api/machines')
 export class MachineController {
   constructor(private readonly machineService: MachineService) {}
 

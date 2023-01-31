@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreatePlanningDto {
   @IsString()
@@ -27,10 +27,6 @@ export class CreatePlanningDto {
   @IsString()
   @IsOptional()
   readonly remark: string;
-
-  @IsBoolean()
-  @Type(() => Boolean)
-  readonly allDay: boolean;
 
   @IsNumber()
   @Type(() => Number)

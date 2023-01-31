@@ -22,7 +22,7 @@ export default function PlanningTableRow({
   onDeleteRow,
   onDuplicateRow,
 }: Props) {
-  const { id, startDate, endDate, title, plannedQuantity, oee, product, user } = row;
+  const { id, startDate, endDate, title, plannedQuantity, oee, product, user, lotNumber } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
 
@@ -40,6 +40,8 @@ export default function PlanningTableRow({
         <Checkbox checked={selected} onClick={onSelectRow} />
       </TableCell>
 
+      <TableCell align="left">{id}</TableCell>
+
       <TableCell align="left">{fDateTime(startDate)}</TableCell>
 
       <TableCell align="left">{fDateTime(endDate)}</TableCell>
@@ -51,6 +53,8 @@ export default function PlanningTableRow({
       <TableCell align="left">{product.name}</TableCell>
 
       <TableCell align="left">{user.firstName}</TableCell>
+
+      <TableCell align="left">{lotNumber}</TableCell>
 
       <TableCell align="center">{plannedQuantity}</TableCell>
 

@@ -21,12 +21,11 @@ services:
     environment:
       PMA_HOST: db
     ports:
-      - "3030:80"
+      - "3020:80"
 
   api:
     build:
       dockerfile: Dockerfile
-      context: ./api
     restart: always
     depends_on:
       - db
@@ -48,17 +47,9 @@ services:
       TOKEN_EXPIRES_IN: 30d
       UPLOAD_FILE_SIZE: 10
     ports:
-      - "3020:3000"
+      - "3010:3000"
     volumes:
       - ./api-data/uploads:/app/uploads
-
-  web:
-    build:
-      dockerfile: Dockerfile
-      context: ./client
-    restart: always
-    ports:
-      - "3010:80"
 
   poller:
     build:
@@ -67,7 +58,8 @@ services:
     restart: always
     environment:
       SITE_ID: 1
-      BASE_API_URL: http://api:3000
+      BASE_API_URL: http://api:3000/api
+      BASE_WS_URL: http://api:3000
       READ_INTERVAL: "0/3 * * * * *"
       SYNC_INTERVAL: "0/3 * * * * *"
       API_USER: poller@user.com

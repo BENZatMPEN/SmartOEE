@@ -23,7 +23,7 @@ import { OptionItem } from '../common/type/option-item';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('roles')
+@Controller('api/roles')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 

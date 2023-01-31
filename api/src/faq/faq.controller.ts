@@ -27,7 +27,7 @@ import { FileInfo } from '../common/type/file-info';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('faqs')
+@Controller('api/faqs')
 export class FaqController {
   constructor(private readonly faqService: FaqService, private readonly fileService: FileService) {}
 

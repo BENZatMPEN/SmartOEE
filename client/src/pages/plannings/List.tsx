@@ -53,12 +53,14 @@ import dayjs from 'dayjs';
 import PlanningCalendarUploadDialog from '../../sections/plannings/calendar/PlanningCalendarUploadDialog';
 
 const TABLE_HEAD = [
+  { id: 'id', label: 'ID', align: 'left' },
   { id: 'startDate', label: 'Start', align: 'left' },
   { id: 'endDate', label: 'End', align: 'left' },
   { id: 'title', label: 'Title', align: 'left' },
   { id: 'productionName', label: 'Production', align: 'left' },
   { id: 'product', label: 'Product', align: 'left' },
   { id: 'user', label: 'User', align: 'left' },
+  { id: 'lotNumber', label: 'Lot Number', align: 'left' },
   { id: 'plannedQuantity', label: 'Planned', align: 'left' },
   { id: '' },
 ];
@@ -105,7 +107,7 @@ export default function PlanningList() {
     const { currentStart } = calendarEl.getApi().view;
     const range = {
       start: dayjs(currentStart).startOf('M').toDate(),
-      end: dayjs(currentStart).endOf('M').toDate(),
+      end: dayjs(currentStart).endOf('M').add(1, 'd').startOf('d').toDate(),
     };
     setViewRange(range);
     refreshData(range);
@@ -449,6 +451,8 @@ export default function PlanningList() {
           />
         </DialogAnimate>
 
+        <PlanningCalendarUploadDialog keepMounted open={openUploadDialog} onClose={handleUploadClose} />
+
         <DeleteConfirmationDialog
           id="confirmDeleting"
           title="Confirmation"
@@ -457,8 +461,6 @@ export default function PlanningList() {
           open={openDeleteDialog}
           onClose={handleConfirmDelete}
         />
-
-        <PlanningCalendarUploadDialog keepMounted open={openUploadDialog} onClose={handleUploadClose} />
       </Container>
     </Page>
   );

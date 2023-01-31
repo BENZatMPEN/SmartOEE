@@ -22,7 +22,7 @@ import { AlarmEntity } from '../common/entities/alarm-entity';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('alarms')
+@Controller('api/alarms')
 export class AlarmController {
   constructor(private readonly alarmService: AlarmService) {}
 

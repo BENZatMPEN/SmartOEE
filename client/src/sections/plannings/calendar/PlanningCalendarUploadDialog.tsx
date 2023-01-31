@@ -1,5 +1,5 @@
-import { Button, DialogActions, Stack } from '@mui/material';
-import { useRef } from 'react';
+import { Alert, AlertTitle, Button, DialogActions, Stack } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -8,22 +8,32 @@ import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import axios from '../../../utils/axios';
 import { useSnackbar } from 'notistack';
+import { ImportPlanningResult } from '../../../@types/planning';
 
-interface PlanningCalendarUploadProps {
+interface Props {
   keepMounted: boolean;
   open: boolean;
   onClose: (success?: boolean) => void;
 }
 
-const PlanningCalendarUploadDialog = (props: PlanningCalendarUploadProps) => {
+const PlanningCalendarUploadDialog = ({ onClose, open }: Props) => {
   const { enqueueSnackbar } = useSnackbar();
-
-  const { onClose, open } = props;
 
   const methods = useForm<{ files: FileList }>();
 
+  const [invalidRows, setInvalidRows] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      reset();
+      setInvalidRows([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const {
     register,
+    reset,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
@@ -31,7 +41,7 @@ const PlanningCalendarUploadDialog = (props: PlanningCalendarUploadProps) => {
   const onSubmit = async (data: { files: FileList }) => {
     if (data && data.files.length >= 0) {
       try {
-        await axios.post(
+        const response = await axios.post<ImportPlanningResult>(
           `/plannings/import-excel`,
           { file: data.files[0] },
           {
@@ -41,7 +51,11 @@ const PlanningCalendarUploadDialog = (props: PlanningCalendarUploadProps) => {
           },
         );
 
-        onClose(true);
+        if (response.data.success) {
+          onClose(true);
+        } else {
+          setInvalidRows(response.data.invalidRows || []);
+        }
       } catch (error) {
         enqueueSnackbar('Error while uploading');
       }
@@ -65,20 +79,30 @@ const PlanningCalendarUploadDialog = (props: PlanningCalendarUploadProps) => {
       <DialogTitle>Upload Planning</DialogTitle>
       <DialogContent dividers>
         <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-          <Stack alignContent="center" spacing={2} direction="row">
-            <Button variant="outlined" component="label">
-              Select File
-              <input
-                {...register('files')}
-                hidden
-                accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                type="file"
-              />
-            </Button>
+          <Stack spacing={3}>
+            <Stack alignContent="center" spacing={2} direction="row">
+              <Button variant="outlined" component="label">
+                Select File
+                <input
+                  {...register('files')}
+                  hidden
+                  accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  type="file"
+                />
+              </Button>
+              <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                Upload
+              </LoadingButton>
+            </Stack>
 
-            <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-              Upload
-            </LoadingButton>
+            {invalidRows.length > 0 ? (
+              <Alert severity="error">
+                <AlertTitle>There are rows that cannot import:</AlertTitle>
+                {invalidRows.join(', ')}
+              </Alert>
+            ) : (
+              <></>
+            )}
           </Stack>
         </FormProvider>
       </DialogContent>

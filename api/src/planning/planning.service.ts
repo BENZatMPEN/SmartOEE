@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { PlanningEntity } from '../common/entities/planning-entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
-import * as dayjs from 'dayjs';
+import { ImportPlanningDto } from './dto/import-planning.dto';
 
 @Injectable()
 export class PlanningService {
@@ -30,7 +30,24 @@ export class PlanningService {
   findById(id: number, siteId: number): Promise<PlanningEntity> {
     return this.planningRepository.findOne({
       where: { id, siteId, deleted: false },
+      relations: ['user'],
     });
+  }
+
+  findByImport(importDto: ImportPlanningDto, siteId: number): Promise<PlanningEntity> {
+    return this.planningRepository
+      .createQueryBuilder('p')
+      .innerJoin('p.oee', 'po', 'po.oeeCode = :oeeCode', { oeeCode: importDto.oeeCode })
+      .innerJoin('p.product', 'pp', 'pp.sku = :productSku', { productSku: importDto.productSku })
+      .innerJoin('p.user', 'pu', 'pu.email = :userEmail', { userEmail: importDto.userEmail })
+      .where('p.deleted = false')
+      .andWhere('p.title = :title', { title: importDto.title })
+      .andWhere('p.lotNumber = :lotNumber', { lotNumber: importDto.lotNumber })
+      .andWhere('p.startDate = :startDate', { startDate: importDto.startDate })
+      .andWhere('p.endDate = :endDate', { endDate: importDto.endDate })
+      .andWhere('p.plannedQuantity = :plannedQuantity', { plannedQuantity: importDto.plannedQuantity })
+      .andWhere('p.siteId = :siteId', { siteId })
+      .getOne();
   }
 
   create(createDto: CreatePlanningDto, siteId: number): Promise<PlanningEntity> {

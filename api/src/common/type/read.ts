@@ -1,12 +1,15 @@
 export class Read {
   readonly siteId: number;
-  readonly connect: boolean;
   readonly timestamp: Date;
-  readonly deviceId: number;
-  readonly reads: ReadItem[];
+  deviceReads: DeviceTagResult[];
 }
 
 export class ReadItem {
   readonly tagId: number;
   readonly read: string;
+}
+
+export class DeviceTagResult {
+  readonly deviceId: number;
+  readonly reads: ReadItem[];
 }

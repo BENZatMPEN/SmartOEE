@@ -20,7 +20,13 @@ import {
   RHFUploadSingleFile,
 } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
-import { initialOeeTags, initialPercentSettings, OEE_TYPE_OPTIONS, TIME_UNIT_OPTIONS } from '../../../../constants';
+import {
+  initialOeeTags,
+  initialPercentSettings,
+  OEE_TYPE_OPTIONS,
+  OEE_TYPE_STANDALONE,
+  TIME_UNIT_OPTIONS,
+} from '../../../../constants';
 import useToggle from '../../../../hooks/useToggle';
 import { createOee, updateOee } from '../../../../redux/actions/oeeAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
@@ -244,7 +250,18 @@ export default function OeeForm({ isEdit }: Props) {
       return;
     }
 
+    const oeeType = getValues('oeeType');
     const oeeMachines = getValues('oeeMachines');
+    if (oeeType === OEE_TYPE_STANDALONE && oeeMachines.length === 1) {
+      enqueueSnackbar('OEE Standalone cannot have more than one machine', { variant: 'warning' });
+      return;
+    }
+
+    if (oeeMachines.filter((item) => item.machineId === oeeMachine.machineId).length > 0) {
+      enqueueSnackbar(`${oeeMachine.machine?.code} has been selected`, { variant: 'warning' });
+      return;
+    }
+
     if (editingMachine) {
       const temp = oeeMachines[editingMachine.index];
       oeeMachines[editingMachine.index] = {

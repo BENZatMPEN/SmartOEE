@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import axios from './utils/axios';
-import { API_PASS, API_USER, BASE_API_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
+import { API_PASS, API_USER, BASE_WS_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
 import { Site } from './@types/site';
 import { scheduleJob } from 'node-schedule';
 import ModbusRTU from 'modbus-serial';
@@ -21,6 +21,7 @@ type ReadItem = {
 };
 
 type WriteItem = {
+  deviceId: number;
   tagId: number;
   value: string;
 };
@@ -28,8 +29,7 @@ type WriteItem = {
 type TagResult = {
   siteId: number;
   timestamp: Date;
-  deviceId: number;
-  reads: ReadItem[];
+  deviceReads: DeviceTagResult[];
 };
 
 type Token = {
@@ -44,18 +44,22 @@ type AuthUser = {
   lastName: string;
 };
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+type DeviceTagResult = {
+  deviceId: number;
+  reads: ReadItem[];
+};
 
-const handleModbus = async (socket: Socket, device: Device, writeData: WriteItem[]) => {
-  const { id, siteId, deviceId, address, port } = device;
-  const jobId = crypto.randomUUID();
+function wait(ms: number) {
+  new Promise((r) => setTimeout(r, ms));
+}
 
-  console.log(jobId, '-', 'start reading', dayjs().format('HH:mm:ss:SSS'));
+async function handleModbus(device: Device, writeData: WriteItem[]): Promise<DeviceTagResult | null> {
+  const { id, deviceId, address, port } = device;
 
-  const tagResult: TagResult = {
-    siteId: siteId,
+  console.log(id, address, port, '-', 'start reading', dayjs().format('HH:mm:ss:SSS'));
+
+  const tagResult: DeviceTagResult = {
     deviceId: id,
-    timestamp: dayjs().startOf('s').toDate(),
     reads: [],
   };
 
@@ -87,23 +91,18 @@ const handleModbus = async (socket: Socket, device: Device, writeData: WriteItem
     }
 
     client.close(() => {
-      console.log(jobId, '- close', device.address, device.port);
+      console.log(id, address, port, '- close', device.address, device.port);
     });
+
+    console.log(id, address, port, '-', 'end reading', dayjs().format('HH:mm:ss:SSS'));
+    return tagResult;
   } catch (modbusErr) {
     console.log('modbus error', modbusErr);
+    return null;
   }
+}
 
-  try {
-    socket.emit('tagReads', tagResult);
-    console.log(tagResult);
-  } catch (socketErr) {
-    console.log('sending error', socketErr);
-  }
-
-  console.log(jobId, '-', 'end reading', dayjs().format('HH:mm:ss:SSS'));
-};
-
-const readModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag): Promise<string> => {
+async function readModbusRegister(client: ModbusRTU, modelTag: DeviceModelTag): Promise<string> {
   // FC1 "Read Coil Status"	readCoils(coil, len)
   // FC2 "Read Input Status"	readDiscreteInputs(addr, arg)
   // FC3 "Read Holding Registers"	readHoldingRegisters(addr, len)
@@ -124,9 +123,9 @@ const readModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag): 
   }
 
   return '0';
-};
+}
 
-const readModbusBuffer = (dataType: string, resultBuffer: Buffer): string => {
+function readModbusBuffer(dataType: string, resultBuffer: Buffer): string {
   let result: number = 0;
 
   switch (dataType) {
@@ -153,9 +152,9 @@ const readModbusBuffer = (dataType: string, resultBuffer: Buffer): string => {
   }
 
   return String(result);
-};
+}
 
-const writeModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag, value: any): Promise<void> => {
+async function writeModbusRegister(client: ModbusRTU, modelTag: DeviceModelTag, value: any): Promise<void> {
   // FC5 "Force Single Coil"	writeCoil(coil, binary) //NOT setCoil
   // FC6 "Preset Single Register"	writeRegister(addr, value)
   // FC15 "Force Multiple Coil"	writeCoils(addr, valueAry)
@@ -170,7 +169,7 @@ const writeModbusRegister = async (client: ModbusRTU, modelTag: DeviceModelTag, 
   } else if (modelTag.writeFunc === 16) {
     // await client.writeRegisters(modelTag.address, value);
   }
-};
+}
 
 bootstrap()
   .then(async () => {
@@ -216,7 +215,7 @@ bootstrap()
       },
     };
 
-    const socket: Socket = io(BASE_API_URL, socketOptions);
+    const socket: Socket = io(BASE_WS_URL, socketOptions);
     socket.on('disconnect', handleClose);
     socket.on('connect', handleOpen);
 
@@ -228,18 +227,29 @@ bootstrap()
       console.log('reconnect');
     });
 
-    const writeData: { id: number; item: WriteItem }[] = [];
+    // const writeData: { id: number; item: WriteItem }[] = [];
+
+    const writeData: { [deviceId: number]: { id: number; item: WriteItem }[] } = {};
 
     socket.on('tag_out', (data: WriteItem) => {
-      writeData.push({ id: dayjs().toDate().getTime(), item: data });
-      console.log('[put]writeData', data);
+      console.log('[incoming]writeData', data);
+
+      if (data.tagId > -1) {
+        if (!writeData[data.deviceId]) {
+          writeData[data.deviceId] = [];
+        }
+
+        writeData[data.deviceId].push({
+          id: dayjs().toDate().getTime(),
+          item: data,
+        });
+      }
     });
 
     scheduleJob(READ_INTERVAL, () => {
       console.log('reading...');
 
       try {
-        // TODO: support multiple sites???
         fs.readFile('./data/site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
           if (fileErr) {
             console.error('site-infos.json is not found.');
@@ -249,8 +259,8 @@ bootstrap()
           const site = JSON.parse(siteJson) as Site;
           const { devices } = site;
 
-          devices.forEach(async (device) => {
-            const { address, port, stopped, deviceModel } = device;
+          const deviceHandlers = devices.map(async (device) => {
+            const { id, address, port, stopped, deviceModel } = device;
             if (stopped) {
               console.log(address, port, 'has been stopped.');
               return;
@@ -262,27 +272,45 @@ bootstrap()
             }
 
             if (deviceModel.modelType === 'modbus') {
-              console.log('[before]writeData', writeData);
-              const filtered = writeData.filter((item) => item.id <= dayjs().toDate().getTime());
-              console.log('filtered', filtered);
-              filtered.forEach((item) => {
-                const tempIndex = writeData.findIndex((tempItem) => tempItem.id === item.id);
-                if (tempIndex >= 0) {
-                  writeData.splice(tempIndex, 1);
-                }
-              });
-              console.log('[after]writeData', writeData);
+              let writingItems: { id: number; item: WriteItem }[] = [];
 
-              await handleModbus(
-                socket,
+              if (writeData[id]) {
+                writingItems = writeData[id].filter((item) => item.id <= dayjs().toDate().getTime());
+                console.log('[writing]writeData', writingItems);
+                writingItems.forEach((item) => {
+                  const tempIndex = writeData[id].findIndex((tempItem) => tempItem.id === item.id);
+                  if (tempIndex >= 0) {
+                    writeData[id].splice(tempIndex, 1);
+                  }
+                });
+              }
+
+              return await handleModbus(
                 device,
-                filtered.map((item) => item.item),
+                writingItems.map((item) => item.item),
               );
             } else if (deviceModel.modelType === 'opcua') {
               console.log('OPC UA had been implemented yet.');
               // TODO: implement here
             }
           });
+
+          (async () => {
+            const readResults = await Promise.all(deviceHandlers);
+            const tempReads = readResults.map((item) => item);
+            const tagResult: TagResult = {
+              siteId: site.id,
+              timestamp: dayjs().startOf('s').toDate(),
+              deviceReads: tempReads,
+            };
+
+            try {
+              socket.emit('tagReads', tagResult);
+              tempReads.forEach((item) => console.log(item.deviceId, item.reads));
+            } catch (socketErr) {
+              console.log('sending error', socketErr);
+            }
+          })();
         });
       } catch (readErr) {
         console.log(readErr);
@@ -301,7 +329,6 @@ bootstrap()
           return;
         }
 
-        console.log('started syncing.');
         const devicesResp = await axios.get<Device[]>(`sites/${SITE_ID}/devices`);
 
         const { data: devices } = devicesResp;
@@ -312,7 +339,6 @@ bootstrap()
           }
         });
         await axios.put(`sites/${SITE_ID}/synced`);
-        console.log('ended syncing.');
       } catch (requestErr) {
         console.log(requestErr);
       }

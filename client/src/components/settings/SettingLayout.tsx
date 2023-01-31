@@ -25,7 +25,7 @@ export default function SettingLayout() {
   return (
     <RadioGroup name="themeLayout" value={themeLayout} onChange={onChangeLayout}>
       <Grid dir="ltr" container spacing={2.5}>
-        {['horizontal', 'vertical'].map((layout) => {
+        {['horizontal'].map((layout) => {
           const isSelected = themeLayout === layout;
           const isVertical = layout === 'vertical';
 

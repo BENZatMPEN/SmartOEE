@@ -34,12 +34,15 @@ import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-
 import { fNumber2 } from '../common/utils/formatNumber';
 import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
 import { OptionItem } from '../common/type/option-item';
+import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
+import { AuthUserDto } from '../auth/dto/auth-user.dto';
+import { PlanningService } from '../planning/planning.service';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('oee-batches')
+@Controller('api/oee-batches')
 export class OeeBatchController {
-  constructor(private readonly oeeBatchService: OeeBatchService) {}
+  constructor(private readonly oeeBatchService: OeeBatchService, private readonly planningService: PlanningService) {}
 
   @Get()
   findPagedList(@Query() filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatchEntity>> {
@@ -61,8 +64,15 @@ export class OeeBatchController {
     @Query('oeeId') oeeId: string,
     @Body() createDto: CreateOeeBatchDto,
     @Query('siteId') siteId: number,
+    @ReqAuthUser() authUser: AuthUserDto,
   ): Promise<OeeBatchEntity> {
-    return this.oeeBatchService.create(Number(oeeId), createDto);
+    let userEmail = authUser.email;
+    if (createDto.planningId > -1) {
+      const planning = await this.planningService.findById(createDto.planningId, siteId);
+      userEmail = planning.user.email;
+    }
+
+    return this.oeeBatchService.create(Number(oeeId), createDto, userEmail);
   }
 
   // @Get('
@@ -171,6 +181,7 @@ export class OeeBatchController {
         productionName,
         product,
         lotNo,
+        userEmail,
         cycleTime,
         totalAvailableTime,
         loadingTime,
@@ -200,6 +211,7 @@ export class OeeBatchController {
         productionName,
         product,
         lotNo,
+        userEmail,
         cycleTime,
         totalAvailableTime,
         loadingTime,
@@ -246,6 +258,7 @@ export class OeeBatchController {
           'OEE (Production Name)',
           'Product (SKU)',
           'Lot No.',
+          'User',
           'Cycle Time',
           'Total Available Time',
           'Loading Time',

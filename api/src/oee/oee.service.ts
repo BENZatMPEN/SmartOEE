@@ -189,6 +189,10 @@ export class OeeService {
     // return null;
   }
 
+  findByOeeCode(oeeCode: string, siteId: number): Promise<OeeEntity> {
+    return this.oeeRepository.findOneBy({ oeeCode, siteId, deleted: false });
+  }
+
   findByIdIncludingProducts(id: number): Promise<OeeProductEntity[]> {
     return this.oeeProductRepository.find({ where: { oeeId: id }, relations: { product: true } });
   }

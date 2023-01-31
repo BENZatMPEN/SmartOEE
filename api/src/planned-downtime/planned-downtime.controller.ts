@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('planned-downtimes')
+@Controller('api/planned-downtimes')
 export class PlannedDowntimeController {
   constructor(private readonly plannedDowntimeService: PlannedDowntimeService) {}
 

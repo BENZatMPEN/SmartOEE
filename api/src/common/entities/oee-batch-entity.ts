@@ -59,6 +59,9 @@ export class OeeBatchEntity {
   @Column({ type: 'varchar', length: 100 })
   status: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  userEmail: string;
+
   @Column({ type: 'int' })
   siteId: number;
 

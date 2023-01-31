@@ -38,7 +38,7 @@ const mapEvent = (plannings: Planning[]): EventInput[] => {
     title: planning.title,
     start: planning.startDate,
     end: planning.endDate,
-    allDay: planning.allDay,
+    allDay: false,
     textColor: planning.color,
   }));
 };

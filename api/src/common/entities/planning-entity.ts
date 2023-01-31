@@ -31,9 +31,6 @@ export class PlanningEntity {
   @Column({ type: 'longtext', nullable: true })
   remark: string;
 
-  @Column({ default: false })
-  allDay: boolean;
-
   @Column({ type: 'int' })
   productId: number;
 
@@ -56,10 +53,10 @@ export class PlanningEntity {
   @ManyToOne(() => SiteEntity)
   site: SiteEntity;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   userId: number;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
   user: UserEntity;
 
   @Column({ type: 'datetime' })

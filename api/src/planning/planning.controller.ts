@@ -13,7 +13,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IdListDto } from '../common/dto/id-list.dto';
 import { PlanningService } from './planning.service';
 import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
@@ -22,35 +21,81 @@ import { PlanningEntity } from '../common/entities/planning-entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as XLSX from 'xlsx';
+import { ImportPlanningDto } from './dto/import-planning.dto';
+import { UserService } from '../user/user.service';
+import { ProductService } from '../product/product.service';
+import { OeeService } from '../oee/oee.service';
+import { ImportResultPlanningDto } from './dto/import-result-planning.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('plannings')
+@Controller('api/plannings')
 export class PlanningController {
-  constructor(private readonly planningService: PlanningService) {}
+  constructor(
+    private readonly planningService: PlanningService,
+    private readonly oeeService: OeeService,
+    private readonly productService: ProductService,
+    private readonly userService: UserService,
+  ) {}
 
+  // import using API
   @Post('import')
   async import(
-    @Body('items', new ParseArrayPipe({ items: CreatePlanningDto })) items: CreatePlanningDto[],
+    @Body('items', new ParseArrayPipe({ items: ImportPlanningDto })) items: ImportPlanningDto[],
     @Query('siteId') siteId: number,
-  ): Promise<void> {
-    for (const createDto of items) {
-      await this.planningService.create(createDto, siteId);
-    }
+  ): Promise<ImportResultPlanningDto> {
+    const invalidRows = await this.importRows(items, siteId);
+    return new ImportResultPlanningDto(invalidRows.length === 0, invalidRows.length > 0 ? invalidRows : undefined);
   }
 
   @Post('import-excel')
   @UseInterceptors(FileInterceptor('file'))
-  async importExcel(@UploadedFile('file') file: Express.Multer.File, @Query('siteId') siteId: number): Promise<void> {
+  async importExcel(
+    @UploadedFile('file') file: Express.Multer.File,
+    @Query('siteId') siteId: number,
+  ): Promise<ImportResultPlanningDto> {
     const workBook = XLSX.read(file.buffer, { type: 'buffer' });
     if (workBook.SheetNames.length < 0) {
       return;
     }
 
-    const items = XLSX.utils.sheet_to_json(workBook.Sheets[workBook.SheetNames[0]]);
-    for (const item of items) {
-      await this.planningService.create(item as CreatePlanningDto, siteId);
+    const items = XLSX.utils.sheet_to_json(workBook.Sheets[workBook.SheetNames[0]]) as ImportPlanningDto[];
+    const invalidRows = await this.importRows(items, siteId);
+    return new ImportResultPlanningDto(invalidRows.length === 0, invalidRows.length > 0 ? invalidRows : undefined);
+  }
+
+  private async importRows(items: ImportPlanningDto[], siteId: number): Promise<number[]> {
+    const invalidRows: number[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const dto = items[i] as ImportPlanningDto;
+      const existingItem = await this.planningService.findByImport(dto, siteId);
+      const oee = await this.oeeService.findByOeeCode(dto.oeeCode, siteId);
+      const product = await this.productService.findBySku(dto.productSku, siteId);
+      const user = await this.userService.findByEmail(dto.userEmail);
+
+      if (existingItem || !oee || !product || !user) {
+        invalidRows.push(i + 1);
+        continue;
+      }
+
+      await this.planningService.create(
+        {
+          title: dto.title,
+          lotNumber: dto.lotNumber,
+          plannedQuantity: dto.plannedQuantity,
+          startDate: dto.startDate,
+          endDate: dto.endDate,
+          oeeId: oee.id,
+          productId: product.id,
+          userId: user.id,
+          remark: dto.remark,
+        },
+        siteId,
+      );
     }
+
+    return invalidRows;
   }
 
   @Get()
@@ -83,7 +128,10 @@ export class PlanningController {
   }
 
   @Delete()
-  async deleteMany(@Query() dto: IdListDto, @Query('siteId') siteId: number): Promise<void> {
-    await this.planningService.deleteMany(dto.ids, siteId);
+  async deleteMany(
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[],
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.planningService.deleteMany(ids, siteId);
   }
 }

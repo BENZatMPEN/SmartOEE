@@ -124,7 +124,7 @@ export class OeeBatchService {
     });
   }
 
-  async create(oeeId: number, createDto: CreateOeeBatchDto): Promise<OeeBatchEntity> {
+  async create(oeeId: number, createDto: CreateOeeBatchDto, userEmail: string): Promise<OeeBatchEntity> {
     const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId } = createDto;
     const oee = await this.oeeRepository.findOneBy({ id: oeeId });
     const oeeProduct = await this.oeeProductRepository.findOne({
@@ -153,6 +153,7 @@ export class OeeBatchService {
       targetQuantity,
       product,
       machines,
+      userEmail,
       planningId: planningId && planningId === -1 ? null : planningId,
       siteId: oee.siteId,
       status: OEE_BATCH_STATUS_UNKNOWN,
@@ -243,6 +244,7 @@ export class OeeBatchService {
       if (tagOutRest !== null) {
         const tagOutResetData: OeeTagOutReset = tagOutRest.data;
         this.socketService.socket.to(`site_${oeeBatch.siteId}`).emit(`tag_out`, {
+          deviceId: tagOutRest.deviceId,
           tagId: tagOutRest.tagId,
           value: tagOutResetData.reset,
         });
@@ -738,6 +740,7 @@ export class OeeBatchService {
       plannedQuantity,
       status: batchStatus,
       machines,
+      userEmail,
     } = batch;
 
     const mcParamAs = machines
@@ -823,6 +826,7 @@ export class OeeBatchService {
         productionName: oee.productionName,
         product: product.sku,
         lotNo: lotNumber,
+        userEmail: userEmail,
         cycleTime: standardSpeedSeconds,
         totalAvailableTime: runningSeconds,
         loadingTime: loadingSeconds,

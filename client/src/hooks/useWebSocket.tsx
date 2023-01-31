@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
 import { TagRead } from '../@types/tagRead';
-import { HOST_API } from '../config';
+import { HOST_WS } from '../config';
 import Emitter from '../utils/emitter';
 
 export type WebSocketContextProps = {
@@ -33,7 +33,7 @@ function WebSocketProvider({ children }: SocketProviderProps) {
       },
     };
 
-    const socket = io(HOST_API, socketOptions);
+    const socket = io(HOST_WS, socketOptions);
     socket.on('disconnect', () => {});
     socket.on('connect', () => {});
 
@@ -46,7 +46,8 @@ function WebSocketProvider({ children }: SocketProviderProps) {
     });
 
     const updateTagRead = (data: TagRead) => {
-      data.reads.forEach((tag) => {
+      const reads = data.deviceReads.map((item) => item.reads).flat();
+      reads.forEach((tag) => {
         Emitter.emit(`tagReads_${tag.tagId}`, tag);
       });
     };
