@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  poller:
+    build:
+      dockerfile: Dockerfile
+      context: ./poller
+    restart: always
+    environment:
+      SITE_ID: 1
+      BASE_API_URL: http://api:3000/api
+      BASE_WS_URL: http://api:3000
+      READ_INTERVAL: "0/3 * * * * *"
+      SYNC_INTERVAL: "0/3 * * * * *"
+      API_USER: poller@user.com
+      API_PASS: P@ssword1
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    volumes:
+      - ./poller-data:/app/data

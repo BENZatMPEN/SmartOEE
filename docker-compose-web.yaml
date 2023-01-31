@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: smartoee
+      MYSQL_USER: smartoee
+      MYSQL_PASSWORD: smartoee
+    # ports:
+    #   - "33061:3306" # chnage 33061
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+    ports:
+      - "3020:80"
+
+  api:
+    build:
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: smartoee
+      DB_PASS: smartoee
+      DB_NAME: smartoee
+      EMAIL_HOST: smtp4dev
+      EMAIL_HAS_AUTH: 0
+      EMAIL_USER: user
+      EMAIL_PASSWORD: password
+      EMAIL_PORT: 25
+      EMAIL_USE_SSL: 0
+      EMAIL_DEFAULT_FROM: hello@user.com
+      LINE_API_URL: https://notify-api.line.me/api/notify
+      TOKEN_SECRET: secret
+      TOKEN_EXPIRES_IN: 30d
+      UPLOAD_FILE_SIZE: 10
+    ports:
+      - "3010:3000"
+    volumes:
+      - ./api-data/uploads:/app/uploads
