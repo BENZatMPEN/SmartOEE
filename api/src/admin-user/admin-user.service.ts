@@ -9,6 +9,7 @@ import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import * as bcrypt from 'bcrypt';
 import { SiteEntity } from '../common/entities/site-entity';
 import { FileService } from '../common/services/file.service';
+import { ChangePasswordDto } from '../user/dto/change-password.dto';
 
 @Injectable()
 export class AdminUserService {
@@ -85,6 +86,17 @@ export class AdminUserService {
       ...dto,
       ...sites,
       imageName: !imageName ? existingImageName : imageName,
+      updatedAt: new Date(),
+    });
+  }
+
+  async changePassword(id: number, changePasswordDto: ChangePasswordDto): Promise<void> {
+    const { password } = changePasswordDto;
+    const updatingUser = await this.userRepository.findOneBy({ id });
+    const passwordHash = await bcrypt.hash(password, this.saltOrRounds);
+    await this.userRepository.save({
+      id: updatingUser.id,
+      passwordHash,
       updatedAt: new Date(),
     });
   }

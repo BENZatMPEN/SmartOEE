@@ -7,9 +7,9 @@ import Page from '../../../components/Page';
 import { emptyCurrentUser, getUser } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../routes/paths';
-import UserForm from '../../../sections/admin/users/details/UserForm';
+import UserForm from '../../../sections/admin/users/details/AdminUserForm';
 
-export default function UserDetails() {
+export default function AdminUserDetails() {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();

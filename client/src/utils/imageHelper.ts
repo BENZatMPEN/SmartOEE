@@ -1,5 +1,5 @@
-import { HOST_API } from '../config';
+import { HOST_IMAGE } from '../config';
 
 export function getFileUrl(imageName: string | undefined): string | undefined {
-  return imageName ? `${HOST_API}/uploads/${imageName}` : undefined;
+  return imageName ? `${HOST_IMAGE}/uploads/${imageName}` : undefined;
 }

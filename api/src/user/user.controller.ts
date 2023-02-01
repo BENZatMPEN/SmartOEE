@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InjectParamIdTo } from '../common/decorators/request-interceptor.dectorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -79,6 +80,15 @@ export class UserController {
     @Query('siteId') siteId: number,
   ): Promise<UserEntity> {
     return this.userService.update(id, updateDto, image, siteId);
+  }
+
+  @Put(':id/change-password')
+  async changePassword(
+    @Param('id') id: number,
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Query('siteId') siteId: number,
+  ): Promise<void> {
+    await this.userService.changePassword(id, changePasswordDto, siteId);
   }
 
   @Delete(':id')

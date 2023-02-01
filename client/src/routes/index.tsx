@@ -229,6 +229,7 @@ export default function Router() {
                 { path: 'new', element: <UserSettingsDetails /> },
                 { path: ':id/edit', element: <UserSettingsDetails /> },
                 { path: ':id/duplicate', element: <UserSettingsDetails /> },
+                { path: ':id/change-password', element: <UserSettingsChangePassword /> },
               ],
             },
             {
@@ -262,6 +263,7 @@ export default function Router() {
                 { path: 'new', element: <AdminUserSettingsDetails /> },
                 { path: ':id/edit', element: <AdminUserSettingsDetails /> },
                 { path: ':id/duplicate', element: <AdminUserSettingsDetails /> },
+                { path: ':id/change-password', element: <AdminUserSettingsChangePassword /> },
               ],
             },
           ],
@@ -354,6 +356,7 @@ const SiteSettingsDetails = Loadable(lazy(() => import('../pages/settings/site/D
 // -- Roles
 const UserSettings = Loadable(lazy(() => import('../pages/settings/users/List')));
 const UserSettingsDetails = Loadable(lazy(() => import('../pages/settings/users/Details')));
+const UserSettingsChangePassword = Loadable(lazy(() => import('../pages/settings/users/ChangePassword')));
 // -- Roles
 const RoleSettings = Loadable(lazy(() => import('../pages/settings/roles/List')));
 const RoleSettingsDetails = Loadable(lazy(() => import('../pages/settings/roles/Details')));
@@ -365,5 +368,6 @@ const AdminSiteSettingsDetails = Loadable(lazy(() => import('../pages/admin/site
 // -- Users
 const AdminUserSettings = Loadable(lazy(() => import('../pages/admin/users/List')));
 const AdminUserSettingsDetails = Loadable(lazy(() => import('../pages/admin/users/Details')));
+const AdminUserSettingsChangePassword = Loadable(lazy(() => import('../pages/admin/users/ChangePassword')));
 
 const NotFound = Loadable(lazy(() => import('../pages/Page404')));

@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { RoleEntity } from '../common/entities/role-entity';
 import { SiteEntity } from '../common/entities/site-entity';
 import { FileService } from '../common/services/file.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -125,6 +126,17 @@ export class UserService {
       ...sites,
       roles: [...currentRoles, ...newRoles],
       imageName: !imageName ? existingImageName : imageName,
+      updatedAt: new Date(),
+    });
+  }
+
+  async changePassword(id: number, changePasswordDto: ChangePasswordDto, siteId: number): Promise<void> {
+    const { password } = changePasswordDto;
+    const updatingUser = await this.findByIdAndSiteId(id, siteId);
+    const passwordHash = await bcrypt.hash(password, this.saltOrRounds);
+    await this.userRepository.save({
+      id: updatingUser.id,
+      passwordHash,
       updatedAt: new Date(),
     });
   }

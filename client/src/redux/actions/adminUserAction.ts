@@ -67,6 +67,18 @@ export function updateUser(id: number, dto: EditAdminUser) {
   };
 }
 
+export function changeUserPassword(id: number, dto: EditUserPassword) {
+  return async () => {
+    dispatch(adminUserSlice.actions.startSavingError());
+
+    try {
+      await axios.put(`/admin/users/${id}/change-password`, dto);
+    } catch (error) {
+      dispatch(adminUserSlice.actions.hasSaveError(error));
+    }
+  };
+}
+
 export function deleteUser(id: number) {
   return async () => {
     dispatch(adminUserSlice.actions.startLoading());

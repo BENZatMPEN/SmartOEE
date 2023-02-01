@@ -26,13 +26,13 @@ export const ListSubheaderStyle = styled((props) => <ListSubheader disableSticky
 // ----------------------------------------------------------------------
 
 export default function NavSectionVertical({ navConfig, isCollapse = false, ...other }: NavSectionProps) {
-  const { userInfo } = useSelector((state: RootState) => state.auth);
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   return (
     <Box {...other}>
       {navConfig.map((group) => {
         if (group.subheader === 'Administrator') {
-          if (userInfo && userInfo.isAdmin) {
+          if (userProfile && userProfile.isAdmin) {
             return (
               <List key={group.subheader} disablePadding sx={{ px: 2 }}>
                 {/*<ListSubheaderStyle*/}

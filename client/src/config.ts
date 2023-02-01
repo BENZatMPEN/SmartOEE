@@ -5,6 +5,7 @@ import { PATH_DASHBOARD } from './routes/paths';
 // ----------------------------------------------------------------------
 
 export const HOST_API = process.env.REACT_APP_HOST_API_KEY || '';
+export const HOST_IMAGE = process.env.REACT_APP_HOST_IMAGE_KEY || '';
 export const HOST_WS = process.env.REACT_APP_HOST_WS_KEY || '';
 export const GOOGLE_MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY || '';
 

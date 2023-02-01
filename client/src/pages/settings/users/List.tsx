@@ -25,7 +25,7 @@ import useTable from '../../../hooks/useTable';
 import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_SETTINGS } from '../../../routes/paths';
-import { UserTableRow, UserTableToolbar } from '../../../sections/admin/users/list';
+import { UserTableRow, UserTableToolbar } from '../../../sections/settings/users/list';
 
 const TABLE_HEAD = [
   { id: 'firstName', label: 'First Name', align: 'left' },
@@ -109,6 +109,10 @@ export default function UserList() {
 
   const handleDuplicateRow = (id: number) => {
     navigate(PATH_SETTINGS.users.duplicate(paramCase(id.toString())));
+  };
+
+  const handleChangePasswordRow = (id: number) => {
+    navigate(PATH_SETTINGS.users.changePassword(paramCase(id.toString())));
   };
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
@@ -214,6 +218,7 @@ export default function UserList() {
                         onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
+                        onChangePasswordRow={() => handleChangePasswordRow(row.id)}
                       />
                     ) : (
                       !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />

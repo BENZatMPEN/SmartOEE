@@ -9,13 +9,10 @@ const axiosInstance = axios.create({
   },
 });
 
-axiosInstance.interceptors.response.use(
-  (response) => {
-    handleDates(response.data);
-    return response;
-  },
-  // (error) => Promise.reject((error.response && error.response.data) || 'Something went wrong'),
-);
+axiosInstance.interceptors.response.use((response) => {
+  handleDates(response.data);
+  return response;
+});
 
 const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 

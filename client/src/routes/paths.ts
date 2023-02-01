@@ -140,6 +140,7 @@ export const PATH_SETTINGS = {
     new: path(ROOTS_SETTINGS, `/users/new`),
     edit: (id: string) => path(ROOTS_SETTINGS, `/users/${id}/edit`),
     duplicate: (id: string) => path(ROOTS_SETTINGS, `/users/${id}/duplicate`),
+    changePassword: (id: string) => path(ROOTS_SETTINGS, `/users/${id}/change-password`),
   },
   roles: {
     root: path(ROOTS_SETTINGS, `/roles`),
@@ -162,5 +163,6 @@ export const PATH_ADMINISTRATOR = {
     new: path(ROOTS_ADMINISTRATOR, '/users/new'),
     edit: (id: string) => path(ROOTS_ADMINISTRATOR, `/users/${id}/edit`),
     duplicate: (id: string) => path(ROOTS_ADMINISTRATOR, `/users/${id}/duplicate`),
+    changePassword: (id: string) => path(ROOTS_ADMINISTRATOR, `/users/${id}/change-password`),
   },
 };

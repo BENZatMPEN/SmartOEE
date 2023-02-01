@@ -15,6 +15,7 @@ import configuration, { Config } from '../configuration';
 import { RoleEntity } from '../common/entities/role-entity';
 import { UserService } from '../user/user.service';
 import { FileService } from '../common/services/file.service';
+import { EmailExistsRule } from '../common/validations/email-exists.validator';
 
 @Module({
   imports: [

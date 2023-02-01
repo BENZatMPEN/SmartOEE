@@ -7,7 +7,7 @@ import useCollapseDrawer from '../../hooks/useCollapseDrawer';
 import useResponsive from '../../hooks/useResponsive';
 import useSettings from '../../hooks/useSettings';
 import { getGroupAnalytics } from '../../redux/actions/analyticAction';
-import { getUserInfo } from '../../redux/actions/authAction';
+import { getUserProfile } from '../../redux/actions/authAction';
 import { getAllDashboard, getUserSites } from '../../redux/actions/userSiteAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import axios from '../../utils/axios';
@@ -65,7 +65,7 @@ export default function DashboardLayout() {
       axios.defaults.params = { siteId: selectedSiteId };
 
       (async () => {
-        await dispatch(getUserInfo());
+        await dispatch(getUserProfile());
         await dispatch(getGroupAnalytics());
         await dispatch(getAllDashboard());
       })();

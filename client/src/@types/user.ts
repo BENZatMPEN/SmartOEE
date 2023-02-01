@@ -14,6 +14,13 @@ export type User = {
   updatedAt: Date;
 };
 
+export interface EditProfile {
+  email: string;
+  firstName: string;
+  lastName: string;
+  image: File | null;
+}
+
 export interface EditUser {
   email: string;
   firstName: string;

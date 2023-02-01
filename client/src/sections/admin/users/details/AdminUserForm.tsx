@@ -35,7 +35,7 @@ type Props = {
   isEdit: boolean;
 };
 
-export default function UserForm({ isEdit }: Props) {
+export default function AdminUserForm({ isEdit }: Props) {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();

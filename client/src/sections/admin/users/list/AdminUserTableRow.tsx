@@ -12,9 +12,18 @@ type Props = {
   onSelectRow: VoidFunction;
   onDeleteRow: VoidFunction;
   onDuplicateRow: VoidFunction;
+  onChangePasswordRow: VoidFunction;
 };
 
-export default function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
+export default function AdminUserTableRow({
+  row,
+  selected,
+  onEditRow,
+  onSelectRow,
+  onDeleteRow,
+  onDuplicateRow,
+  onChangePasswordRow,
+}: Props) {
   const { email, firstName, lastName, createdAt } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
@@ -66,6 +75,16 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
               >
                 <Iconify icon={'eva:copy-fill'} />
                 Duplicate
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  onChangePasswordRow();
+                  handleCloseMenu();
+                }}
+              >
+                <Iconify icon={'eva:credit-card-outline'} />
+                Change Password
               </MenuItem>
 
               <Divider sx={{ borderStyle: 'dashed' }} />

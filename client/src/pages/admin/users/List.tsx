@@ -35,7 +35,7 @@ const TABLE_HEAD = [
   { id: '' },
 ];
 
-export default function UserList() {
+export default function AdminUserList() {
   const {
     dense,
     page,
@@ -109,6 +109,10 @@ export default function UserList() {
 
   const handleDuplicateRow = (id: number) => {
     navigate(PATH_ADMINISTRATOR.users.duplicate(paramCase(id.toString())));
+  };
+
+  const handleChangePasswordRow = (id: number) => {
+    navigate(PATH_ADMINISTRATOR.users.changePassword(paramCase(id.toString())));
   };
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
@@ -214,6 +218,7 @@ export default function UserList() {
                         onDeleteRow={() => handleOpenDeleteDialog([row.id])}
                         onEditRow={() => handleEditRow(row.id)}
                         onDuplicateRow={() => handleDuplicateRow(row.id)}
+                        onChangePasswordRow={() => handleChangePasswordRow(row.id)}
                       />
                     ) : (
                       !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />

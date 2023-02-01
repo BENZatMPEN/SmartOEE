@@ -29,7 +29,7 @@ const MENU_OPTIONS = [
 export default function AccountPopover() {
   const navigate = useNavigate();
 
-  const { userInfo } = useSelector((state: RootState) => state.auth);
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const { logout } = useAuth();
 
@@ -62,11 +62,11 @@ export default function AccountPopover() {
   };
 
   return (
-    userInfo && (
+    userProfile && (
       <>
         <Box sx={{ my: 1.5, px: 2 }}>
           <Typography variant="subtitle2" sx={{ color: 'text.secondary' }} noWrap>
-            {userInfo.firstName} {userInfo.lastName}
+            {userProfile.firstName} {userProfile.lastName}
           </Typography>
         </Box>
 
@@ -87,7 +87,7 @@ export default function AccountPopover() {
             }),
           }}
         >
-          <Avatar src={defaultUser} alt={userInfo.email} />
+          <Avatar src={defaultUser} alt={userProfile.email} />
         </IconButtonAnimate>
 
         <MenuPopover
@@ -106,7 +106,7 @@ export default function AccountPopover() {
         >
           <Box sx={{ my: 1.5, px: 2.5 }}>
             <Typography variant="subtitle2" noWrap>
-              {userInfo.email}
+              {userProfile.email}
             </Typography>
             {/*<Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>*/}
             {/*  {user1@user.com}*/}

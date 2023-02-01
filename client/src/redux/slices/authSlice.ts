@@ -4,13 +4,15 @@ import { User } from '../../@types/user';
 export type AuthState = {
   isLoading: boolean;
   error: any | string | null;
-  userInfo: User | null;
+  userProfile: User | null;
+  saveError: any | null;
 };
 
 const initialState: AuthState = {
   isLoading: false,
   error: null,
-  userInfo: null,
+  userProfile: null,
+  saveError: null,
 };
 
 const authSlice = createSlice({
@@ -25,9 +27,15 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    getUserInfoSuccess(state, action) {
+    getUserProfileSuccess(state, action) {
       state.isLoading = false;
-      state.userInfo = action.payload;
+      state.userProfile = action.payload;
+    },
+    startSavingError(state) {
+      state.saveError = null;
+    },
+    hasSaveError(state, action) {
+      state.saveError = action.payload;
     },
   },
 });

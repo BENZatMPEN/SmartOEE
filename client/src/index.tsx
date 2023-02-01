@@ -38,7 +38,7 @@ const ability = buildAbilityFor([]);
 
 store.subscribe(() => {
   const authState = store.getState().auth;
-  const user = authState?.userInfo as User;
+  const user = authState?.userProfile as User;
 
   // if (!user) {
   //   cannot(RoleAction.Manage, RoleSubject.All);
