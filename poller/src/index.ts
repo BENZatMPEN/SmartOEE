@@ -297,7 +297,7 @@ bootstrap()
 
           (async () => {
             const readResults = await Promise.all(deviceHandlers);
-            const tempReads = readResults.map((item) => item);
+            const tempReads = readResults.filter((item) => item);
             const tagResult: TagResult = {
               siteId: site.id,
               timestamp: dayjs().startOf('s').toDate(),

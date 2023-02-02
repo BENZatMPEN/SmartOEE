@@ -5,10 +5,12 @@ import {
   Delete,
   Get,
   Param,
+  Res,
   ParseArrayPipe,
   Post,
   Put,
   Query,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -26,6 +28,8 @@ import { UserService } from '../user/user.service';
 import { ProductService } from '../product/product.service';
 import { OeeService } from '../oee/oee.service';
 import { ImportResultPlanningDto } from './dto/import-result-planning.dto';
+import { Response } from 'express';
+import * as dayjs from 'dayjs';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -96,6 +100,45 @@ export class PlanningController {
     }
 
     return invalidRows;
+  }
+
+  @Get('export-excel')
+  async export(
+    @Query() filterDto: FilterPlanningDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const plannings = await this.planningService.findByDateRange(filterDto);
+    const rows = plannings.map((item) => {
+      return {
+        id: item.id,
+        title: item.title,
+        lotNumber: item.lotNumber,
+        plannedQuantity: item.plannedQuantity,
+        oee: item.oee.oeeCode,
+        product: item.product.sku,
+        user: item.user?.email || '',
+        startDate: dayjs(item.startDate).format('YYYY-MM-DD HH:mm'),
+        endDate: dayjs(item.endDate).format('YYYY-MM-DD HH:mm'),
+        remark: item.remark,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      [['ID', 'Title', 'Lot Number', 'Planned Quantity', 'OEE', 'Product', 'User', 'Start Date', 'End Date', 'Remark']],
+      { origin: 'A1' },
+    );
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Plannings');
+
+    const buf = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.set({
+      'Content-Type': 'application/vnd.ms-excel',
+      'Content-Disposition': `attachment; filename="history-logs.xlsx"`,
+    });
+
+    return new StreamableFile(buf);
   }
 
   @Get()

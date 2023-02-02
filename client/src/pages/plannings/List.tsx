@@ -51,6 +51,7 @@ import {
 import { PlanningTableRow, PlanningTableToolbar } from '../../sections/plannings/list';
 import dayjs from 'dayjs';
 import PlanningCalendarUploadDialog from '../../sections/plannings/calendar/PlanningCalendarUploadDialog';
+import PlanningCalendarExportDialog from '../../sections/plannings/calendar/PlanningCalendarExportDialog';
 
 const TABLE_HEAD = [
   { id: 'id', label: 'ID', align: 'left' },
@@ -104,10 +105,10 @@ export default function PlanningList() {
       return;
     }
 
-    const { currentStart } = calendarEl.getApi().view;
+    const currentDate = calendarEl.getApi().getDate();
     const range = {
-      start: dayjs(currentStart).startOf('M').toDate(),
-      end: dayjs(currentStart).endOf('M').add(1, 'd').startOf('d').toDate(),
+      start: dayjs(currentDate).startOf('M').toDate(),
+      end: dayjs(currentDate).endOf('M').add(1, 'd').startOf('d').toDate(),
     };
     setViewRange(range);
     refreshData(range);
@@ -264,6 +265,8 @@ export default function PlanningList() {
     enqueueSnackbar('Delete success!');
   };
 
+  const [openExportDialog, setOpenExportDialog] = useState<boolean>(false);
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
 
   const [deletingItems, setDeletingItems] = useState<number[]>([]);
@@ -312,6 +315,10 @@ export default function PlanningList() {
           ]}
           action={
             <Stack spacing={1} direction="row">
+              <Button variant="outlined" component="label" onClick={() => setOpenExportDialog(true)}>
+                Export Excel
+              </Button>
+
               <Button variant="outlined" component="label" onClick={() => setOpenUploadDialog(true)}>
                 Import Excel
               </Button>
@@ -452,6 +459,8 @@ export default function PlanningList() {
         </DialogAnimate>
 
         <PlanningCalendarUploadDialog keepMounted open={openUploadDialog} onClose={handleUploadClose} />
+
+        <PlanningCalendarExportDialog keepMounted open={openExportDialog} onClose={() => setOpenExportDialog(false)} />
 
         <DeleteConfirmationDialog
           id="confirmDeleting"
