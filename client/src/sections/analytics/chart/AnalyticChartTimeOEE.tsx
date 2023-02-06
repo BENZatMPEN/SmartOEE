@@ -1,18 +1,62 @@
 import { ApexOptions } from 'apexcharts';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import * as React from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle } from '../../../utils/formatText';
+import {
+  Box,
+  Divider,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import { useSnackbar } from 'notistack';
+import { AxiosError } from 'axios';
+import ExportXlsx from './ExportXlsx';
+import Button from '@mui/material/Button';
+import { AnalyticChartOEELotDialog } from './AnalyticChartOEELotDialog';
+import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
-  criteria: AnalyticCriteria;
+  group?: boolean;
 }
 
-export default function AnalyticChartTimeOEE({ criteria }: Props) {
+const headers: string[] = [
+  'key',
+  'name',
+  'runningSeconds',
+  'totalBreakdownSeconds',
+  'plannedDowntimeSeconds',
+  'totalCount',
+  'totalAutoDefects',
+  'totalManualDefects',
+  'totalOtherDefects',
+  'totalTimeSeconds',
+  'totalCountByBatch',
+];
+
+export default function AnalyticChartTimeOEE({ group }: Props) {
+  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const [dataRows, setDataRows] = useState<any[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const [lotOpen, setLotOpen] = useState<boolean>(false);
+
+  const [lotDetails, setLotDetails] = useState<ReactNode>();
 
   const [series, setSeries] = useState<any>([]);
 
@@ -66,11 +110,11 @@ export default function AnalyticChartTimeOEE({ criteria }: Props) {
     },
   } as ApexOptions);
 
-  const getCriteria = async () => {
+  const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.get<any>(`/analytics/oee`, {
+      const response = await axios.get<any>(`/oee-analytics/oee`, {
         params: {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
           type: criteria.comparisonType,
@@ -83,6 +127,17 @@ export default function AnalyticChartTimeOEE({ criteria }: Props) {
 
       const { data } = response;
       const { rows, sumRows } = data;
+      setDataRows(
+        (rows as any[])
+          .map((row) =>
+            Object.keys(row).map((key) => {
+              const item = row[key];
+              item.key = key;
+              return item;
+            }),
+          )
+          .flat(),
+      );
 
       setOptions({
         ...options,
@@ -118,21 +173,149 @@ export default function AnalyticChartTimeOEE({ criteria }: Props) {
 
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
+      if (error) {
+        if (error instanceof AxiosError) {
+          if ('message' in error.response?.data) {
+            if (Array.isArray(error.response?.data.message)) {
+              for (const item of error.response?.data.message) {
+                enqueueSnackbar(item, { variant: 'error' });
+              }
+            } else {
+              enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            }
+          }
+        } else {
+          enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+        }
+      }
       setIsLoading(false);
     }
   };
 
+  const xlsxCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { key, totalCountByBatch, ...other } = row;
+      const batchKeys = Object.keys(totalCountByBatch);
+      return {
+        key: dayjs(key).format('YYYY-MM-DD HH:mm'),
+        ...other,
+        totalTimeSeconds: Object.keys(totalCountByBatch).reduce((acc, key) => {
+          acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+          return acc;
+        }, 0),
+        totalCountByBatch: batchKeys
+          .map((batchKey) => {
+            const { lotNumber, standardSpeedSeconds, totalCount } = totalCountByBatch[batchKey];
+            return `Lot Number: ${
+              lotNumber ? lotNumber : batchKey
+            }, Standard Speed: ${standardSpeedSeconds}, Total Count: ${totalCount}`;
+          })
+          .join('\n'),
+      };
+    });
+
+  const tableCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { key, totalCountByBatch, ...other } = row;
+      const batchKeys = Object.keys(totalCountByBatch);
+      return {
+        key: dayjs(key).format('YYYY-MM-DD HH:mm'),
+        ...other,
+        totalTimeSeconds: Object.keys(totalCountByBatch).reduce((acc, key) => {
+          acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+          return acc;
+        }, 0),
+        totalCountByBatch: (
+          <>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setLotOpen(true);
+                setLotDetails(
+                  <>
+                    <Stack spacing={3} divider={<Divider />}>
+                      {batchKeys.map((batchKey) => {
+                        const { lotNumber, standardSpeedSeconds, totalCount } = totalCountByBatch[batchKey];
+                        return (
+                          <Box key={batchKey}>
+                            <Typography variant="subtitle1" gutterBottom>
+                              Lot Number: {lotNumber ? lotNumber : batchKey}
+                            </Typography>
+                            <div>Standard Speed: {standardSpeedSeconds}</div>
+                            <div>Total Count: {totalCount}</div>
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  </>,
+                );
+              }}
+            >
+              Lot Details
+            </Button>
+          </>
+        ),
+      };
+    });
+
   useEffect(() => {
     (async () => {
-      await getCriteria();
+      if (!currentCriteria) {
+        return;
+      }
+
+      await refresh(currentCriteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [criteria]);
+  }, [currentCriteria]);
 
   return (
     <>
-      <ReactApexChart key={`oee${new Date().getTime()}`} options={options} series={series} type="line" height={600} />
+      {currentCriteria && (
+        <>
+          <ReactApexChart key="oeeTime" options={options} series={series} type="line" height={600} />
+
+          {!group && (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="test" />
+              <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {headers.map((item) => (
+                        <TableCell key={item}>{item}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableCleanUp(dataRows).map((row) => (
+                      <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        {headers.map((key) => (
+                          <TableCell
+                            key={`${row.name}_${key}`}
+                            width={key === 'totalCountByBatch' ? '300px' : undefined}
+                          >
+                            {row[key]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          )}
+
+          <AnalyticChartOEELotDialog
+            details={lotDetails}
+            open={lotOpen}
+            onClose={() => {
+              setLotOpen(false);
+              setLotDetails(<></>);
+            }}
+          />
+        </>
+      )}
     </>
   );
 }

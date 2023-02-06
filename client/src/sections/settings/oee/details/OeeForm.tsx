@@ -141,6 +141,7 @@ export default function OeeForm({ isEdit }: Props) {
     data.oeeMachines = data.oeeMachines.map((item) => {
       if (item.machine) {
         item.machine.widgets = [];
+        item.machine.remark = '';
       }
       return item;
     });

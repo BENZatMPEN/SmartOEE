@@ -7,12 +7,15 @@ import axios from '../../../utils/axios';
 import { fNumber2, fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
 import { convertToUnit } from '../../../utils/timeHelper';
+import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
-  criteria: AnalyticCriteria;
+  group?: boolean;
 }
 
-export default function AnalyticChartP({ criteria }: Props) {
+export default function AnalyticChartP({ group }: Props) {
+  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [series, setSeries] = useState<any>([]);
@@ -135,12 +138,12 @@ export default function AnalyticChartP({ criteria }: Props) {
     },
   } as ApexOptions);
 
-  const getCriteria = async () => {
+  const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
 
     try {
       const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
-      const url = criteria.chartSubType === 'pareto' ? '/analytics/pParam' : '/analytics/oee';
+      const url = criteria.chartSubType === 'pareto' ? '/oee-analytics/pParam' : '/oee-analytics/oee';
 
       const response = await axios.get<any>(url, {
         params: {
@@ -244,27 +247,31 @@ export default function AnalyticChartP({ criteria }: Props) {
 
   useEffect(() => {
     (async () => {
-      await getCriteria();
+      if (!currentCriteria) {
+        return;
+      }
+      await refresh(currentCriteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [criteria]);
+  }, [currentCriteria]);
 
-  const getChart = () => {
-    switch (criteria.chartSubType) {
-      case 'bar':
-      case 'bar_min_max':
-        return <ReactApexChart key={`pBar}`} options={barOptions} series={series} type="bar" height={600} />;
+  return (
+    <>
+      {currentCriteria && (
+        <>
+          {(currentCriteria.chartSubType === 'bar' || currentCriteria.chartSubType === 'bar_min_max') && (
+            <ReactApexChart key={`pBar}`} options={barOptions} series={series} type="bar" height={600} />
+          )}
 
-      case 'line':
-        return <ReactApexChart key={`pLine}`} options={lineOptions} series={series} type="line" height={600} />;
+          {currentCriteria.chartSubType === 'line' && (
+            <ReactApexChart key={`pLine}`} options={lineOptions} series={series} type="line" height={600} />
+          )}
 
-      case 'pareto':
-        return <ReactApexChart key={`pPareto}`} options={paretoOptions} series={series} type="line" height={600} />;
-
-      default:
-        return <></>;
-    }
-  };
-
-  return getChart();
+          {currentCriteria.chartSubType === 'pareto' && (
+            <ReactApexChart key={`pPareto}`} options={paretoOptions} series={series} type="line" height={600} />
+          )}
+        </>
+      )}
+    </>
+  );
 }

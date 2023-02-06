@@ -1,4 +1,3 @@
-import { AnalyticCriteria } from '../../@types/analytic';
 import AnalyticChartA from './chart/AnalyticChartA';
 import AnalyticChartMCState from './chart/AnalyticChartMCState';
 import AnalyticChartOEE from './chart/AnalyticChartOEE';
@@ -9,51 +8,40 @@ import AnalyticChartTimeMCState from './chart/AnalyticChartTimeMCState';
 import AnalyticChartTimeOEE from './chart/AnalyticChartTimeOEE';
 import AnalyticChartTimeP from './chart/AnalyticChartTimeP';
 import AnalyticChartTimeQ from './chart/AnalyticChartTimeQ';
+import { RootState, useSelector } from '../../redux/store';
 
-interface Props {
-  criteria: AnalyticCriteria;
+interface Prop {
+  group?: boolean;
 }
 
-export default function AnalyticChart({ criteria }: Props) {
-  const getChart = (criteria: AnalyticCriteria) => {
-    if (criteria.viewType === 'object') {
-      switch (criteria.chartType) {
-        case 'oee':
-          return <AnalyticChartOEE criteria={criteria} />;
+export default function AnalyticChart({ group }: Prop) {
+  const { currentCriteria: criteria } = useSelector((state: RootState) => state.analytic);
 
-        case 'mc':
-          return <AnalyticChartMCState criteria={criteria} />;
+  return (
+    <>
+      {criteria && (
+        <>
+          {criteria.viewType === 'object' && criteria.chartType === 'oee' && <AnalyticChartOEE group={group} />}
 
-        case 'a':
-          return <AnalyticChartA criteria={criteria} />;
+          {criteria.viewType === 'object' && criteria.chartType === 'mc' && <AnalyticChartMCState group={group} />}
 
-        case 'p':
-          return <AnalyticChartP criteria={criteria} />;
+          {criteria.viewType === 'object' && criteria.chartType === 'a' && <AnalyticChartA group={group} />}
 
-        case 'q':
-          return <AnalyticChartQ criteria={criteria} />;
-      }
-    } else if (criteria.viewType === 'time') {
-      switch (criteria.chartType) {
-        case 'oee':
-          return <AnalyticChartTimeOEE criteria={criteria} />;
+          {criteria.viewType === 'object' && criteria.chartType === 'p' && <AnalyticChartP group={group} />}
 
-        case 'mc':
-          return <AnalyticChartTimeMCState criteria={criteria} />;
+          {criteria.viewType === 'object' && criteria.chartType === 'q' && <AnalyticChartQ group={group} />}
 
-        case 'a':
-          return <AnalyticChartTimeA criteria={criteria} />;
+          {criteria.viewType === 'time' && criteria.chartType === 'oee' && <AnalyticChartTimeOEE group={group} />}
 
-        case 'p':
-          return <AnalyticChartTimeP criteria={criteria} />;
+          {criteria.viewType === 'time' && criteria.chartType === 'mc' && <AnalyticChartTimeMCState group={group} />}
 
-        case 'q':
-          return <AnalyticChartTimeQ criteria={criteria} />;
-      }
-    } else {
-      return <></>;
-    }
-  };
+          {criteria.viewType === 'time' && criteria.chartType === 'a' && <AnalyticChartTimeA group={group} />}
 
-  return getChart(criteria);
+          {criteria.viewType === 'time' && criteria.chartType === 'p' && <AnalyticChartTimeP group={group} />}
+
+          {criteria.viewType === 'time' && criteria.chartType === 'q' && <AnalyticChartTimeQ group={group} />}
+        </>
+      )}
+    </>
+  );
 }

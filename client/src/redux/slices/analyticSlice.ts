@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Analytic } from '../../@types/analytic';
+import { Analytic, AnalyticCriteria } from '../../@types/analytic';
 import { OptionItem } from '../../@types/option';
 
 export type AnalyticState = {
@@ -13,6 +13,7 @@ export type AnalyticState = {
   oeeOpts: OptionItem[];
   productOpts: OptionItem[];
   batchOpts: OptionItem[];
+  currentCriteria: AnalyticCriteria | null;
 };
 
 const initialState: AnalyticState = {
@@ -26,6 +27,7 @@ const initialState: AnalyticState = {
   oeeOpts: [],
   productOpts: [],
   batchOpts: [],
+  currentCriteria: null,
 };
 
 const analyticSlice = createSlice({
@@ -89,6 +91,9 @@ const analyticSlice = createSlice({
     },
     updateCurrentAnalytics(state, action) {
       state.currentAnalytics = action.payload;
+    },
+    updateCurrentCriteria(state, action) {
+      state.currentCriteria = action.payload;
     },
     getOeeOptsSuccess(state, action) {
       state.oeeOpts = action.payload;

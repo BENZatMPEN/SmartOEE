@@ -198,7 +198,7 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
     const result: AnalyticGroupCriteriaDetailItem[] = [];
 
     for (const item of criteria) {
-      const response = await axios.get<Analytic>(`/analytics/${item.criteriaId}`);
+      const response = await axios.get<Analytic>(`/oee-analytics/${item.criteriaId}`);
       const { data: analytic } = response;
       result.push(analytic.data);
     }

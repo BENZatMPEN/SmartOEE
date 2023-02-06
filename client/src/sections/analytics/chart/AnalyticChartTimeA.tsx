@@ -7,12 +7,15 @@ import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle } from '../../../utils/formatText';
 import { fDate } from '../../../utils/formatTime';
+import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
-  criteria: AnalyticCriteria;
+  group?: boolean;
 }
 
-export default function AnalyticChartTimeA({ criteria }: Props) {
+export default function AnalyticChartTimeA({ group }: Props) {
+  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [barSeries, setBarSeries] = useState<any>([]);
@@ -141,13 +144,15 @@ export default function AnalyticChartTimeA({ criteria }: Props) {
     },
   } as ApexOptions);
 
-  const getCriteria = async () => {
+  const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
 
     try {
       const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
       const url =
-        criteria.chartSubType === 'pie' || criteria.chartSubType === 'stack' ? '/analytics/aParam' : '/analytics/oee';
+        criteria.chartSubType === 'pie' || criteria.chartSubType === 'stack'
+          ? '/oee-analytics/aParam'
+          : '/oee-analytics/oee';
 
       const response = await axios.get<any>(url, {
         params: {
@@ -257,35 +262,40 @@ export default function AnalyticChartTimeA({ criteria }: Props) {
 
   useEffect(() => {
     (async () => {
-      await getCriteria();
+      if (!currentCriteria) {
+        return;
+      }
+
+      await refresh(currentCriteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [criteria]);
+  }, [currentCriteria]);
 
-  const getChart = () => {
-    switch (criteria.chartSubType) {
-      case 'bar':
-        return <ReactApexChart key={`aBar`} options={barOptions} series={barSeries} type="bar" height={600} />;
+  return (
+    <>
+      {currentCriteria && (
+        <>
+          {currentCriteria.chartSubType === 'bar' && (
+            <ReactApexChart key={`aBar`} options={barOptions} series={barSeries} type="bar" height={600} />
+          )}
 
-      case 'line':
-        return <ReactApexChart key={`aLine`} options={lineOptions} series={barSeries} type="line" height={600} />;
+          {currentCriteria.chartSubType === 'line' && (
+            <ReactApexChart key={`aLine`} options={lineOptions} series={barSeries} type="line" height={600} />
+          )}
 
-      case 'stack':
-        return <ReactApexChart key={`aStack`} options={stackOptions} series={stackSeries} type="bar" height={600} />;
+          {currentCriteria.chartSubType === 'stack' && (
+            <ReactApexChart key={`aStack`} options={stackOptions} series={stackSeries} type="bar" height={600} />
+          )}
 
-      case 'pie':
-        return (
-          <>
-            {pieSeries.map((series: any, idx: number) => (
-              <ReactApexChart key={`aPie${idx}`} options={pieOptions[idx]} series={series} type="pie" width={500} />
-            ))}
-          </>
-        );
-
-      default:
-        return <></>;
-    }
-  };
-
-  return getChart();
+          {currentCriteria.chartSubType === 'pie' && (
+            <>
+              {pieSeries.map((series: any, idx: number) => (
+                <ReactApexChart key={`aPie${idx}`} options={pieOptions[idx]} series={series} type="pie" width={500} />
+              ))}
+            </>
+          )}
+        </>
+      )}
+    </>
+  );
 }

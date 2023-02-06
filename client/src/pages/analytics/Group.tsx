@@ -147,7 +147,7 @@ export default function AnalyticGroup() {
                         </Stack>
 
                         <Box>
-                          <AnalyticChart criteria={criteria} />
+                          <AnalyticChart />
                         </Box>
                       </Stack>
                     </div>

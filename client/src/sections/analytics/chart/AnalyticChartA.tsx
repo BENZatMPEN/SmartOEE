@@ -7,17 +7,30 @@ import axios from '../../../utils/axios';
 import { fNumber2, fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
 import { convertToUnit } from '../../../utils/timeHelper';
+import { RootState, useSelector } from '../../../redux/store';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import ExportXlsx from './ExportXlsx';
 
 interface Props {
-  criteria: AnalyticCriteria;
+  group?: boolean;
 }
 
-export default function AnalyticChartA({ criteria }: Props) {
+const headers: string[] = ['name', 'runningSeconds', 'totalBreakdownSeconds', 'plannedDowntimeSeconds', 'percent'];
+
+const paretoHeaders: string[] = ['name', 'count', 'percent'];
+
+export default function AnalyticChartA({ group }: Props) {
+  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [series, setSeries] = useState<any>([]);
+  const [dataRows, setDataRows] = useState<any[]>([]);
 
-  const [barOptions, setBarOptions] = useState<ApexOptions>({
+  const [series, setSeries] = useState<any[]>([]);
+
+  const [options, setOptions] = useState<ApexOptions>({});
+
+  const barOptions: ApexOptions = {
     chart: {
       type: 'bar',
     },
@@ -52,9 +65,9 @@ export default function AnalyticChartA({ criteria }: Props) {
     //     borderRadius: 5,
     //   },
     // },
-  } as ApexOptions);
+  } as ApexOptions;
 
-  const [lineOptions, setLineOptions] = useState<ApexOptions>({
+  const lineOptions: ApexOptions = {
     chart: {
       type: 'line',
     },
@@ -92,9 +105,9 @@ export default function AnalyticChartA({ criteria }: Props) {
     //     },
     //   },
     // },
-  } as ApexOptions);
+  } as ApexOptions;
 
-  const [paretoOptions, setParetoOptions] = useState<ApexOptions>({
+  const paretoOptions: ApexOptions = {
     stroke: {
       width: [0, 4],
       // curve: 'smooth',
@@ -133,14 +146,14 @@ export default function AnalyticChartA({ criteria }: Props) {
     legend: {
       show: false,
     },
-  } as ApexOptions);
+  } as ApexOptions;
 
-  const getCriteria = async () => {
+  const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
 
     try {
       const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
-      const url = criteria.chartSubType === 'pareto' ? '/analytics/aParam' : '/analytics/oee';
+      const url = criteria.chartSubType === 'pareto' ? '/oee-analytics/aParam' : '/oee-analytics/oee';
 
       const response = await axios.get<any>(url, {
         params: {
@@ -156,8 +169,14 @@ export default function AnalyticChartA({ criteria }: Props) {
       const { data } = response;
       const { rows, sumRows } = data;
 
+      if (criteria.chartSubType === 'pareto') {
+        setDataRows(Object.keys(sumRows).map((key) => sumRows[key]));
+      } else {
+        setDataRows((rows as any[]).map((row) => Object.keys(row).map((key) => row[key])).flat());
+      }
+
       if (criteria.chartSubType === 'line') {
-        setLineOptions({
+        setOptions({
           ...lineOptions,
           xaxis: {
             ...lineOptions.xaxis,
@@ -188,7 +207,7 @@ export default function AnalyticChartA({ criteria }: Props) {
           });
         }
 
-        setBarOptions({
+        setOptions({
           ...barOptions,
           labels: sumRows.map((item: any) => item.key),
           title: {
@@ -212,7 +231,7 @@ export default function AnalyticChartA({ criteria }: Props) {
         }
 
         const { labels, counts, percents } = sumRows[ids[0]] || { labels: [], counts: [], percents: [] };
-        setParetoOptions({
+        setOptions({
           ...paretoOptions,
           labels: labels,
           title: {
@@ -245,27 +264,157 @@ export default function AnalyticChartA({ criteria }: Props) {
 
   useEffect(() => {
     (async () => {
-      await getCriteria();
+      if (!currentCriteria) {
+        return;
+      }
+
+      await refresh(currentCriteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [criteria]);
+  }, [currentCriteria]);
 
-  const getChart = () => {
-    switch (criteria.chartSubType) {
-      case 'bar':
-      case 'bar_min_max':
-        return <ReactApexChart key={`aBar}`} options={barOptions} series={series} type="bar" height={600} />;
-
-      case 'line':
-        return <ReactApexChart key={`aLine}`} options={lineOptions} series={series} type="line" height={600} />;
-
-      case 'pareto':
-        return <ReactApexChart key={`aPareto`} options={paretoOptions} series={series} type="line" height={600} />;
-
-      default:
-        return <></>;
-    }
+  const calAPercent = (runningSeconds: number, plannedDowntimeSeconds: number, totalBreakdownSeconds: number) => {
+    const loadingTime = runningSeconds - plannedDowntimeSeconds;
+    const nonZeroLoadingTime = loadingTime === 0 ? 1 : loadingTime;
+    const operatingTime = loadingTime - totalBreakdownSeconds;
+    return operatingTime / nonZeroLoadingTime;
   };
 
-  return getChart();
+  const xlsxAPercentCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { name, runningSeconds, totalBreakdownSeconds, plannedDowntimeSeconds } = row;
+      return {
+        name,
+        runningSeconds,
+        totalBreakdownSeconds,
+        plannedDowntimeSeconds,
+        percent: calAPercent(runningSeconds, plannedDowntimeSeconds, totalBreakdownSeconds),
+      };
+    });
+
+  const tableAPercentCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { name, runningSeconds, totalBreakdownSeconds, plannedDowntimeSeconds } = row;
+      return {
+        name,
+        runningSeconds,
+        totalBreakdownSeconds,
+        plannedDowntimeSeconds,
+        percent: calAPercent(runningSeconds, plannedDowntimeSeconds, totalBreakdownSeconds),
+      };
+    });
+
+  const xlsxAParetoCleanUp = (rows: any[]): any[] => {
+    if (rows.length <= 0) {
+      return [];
+    }
+
+    const row = rows[0];
+    const results = [];
+    for (let i = 0; i < row.labels.length; i++) {
+      results.push({
+        name: row.labels[i],
+        count: row.counts[i],
+        percent: row.percents[i],
+      });
+    }
+
+    return results;
+  };
+
+  const tableAParetoCleanUp = (rows: any[]): any[] => {
+    if (rows.length <= 0) {
+      return [];
+    }
+
+    const row = rows[0];
+    const results = [];
+    for (let i = 0; i < row.labels.length; i++) {
+      results.push({
+        name: row.labels[i],
+        count: row.counts[i],
+        percent: row.percents[i],
+      });
+    }
+
+    return results;
+  };
+
+  return (
+    <>
+      {currentCriteria && (
+        <>
+          {(currentCriteria.chartSubType === 'bar' || currentCriteria.chartSubType === 'bar_min_max') && (
+            <ReactApexChart options={options} series={series} type="bar" height={600} />
+          )}
+
+          {currentCriteria.chartSubType === 'line' && (
+            <ReactApexChart options={options} series={series} type="line" height={600} />
+          )}
+
+          {currentCriteria.chartSubType === 'pareto' && (
+            <ReactApexChart options={options} series={series} type="line" height={600} />
+          )}
+
+          {!group && (
+            <>
+              {(currentCriteria.chartSubType === 'bar' ||
+                currentCriteria.chartSubType === 'bar_min_max' ||
+                currentCriteria.chartSubType === 'line') && (
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <ExportXlsx headers={headers} rows={xlsxAPercentCleanUp(dataRows)} filename="test" />
+                  <TableContainer sx={{ maxHeight: 440 }}>
+                    <Table stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          {headers.map((item) => (
+                            <TableCell key={item}>{item}</TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {tableAPercentCleanUp(dataRows).map((row) => (
+                          <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            {headers.map((key) => (
+                              <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              )}
+
+              {currentCriteria.chartSubType === 'pareto' && (
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                  <ExportXlsx headers={paretoHeaders} rows={xlsxAParetoCleanUp(dataRows)} filename="test" />
+                  <TableContainer sx={{ maxHeight: 440 }}>
+                    <Table stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          {paretoHeaders.map((item) => (
+                            <TableCell key={item}>{item}</TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {tableAParetoCleanUp(dataRows).map((row) => (
+                          <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            {paretoHeaders.map((key) => (
+                              <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </>
+  );
 }

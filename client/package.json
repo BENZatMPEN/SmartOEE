@@ -95,6 +95,7 @@
     "stream-browserify": "^3.0.0",
     "util": "^0.12.4",
     "web-vitals": "^2.1.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.2/xlsx-0.19.2.tgz",
     "yup": "^0.32.11"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@ export class ChartFilterDto {
   @IsString()
   readonly type: string;
 
-  @IsArray()
+  @IsArray({ message: 'Machine/Product/Lot has to be selected' })
   @Type(() => Number)
   readonly ids: number[];
 

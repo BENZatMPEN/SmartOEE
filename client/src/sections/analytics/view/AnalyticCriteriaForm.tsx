@@ -43,6 +43,7 @@ import {
   getAnalytics,
   updateAnalytic,
   updateCurrentAnalytics,
+  updateCurrentCriteria,
 } from '../../../redux/actions/analyticAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ANALYTICS } from '../../../routes/paths';
@@ -115,11 +116,11 @@ const getChartSubType = (charType: AnalyticChartType, viewType: AnalyticViewType
 
 interface FormValuesProps extends Partial<AnalyticCriteria> {}
 
-interface Props {
-  onRefresh: (criteria: AnalyticCriteria) => void;
-}
+// interface Props {
+//   onRefresh: (criteria: AnalyticCriteria) => void;
+// }
 
-export default function AnalyticCriteriaForm({ onRefresh }: Props) {
+export default function AnalyticCriteriaForm() {
   const { enqueueSnackbar } = useSnackbar();
 
   const dispatch = useDispatch();
@@ -221,18 +222,35 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
 
   const handleRefresh = () => {
     const criteria = getValues();
-    if (criteria.duration === 'hourly') {
-      criteria.fromDate = dayjs(criteria.fromDate).startOf('h').toDate();
-      criteria.toDate = dayjs(criteria.toDate).endOf('h').toDate();
-    } else if (criteria.duration === 'daily') {
-      criteria.fromDate = dayjs(criteria.fromDate).startOf('d').toDate();
-      criteria.toDate = dayjs(criteria.toDate).endOf('d').toDate();
-    } else if (criteria.duration === 'monthly') {
-      criteria.fromDate = dayjs(criteria.fromDate).startOf('M').toDate();
-      criteria.toDate = dayjs(criteria.toDate).endOf('M').toDate();
-    }
 
-    onRefresh(criteria);
+    criteria.fromDate = dayjs(criteria.fromDate).toDate();
+    criteria.toDate = dayjs(criteria.toDate).toDate();
+
+    // if (criteria.viewType === 'object') {
+    //   if (criteria.duration === 'hourly') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('h').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('h').toDate();
+    //   } else if (criteria.duration === 'daily') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('d').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('d').toDate();
+    //   } else if (criteria.duration === 'monthly') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('M').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('M').toDate();
+    //   }
+    // } else {
+    //   if (criteria.duration === 'hourly') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('h').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('h').toDate();
+    //   } else if (criteria.duration === 'daily') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('d').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('d').toDate();
+    //   } else if (criteria.duration === 'monthly') {
+    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('M').toDate();
+    //     criteria.toDate = dayjs(criteria.toDate).endOf('M').toDate();
+    //   }
+    // }
+
+    dispatch(updateCurrentCriteria(criteria));
   };
 
   const createNewCriteria = async (data: FormValuesProps) => {
@@ -314,26 +332,13 @@ export default function AnalyticCriteriaForm({ onRefresh }: Props) {
     setValue('products', []);
     setValue('batches', []);
     setValue('viewType', type);
-
-    if (type === 'object') {
-      setValue('duration', 'hourly');
-    }
+    setValue('duration', 'hourly');
 
     fillChartSubTypes(getValues('chartType'), type);
   };
 
   const handleDurationChanged = (type: AnalyticDuration): void => {
     setValue('duration', type);
-    setValue('fromDate', dayjs().toDate());
-    setValue('toDate', dayjs().toDate());
-
-    if (type === 'daily') {
-      setValue('fromDate', dayjs(getValues('fromDate')).add(-7, 'd').startOf('d').toDate());
-      setValue('toDate', dayjs(getValues('toDate')).endOf('d').toDate());
-    } else {
-      setValue('fromDate', dayjs(getValues('fromDate')).startOf('M').toDate());
-      setValue('toDate', dayjs(getValues('toDate')).startOf('M').toDate());
-    }
   };
 
   const fillChartSubTypes = (chartType: AnalyticChartType, viewType: AnalyticViewType) => {

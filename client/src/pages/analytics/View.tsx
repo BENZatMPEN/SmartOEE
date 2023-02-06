@@ -1,32 +1,24 @@
 import { Card, CardContent, Container, Stack } from '@mui/material';
-import dayjs from 'dayjs';
-import { useState } from 'react';
-import { AnalyticCriteria } from '../../@types/analytic';
 import Page from '../../components/Page';
-import AnalyticChart from '../../sections/analytics/AnalyticChart';
 import AnalyticCriteriaForm from '../../sections/analytics/view/AnalyticCriteriaForm';
+import { RootState, useSelector } from '../../redux/store';
+import AnalyticChart from '../../sections/analytics/AnalyticChart';
 
 export default function AnalyticSingle() {
-  const [criteria, setCriteria] = useState<AnalyticCriteria | null>();
-
-  const handleRefresh = (data: AnalyticCriteria) => {
-    setCriteria(data);
-  };
+  const { currentCriteria: criteria } = useSelector((state: RootState) => state.analytic);
 
   return (
     <Page title="Analytics">
       <Container maxWidth={false}>
         <Stack spacing={3}>
-          <AnalyticCriteriaForm onRefresh={handleRefresh} />
+          <AnalyticCriteriaForm />
 
-          {criteria ? (
+          {criteria && (
             <Card>
               <CardContent>
-                <AnalyticChart criteria={criteria} />
+                <AnalyticChart key={`${criteria.viewType}_${criteria.chartType}_${criteria.chartSubType}`} />
               </CardContent>
             </Card>
-          ) : (
-            <></>
           )}
         </Stack>
       </Container>

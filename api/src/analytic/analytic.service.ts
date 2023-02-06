@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AnalyticEntity } from '../common/entities/analytic-entity';
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
@@ -45,6 +45,7 @@ type CalculationItem = {
 };
 
 type OeeSumData = {
+  name: string;
   runningSeconds: number;
   totalBreakdownSeconds: number;
   plannedDowntimeSeconds: number;
@@ -54,6 +55,7 @@ type OeeSumData = {
   totalOtherDefects: number;
   totalCountByBatch: {
     [key: string]: {
+      lotNumber: string;
       standardSpeedSeconds: number;
       totalCount: number;
     };
@@ -174,8 +176,14 @@ export class AnalyticService {
         return acc;
       }, {} as StatsGroup);
 
-      const oeeRows = Object.keys(groupHour).map((key) => this.calculateOee(this.sumOeeData(groupHour[key]), key));
-      const dataRows = Object.keys(groupHour).map((key) => ({ [key]: this.sumOeeData(groupHour[key]) }));
+      const names = await this.getNames(fieldName, rows);
+      const lotNumbers = await this.getLotNumbers(rows);
+      const oeeRows = Object.keys(groupHour).map((key) =>
+        this.calculateOee(this.sumOeeData(groupHour[key], fieldName, names, lotNumbers), key),
+      );
+      const dataRows = Object.keys(groupHour).map((key) => ({
+        [key]: this.sumOeeData(groupHour[key], fieldName, names, lotNumbers),
+      }));
 
       return {
         rows: dataRows,
@@ -204,8 +212,14 @@ export class AnalyticService {
         });
       }
 
-      const oeeRows = Object.keys(groupDay).map((key) => this.calculateOee(this.sumOeeData(groupDay[key]), key));
-      const dataRows = Object.keys(groupDay).map((key) => ({ [key]: this.sumOeeData(groupDay[key]) }));
+      const names = await this.getNames(fieldName, rows);
+      const lotNumbers = await this.getLotNumbers(rows);
+      const oeeRows = Object.keys(groupDay).map((key) =>
+        this.calculateOee(this.sumOeeData(groupDay[key], fieldName, names, lotNumbers), key),
+      );
+      const dataRows = Object.keys(groupDay).map((key) => ({
+        [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
+      }));
 
       return {
         rows: dataRows,
@@ -241,8 +255,14 @@ export class AnalyticService {
         });
       }
 
-      const oeeRows = Object.keys(groupMonth).map((key) => this.calculateOee(this.sumOeeData(groupMonth[key]), key));
-      const dataRows = Object.keys(groupMonth).map((key) => ({ [key]: this.sumOeeData(groupMonth[key]) }));
+      const names = await this.getNames(fieldName, rows);
+      const lotNumbers = await this.getLotNumbers(rows);
+      const oeeRows = Object.keys(groupMonth).map((key) =>
+        this.calculateOee(this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers), key),
+      );
+      const dataRows = Object.keys(groupMonth).map((key) => ({
+        [key]: this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers),
+      }));
 
       return {
         rows: dataRows,
@@ -260,6 +280,53 @@ export class AnalyticService {
   // sum of days (from - to) for each of selected OEEs, Products or Lots
   // From - To
   // Multiple OEEs, Products or Lots
+
+  private async getNames(fieldName: string, rows: AnalyticStatsEntity[]): Promise<{ [key: number]: string }> {
+    const ids = rows.reduce((acc, item) => (acc.indexOf(item[fieldName]) < 0 ? [...acc, item[fieldName]] : acc), []);
+
+    if (fieldName === 'oeeId') {
+      const oees = await this.oeeRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'oeeCode', 'productionName'],
+      });
+
+      return oees.reduce((acc, item) => {
+        acc[item.id] = item.productionName;
+        return acc;
+      }, {});
+    } else if (fieldName === 'oeeBatchId') {
+      const batches = await this.oeeBatchRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'lotNumber'],
+      });
+      return batches.reduce((acc, item) => {
+        acc[item.id] = item.lotNumber;
+        return acc;
+      }, {});
+    } else if (fieldName === 'productId') {
+      const products = await this.productRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'sku', 'name'],
+      });
+      return products.reduce((acc, item) => {
+        acc[item.id] = item.name;
+        return acc;
+      }, {});
+    }
+    return {};
+  }
+
+  private async getLotNumbers(rows: AnalyticStatsEntity[]): Promise<{ [key: number]: string }> {
+    const ids = rows.reduce((acc, item) => (acc.indexOf(item.oeeBatchId) < 0 ? [...acc, item.oeeBatchId] : acc), []);
+    const batches = await this.oeeBatchRepository.find({
+      where: { id: In(ids) },
+      select: ['id', 'lotNumber'],
+    });
+    return batches.reduce((acc, item) => {
+      acc[item.id] = item.lotNumber;
+      return acc;
+    }, {});
+  }
 
   async findOeeByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
@@ -286,12 +353,16 @@ export class AnalyticService {
       return acc;
     }, {});
 
+    const names = await this.getNames(fieldName, rows);
+    const lotNumbers = await this.getLotNumbers(rows);
     const oeeRows = [];
     for (const key of Object.keys(group)) {
       const objName = await this.getObjectName(Number(key), chartType);
-      oeeRows.push(await this.calculateOee(this.sumOeeData(group[key]), objName));
+      oeeRows.push(await this.calculateOee(this.sumOeeData(group[key], fieldName, names, lotNumbers), objName));
     }
-    const dataRows = Object.keys(group).map((key) => ({ [key]: this.sumOeeData(group[key]) }));
+    const dataRows = Object.keys(group).map((key) => ({
+      [key]: this.sumOeeData(group[key], fieldName, names, lotNumbers),
+    }));
 
     return {
       rows: dataRows,
@@ -321,7 +392,6 @@ export class AnalyticService {
 
     if (rows.length === 0) {
       return {
-        rows: [],
         sumRows: [],
       };
     }
@@ -416,7 +486,6 @@ export class AnalyticService {
     }
 
     return {
-      rows: [],
       sumRows: result,
     };
   }
@@ -436,7 +505,6 @@ export class AnalyticService {
 
     if (rows.length === 0) {
       return {
-        rows: [],
         sumRows: [],
       };
     }
@@ -472,7 +540,6 @@ export class AnalyticService {
     }
 
     return {
-      rows: [],
       sumRows: result,
     };
   }
@@ -1151,8 +1218,14 @@ export class AnalyticService {
     return {};
   }
 
-  private sumOeeData(rows: AnalyticStatsEntity[]): OeeSumData {
+  private sumOeeData(
+    rows: AnalyticStatsEntity[],
+    fieldName: string,
+    names: { [key: number]: string },
+    lotNumbers: { [key: number]: string },
+  ): OeeSumData {
     const initSum: OeeSumData = {
+      name: '',
       runningSeconds: 0,
       totalBreakdownSeconds: 0,
       plannedDowntimeSeconds: 0,
@@ -1181,12 +1254,14 @@ export class AnalyticService {
         totalCountByBatch[oeeBatchId].totalCount += totalCount;
       } else {
         totalCountByBatch[oeeBatchId] = {
+          lotNumber: Object.keys(lotNumbers).indexOf(oeeBatchId.toString()) >= 0 ? lotNumbers[oeeBatchId] : '',
           standardSpeedSeconds,
           totalCount,
         };
       }
 
       return {
+        name: Object.keys(names).indexOf(row[fieldName].toString()) >= 0 ? names[row[fieldName]] : '',
         runningSeconds: acc.runningSeconds + runningSeconds,
         totalBreakdownSeconds: acc.totalBreakdownSeconds + totalBreakdownSeconds,
         plannedDowntimeSeconds: acc.plannedDowntimeSeconds + plannedDowntimeSeconds,
@@ -1219,7 +1294,8 @@ export class AnalyticService {
 
     // calculate P
     const totalP = Object.keys(totalCountByBatch).reduce((acc, key) => {
-      return totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+      acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+      return acc;
     }, 0);
     const pPercent = totalP / nonZeroLoadingTime;
 

@@ -18,7 +18,7 @@ import { ChartFilterDto } from './dto/chart-filter-dto';
 
 // @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('api/analytics')
+@Controller('api/oee-analytics')
 export class AnalyticController {
   constructor(private readonly analyticService: AnalyticService) {}
 
@@ -49,7 +49,6 @@ export class AnalyticController {
     const { viewType, duration, type, ids, from, to } = requestDto;
     if ((ids || []).length === 0) {
       return {
-        rows: [],
         sumRows: [],
       };
     }
@@ -61,7 +60,6 @@ export class AnalyticController {
     }
 
     return {
-      rows: [],
       sumRows: [],
     };
   }
