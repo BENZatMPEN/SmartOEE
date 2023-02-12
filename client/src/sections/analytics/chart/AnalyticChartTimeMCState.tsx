@@ -10,39 +10,53 @@ import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
-import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
+  criteria: AnalyticCriteria;
   group?: boolean;
 }
 
 const headers: string[] = ['key', 'running', 'standby', 'breakdown', 'planned', 'mc_setup'];
 
-export default function AnalyticChartTimeMCState({ group }: Props) {
-  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
-
+export default function AnalyticChartTimeMCState({ criteria, group }: Props) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [dataRows, setDataRows] = useState<any[]>([]);
 
-  const [barSeries, setBarSeries] = useState<any>([]);
+  const [stackSeries, setStackSeries] = useState<any>([]);
 
-  const [barOptions, setBarOptions] = useState<ApexOptions>({
+  const [stackOptions, setStackOptions] = useState<ApexOptions>({
     chart: {
       stacked: true,
       stackType: '100%',
     },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
+    },
     xaxis: {
       show: false,
+      type: 'datetime',
       labels: { rotateAlways: true },
     },
+    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#00D000'],
   } as ApexOptions);
 
   const [pieSeries, setPieSeries] = useState<any[]>([]);
 
   const [pieOptions, setPieOptions] = useState<ApexOptions[]>([]);
+
+  const pieOption: ApexOptions = {
+    chart: {
+      toolbar: {
+        show: true,
+      },
+    },
+    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#00D000'],
+  } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
@@ -64,11 +78,11 @@ export default function AnalyticChartTimeMCState({ group }: Props) {
       setDataRows(sumRows);
 
       if (criteria.chartSubType === 'stack') {
-        setBarOptions({
-          ...barOptions,
+        setStackOptions({
+          ...stackOptions,
           xaxis: {
-            ...barOptions.xaxis,
-            categories: sumRows.map((row: any) => dayjs(row.key).format('DD/MM/YYYY HH:mm')),
+            ...stackOptions.xaxis,
+            categories: sumRows.map((row: any) => dayjs(row.key).toDate().getTime()),
           },
           title: {
             text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
@@ -76,7 +90,7 @@ export default function AnalyticChartTimeMCState({ group }: Props) {
           },
         });
 
-        setBarSeries([
+        setStackSeries([
           { name: 'Running', data: sumRows.map((row: any) => ('running' in row.status ? row.status.running : 0)) },
           { name: 'Planned', data: sumRows.map((row: any) => ('planned' in row.status ? row.status.planned : 0)) },
           {
@@ -90,6 +104,7 @@ export default function AnalyticChartTimeMCState({ group }: Props) {
         setPieOptions(
           sumRows.map((row: any) => {
             return {
+              ...pieOption,
               labels: ['Running', 'Planned', 'Breakdown', 'M/C Setup', 'Standby'],
               title: {
                 text: fDate(row.key),
@@ -132,29 +147,10 @@ export default function AnalyticChartTimeMCState({ group }: Props) {
 
   useEffect(() => {
     (async () => {
-      if (!currentCriteria) {
-        return;
-      }
-
-      await refresh(currentCriteria);
+      await refresh(criteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCriteria]);
-
-  const xlsxCleanUp = (rows: any[]): any[] =>
-    rows.map((row) => {
-      const { key, status } = row;
-      const { running, standby, breakdown, planned, mc_setup } = status;
-
-      return {
-        key: dayjs(key).format('YYYY-MM-DD HH:mm'),
-        running: running ? running : 0,
-        standby: standby ? standby : 0,
-        breakdown: breakdown ? breakdown : 0,
-        planned: planned ? planned : 0,
-        mc_setup: mc_setup ? mc_setup : 0,
-      };
-    });
+  }, [criteria]);
 
   const tableCleanUp = (rows: any[]): any[] =>
     rows.map((row) => {
@@ -173,44 +169,42 @@ export default function AnalyticChartTimeMCState({ group }: Props) {
 
   return (
     <>
-      {currentCriteria && (
+      {criteria.chartSubType === 'stack' ? (
+        <ReactApexChart options={stackOptions} series={stackSeries} type="bar" height={600} />
+      ) : (
         <>
-          {currentCriteria.chartSubType === 'stack' ? (
-            <ReactApexChart key={`mcStack`} options={barOptions} series={barSeries} type="bar" height={600} />
-          ) : (
-            <>
-              {pieSeries.map((series: any, idx: number) => (
-                <ReactApexChart key={`mcPie${idx}`} options={pieOptions[idx]} series={series} type="pie" width={500} />
-              ))}
-            </>
-          )}
-
-          {!group && (
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="test" />
-              <TableContainer sx={{ maxHeight: 440 }}>
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tableCleanUp(dataRows).map((row) => (
-                      <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        {headers.map((key) => (
-                          <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          )}
+          {pieSeries.map((series: any, idx: number) => (
+            <div key={`mcPie${idx}}`} style={{ paddingBottom: '20px' }}>
+              <ReactApexChart options={pieOptions[idx]} series={series} type="pie" width={500} />
+            </div>
+          ))}
         </>
+      )}
+
+      {!group && (
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+          <ExportXlsx headers={headers} rows={tableCleanUp(dataRows)} filename="mc-state" />
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  {headers.map((item) => (
+                    <TableCell key={item}>{item}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableCleanUp(dataRows).map((row) => (
+                  <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    {headers.map((key) => (
+                      <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
     </>
   );

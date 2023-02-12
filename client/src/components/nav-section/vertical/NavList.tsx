@@ -58,7 +58,7 @@ export function NavListRoot({ list, isCollapse }: NavListRootProps) {
                     return item.roleSubject && ability.can(RoleAction.Read, item.roleSubject) ? (
                       <NavListSub key={`${item.title}_${idx}`} list={item} />
                     ) : (
-                      <Fragment key={`${item.title}_${idx}`}></Fragment>
+                      <Fragment key={`${item.title}_${idx}`} />
                     );
                   } else {
                     return <NavListSub key={`${item.title}_${idx}`} list={item} />;

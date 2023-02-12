@@ -14,17 +14,21 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import { useEffect, useState } from 'react';
+import { Layouts, Responsive, WidthProvider } from 'react-grid-layout';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
-import { AnalyticGroupCriteriaDetailItem } from '../../@types/analytic';
+import { Analytic, AnalyticDuration, AnalyticGroupCriteriaDetailItem } from '../../@types/analytic';
 import { FormProvider } from '../../components/hook-form';
-import { RHFDatePicker } from '../../components/hook-form/RHFDateTimePicker';
+import { RHFDatePicker, RHFDateTimePicker } from '../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../components/Iconify';
 import Page from '../../components/Page';
 import AnalyticChart from '../../sections/analytics/AnalyticChart';
 import AnalyticGroupCriteriaForm from '../../sections/analytics/group/AnalyticGroupCriteriaForm';
+import { RootState, useDispatch, useSelector } from '../../redux/store';
+import axios from '../../utils/axios';
+import { updateCurrentAnalytics } from '../../redux/actions/analyticAction';
+import { useParams } from 'react-router-dom';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -40,26 +44,93 @@ const initDateCriteria: ItemCriteria = {
   index: -1,
 };
 
+function keyGen(): string {
+  return crypto.randomUUID().replace('-', '');
+}
+
 export default function AnalyticGroup() {
+  const { currentAnalytics } = useSelector((state: RootState) => state.analytic);
+
+  const dispatch = useDispatch();
+
+  const { id } = useParams();
+
+  const [chartKey, setChartKey] = useState<string>(keyGen());
+
   const [criteriaList, setCriteriaList] = useState<AnalyticGroupCriteriaDetailItem[]>([]);
 
-  const handleRefresh = () => {
-    // console.log(data);
+  const [criteriaLayouts, setCriteriaLayouts] = useState<Layouts>({});
+
+  const [selectedCriteria, setSelectedCriteria] = useState<AnalyticGroupCriteriaDetailItem | null>(null);
+
+  const defaultGridLayout = {
+    className: 'layout',
+    rowHeight: 680,
+    cols: { lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 },
+    draggableHandle: '.chart-header',
   };
 
-  const handleCriteriaAdded = (criteria: AnalyticGroupCriteriaDetailItem[], clear: boolean) => {
-    if (clear) {
-      setCriteriaList([...criteria]);
-    } else {
-      setCriteriaList([...criteriaList, ...criteria]);
+  const [gridLayouts, setGridLayouts] = useState<any>(defaultGridLayout);
+
+  useEffect(() => {
+    if (!id) {
+      return;
     }
+
+    (async () => {
+      const response = await axios.get<Analytic>(`/oee-analytics/${id}`);
+      const { data } = response;
+      await refresh(data);
+
+      dispatch(updateCurrentAnalytics(data));
+    })();
+
+    return () => {
+      setCriteriaList([]);
+      setCriteriaLayouts({});
+      setSelectedCriteria(null);
+      dispatch(updateCurrentAnalytics(null));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const refresh = async (analytic: Analytic) => {
+    const { criteria, layouts } = analytic?.data || { criteria: [], layouts: [] };
+    const result: AnalyticGroupCriteriaDetailItem[] = [];
+
+    for (const item of criteria) {
+      const response = await axios.get<Analytic>(`/oee-analytics/${item.criteriaId}`);
+      const { data: analytic } = response;
+      result.push({ ...analytic.data, ...item });
+    }
+
+    setGridLayouts({
+      ...defaultGridLayout,
+      layouts,
+    });
+    setCriteriaList(result);
+  };
+
+  const handleRefresh = async () => {
+    if (!currentAnalytics) {
+      return;
+    }
+
+    setChartKey(keyGen());
+    await refresh(currentAnalytics);
+  };
+
+  const handleCriteriaAdded = (criteria: AnalyticGroupCriteriaDetailItem[]) => {
+    setCriteriaList([...criteriaList, ...criteria]);
   };
 
   const [isOpenCriteria, setIsOpenCriteria] = useState<boolean>(false);
 
   const handleOpenCriteria = (index: number) => {
     setIsOpenCriteria(true);
-    const { fromDate, toDate } = criteriaList[index];
+    const criteria = criteriaList[index];
+    setSelectedCriteria(criteria);
+    const { fromDate, toDate } = criteria;
     reset({
       fromDate,
       toDate,
@@ -73,6 +144,7 @@ export default function AnalyticGroup() {
 
   const handleSaveCriteria = () => {
     handleSubmit((data) => {
+      console.log(data);
       const updatingCriteria = criteriaList[data.index];
       updatingCriteria.fromDate = data.fromDate;
       updatingCriteria.toDate = data.toDate;
@@ -98,11 +170,28 @@ export default function AnalyticGroup() {
 
   const { reset, handleSubmit } = methods;
 
-  const a = {
-    className: 'layout',
-    rowHeight: 550,
-    cols: { lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 },
-    draggableHandle: '.chart-header',
+  const getToPicker = (duration: AnalyticDuration) => {
+    if (duration === 'hourly') {
+      return <RHFDateTimePicker key="fromDateHourly" name="toDate" label="To Date" />;
+    } else if (duration === 'daily') {
+      return <RHFDatePicker key="fromDateDaily" name="toDate" label="To Date" />;
+    } else if (duration === 'monthly') {
+      return <RHFDatePicker key="fromDateMonthly" name="toDate" label="To Date" views={['year', 'month']} />;
+    } else {
+      return <></>;
+    }
+  };
+
+  const getFromPicker = (duration: AnalyticDuration) => {
+    if (duration === 'hourly') {
+      return <RHFDateTimePicker key="fromDateHourly" name="fromDate" label="From Date" />;
+    } else if (duration === 'daily') {
+      return <RHFDatePicker key="fromDateDaily" name="fromDate" label="From Date" />;
+    } else if (duration === 'monthly') {
+      return <RHFDatePicker key="fromDateMonthly" name="fromDate" label="From Date" views={['year', 'month']} />;
+    } else {
+      return <></>;
+    }
   };
 
   return (
@@ -111,6 +200,7 @@ export default function AnalyticGroup() {
         <Stack spacing={3}>
           <AnalyticGroupCriteriaForm
             criteriaList={criteriaList}
+            criteriaLayouts={criteriaLayouts}
             onCriteriaAdded={handleCriteriaAdded}
             onRefresh={handleRefresh}
           />
@@ -119,9 +209,9 @@ export default function AnalyticGroup() {
             <Card>
               <CardContent>
                 <ResponsiveGridLayout
-                  {...a}
+                  {...gridLayouts}
                   onLayoutChange={(currentLayout, allLayouts) => {
-                    console.log(currentLayout);
+                    setCriteriaLayouts(allLayouts);
                   }}
                 >
                   {criteriaList.map((criteria, index) => (
@@ -130,10 +220,16 @@ export default function AnalyticGroup() {
                       data-grid={{ x: index % 2, y: 0, w: 1, h: 1, resizeHandles: ['e'] }}
                     >
                       <Stack spacing={3}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="subtitle1" className="chart-header">
-                            {criteria.title}
-                          </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          bgcolor={(theme) => theme.palette.grey.A100}
+                          padding={1}
+                          borderRadius={1}
+                          className="chart-header"
+                        >
+                          <Typography variant="subtitle1">{criteria.title}</Typography>
 
                           <Box sx={{ flexGrow: 1 }} />
 
@@ -147,7 +243,7 @@ export default function AnalyticGroup() {
                         </Stack>
 
                         <Box>
-                          <AnalyticChart />
+                          <AnalyticChart key={chartKey} criteria={criteria} group={true} />
                         </Box>
                       </Stack>
                     </div>
@@ -158,18 +254,18 @@ export default function AnalyticGroup() {
           )}
         </Stack>
 
-        <Dialog fullWidth maxWidth="xs" open={isOpenCriteria} onClose={handleCloseCriteria}>
+        <Dialog fullWidth maxWidth="sm" open={isOpenCriteria} onClose={handleCloseCriteria}>
           <DialogTitle>Change Date</DialogTitle>
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <FormProvider methods={methods}>
               <Grid container spacing={3}>
                 <Grid item sm={6}>
-                  <RHFDatePicker name="fromDate" label="From Date" />
+                  {selectedCriteria && getFromPicker(selectedCriteria.duration)}
                 </Grid>
 
                 <Grid item sm={6}>
-                  <RHFDatePicker name="toDate" label="To Date" />
+                  {selectedCriteria && getToPicker(selectedCriteria.duration)}
                 </Grid>
               </Grid>
             </FormProvider>

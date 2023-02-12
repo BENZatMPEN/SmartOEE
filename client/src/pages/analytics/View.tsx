@@ -7,6 +7,20 @@ import AnalyticChart from '../../sections/analytics/AnalyticChart';
 export default function AnalyticSingle() {
   const { currentCriteria: criteria } = useSelector((state: RootState) => state.analytic);
 
+  function genKey() {
+    if (!criteria) {
+      return '';
+    }
+
+    const { oees, products, batches } = criteria;
+    const ids = [...oees, ...products, ...batches];
+    if (ids.length === 0) {
+      return '';
+    }
+
+    return `_${ids.join('_')}`;
+  }
+
   return (
     <Page title="Analytics">
       <Container maxWidth={false}>
@@ -16,7 +30,10 @@ export default function AnalyticSingle() {
           {criteria && (
             <Card>
               <CardContent>
-                <AnalyticChart key={`${criteria.viewType}_${criteria.chartType}_${criteria.chartSubType}`} />
+                <AnalyticChart
+                  criteria={criteria}
+                  key={`${criteria.viewType}_${criteria.chartType}_${criteria.chartSubType}${genKey()}`}
+                />
               </CardContent>
             </Card>
           )}

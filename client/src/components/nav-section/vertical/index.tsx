@@ -50,7 +50,7 @@ export default function NavSectionVertical({ navConfig, isCollapse = false, ...o
               </List>
             );
           } else {
-            return <Fragment key={group.subheader}></Fragment>;
+            return <Fragment key={group.subheader} />;
           }
         } else {
           return (

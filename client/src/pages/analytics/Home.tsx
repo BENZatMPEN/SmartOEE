@@ -10,7 +10,7 @@ export default function AnalyticHome() {
       <Container maxWidth={false}>
         <Grid container spacing={3} justifyContent="center">
           <Grid item md={4}>
-            <Link to={PATH_ANALYTICS.view.root}>
+            <Link to={PATH_ANALYTICS.view}>
               <ButtonWidget title="Analytics" icon={'icon-park:data-sheet'} />
             </Link>
           </Grid>

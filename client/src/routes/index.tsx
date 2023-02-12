@@ -102,7 +102,13 @@ export default function Router() {
           children: [
             { element: <Analytics />, index: true },
             { path: 'view', element: <AnalyticView /> },
-            { path: 'group', element: <AnalyticGroup /> },
+            {
+              path: 'group',
+              children: [
+                { element: <AnalyticGroup />, index: true },
+                { path: ':id', element: <AnalyticGroupDetails /> },
+              ],
+            },
           ],
         },
         {
@@ -127,13 +133,7 @@ export default function Router() {
         },
         {
           path: 'plannings',
-          children: [
-            { element: <Plannings />, index: true },
-            // { path: 'new', element: <FaqsAddEdit /> },
-            // { path: ':id', element: <FaqsDetails /> },
-            // { path: ':id/edit', element: <FaqsAddEdit /> },
-            // { path: ':id/duplicate', element: <FaqsAddEdit /> },
-          ],
+          children: [{ element: <Plannings />, index: true }],
         },
         {
           path: 'history',
@@ -306,6 +306,7 @@ const DashboardDetailsHistory = Loadable(lazy(() => import('../pages/dashboard/d
 const Analytics = Loadable(lazy(() => import('../pages/analytics/Home')));
 const AnalyticView = Loadable(lazy(() => import('../pages/analytics/View')));
 const AnalyticGroup = Loadable(lazy(() => import('../pages/analytics/Group')));
+const AnalyticGroupDetails = Loadable(lazy(() => import('../pages/analytics/Group')));
 
 // Problems and Solutions
 const ProblemsSolutions = Loadable(lazy(() => import('../pages/problems-solutions/List')));

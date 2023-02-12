@@ -24,9 +24,9 @@ import {
 import ExportXlsx from './ExportXlsx';
 import Button from '@mui/material/Button';
 import { AnalyticChartOEELotDialog } from './AnalyticChartOEELotDialog';
-import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
+  criteria: AnalyticCriteria;
   group?: boolean;
 }
 
@@ -43,9 +43,7 @@ const headers: string[] = [
   'totalCountByBatch',
 ];
 
-export default function AnalyticChartOEE({ group }: Props) {
-  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
-
+export default function AnalyticChartOEE({ criteria, group }: Props) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [dataRows, setDataRows] = useState<any[]>([]);
@@ -65,8 +63,16 @@ export default function AnalyticChartOEE({ group }: Props) {
       type: 'bar',
     },
     stroke: {
-      width: [0, 4],
-      curve: 'straight',
+      width: [0, 5, 5, 5],
+      curve: 'smooth',
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
     },
     labels: [],
     xaxis: {
@@ -84,12 +90,13 @@ export default function AnalyticChartOEE({ group }: Props) {
         },
       },
     ],
-    // plotOptions: {
-    //   bar: {
-    //     endingShape: 'rounded',
-    //     borderRadius: 5,
-    //   },
-    // },
+    colors: ['#00C000', '#FF6699', '#00CCFF', '#FFFA00'],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
   } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {
@@ -178,14 +185,10 @@ export default function AnalyticChartOEE({ group }: Props) {
 
   useEffect(() => {
     (async () => {
-      if (!currentCriteria) {
-        return;
-      }
-
-      await refresh(currentCriteria);
+      await refresh(criteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCriteria]);
+  }, [criteria]);
 
   const xlsxCleanUp = (rows: any[]): any[] =>
     rows.map((row) => {
@@ -257,7 +260,7 @@ export default function AnalyticChartOEE({ group }: Props) {
 
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="test" />
+          <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="oee" />
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader>
               <TableHead>

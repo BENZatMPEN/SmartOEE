@@ -15,7 +15,6 @@ const ROOTS_ADMINISTRATOR = '/admin';
 export const PATH_AUTH = {
   root: ROOTS_AUTH,
   login: path(ROOTS_AUTH, '/login'),
-  loginUnprotected: path(ROOTS_AUTH, '/login-unprotected'),
 };
 
 export const PATH_DASHBOARD = {
@@ -33,13 +32,10 @@ export const PATH_DASHBOARD = {
 
 export const PATH_ANALYTICS = {
   root: ROOTS_ANALYTICS,
+  view: path(ROOTS_ANALYTICS, `/view`),
   group: {
     root: path(ROOTS_ANALYTICS, `/group`),
     details: (id: string) => path(ROOTS_ANALYTICS, `/group/${id}`),
-  },
-  view: {
-    root: path(ROOTS_ANALYTICS, `/view`),
-    details: (id: string) => path(ROOTS_ANALYTICS, `/single/${id}`),
   },
 };
 
@@ -65,12 +61,6 @@ export const PATH_FAQS = {
 
 export const PATH_PLANNINGS = {
   root: ROOTS_PLANNINGS,
-  item: {
-    // new: path(ROOTS_PLANNINGS, `/new`),
-    // details: (id: string) => path(ROOTS_FAQS, `/${id}`),
-    // edit: (id: string) => path(ROOTS_FAQS, `/${id}/edit`),
-    // duplicate: (id: string) => path(ROOTS_FAQS, `/${id}/duplicate`),
-  },
 };
 
 export const PATH_HISTORY = {

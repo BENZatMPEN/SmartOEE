@@ -38,7 +38,7 @@ export function RHFDateTimePicker({ name, label, size, ...others }: RHFDateTimeP
             value={field.value}
             onChange={(newValue: any) => {
               if (newValue) {
-                field.onChange(newValue);
+                field.onChange(newValue.toDate());
               }
             }}
             renderInput={(params: any) => (
@@ -66,7 +66,7 @@ export function RHFDatePicker({ name, label, size, ...others }: RHFDatePickerPro
             value={field.value}
             onChange={(newValue: any) => {
               if (newValue) {
-                field.onChange(newValue);
+                field.onChange(newValue.toDate());
               }
             }}
             renderInput={(params: any) => (

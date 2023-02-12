@@ -1,7 +1,5 @@
 import { matchPath } from 'react-router-dom';
 
-// ----------------------------------------------------------------------
-
 export { default as NavSectionVertical } from './vertical';
 export { default as NavSectionHorizontal } from './horizontal';
 

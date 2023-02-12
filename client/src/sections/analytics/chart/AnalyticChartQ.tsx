@@ -5,31 +5,45 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fNumber, fNumber2, fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle } from '../../../utils/formatText';
-import { RootState, useSelector } from '../../../redux/store';
+import { useSnackbar } from 'notistack';
+import { AxiosError } from 'axios';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import ExportXlsx from './ExportXlsx';
 
 interface Props {
+  criteria: AnalyticCriteria;
   group?: boolean;
 }
 
-export default function AnalyticChartQ({ group }: Props) {
-  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+const headers: string[] = ['name', 'totalAutoDefects', 'totalManualDefects', 'totalCount', 'percent'];
+
+const paretoHeaders: string[] = ['name', 'count', 'percent'];
+
+export default function AnalyticChartQ({ criteria, group }: Props) {
+  const { enqueueSnackbar } = useSnackbar();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [series, setSeries] = useState<any>([]);
+  const [dataRows, setDataRows] = useState<any[]>([]);
 
-  const [barOptions, setBarOptions] = useState<ApexOptions>({
+  const [series, setSeries] = useState<any[]>([]);
+
+  const [options, setOptions] = useState<ApexOptions>({});
+
+  const barOptions: ApexOptions = {
     chart: {
       type: 'bar',
+    },
+    stroke: {
+      width: [0],
+    },
+    dataLabels: {
+      enabled: false,
     },
     grid: {
       padding: {
         bottom: 30,
       },
-    },
-    stroke: {
-      width: [0, 4],
-      curve: 'straight',
     },
     labels: [],
     xaxis: {
@@ -47,35 +61,26 @@ export default function AnalyticChartQ({ group }: Props) {
         },
       },
     ],
-    // plotOptions: {
-    //   bar: {
-    //     endingShape: 'rounded',
-    //     borderRadius: 5,
-    //   },
-    // },
-  } as ApexOptions);
+    colors: ['#FFFA00'],
+  } as ApexOptions;
 
-  const [lineOptions, setLineOptions] = useState<ApexOptions>({
+  const lineOptions: ApexOptions = {
     chart: {
       type: 'line',
     },
-    dataLabels: {
-      enabled: false,
-    },
     stroke: {
-      curve: 'straight',
+      curve: 'smooth',
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
     },
     xaxis: {
-      // type: 'datetime',
-      categories: [],
-      // labels: {
-      //   datetimeUTC: false,
-      // },
-      // tooltip: {
-      //   formatter(value: string, opts?: object): string {
-      //     return dayjs(new Date(value)).format('HH:mm:ss');
-      //   },
-      // },
+      xaxis: {
+        categories: [],
+        labels: { rotateAlways: true },
+      },
     },
     yaxis: {
       min: 0,
@@ -86,19 +91,19 @@ export default function AnalyticChartQ({ group }: Props) {
         },
       },
     },
-    // tooltip: {
-    //   x: {
-    //     formatter(val: number, opts?: any): string {
-    //       return dayjs(new Date(val)).format('DD/MM/YYYY HH:mm');
-    //     },
-    //   },
-    // },
-  } as ApexOptions);
+    colors: ['#FFFA00'],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
+  } as ApexOptions;
 
-  const [paretoOptions, setParetoOptions] = useState<ApexOptions>({
+  const paretoOptions: ApexOptions = {
     stroke: {
-      width: [0, 4],
-      // curve: 'smooth',
+      width: [0, 5],
+      curve: 'smooth',
     },
     grid: {
       padding: {
@@ -131,10 +136,16 @@ export default function AnalyticChartQ({ group }: Props) {
         },
       },
     ],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
     legend: {
       show: false,
     },
-  } as ApexOptions);
+  } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
@@ -157,8 +168,14 @@ export default function AnalyticChartQ({ group }: Props) {
       const { data } = response;
       const { rows, sumRows } = data;
 
+      if (criteria.chartSubType === 'pareto') {
+        setDataRows(Object.keys(sumRows).map((key) => sumRows[key]));
+      } else {
+        setDataRows((rows as any[]).map((row) => Object.keys(row).map((key) => row[key])).flat());
+      }
+
       if (criteria.chartSubType === 'line') {
-        setLineOptions({
+        setOptions({
           ...lineOptions,
           xaxis: {
             ...lineOptions.xaxis,
@@ -189,7 +206,7 @@ export default function AnalyticChartQ({ group }: Props) {
           });
         }
 
-        setBarOptions({
+        setOptions({
           ...barOptions,
           labels: sumRows.map((item: any) => item.key),
           title: {
@@ -213,7 +230,7 @@ export default function AnalyticChartQ({ group }: Props) {
         }
 
         const { labels, counts, percents } = sumRows[ids[0]] || { labels: [], counts: [], percents: [] };
-        setParetoOptions({
+        setOptions({
           ...paretoOptions,
           labels: labels,
           title: {
@@ -226,6 +243,7 @@ export default function AnalyticChartQ({ group }: Props) {
           {
             name: 'Count',
             type: 'column',
+            color: '#FFFA00',
             data: counts.map((item: any) => item),
           },
           {
@@ -239,36 +257,134 @@ export default function AnalyticChartQ({ group }: Props) {
       // console.log(data);
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
+      if (error) {
+        if (error instanceof AxiosError) {
+          if ('message' in error.response?.data) {
+            if (Array.isArray(error.response?.data.message)) {
+              for (const item of error.response?.data.message) {
+                enqueueSnackbar(item, { variant: 'error' });
+              }
+            } else {
+              enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            }
+          }
+        } else {
+          enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+        }
+      }
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     (async () => {
-      if (!currentCriteria) {
-        return;
-      }
-
-      await refresh(currentCriteria);
+      await refresh(criteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCriteria]);
+  }, [criteria]);
+
+  function tableQPercentCleanUp(rows: any[]): any[] {
+    return rows.map((row) => {
+      const { name, totalAutoDefects, totalManualDefects, totalCount } = row;
+      const totalAllDefects = totalAutoDefects + totalManualDefects;
+      const nonZeroTotalCount = totalCount === 0 ? 1 : totalCount;
+
+      return {
+        name,
+        totalAutoDefects,
+        totalManualDefects,
+        totalCount,
+        percent: (totalCount - totalAllDefects) / nonZeroTotalCount,
+      };
+    });
+  }
+
+  function tableQParetoCleanUp(rows: any[]): any[] {
+    if (rows.length <= 0) {
+      return [];
+    }
+
+    const row = rows[0];
+    const results = [];
+    for (let i = 0; i < row.labels.length; i++) {
+      results.push({
+        name: row.labels[i],
+        count: row.counts[i],
+        percent: row.percents[i],
+      });
+    }
+
+    return results;
+  }
 
   return (
     <>
-      {currentCriteria && (
+      {(criteria.chartSubType === 'bar' || criteria.chartSubType === 'bar_min_max') && (
+        <ReactApexChart options={options} series={series} type="bar" height={600} />
+      )}
+
+      {criteria.chartSubType === 'line' && (
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+      )}
+
+      {criteria.chartSubType === 'pareto' && (
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+      )}
+
+      {!group && (
         <>
-          {(currentCriteria.chartSubType === 'bar' || currentCriteria.chartSubType === 'bar_min_max') && (
-            <ReactApexChart key={`qBar`} options={barOptions} series={series} type="bar" height={600} />
+          {(criteria.chartSubType === 'bar' ||
+            criteria.chartSubType === 'bar_min_max' ||
+            criteria.chartSubType === 'line') && (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <ExportXlsx headers={headers} rows={tableQPercentCleanUp(dataRows)} filename="q-percent" />
+              <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {headers.map((item) => (
+                        <TableCell key={item}>{item}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableQPercentCleanUp(dataRows).map((row) => (
+                      <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        {headers.map((key) => (
+                          <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
           )}
 
-          {currentCriteria.chartSubType === 'line' && (
-            <ReactApexChart key={`qLine`} options={lineOptions} series={series} type="line" height={600} />
-          )}
-
-          {currentCriteria.chartSubType === 'pareto' && (
-            <ReactApexChart key={`qPareto}`} options={paretoOptions} series={series} type="line" height={600} />
+          {criteria.chartSubType === 'pareto' && (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <ExportXlsx headers={paretoHeaders} rows={tableQParetoCleanUp(dataRows)} filename="q-pareto" />
+              <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {paretoHeaders.map((item) => (
+                        <TableCell key={item}>{item}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableQParetoCleanUp(dataRows).map((row) => (
+                      <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        {paretoHeaders.map((key) => (
+                          <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
           )}
         </>
       )}

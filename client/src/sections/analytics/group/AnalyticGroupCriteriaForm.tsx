@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { Analytic, AnalyticGroupCriteriaDetailItem, AnalyticGroupCriteriaItem } from '../../../@types/analytic';
@@ -33,20 +33,26 @@ import {
 } from '../../../redux/actions/analyticAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ANALYTICS } from '../../../routes/paths';
-import axios from '../../../utils/axios';
+import { Layouts } from 'react-grid-layout';
 
 interface FormValuesProps extends Partial<Analytic> {}
 
 type Props = {
   criteriaList: AnalyticGroupCriteriaDetailItem[];
-  onCriteriaAdded: (criteria: AnalyticGroupCriteriaDetailItem[], clear: boolean) => void;
+  criteriaLayouts: Layouts;
+  onCriteriaAdded: (criteria: AnalyticGroupCriteriaDetailItem[]) => void;
   onRefresh: () => void;
 };
 
-export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdded, onRefresh }: Props) {
-  const { enqueueSnackbar } = useSnackbar();
-
+export default function AnalyticGroupCriteriaForm({
+  criteriaList,
+  criteriaLayouts,
+  onCriteriaAdded,
+  onRefresh,
+}: Props) {
   const dispatch = useDispatch();
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
@@ -80,6 +86,15 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
   const [isOpenLoad, setIsOpenLoad] = useState<boolean>(false);
 
   const [isOpenAdd, setIsOpenAdd] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!currentAnalytics) {
+      return;
+    }
+
+    reset({ name: currentAnalytics.name });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAnalytics]);
 
   const handleOpenSave = () => {
     setIsOpenSave(true);
@@ -127,7 +142,10 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
       await dispatch(
         createAnalytic({
           name: data.name,
-          data: getCriteriaDetailList(),
+          data: {
+            criteria: getCriteriaDetailList(),
+            layouts: criteriaLayouts,
+          },
           group: true,
           siteId: selectedSite?.id,
         }),
@@ -149,7 +167,10 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
         updateAnalytic(currentAnalytics.id, {
           ...currentAnalytics,
           name: data.name,
-          data: getCriteriaDetailList(),
+          data: {
+            criteria: getCriteriaDetailList(),
+            layouts: criteriaLayouts,
+          },
         }),
       );
 
@@ -184,7 +205,7 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
       toDate: new Date(),
     };
 
-    onCriteriaAdded([criteria], false);
+    onCriteriaAdded([criteria]);
     handleCloseAdd();
   };
 
@@ -193,17 +214,6 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
       return;
     }
 
-    const { data } = selectingGroupAnalytic;
-    const criteria: AnalyticGroupCriteriaItem[] = data || [];
-    const result: AnalyticGroupCriteriaDetailItem[] = [];
-
-    for (const item of criteria) {
-      const response = await axios.get<Analytic>(`/oee-analytics/${item.criteriaId}`);
-      const { data: analytic } = response;
-      result.push(analytic.data);
-    }
-
-    onCriteriaAdded(result, true);
     dispatch(updateCurrentAnalytics(selectingGroupAnalytic));
     reset(selectingGroupAnalytic);
     handleCloseLoad();
@@ -217,7 +227,7 @@ export default function AnalyticGroupCriteriaForm({ criteriaList, onCriteriaAdde
           { name: 'Home', href: '/' },
           { name: 'Analytics', href: PATH_ANALYTICS.root },
           {
-            name: 'Group Analytic',
+            name: currentAnalytics?.name || 'Group Analytic',
           },
         ]}
         action={

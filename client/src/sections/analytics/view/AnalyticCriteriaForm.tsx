@@ -55,6 +55,7 @@ import {
   getAnalyticDurationText,
   getAnalyticViewTypeText,
 } from '../../../utils/formatText';
+import { OptionItem } from '../../../@types/option';
 
 const VIEW_TYPES: AnalyticViewType[] = ['object', 'time'];
 
@@ -116,10 +117,6 @@ const getChartSubType = (charType: AnalyticChartType, viewType: AnalyticViewType
 
 interface FormValuesProps extends Partial<AnalyticCriteria> {}
 
-// interface Props {
-//   onRefresh: (criteria: AnalyticCriteria) => void;
-// }
-
 export default function AnalyticCriteriaForm() {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -132,10 +129,9 @@ export default function AnalyticCriteriaForm() {
   );
 
   useEffect(() => {
-    dispatch(updateCurrentAnalytics(null));
-
     return () => {
       dispatch(updateCurrentAnalytics(null));
+      dispatch(updateCurrentCriteria(null));
     };
   }, [dispatch]);
 
@@ -222,34 +218,8 @@ export default function AnalyticCriteriaForm() {
 
   const handleRefresh = () => {
     const criteria = getValues();
-
     criteria.fromDate = dayjs(criteria.fromDate).toDate();
     criteria.toDate = dayjs(criteria.toDate).toDate();
-
-    // if (criteria.viewType === 'object') {
-    //   if (criteria.duration === 'hourly') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('h').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('h').toDate();
-    //   } else if (criteria.duration === 'daily') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('d').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('d').toDate();
-    //   } else if (criteria.duration === 'monthly') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('M').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('M').toDate();
-    //   }
-    // } else {
-    //   if (criteria.duration === 'hourly') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('h').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('h').toDate();
-    //   } else if (criteria.duration === 'daily') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('d').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('d').toDate();
-    //   } else if (criteria.duration === 'monthly') {
-    //     criteria.fromDate = dayjs(criteria.fromDate).startOf('M').toDate();
-    //     criteria.toDate = dayjs(criteria.toDate).endOf('M').toDate();
-    //   }
-    // }
-
     dispatch(updateCurrentCriteria(criteria));
   };
 
@@ -350,7 +320,7 @@ export default function AnalyticCriteriaForm() {
 
   const [chartSubTypes, setChartSubTypes] = useState<string[]>(getChartSubType('oee', 'object'));
 
-  const getToPicker = (duration: string) => {
+  const getToPicker = (duration: AnalyticDuration) => {
     if (duration === 'hourly') {
       return <RHFDateTimePicker key="fromDateHourly" name="toDate" label="To Date" />;
     } else if (duration === 'daily') {
@@ -563,6 +533,13 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={oeeOpts}
+                      value={(currentAnalytics?.data || { oees: [] }).oees.reduce((arr: OptionItem[], id: number) => {
+                        const filtered = (oeeOpts || []).filter((item) => item.id === id);
+                        if (filtered.length > 0) {
+                          arr.push(filtered[0]);
+                        }
+                        return arr;
+                      }, [])}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Machines" />}
                       onChange={(event, value) => {
@@ -573,6 +550,13 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`oeeOpts_single_${values.viewType}`}
                       options={oeeOpts}
+                      value={(currentAnalytics?.data || { oees: [] }).oees.reduce((arr: OptionItem[], id: number) => {
+                        const filtered = (oeeOpts || []).filter((item) => item.id === id);
+                        if (filtered.length > 0) {
+                          arr.push(filtered[0]);
+                        }
+                        return arr;
+                      }, [])}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Machines" />}
                       onChange={(event, value) => {
@@ -588,6 +572,16 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={productOpts}
+                      value={(currentAnalytics?.data || { products: [] }).products.reduce(
+                        (arr: OptionItem[], id: number) => {
+                          const filtered = (productOpts || []).filter((item) => item.id === id);
+                          if (filtered.length > 0) {
+                            arr.push(filtered[0]);
+                          }
+                          return arr;
+                        },
+                        [],
+                      )}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Products" />}
                       onChange={(event, value) => {
@@ -598,6 +592,16 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`productOpts_single_${values.viewType}`}
                       options={productOpts}
+                      value={(currentAnalytics?.data || { products: [] }).products.reduce(
+                        (arr: OptionItem[], id: number) => {
+                          const filtered = (productOpts || []).filter((item) => item.id === id);
+                          if (filtered.length > 0) {
+                            arr.push(filtered[0]);
+                          }
+                          return arr;
+                        },
+                        [],
+                      )}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Products" />}
                       onChange={(event, value) => {
@@ -613,6 +617,16 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={batchOpts}
+                      value={(currentAnalytics?.data || { batches: [] }).batches.reduce(
+                        (arr: OptionItem[], id: number) => {
+                          const filtered = (batchOpts || []).filter((item) => item.id === id);
+                          if (filtered.length > 0) {
+                            arr.push(filtered[0]);
+                          }
+                          return arr;
+                        },
+                        [],
+                      )}
                       getOptionLabel={(option) => `${option.name}`}
                       renderInput={(params) => <TextField {...params} label="Lots" />}
                       onChange={(event, value) => {
@@ -623,6 +637,16 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`batchOpts_single_${values.viewType}`}
                       options={batchOpts}
+                      value={(currentAnalytics?.data || { batches: [] }).batches.reduce(
+                        (arr: OptionItem[], id: number) => {
+                          const filtered = (batchOpts || []).filter((item) => item.id === id);
+                          if (filtered.length > 0) {
+                            arr.push(filtered[0]);
+                          }
+                          return arr;
+                        },
+                        [],
+                      )}
                       getOptionLabel={(option) => `${option.name}`}
                       renderInput={(params) => <TextField {...params} label="Lots" />}
                       onChange={(event, value) => {

@@ -25,9 +25,9 @@ import { AxiosError } from 'axios';
 import ExportXlsx from './ExportXlsx';
 import Button from '@mui/material/Button';
 import { AnalyticChartOEELotDialog } from './AnalyticChartOEELotDialog';
-import { RootState, useSelector } from '../../../redux/store';
 
 interface Props {
+  criteria: AnalyticCriteria;
   group?: boolean;
 }
 
@@ -45,9 +45,7 @@ const headers: string[] = [
   'totalCountByBatch',
 ];
 
-export default function AnalyticChartTimeOEE({ group }: Props) {
-  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
-
+export default function AnalyticChartTimeOEE({ criteria, group }: Props) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [dataRows, setDataRows] = useState<any[]>([]);
@@ -58,7 +56,7 @@ export default function AnalyticChartTimeOEE({ group }: Props) {
 
   const [lotDetails, setLotDetails] = useState<ReactNode>();
 
-  const [series, setSeries] = useState<any>([]);
+  const [series, setSeries] = useState<any[]>([]);
 
   const [options, setOptions] = useState<ApexOptions>({
     chart: {
@@ -77,8 +75,13 @@ export default function AnalyticChartTimeOEE({ group }: Props) {
       },
     },
     stroke: {
-      width: [0, 4],
-      curve: 'straight',
+      width: [0, 5, 5, 5],
+      curve: 'smooth',
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
     },
     labels: [],
     xaxis: {
@@ -101,6 +104,13 @@ export default function AnalyticChartTimeOEE({ group }: Props) {
         },
       },
     ],
+    colors: ['#00C000', '#FF6699', '#00CCFF', '#FFFA00'],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
     tooltip: {
       x: {
         formatter(val: number, opts?: any): string {
@@ -260,62 +270,51 @@ export default function AnalyticChartTimeOEE({ group }: Props) {
 
   useEffect(() => {
     (async () => {
-      if (!currentCriteria) {
-        return;
-      }
-
-      await refresh(currentCriteria);
+      await refresh(criteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCriteria]);
+  }, [criteria]);
 
   return (
     <>
-      {currentCriteria && (
-        <>
-          <ReactApexChart key="oeeTime" options={options} series={series} type="line" height={600} />
+      <ReactApexChart options={options} series={series} type="line" height={600} />
 
-          {!group && (
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="test" />
-              <TableContainer sx={{ maxHeight: 440 }}>
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tableCleanUp(dataRows).map((row) => (
-                      <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        {headers.map((key) => (
-                          <TableCell
-                            key={`${row.name}_${key}`}
-                            width={key === 'totalCountByBatch' ? '300px' : undefined}
-                          >
-                            {row[key]}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+      {!group && (
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+          <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="oee" />
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  {headers.map((item) => (
+                    <TableCell key={item}>{item}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableCleanUp(dataRows).map((row) => (
+                  <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    {headers.map((key) => (
+                      <TableCell key={`${row.name}_${key}`} width={key === 'totalCountByBatch' ? '300px' : undefined}>
+                        {row[key]}
+                      </TableCell>
                     ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          )}
-
-          <AnalyticChartOEELotDialog
-            details={lotDetails}
-            open={lotOpen}
-            onClose={() => {
-              setLotOpen(false);
-              setLotDetails(<></>);
-            }}
-          />
-        </>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
+
+      <AnalyticChartOEELotDialog
+        details={lotDetails}
+        open={lotOpen}
+        onClose={() => {
+          setLotOpen(false);
+          setLotDetails(<></>);
+        }}
+      />
     </>
   );
 }

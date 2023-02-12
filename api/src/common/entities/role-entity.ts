@@ -1,5 +1,4 @@
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Exclude } from 'class-transformer';
 import { SiteEntity } from './site-entity';
 import { RoleSetting } from '../type/role-setting';
 import { UserEntity } from './user-entity';

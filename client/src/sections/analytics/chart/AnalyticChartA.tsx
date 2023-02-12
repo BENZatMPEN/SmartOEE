@@ -7,11 +7,13 @@ import axios from '../../../utils/axios';
 import { fNumber2, fPercent } from '../../../utils/formatNumber';
 import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
 import { convertToUnit } from '../../../utils/timeHelper';
-import { RootState, useSelector } from '../../../redux/store';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
+import { AxiosError } from 'axios';
+import { useSnackbar } from 'notistack';
 
 interface Props {
+  criteria: AnalyticCriteria;
   group?: boolean;
 }
 
@@ -19,8 +21,8 @@ const headers: string[] = ['name', 'runningSeconds', 'totalBreakdownSeconds', 'p
 
 const paretoHeaders: string[] = ['name', 'count', 'percent'];
 
-export default function AnalyticChartA({ group }: Props) {
-  const { currentCriteria } = useSelector((state: RootState) => state.analytic);
+export default function AnalyticChartA({ criteria, group }: Props) {
+  const { enqueueSnackbar } = useSnackbar();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -34,14 +36,16 @@ export default function AnalyticChartA({ group }: Props) {
     chart: {
       type: 'bar',
     },
+    stroke: {
+      width: [0],
+    },
+    dataLabels: {
+      enabled: false,
+    },
     grid: {
       padding: {
         bottom: 30,
       },
-    },
-    stroke: {
-      width: [0, 4],
-      curve: 'straight',
     },
     labels: [],
     xaxis: {
@@ -59,35 +63,24 @@ export default function AnalyticChartA({ group }: Props) {
         },
       },
     ],
-    // plotOptions: {
-    //   bar: {
-    //     endingShape: 'rounded',
-    //     borderRadius: 5,
-    //   },
-    // },
+    colors: ['#FF6699'],
   } as ApexOptions;
 
   const lineOptions: ApexOptions = {
     chart: {
       type: 'line',
     },
-    dataLabels: {
-      enabled: false,
-    },
     stroke: {
-      curve: 'straight',
+      curve: 'smooth',
+    },
+    grid: {
+      padding: {
+        bottom: 30,
+      },
     },
     xaxis: {
-      // type: 'datetime',
       categories: [],
-      // labels: {
-      //   datetimeUTC: false,
-      // },
-      // tooltip: {
-      //   formatter(value: string, opts?: object): string {
-      //     return dayjs(new Date(value)).format('HH:mm:ss');
-      //   },
-      // },
+      labels: { rotateAlways: true },
     },
     yaxis: {
       min: 0,
@@ -98,19 +91,19 @@ export default function AnalyticChartA({ group }: Props) {
         },
       },
     },
-    // tooltip: {
-    //   x: {
-    //     formatter(val: number, opts?: any): string {
-    //       return dayjs(new Date(val)).format('DD/MM/YYYY HH:mm');
-    //     },
-    //   },
-    // },
+    colors: ['#FF6699'],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
   } as ApexOptions;
 
   const paretoOptions: ApexOptions = {
     stroke: {
-      width: [0, 4],
-      // curve: 'smooth',
+      width: [0, 5],
+      curve: 'smooth',
     },
     grid: {
       padding: {
@@ -143,6 +136,12 @@ export default function AnalyticChartA({ group }: Props) {
         },
       },
     ],
+    markers: {
+      size: 5,
+      hover: {
+        size: 7,
+      },
+    },
     legend: {
       show: false,
     },
@@ -244,6 +243,7 @@ export default function AnalyticChartA({ group }: Props) {
           {
             name: getTimeUnitText(TIME_UNIT_MINUTE),
             type: 'column',
+            color: '#FF6699',
             data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),
           },
           {
@@ -257,54 +257,50 @@ export default function AnalyticChartA({ group }: Props) {
       // console.log(data);
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
+      if (error) {
+        if (error instanceof AxiosError) {
+          if ('message' in error.response?.data) {
+            if (Array.isArray(error.response?.data.message)) {
+              for (const item of error.response?.data.message) {
+                enqueueSnackbar(item, { variant: 'error' });
+              }
+            } else {
+              enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            }
+          }
+        } else {
+          enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+        }
+      }
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     (async () => {
-      if (!currentCriteria) {
-        return;
-      }
-
-      await refresh(currentCriteria);
+      await refresh(criteria);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCriteria]);
+  }, [criteria]);
 
-  const calAPercent = (runningSeconds: number, plannedDowntimeSeconds: number, totalBreakdownSeconds: number) => {
-    const loadingTime = runningSeconds - plannedDowntimeSeconds;
-    const nonZeroLoadingTime = loadingTime === 0 ? 1 : loadingTime;
-    const operatingTime = loadingTime - totalBreakdownSeconds;
-    return operatingTime / nonZeroLoadingTime;
-  };
-
-  const xlsxAPercentCleanUp = (rows: any[]): any[] =>
-    rows.map((row) => {
+  function tableAPercentCleanUp(rows: any[]): any[] {
+    return rows.map((row) => {
       const { name, runningSeconds, totalBreakdownSeconds, plannedDowntimeSeconds } = row;
+      const loadingTime = runningSeconds - plannedDowntimeSeconds;
+      const nonZeroLoadingTime = loadingTime === 0 ? 1 : loadingTime;
+      const operatingTime = loadingTime - totalBreakdownSeconds;
+
       return {
         name,
         runningSeconds,
         totalBreakdownSeconds,
         plannedDowntimeSeconds,
-        percent: calAPercent(runningSeconds, plannedDowntimeSeconds, totalBreakdownSeconds),
+        percent: operatingTime / nonZeroLoadingTime,
       };
     });
+  }
 
-  const tableAPercentCleanUp = (rows: any[]): any[] =>
-    rows.map((row) => {
-      const { name, runningSeconds, totalBreakdownSeconds, plannedDowntimeSeconds } = row;
-      return {
-        name,
-        runningSeconds,
-        totalBreakdownSeconds,
-        plannedDowntimeSeconds,
-        percent: calAPercent(runningSeconds, plannedDowntimeSeconds, totalBreakdownSeconds),
-      };
-    });
-
-  const xlsxAParetoCleanUp = (rows: any[]): any[] => {
+  function tableAParetoCleanUp(rows: any[]): any[] {
     if (rows.length <= 0) {
       return [];
     }
@@ -320,98 +316,76 @@ export default function AnalyticChartA({ group }: Props) {
     }
 
     return results;
-  };
-
-  const tableAParetoCleanUp = (rows: any[]): any[] => {
-    if (rows.length <= 0) {
-      return [];
-    }
-
-    const row = rows[0];
-    const results = [];
-    for (let i = 0; i < row.labels.length; i++) {
-      results.push({
-        name: row.labels[i],
-        count: row.counts[i],
-        percent: row.percents[i],
-      });
-    }
-
-    return results;
-  };
+  }
 
   return (
     <>
-      {currentCriteria && (
+      {(criteria.chartSubType === 'bar' || criteria.chartSubType === 'bar_min_max') && (
+        <ReactApexChart options={options} series={series} type="bar" height={600} />
+      )}
+
+      {criteria.chartSubType === 'line' && (
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+      )}
+
+      {criteria.chartSubType === 'pareto' && (
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+      )}
+
+      {!group && (
         <>
-          {(currentCriteria.chartSubType === 'bar' || currentCriteria.chartSubType === 'bar_min_max') && (
-            <ReactApexChart options={options} series={series} type="bar" height={600} />
-          )}
-
-          {currentCriteria.chartSubType === 'line' && (
-            <ReactApexChart options={options} series={series} type="line" height={600} />
-          )}
-
-          {currentCriteria.chartSubType === 'pareto' && (
-            <ReactApexChart options={options} series={series} type="line" height={600} />
-          )}
-
-          {!group && (
-            <>
-              {(currentCriteria.chartSubType === 'bar' ||
-                currentCriteria.chartSubType === 'bar_min_max' ||
-                currentCriteria.chartSubType === 'line') && (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                  <ExportXlsx headers={headers} rows={xlsxAPercentCleanUp(dataRows)} filename="test" />
-                  <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader>
-                      <TableHead>
-                        <TableRow>
-                          {headers.map((item) => (
-                            <TableCell key={item}>{item}</TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {tableAPercentCleanUp(dataRows).map((row) => (
-                          <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                            {headers.map((key) => (
-                              <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
-                            ))}
-                          </TableRow>
+          {(criteria.chartSubType === 'bar' ||
+            criteria.chartSubType === 'bar_min_max' ||
+            criteria.chartSubType === 'line') && (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <ExportXlsx headers={headers} rows={tableAPercentCleanUp(dataRows)} filename="a-percent" />
+              <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {headers.map((item) => (
+                        <TableCell key={item}>{item}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableAPercentCleanUp(dataRows).map((row) => (
+                      <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        {headers.map((key) => (
+                          <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          )}
 
-              {currentCriteria.chartSubType === 'pareto' && (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                  <ExportXlsx headers={paretoHeaders} rows={xlsxAParetoCleanUp(dataRows)} filename="test" />
-                  <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader>
-                      <TableHead>
-                        <TableRow>
-                          {paretoHeaders.map((item) => (
-                            <TableCell key={item}>{item}</TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {tableAParetoCleanUp(dataRows).map((row) => (
-                          <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                            {paretoHeaders.map((key) => (
-                              <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
-                            ))}
-                          </TableRow>
+          {criteria.chartSubType === 'pareto' && (
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <ExportXlsx headers={paretoHeaders} rows={tableAParetoCleanUp(dataRows)} filename="a-pareto" />
+              <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {paretoHeaders.map((item) => (
+                        <TableCell key={item}>{item}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableAParetoCleanUp(dataRows).map((row) => (
+                      <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        {paretoHeaders.map((key) => (
+                          <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              )}
-            </>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
           )}
         </>
       )}
