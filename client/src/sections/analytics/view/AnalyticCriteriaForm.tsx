@@ -129,13 +129,6 @@ export default function AnalyticCriteriaForm() {
   );
 
   useEffect(() => {
-    return () => {
-      dispatch(updateCurrentAnalytics(null));
-      dispatch(updateCurrentCriteria(null));
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
     (async () => {
       await dispatch(getAnalyticOeeOpts());
     })();
@@ -184,6 +177,20 @@ export default function AnalyticCriteriaForm() {
   } = methods;
 
   const values = watch();
+
+  useEffect(() => {
+    if (!currentAnalytics) {
+      return;
+    }
+
+    reset(currentAnalytics.data);
+
+    return () => {
+      dispatch(updateCurrentAnalytics(null));
+      dispatch(updateCurrentCriteria(null));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, currentAnalytics]);
 
   const [isOpenSave, setIsOpenSave] = useState<boolean>(false);
 
@@ -354,6 +361,11 @@ export default function AnalyticCriteriaForm() {
     }
 
     return false;
+  };
+
+  const findSingleOption = (id: number, list: OptionItem[]): OptionItem | null => {
+    const filtered = list.filter((item) => item.id === id);
+    return filtered.length > 0 ? filtered[0] : null;
   };
 
   return (
@@ -533,7 +545,7 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={oeeOpts}
-                      value={(currentAnalytics?.data || { oees: [] }).oees.reduce((arr: OptionItem[], id: number) => {
+                      value={(values.oees || []).reduce((arr: OptionItem[], id: number) => {
                         const filtered = (oeeOpts || []).filter((item) => item.id === id);
                         if (filtered.length > 0) {
                           arr.push(filtered[0]);
@@ -550,13 +562,7 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`oeeOpts_single_${values.viewType}`}
                       options={oeeOpts}
-                      value={(currentAnalytics?.data || { oees: [] }).oees.reduce((arr: OptionItem[], id: number) => {
-                        const filtered = (oeeOpts || []).filter((item) => item.id === id);
-                        if (filtered.length > 0) {
-                          arr.push(filtered[0]);
-                        }
-                        return arr;
-                      }, [])}
+                      value={(values.oees || []).length > 0 ? findSingleOption(values.oees[0], oeeOpts) : null}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Machines" />}
                       onChange={(event, value) => {
@@ -572,16 +578,13 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={productOpts}
-                      value={(currentAnalytics?.data || { products: [] }).products.reduce(
-                        (arr: OptionItem[], id: number) => {
-                          const filtered = (productOpts || []).filter((item) => item.id === id);
-                          if (filtered.length > 0) {
-                            arr.push(filtered[0]);
-                          }
-                          return arr;
-                        },
-                        [],
-                      )}
+                      value={(values.products || []).reduce((arr: OptionItem[], id: number) => {
+                        const filtered = (productOpts || []).filter((item) => item.id === id);
+                        if (filtered.length > 0) {
+                          arr.push(filtered[0]);
+                        }
+                        return arr;
+                      }, [])}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Products" />}
                       onChange={(event, value) => {
@@ -592,16 +595,9 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`productOpts_single_${values.viewType}`}
                       options={productOpts}
-                      value={(currentAnalytics?.data || { products: [] }).products.reduce(
-                        (arr: OptionItem[], id: number) => {
-                          const filtered = (productOpts || []).filter((item) => item.id === id);
-                          if (filtered.length > 0) {
-                            arr.push(filtered[0]);
-                          }
-                          return arr;
-                        },
-                        [],
-                      )}
+                      value={
+                        (values.products || []).length > 0 ? findSingleOption(values.products[0], productOpts) : null
+                      }
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                       renderInput={(params) => <TextField {...params} label="Products" />}
                       onChange={(event, value) => {
@@ -617,16 +613,13 @@ export default function AnalyticCriteriaForm() {
                       multiple
                       limitTags={3}
                       options={batchOpts}
-                      value={(currentAnalytics?.data || { batches: [] }).batches.reduce(
-                        (arr: OptionItem[], id: number) => {
-                          const filtered = (batchOpts || []).filter((item) => item.id === id);
-                          if (filtered.length > 0) {
-                            arr.push(filtered[0]);
-                          }
-                          return arr;
-                        },
-                        [],
-                      )}
+                      value={(values.batches || []).reduce((arr: OptionItem[], id: number) => {
+                        const filtered = (batchOpts || []).filter((item) => item.id === id);
+                        if (filtered.length > 0) {
+                          arr.push(filtered[0]);
+                        }
+                        return arr;
+                      }, [])}
                       getOptionLabel={(option) => `${option.name}`}
                       renderInput={(params) => <TextField {...params} label="Lots" />}
                       onChange={(event, value) => {
@@ -637,16 +630,7 @@ export default function AnalyticCriteriaForm() {
                     <Autocomplete
                       key={`batchOpts_single_${values.viewType}`}
                       options={batchOpts}
-                      value={(currentAnalytics?.data || { batches: [] }).batches.reduce(
-                        (arr: OptionItem[], id: number) => {
-                          const filtered = (batchOpts || []).filter((item) => item.id === id);
-                          if (filtered.length > 0) {
-                            arr.push(filtered[0]);
-                          }
-                          return arr;
-                        },
-                        [],
-                      )}
+                      value={(values.batches || []).length > 0 ? findSingleOption(values.batches[0], batchOpts) : null}
                       getOptionLabel={(option) => `${option.name}`}
                       renderInput={(params) => <TextField {...params} label="Lots" />}
                       onChange={(event, value) => {
