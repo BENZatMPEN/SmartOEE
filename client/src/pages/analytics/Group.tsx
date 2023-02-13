@@ -29,6 +29,7 @@ import { RootState, useDispatch, useSelector } from '../../redux/store';
 import axios from '../../utils/axios';
 import { updateCurrentAnalytics } from '../../redux/actions/analyticAction';
 import { useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -45,7 +46,7 @@ const initDateCriteria: ItemCriteria = {
 };
 
 function keyGen(): string {
-  return crypto.randomUUID().replace('-', '');
+  return uuidv4().replace('-', '');
 }
 
 export default function AnalyticGroup() {
