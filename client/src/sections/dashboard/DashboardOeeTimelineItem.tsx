@@ -91,7 +91,10 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
             return getBatchStatus(seriesName);
           },
         },
-        formatter(val: number, opts?: any): string {
+        formatter(val: any, opts?: any): string {
+          if (/^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/.test(val)) {
+            return val;
+          }
           return '';
         },
       },
@@ -112,7 +115,7 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
           ...options,
           xaxis: {
             ...options.xaxis,
-            min: data[0].fromDate.getTime(),
+            min: new Date(data[0].fromDate).getTime(),
           },
         });
       }

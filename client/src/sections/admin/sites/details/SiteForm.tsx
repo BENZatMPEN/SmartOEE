@@ -24,7 +24,7 @@ import {
 import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../../components/Iconify';
 import { GOOGLE_MAPS_KEY } from '../../../../config';
-import { defaultMaps, initialPercentSettings } from '../../../../constants';
+import { defaultMaps, initialAlertTemplate, initialPercentSettings } from '../../../../constants';
 import { createSite, updateSite } from '../../../../redux/actions/adminSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_ADMINISTRATOR } from '../../../../routes/paths';
@@ -75,6 +75,7 @@ export default function SiteForm({ isEdit }: Props) {
       image: null,
       oeeLimit: -1,
       userLimit: -1,
+      alertTemplate: initialAlertTemplate,
     },
     values: {
       name: currentSite?.name || '',
@@ -86,6 +87,7 @@ export default function SiteForm({ isEdit }: Props) {
       active: currentSite ? currentSite.active : true,
       sync: currentSite ? currentSite.sync : true,
       defaultPercentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
+      alertTemplate: currentSite ? currentSite.alertTemplate : initialAlertTemplate,
       cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
       image: null,
       oeeLimit: currentSite?.oeeLimit || -1,

@@ -25,6 +25,9 @@ import { OeeBatchEditHistoryEntity } from '../entities/oee-batch-edit-history-en
 import { OeeBatchStatsTimelineEntity } from '../entities/oee-batch-stats-timeline-entity';
 import { OeeBatchStatsEntity } from '../entities/oee-batch-stats-entity';
 import { OeeBatchLogEntity } from '../entities/oee-batch-logs-entity';
+import { SiteService } from '../../site/site.service';
+import { UserEntity } from '../entities/user-entity';
+import { FileService } from './file.service';
 
 @Global()
 @Module({
@@ -46,6 +49,7 @@ import { OeeBatchLogEntity } from '../entities/oee-batch-logs-entity';
       TagReadEntity,
       AlarmEntity,
       HistoryLogEntity,
+      UserEntity,
     ]),
     ConfigModule.forFeature(configuration),
     HttpModule.register({
@@ -53,7 +57,15 @@ import { OeeBatchLogEntity } from '../entities/oee-batch-logs-entity';
       httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     }),
   ],
-  providers: [NotificationService, LineNotifyService, EmailService, OeeBatchService, LogService],
+  providers: [
+    NotificationService,
+    LineNotifyService,
+    EmailService,
+    OeeBatchService,
+    LogService,
+    SiteService,
+    FileService,
+  ],
   exports: [NotificationService, LineNotifyService, EmailService],
 })
 export class NotificationModule {}

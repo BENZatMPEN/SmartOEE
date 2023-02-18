@@ -29,7 +29,7 @@ import { OeeStatus } from '../common/type/oee-status';
 import { OptionItem } from '../common/type/option-item';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { PlanningEntity } from '../common/entities/planning-entity';
-import { OEE_TYPE_CONTINUOUS, OEE_TYPE_STANDALONE } from '../common/constant';
+import { OEE_TYPE_STANDALONE } from '../common/constant';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)

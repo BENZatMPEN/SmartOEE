@@ -2,6 +2,14 @@ import { Box, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { RootState, useSelector } from '../../../redux/store';
 import { fDateTime } from '../../../utils/formatTime';
+import { getColor } from '../../../utils/colorHelper';
+import {
+  OEE_BATCH_STATUS_BREAKDOWN,
+  OEE_BATCH_STATUS_MC_SETUP,
+  OEE_BATCH_STATUS_PLANNED,
+  OEE_BATCH_STATUS_RUNNING,
+  OEE_BATCH_STATUS_STANDBY,
+} from '../../../constants';
 
 export default function DashboardDetailsStatus() {
   const theme = useTheme();
@@ -44,7 +52,11 @@ export default function DashboardDetailsStatus() {
             </Typography>
             <Box
               sx={{
-                backgroundColor: status ? (status === 'running' ? 'green' : 'lightgray') : 'lightgray',
+                backgroundColor: status
+                  ? status === OEE_BATCH_STATUS_RUNNING
+                    ? getColor(status)
+                    : 'lightgray'
+                  : 'lightgray',
                 borderRadius: '6px',
                 p: theme.spacing(2),
               }}
@@ -61,7 +73,11 @@ export default function DashboardDetailsStatus() {
             </Typography>
             <Box
               sx={{
-                backgroundColor: status ? (status === 'breakdown' ? 'red' : 'lightgray') : 'lightgray',
+                backgroundColor: status
+                  ? status === OEE_BATCH_STATUS_BREAKDOWN
+                    ? getColor(status)
+                    : 'lightgray'
+                  : 'lightgray',
                 borderRadius: '6px',
                 p: theme.spacing(2),
               }}
@@ -78,7 +94,11 @@ export default function DashboardDetailsStatus() {
             </Typography>
             <Box
               sx={{
-                backgroundColor: status ? (status === 'mc_setup' ? 'blue' : 'lightgray') : 'lightgray',
+                backgroundColor: status
+                  ? status === OEE_BATCH_STATUS_MC_SETUP
+                    ? getColor(status)
+                    : 'lightgray'
+                  : 'lightgray',
                 borderRadius: '6px',
                 p: theme.spacing(2),
               }}
@@ -96,8 +116,8 @@ export default function DashboardDetailsStatus() {
             <Box
               sx={{
                 backgroundColor: status
-                  ? status === 'standby' || status === 'planned'
-                    ? 'yellow'
+                  ? status === OEE_BATCH_STATUS_STANDBY || status === OEE_BATCH_STATUS_PLANNED
+                    ? getColor(status)
                     : 'lightgray'
                   : 'lightgray',
                 borderRadius: '6px',

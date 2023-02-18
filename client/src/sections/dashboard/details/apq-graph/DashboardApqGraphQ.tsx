@@ -57,17 +57,18 @@ export default function DashboardApqGraphQ() {
     },
     stroke: {
       width: [0, 4],
-      // curve: 'smooth',
+      curve: 'smooth',
     },
     grid: {
       padding: {
-        bottom: 30,
+        bottom: 50,
+        left: 40,
       },
     },
     labels: [],
     xaxis: {
       show: false,
-      labels: { rotateAlways: true },
+      labels: { rotateAlways: true, hideOverlappingLabels: false },
     },
     yaxis: [
       {
@@ -122,6 +123,7 @@ export default function DashboardApqGraphQ() {
         name: 'Count',
         type: 'column',
         data: counts,
+        color: '#FFFA00',
       },
       {
         name: '%',
@@ -141,7 +143,7 @@ export default function DashboardApqGraphQ() {
     <Card>
       <CardContent>
         <Grid container alignItems="center" spacing={3}>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, gap: 3 }}>
               <Typography variant="h2">Q</Typography>
 
@@ -161,7 +163,7 @@ export default function DashboardApqGraphQ() {
             </Box>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3.5}>
             <Stack spacing={1}>
               <ItemBox head="Total Product" value={fNumber(totalCount)} tail="pcs." />
 
@@ -175,8 +177,8 @@ export default function DashboardApqGraphQ() {
             </Stack>
           </Grid>
 
-          <Grid item xs={4}>
-            <ReactApexChart options={options} series={series} type="line" height={300} />
+          <Grid item xs={5.5}>
+            <ReactApexChart options={options} series={series} type="line" height={400} />
           </Grid>
         </Grid>
       </CardContent>

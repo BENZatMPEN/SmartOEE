@@ -461,7 +461,7 @@ export class BatchOeeCalculateListener {
       this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
 
       // notify
-      // this.notifyLow(batch.siteId, batch.oeeId, batch.oeeStatus, currentStatus),
+      await this.notifyLow(batch.siteId, batch.oeeId, oeeStats, currentStats);
     } catch (error) {
       this.logger.log('exception', error);
     }
@@ -488,19 +488,31 @@ export class BatchOeeCalculateListener {
       oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings,
     );
 
-    if (previousStatus.oeePercent > percentSettings.oeeLow && currentStatus.oeePercent < percentSettings.oeeLow) {
+    if (
+      (previousStatus.oeePercent > percentSettings.oeeLow || previousStatus.qPercent > currentStatus.qPercent) &&
+      currentStatus.oeePercent < percentSettings.oeeLow
+    ) {
       await this.notificationService.notifyOeeLow(siteId, oeeId, previousStatus.oeePercent, currentStatus.oeePercent);
     }
 
-    if (previousStatus.aPercent > percentSettings.aLow && currentStatus.aPercent < percentSettings.aLow) {
+    if (
+      (previousStatus.aPercent > percentSettings.aLow || previousStatus.aPercent > currentStatus.aPercent) &&
+      currentStatus.aPercent < percentSettings.aLow
+    ) {
       await this.notificationService.notifyALow(siteId, oeeId, previousStatus.aPercent, currentStatus.aPercent);
     }
 
-    if (previousStatus.pPercent > percentSettings.pLow && currentStatus.pPercent < percentSettings.pLow) {
+    if (
+      (previousStatus.pPercent > percentSettings.pLow || previousStatus.pPercent > currentStatus.pPercent) &&
+      currentStatus.pPercent < percentSettings.pLow
+    ) {
       await this.notificationService.notifyPLow(siteId, oeeId, previousStatus.pPercent, currentStatus.pPercent);
     }
 
-    if (previousStatus.qPercent > percentSettings.qLow && currentStatus.qPercent < percentSettings.qLow) {
+    if (
+      (previousStatus.qPercent > percentSettings.qLow || previousStatus.qPercent > currentStatus.qPercent) &&
+      currentStatus.qPercent < percentSettings.qLow
+    ) {
       await this.notificationService.notifyQLow(siteId, oeeId, previousStatus.qPercent, currentStatus.qPercent);
     }
   }
@@ -517,8 +529,9 @@ export class BatchOeeCalculateListener {
     const mcParamAs = machines
       .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_A && param.tagId))
       .flat();
+
     const updatingAs = mcParamAs.reduce((acc, param) => {
-      const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
+      const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read !== '0');
       if (idx < 0) {
         return acc;
       }
@@ -596,7 +609,7 @@ export class BatchOeeCalculateListener {
         .map((machine) => machine.parameters.filter((param) => param.oeeType === OEE_PARAM_TYPE_P && param.tagId))
         .flat();
       const updatingPs = mcParamPs.reduce((acc, param) => {
-        const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read === param.value);
+        const idx = reads.findIndex((read) => read.tagId === param.tagId && read.read !== '0');
         if (idx < 0) {
           return acc;
         }
@@ -897,8 +910,8 @@ export class BatchOeeCalculateListener {
   //     this.logger.log('exception', error);
   //   }
   // }
-  //
-  // private async notifyLow(
+
+  // async private  notifyLow(
   //   siteId: number,
   //   oeeId: number,
   //   previousStatus: OeeStats,

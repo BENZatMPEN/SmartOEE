@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Card, CardContent, Grid, Stack } from '@mui/material';
+import { Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
@@ -23,11 +23,12 @@ import {
 import { RHFTimePicker } from '../../../../components/hook-form/RHFDateTimePicker';
 import Iconify from '../../../../components/Iconify';
 import { GOOGLE_MAPS_KEY } from '../../../../config';
-import { defaultMaps, initialPercentSettings } from '../../../../constants';
+import { defaultMaps, initialAlertTemplate, initialPercentSettings } from '../../../../constants';
 import { updateSite } from '../../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import SitePercentSettings from './SitePercentSettings';
+import SiteAlertTemplate from './SiteAlertTemplate';
 
 interface MapProps {
   map: any;
@@ -63,6 +64,7 @@ export default function SiteForm() {
       active: true,
       sync: true,
       defaultPercentSettings: initialPercentSettings,
+      alertTemplate: initialAlertTemplate,
       cutoffTime: null,
       image: null,
     },
@@ -76,6 +78,7 @@ export default function SiteForm() {
       active: currentSite ? currentSite.active : true,
       sync: currentSite ? currentSite.sync : true,
       defaultPercentSettings: currentSite ? currentSite.defaultPercentSettings : initialPercentSettings,
+      alertTemplate: currentSite?.alertTemplate ? currentSite.alertTemplate : initialAlertTemplate,
       cutoffTime: currentSite?.cutoffTime || dayjs().startOf('d').toDate(),
       image: null,
     },
@@ -271,6 +274,145 @@ export default function SiteForm() {
                       onEdit={handlePercentSettingChange}
                     />
                   ))}
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Stack spacing={2}>
+                  <Typography variant="subtitle1">Alert Template</Typography>
+
+                  <SiteAlertTemplate
+                    label="A without name"
+                    value={values.alertTemplate?.aParamWithoutParam || ''}
+                    description={"Variables: {'{{time}} = Timestamp, {{seconds}} = Total seconds'}"}
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        aParamWithoutParam: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="A with name"
+                    value={values.alertTemplate?.aParamWithParam || ''}
+                    description={
+                      "Variables: {'{{paramName}} = Breakdown Name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        aParamWithParam: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="P without name"
+                    value={values.alertTemplate?.pParamWithoutParam || ''}
+                    description={"Variables: {'{{time}} = Timestamp, {{seconds}} = Total seconds'}"}
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        pParamWithoutParam: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="P with name"
+                    value={values.alertTemplate?.pParamWithParam || ''}
+                    description={
+                      "Variables: {'{{paramName}} = Minor Loss Name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        pParamWithParam: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="Q with name"
+                    value={values.alertTemplate?.qParamWithParam || ''}
+                    description={
+                      "Variables: {'{{paramName}} = Loss name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        qParamWithParam: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="OEE Low"
+                    value={values.alertTemplate?.oeeLow || ''}
+                    description={
+                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        oeeLow: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="A Low"
+                    value={values.alertTemplate?.aLow || ''}
+                    description={
+                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        aLow: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="P Low"
+                    value={values.alertTemplate?.pLow || ''}
+                    description={
+                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        pLow: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="Q Low"
+                    value={values.alertTemplate?.qLow || ''}
+                    description={
+                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        qLow: value,
+                      });
+                    }}
+                  />
                 </Stack>
               </CardContent>
             </Card>

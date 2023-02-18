@@ -4,15 +4,19 @@ import { LineNotifyService } from './line-notify.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AlarmEntity } from '../entities/alarm-entity';
-import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE } from '../constant';
+import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE, defaultAlertTemplate } from '../constant';
 import { AlarmEmailDataItem, AlarmLineData } from '../type/alarm';
 import * as dayjs from 'dayjs';
 import { LogService } from './log.service';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
+import { SiteService } from '../../site/site.service';
+import { SiteEntity } from '../entities/site-entity';
+import Handlebars from 'handlebars';
 
 @Injectable()
 export class NotificationService {
   constructor(
+    private readonly siteService: SiteService,
     private readonly emailService: EmailService,
     private readonly lineNotifyService: LineNotifyService,
     private readonly oeeBatchService: OeeBatchService,
@@ -32,13 +36,22 @@ export class NotificationService {
     seconds: number,
   ): Promise<void> {
     let message = '';
+    const site = await this.getSite(siteId);
+
     if (tagId) {
       const aParam = await this.oeeBatchService.findBatchAByIdAndTagId(batchId, tagId);
-      message = `${aParam.machineParameter.name} has occurred at ${dayjs(timestamp).format(
-        'DD/MM/YYYY HH:mm',
-      )} - ${seconds} seconds.`;
+      const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).aParamWithParam);
+      message = template({
+        paramName: aParam.machineParameter.name,
+        time: dayjs(timestamp).format('DD/MM/YYYY HH:mm'),
+        seconds,
+      });
     } else {
-      message = `Breakdown has occurred at ${dayjs(timestamp).format('DD/MM/YYYY HH:mm')} - ${seconds} seconds.`;
+      const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).aParamWithoutParam);
+      message = template({
+        time: dayjs(timestamp).format('DD/MM/YYYY HH:mm'),
+        seconds,
+      });
     }
 
     this.logger.log(message);
@@ -59,13 +72,22 @@ export class NotificationService {
     seconds: number,
   ): Promise<void> {
     let message = '';
+    const site = await this.getSite(siteId);
+
     if (tagId) {
       const pParam = await this.oeeBatchService.findBatchPByIdAndTagId(batchId, tagId);
-      message = `${pParam.machineParameter.name} has occurred at ${dayjs(timestamp).format(
-        'DD/MM/YYYY HH:mm',
-      )} - ${seconds} seconds.`;
+      const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).pParamWithParam);
+      message = template({
+        paramName: pParam.machineParameter.name,
+        time: dayjs(timestamp).format('DD/MM/YYYY HH:mm'),
+        seconds,
+      });
     } else {
-      message = `Minor Loss has occurred at ${dayjs(timestamp).format('DD/MM/YYYY HH:mm')} - ${seconds} seconds.`;
+      const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).pParamWithoutParam);
+      message = template({
+        time: dayjs(timestamp).format('DD/MM/YYYY HH:mm'),
+        seconds,
+      });
     }
 
     this.logger.log(message);
@@ -86,7 +108,9 @@ export class NotificationService {
     currentAmount: number,
   ): Promise<void> {
     const qParam = await this.oeeBatchService.findBatchQByIdAndTagId(batchId, tagId);
-    const message = `${qParam.machineParameter.name} has increased from ${previousAmount} to ${currentAmount}.`;
+    const site = await this.getSite(siteId);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).qParamWithParam);
+    const message = template({ paramName: qParam.machineParameter.name, previousAmount, currentAmount });
 
     this.logger.log(message);
     await this.notify(siteId, oeeId, 'qParams', {
@@ -119,12 +143,21 @@ export class NotificationService {
     }
   }
 
-  getAlarms(siteId: number): Promise<AlarmEntity[]> {
+  private getAlarms(siteId: number): Promise<AlarmEntity[]> {
     return this.alarmRepository.find({ where: { siteId: siteId, notify: true, deleted: false } });
   }
 
+  private getSite(siteId: number): Promise<SiteEntity> {
+    return this.siteService.findById(siteId);
+  }
+
   async notifyOeeLow(siteId: number, oeeId: number, previousPercent: number, currentPercent: number): Promise<void> {
-    const message = `OEE low - previous: ${previousPercent}, current: ${currentPercent}`;
+    const site = await this.getSite(siteId);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).oeeLow);
+    const message = template({
+      previousPercent: previousPercent.toFixed(2),
+      currentPercent: currentPercent.toFixed(2),
+    });
     await this.notify(siteId, oeeId, 'oeeLow', {
       message,
       subject: message,
@@ -134,7 +167,12 @@ export class NotificationService {
   }
 
   async notifyALow(siteId: number, oeeId: number, previousPercent: number, currentPercent: number): Promise<void> {
-    const message = `A low - previous: ${previousPercent}, current: ${currentPercent}`;
+    const site = await this.getSite(siteId);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).aLow);
+    const message = template({
+      previousPercent: previousPercent.toFixed(2),
+      currentPercent: currentPercent.toFixed(2),
+    });
     await this.notify(siteId, oeeId, 'aLow', {
       message,
       subject: message,
@@ -144,7 +182,12 @@ export class NotificationService {
   }
 
   async notifyPLow(siteId: number, oeeId: number, previousPercent: number, currentPercent: number): Promise<void> {
-    const message = `P low - previous: ${previousPercent}, current: ${currentPercent}`;
+    const site = await this.getSite(siteId);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).pLow);
+    const message = template({
+      previousPercent: previousPercent.toFixed(2),
+      currentPercent: currentPercent.toFixed(2),
+    });
     await this.notify(siteId, oeeId, 'pLow', {
       message,
       subject: message,
@@ -154,7 +197,12 @@ export class NotificationService {
   }
 
   async notifyQLow(siteId: number, oeeId: number, previousPercent: number, currentPercent: number): Promise<void> {
-    const message = `Q low - previous: ${previousPercent}, current: ${currentPercent}`;
+    const site = await this.getSite(siteId);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).qLow);
+    const message = template({
+      previousPercent: previousPercent.toFixed(2),
+      currentPercent: currentPercent.toFixed(2),
+    });
     await this.notify(siteId, oeeId, 'qLow', {
       message,
       subject: message,

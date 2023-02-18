@@ -9,19 +9,19 @@ import {
 export function getColor(status: string): string {
   switch (status) {
     case OEE_BATCH_STATUS_STANDBY:
-      return '#ffc107';
+      return '#FFFA00';
 
     case OEE_BATCH_STATUS_RUNNING:
-      return '#229a16';
+      return '#00D000';
 
     case OEE_BATCH_STATUS_BREAKDOWN:
-      return '#b72136';
+      return '#FF0000';
 
     case OEE_BATCH_STATUS_PLANNED:
-      return '#0a853e';
+      return '#B0B0B0';
 
     case OEE_BATCH_STATUS_MC_SETUP:
-      return '#ff5200';
+      return '#072EEF';
 
     default:
       return '#616161';

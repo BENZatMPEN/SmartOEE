@@ -1,5 +1,6 @@
 import { PercentSetting } from './type/percent-settings';
 import { RoleAction, RoleSetting, RoleSubject } from './type/role-setting';
+import { AlertTemplate } from './type/alertTemplate';
 
 export const ROLE_OWNER = 'Owner';
 
@@ -81,7 +82,19 @@ export const defaultPercentSettings: PercentSetting[] = [
   },
 ];
 
-export const initialRoles: RoleSetting[] = [
+export const defaultAlertTemplate: AlertTemplate = {
+  aParamWithoutParam: 'Breakdown has occurred at {{time}} - {{seconds}} seconds.',
+  aParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
+  pParamWithoutParam: 'Minor Loss has occurred at {{time}} - {{seconds}} seconds.',
+  pParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
+  qParamWithParam: '{{paramName}} has increased from {{previousAmount}} to {{currentAmount}}.',
+  oeeLow: 'OEE low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aLow: 'A low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  pLow: 'P low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  qLow: 'Q low - previous: {{previousPercent}}, current: {{currentPercent}}',
+};
+
+export const defaultRoles: RoleSetting[] = [
   {
     subject: RoleSubject.Dashboard,
     actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update],

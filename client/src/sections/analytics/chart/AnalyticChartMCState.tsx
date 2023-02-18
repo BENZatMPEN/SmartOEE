@@ -40,7 +40,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
       labels: { rotateAlways: true },
       tickPlacement: 'on',
     },
-    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#00D000'],
+    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#FFFA00'],
   } as ApexOptions);
 
   const [pieSeries, setPieSeries] = useState<any[]>([]);
@@ -58,7 +58,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
         top: 10,
       },
     },
-    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#00D000'],
+    colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#FFFA00'],
   } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {

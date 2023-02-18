@@ -3,6 +3,7 @@ import { Exclude } from 'class-transformer';
 import { UserEntity } from './user-entity';
 import { DeviceEntity } from './device-entity';
 import { PercentSetting } from '../type/percent-settings';
+import { AlertTemplate } from '../type/alertTemplate';
 
 @Entity('sites')
 export class SiteEntity {
@@ -64,6 +65,9 @@ export class SiteEntity {
 
   @Column({ type: 'int', default: -1 })
   userLimit: number;
+
+  @Column({ type: 'json' })
+  alertTemplate: AlertTemplate;
 
   // @OneToMany(() => Role, (role) => role.site)
   // roles: Role[];

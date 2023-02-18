@@ -63,17 +63,18 @@ export default function DashboardApqGraphA() {
     },
     stroke: {
       width: [0, 4],
-      // curve: 'smooth',
+      curve: 'smooth',
     },
     grid: {
       padding: {
-        bottom: 30,
+        bottom: 50,
+        left: 40,
       },
     },
     labels: [],
     xaxis: {
       show: false,
-      labels: { rotateAlways: true },
+      labels: { rotateAlways: true, hideOverlappingLabels: false },
     },
     yaxis: [
       {
@@ -128,6 +129,7 @@ export default function DashboardApqGraphA() {
         name: getTimeUnitText(timeUnit),
         type: 'column',
         data: counts.map((item) => convertToUnit(item, timeUnit)),
+        color: '#FF6699',
       },
       {
         name: '%',
@@ -147,7 +149,7 @@ export default function DashboardApqGraphA() {
     <Card>
       <CardContent>
         <Grid container alignItems="center" spacing={3}>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, gap: 3 }}>
               <Typography variant="h2">A</Typography>
 
@@ -167,7 +169,7 @@ export default function DashboardApqGraphA() {
             </Box>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3.5}>
             <Stack spacing={1}>
               <ItemBox head="Total Run Time" value={fSeconds(operatingSeconds)} />
 
@@ -177,8 +179,8 @@ export default function DashboardApqGraphA() {
             </Stack>
           </Grid>
 
-          <Grid item xs={4}>
-            <ReactApexChart options={options} series={series} type="line" height={300} />
+          <Grid item xs={5.5}>
+            <ReactApexChart options={options} series={series} type="line" height={400} />
           </Grid>
         </Grid>
       </CardContent>
@@ -196,22 +198,18 @@ function ItemBox({ head, value, tail }: ItemBoxPros) {
   return (
     <Box>
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={5}>
+        <Grid item xs={6}>
           <Typography variant="body1" textAlign="right">
             {head}
           </Typography>
         </Grid>
 
-        <Grid item xs={3.5}>
+        <Grid item xs={6}>
           <Box sx={{ border: '1px solid rgba(0, 0, 0, 0.2)', borderRadius: '6px', p: 1 }}>
             <Typography variant="body1" textAlign="center">
               {value}
             </Typography>
           </Box>
-        </Grid>
-
-        <Grid item xs={3.5}>
-          <Typography variant="body2">{tail}</Typography>
         </Grid>
       </Grid>
     </Box>

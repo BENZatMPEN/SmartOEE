@@ -111,12 +111,12 @@ export class PlanningController {
     const rows = plannings.map((item) => {
       return {
         id: item.id,
+        oeeCode: item.oee.oeeCode,
+        productSku: item.product.sku,
+        userEmail: item.user?.email || '',
+        plannedQuantity: item.plannedQuantity,
         title: item.title,
         lotNumber: item.lotNumber,
-        plannedQuantity: item.plannedQuantity,
-        oee: item.oee.oeeCode,
-        product: item.product.sku,
-        user: item.user?.email || '',
         startDate: dayjs(item.startDate).format('YYYY-MM-DD HH:mm'),
         endDate: dayjs(item.endDate).format('YYYY-MM-DD HH:mm'),
         remark: item.remark,
@@ -127,7 +127,20 @@ export class PlanningController {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.sheet_add_aoa(
       worksheet,
-      [['ID', 'Title', 'Lot Number', 'Planned Quantity', 'OEE', 'Product', 'User', 'Start Date', 'End Date', 'Remark']],
+      [
+        [
+          'id',
+          'oeeCode',
+          'productSku',
+          'userEmail',
+          'plannedQuantity',
+          'title',
+          'lotNumber',
+          'startDate',
+          'endDate',
+          'remark',
+        ],
+      ],
       { origin: 'A1' },
     );
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Plannings');

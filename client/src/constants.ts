@@ -2,6 +2,7 @@ import { OeeTag } from './@types/oee';
 import { OeeStats } from './@types/oeeBatch';
 import { PercentSetting } from './@types/percentSetting';
 import { RoleAction, RoleSetting, RoleSubject } from './@types/role';
+import { AlertTemplate } from './@types/alertTemplate';
 
 export const ROWS_PER_PAGE_OPTIONS = [10, 15, 20];
 export const ROWS_PER_PAGE_DEFAULT = 10;
@@ -235,6 +236,18 @@ export const initialPercentSettings: PercentSetting[] = [
     settings: { high: 80, medium: 60, low: 50 },
   },
 ];
+
+export const initialAlertTemplate: AlertTemplate = {
+  aParamWithoutParam: 'Breakdown has occurred at {{time}} - {{seconds}} seconds.',
+  aParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
+  pParamWithoutParam: 'Minor Loss has occurred at {{time}} - {{seconds}} seconds.',
+  pParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
+  qParamWithParam: '{{paramName}} has increased from {{previousAmount}} to {{currentAmount}}.',
+  oeeLow: 'OEE low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aLow: 'A low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  pLow: 'P low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  qLow: 'Q low - previous: {{previousPercent}}, current: {{currentPercent}}',
+};
 
 export const initialRoles: RoleSetting[] = [
   {

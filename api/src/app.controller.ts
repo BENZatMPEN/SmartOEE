@@ -6,7 +6,7 @@ import { UserService } from './user/user.service';
 import { RoleService } from './role/role.service';
 import {
   defaultPercentSettings,
-  initialRoles,
+  defaultRoles,
   OEE_PARAM_TYPE_A,
   OEE_PARAM_TYPE_P,
   OEE_PARAM_TYPE_Q,
@@ -162,7 +162,7 @@ export class AppController {
       {
         name: 'Poller',
         remark: '',
-        roles: initialRoles,
+        roles: defaultRoles,
       },
       sites[0].id,
     );

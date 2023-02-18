@@ -94,6 +94,7 @@ export default function DashboardOeeGraphRealtime() {
         },
       },
     },
+    colors: ['#FF6699', '#00CCFF', '#FFFA00', '#00C000'],
   } as ApexOptions);
 
   const [lineOptions, setLineOptions] = useState<ApexOptions>({
@@ -152,6 +153,7 @@ export default function DashboardOeeGraphRealtime() {
         },
       },
     },
+    colors: ['#FF6699', '#00CCFF', '#FFFA00', '#00C000'],
   } as ApexOptions);
 
   useEffect(() => {

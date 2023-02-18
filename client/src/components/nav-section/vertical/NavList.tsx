@@ -1,16 +1,11 @@
-// @mui
 import { Collapse, List } from '@mui/material';
 import { Fragment, useContext, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getActive } from '..';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 import { AbilityContext } from '../../../caslContext';
-// type
 import { NavListProps } from '../type';
-//
 import { NavItemRoot, NavItemSub } from './NavItem';
-
-// ----------------------------------------------------------------------
 
 type NavListRootProps = {
   list: NavListProps;
