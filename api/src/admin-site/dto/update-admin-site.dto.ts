@@ -1,6 +1,7 @@
 import { PercentSetting } from '../../common/type/percent-settings';
-import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { AlertTemplate } from '../../common/type/alertTemplate';
 
 export class UpdateAdminSiteDto {
   @IsString()
@@ -47,4 +48,9 @@ export class UpdateAdminSiteDto {
   @IsDate()
   @Type(() => Date)
   readonly cutoffTime: Date;
+
+  @IsObject()
+  @IsOptional()
+  @Type(() => AlertTemplate)
+  readonly alertTemplate: AlertTemplate;
 }

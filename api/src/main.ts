@@ -9,7 +9,7 @@ import { ValidationPipe } from '@nestjs/common';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
-import { defaultPercentSettings, defaultRoles } from './common/constant';
+import { defaultAlertTemplate, defaultPercentSettings, defaultRoles } from './common/constant';
 import { AdminSiteService } from './admin-site/admin-site.service';
 import { AdminUserService } from './admin-user/admin-user.service';
 import { UserService } from './user/user.service';
@@ -97,6 +97,7 @@ async function seedInitialData(app: NestExpressApplication) {
       oeeLimit: -1,
       userLimit: -1,
       cutoffTime: new Date(),
+      alertTemplate: defaultAlertTemplate,
     },
     null,
   );

@@ -24,4 +24,4 @@ RUN npm run build
 
 COPY --from=client /src/build/ /app/client/
 
-CMD [ "npm", "start" ]
+CMD [ "node", "dist/main" ]

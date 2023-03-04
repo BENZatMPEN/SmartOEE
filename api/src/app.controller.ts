@@ -5,6 +5,7 @@ import { EntityManager } from 'typeorm';
 import { UserService } from './user/user.service';
 import { RoleService } from './role/role.service';
 import {
+  defaultAlertTemplate,
   defaultPercentSettings,
   defaultRoles,
   OEE_PARAM_TYPE_A,
@@ -139,6 +140,7 @@ export class AppController {
           oeeLimit: -1,
           userLimit: -1,
           cutoffTime: new Date(),
+          alertTemplate: defaultAlertTemplate,
         },
         null,
       );
