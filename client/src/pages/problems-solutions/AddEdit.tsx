@@ -1,13 +1,15 @@
 import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../components/Page';
 import { emptyCurrentProblemSolution, getProblemSolution } from '../../redux/actions/problemSolutionAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_SETTINGS } from '../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../routes/paths';
 import ProblemSolutionForm from '../../sections/problems-solutions/addEdit/ProblemSolutionForm';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
 
 export default function ProblemSolutionAddEdit() {
   const dispatch = useDispatch();
@@ -48,6 +50,16 @@ export default function ProblemSolutionAddEdit() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  const ability = useContext(AbilityContext);
+
+  if (!isEdit && !ability.can(RoleAction.Create, RoleSubject.ProblemsAndSolutions)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
+  if (isEdit && !ability.can(RoleAction.Update, RoleSubject.ProblemsAndSolutions)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page

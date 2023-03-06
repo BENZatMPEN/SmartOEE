@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { Analytic, AnalyticGroupCriteriaDetailItem, AnalyticGroupCriteriaItem } from '../../../@types/analytic';
@@ -34,6 +34,8 @@ import {
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ANALYTICS } from '../../../routes/paths';
 import { Layouts } from 'react-grid-layout';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 interface FormValuesProps extends Partial<Analytic> {}
 
@@ -219,6 +221,8 @@ export default function AnalyticGroupCriteriaForm({
     handleCloseLoad();
   };
 
+  const ability = useContext(AbilityContext);
+
   return (
     <>
       <HeaderBreadcrumbs
@@ -244,9 +248,13 @@ export default function AnalyticGroupCriteriaForm({
               Load
             </Button>
 
-            <Button variant="contained" startIcon={<Iconify icon="eva:save-outline" />} onClick={handleOpenSave}>
-              Save
-            </Button>
+            {(ability.can(RoleAction.Create, RoleSubject.Analytics) ||
+              ability.can(RoleAction.Update, RoleSubject.Analytics) ||
+              ability.can(RoleAction.Delete, RoleSubject.Analytics)) && (
+              <Button variant="contained" startIcon={<Iconify icon="eva:save-outline" />} onClick={handleOpenSave}>
+                Save
+              </Button>
+            )}
           </Stack>
         }
       />
@@ -362,7 +370,7 @@ export default function AnalyticGroupCriteriaForm({
         <DialogTitle>Save</DialogTitle>
 
         <Stack spacing={3} sx={{ p: 3 }}>
-          {currentAnalytics && (
+          {ability.can(RoleAction.Update, RoleSubject.Analytics) && currentAnalytics && (
             <LoadingButton
               variant="contained"
               fullWidth
@@ -375,20 +383,21 @@ export default function AnalyticGroupCriteriaForm({
               Save the changes
             </LoadingButton>
           )}
+          {ability.can(RoleAction.Create, RoleSubject.Analytics) && (
+            <LoadingButton
+              variant="outlined"
+              fullWidth
+              loading={isSubmitting}
+              onClick={() => {
+                handleSubmit(createNewGroupAnalytics)();
+                handleCloseSave();
+              }}
+            >
+              Create a new analytic
+            </LoadingButton>
+          )}
 
-          <LoadingButton
-            variant="outlined"
-            fullWidth
-            loading={isSubmitting}
-            onClick={() => {
-              handleSubmit(createNewGroupAnalytics)();
-              handleCloseSave();
-            }}
-          >
-            Create a new analytic
-          </LoadingButton>
-
-          {currentAnalytics && (
+          {ability.can(RoleAction.Delete, RoleSubject.Analytics) && currentAnalytics && (
             <LoadingButton
               variant="outlined"
               color="error"

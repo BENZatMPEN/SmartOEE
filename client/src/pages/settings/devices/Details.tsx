@@ -1,13 +1,15 @@
 import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentDevice, getDevice } from '../../../redux/actions/deviceAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import DeviceSummary from '../../../sections/settings/devices/details/DeviceSummary';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 export default function DeviceDetails() {
   const { id } = useParams();
@@ -40,6 +42,12 @@ export default function DeviceDetails() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.DeviceSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Device">

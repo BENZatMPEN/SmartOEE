@@ -11,6 +11,9 @@ import DashboardDetailsEnableEditingBatchDialog from './DashboardDetailsEnableEd
 import DashboardDetailsEndBatchDialog from './DashboardDetailsEndBatchDialog';
 import DashboardDetailsPlannedDowntimeDetails from './DashboardDetailsPlannedDowntimeDetails';
 import DashboardDetailsPlannedDowntimeDialog from './DashboardDetailsPlannedDowntimeDialog';
+import { useContext } from 'react';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const downtimeStatus = [OEE_BATCH_STATUS_MC_SETUP, OEE_BATCH_STATUS_PLANNED];
 
@@ -96,11 +99,13 @@ export default function DashboardDetailsControlPanel() {
     }
   };
 
+  const stoppedBatch = batchStoppedDate || toBeStopped;
+
+  const ability = useContext(AbilityContext);
+
   if (!selectedOee) {
     return <></>;
   }
-
-  const stoppedBatch = batchStoppedDate || toBeStopped;
 
   return currentBatch ? (
     <Stack spacing={3}>
@@ -156,9 +161,13 @@ export default function DashboardDetailsControlPanel() {
             </Button>
           )}
 
-          <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
+          {ability.can(RoleAction.Create, RoleSubject.Dashboard) && (
+            <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
+          )}
 
-          <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
+          {ability.can(RoleAction.Update, RoleSubject.Dashboard) && (
+            <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
+          )}
 
           <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
 
@@ -172,7 +181,9 @@ export default function DashboardDetailsControlPanel() {
     </Stack>
   ) : (
     <Stack spacing={3}>
-      <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
+      {ability.can(RoleAction.Create, RoleSubject.Dashboard) && (
+        <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
+      )}
 
       <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
     </Stack>

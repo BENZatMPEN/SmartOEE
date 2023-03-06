@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles';
 import { Outlet } from 'react-router-dom';
 // components
 import Logo from '../components/Logo';
+import { Box, Stack } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
@@ -24,8 +25,13 @@ export default function LogoOnlyLayout() {
   return (
     <>
       <HeaderStyle>
-        <Logo />
+        <Stack alignItems="center">
+          <Box sx={{ width: 250 }}>
+            <Logo />
+          </Box>
+        </Stack>
       </HeaderStyle>
+
       <Outlet />
     </>
   );

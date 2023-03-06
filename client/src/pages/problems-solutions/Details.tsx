@@ -1,16 +1,18 @@
 import { Box, Card, CardContent, Container, Grid } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Page from '../../components/Page';
 import { emptyCurrentProblemSolution, getProblemSolution } from '../../redux/actions/problemSolutionAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_PROBLEMS_SOLUTIONS, PATH_SETTINGS } from '../../routes/paths';
+import { PATH_PAGES, PATH_PROBLEMS_SOLUTIONS, PATH_SETTINGS } from '../../routes/paths';
 import ProblemSolutionCarousel from '../../sections/problems-solutions/details/ProblemSolutionCarousel';
 import ProblemSolutionSummary from '../../sections/problems-solutions/details/ProblemSolutionSummary';
 import { getFileUrl } from '../../utils/imageHelper';
+import { RoleAction, RoleSubject } from '../../@types/role';
+import { AbilityContext } from '../../caslContext';
 
 export default function ProblemSolutionDetails() {
   const dispatch = useDispatch();
@@ -49,6 +51,12 @@ export default function ProblemSolutionDetails() {
       .filter((item) => item.groupName === groupName)
       .map((item) => getFileUrl(item.attachment.fileName) || '');
   };
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.ProblemsAndSolutions)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Problems & Solutions">

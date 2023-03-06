@@ -1,17 +1,19 @@
 import { Box, Card, CardContent, Container, Grid } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import Page from '../../components/Page';
 import { emptyCurrentFaq, getFaq } from '../../redux/actions/faqAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_FAQS, PATH_SETTINGS } from '../../routes/paths';
+import { PATH_FAQS, PATH_PAGES, PATH_SETTINGS } from '../../routes/paths';
 import FaqAttachments from '../../sections/faqs/details/FaqAttachments';
 import FaqCarousel from '../../sections/faqs/details/FaqCarousel';
 import FaqSummary from '../../sections/faqs/details/FaqSummary';
 import { getFileUrl } from '../../utils/imageHelper';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
 
 export default function FaqDetails() {
   const dispatch = useDispatch();
@@ -50,6 +52,12 @@ export default function FaqDetails() {
       .filter((item) => item.groupName === groupName)
       .map((item) => getFileUrl(item.attachment.fileName) || '');
   };
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Faqs)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Knowledge & FAQs">

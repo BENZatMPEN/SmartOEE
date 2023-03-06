@@ -39,18 +39,6 @@ const ability = buildAbilityFor([]);
 store.subscribe(() => {
   const authState = store.getState().auth;
   const user = authState?.userProfile as User;
-
-  // if (!user) {
-  //   cannot(RoleAction.Manage, RoleSubject.All);
-  //   return build();
-  // }
-
-  // if (user.isAdmin) {
-  //   can([RoleAction.Manage], RoleSubject.All);
-  // } else {
-
-  // TODO: if no role cannot do anything
-
   if (!user) {
     return;
   }

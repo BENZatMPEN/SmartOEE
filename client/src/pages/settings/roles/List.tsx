@@ -10,9 +10,9 @@ import {
   TablePagination,
   Tooltip,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FilterRole } from '../../../@types/role';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
+import { FilterRole, RoleAction, RoleSubject } from '../../../@types/role';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
 import Iconify from '../../../components/Iconify';
@@ -23,8 +23,9 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteRole, deleteRoles, getRolePagedList } from '../../../redux/actions/roleAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR, PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_ADMINISTRATOR, PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { RoleTableRow, RoleTableToolbar } from '../../../sections/settings/roles/list';
+import { AbilityContext } from '../../../caslContext';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },
@@ -139,6 +140,12 @@ export default function RoleList() {
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.RoleSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Administrator - Role List">
       <Container maxWidth={false}>
@@ -150,16 +157,20 @@ export default function RoleList() {
               name: 'Roles',
             },
           ]}
-          action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="eva:plus-fill" />}
-              component={RouterLink}
-              to={PATH_SETTINGS.roles.new}
-            >
-              New
-            </Button>
-          }
+          {...(ability.can(RoleAction.Create, RoleSubject.RoleSettings)
+            ? {
+                action: (
+                  <Button
+                    variant="contained"
+                    startIcon={<Iconify icon="eva:plus-fill" />}
+                    component={RouterLink}
+                    to={PATH_SETTINGS.roles.new}
+                  >
+                    New
+                  </Button>
+                ),
+              }
+            : undefined)}
         />
 
         <Card>

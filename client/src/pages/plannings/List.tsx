@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { CalendarView, DateRange } from '../../@types/calendar';
 import { FilterPlanning } from '../../@types/planning';
 import { DialogAnimate } from '../../components/animate';
@@ -52,6 +52,10 @@ import { PlanningTableRow, PlanningTableToolbar } from '../../sections/plannings
 import dayjs from 'dayjs';
 import PlanningCalendarUploadDialog from '../../sections/plannings/calendar/PlanningCalendarUploadDialog';
 import PlanningCalendarExportDialog from '../../sections/plannings/calendar/PlanningCalendarExportDialog';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
+import { Navigate } from 'react-router-dom';
+import { PATH_PAGES } from '../../routes/paths';
 
 const TABLE_HEAD = [
   { id: 'id', label: 'ID', align: 'left' },
@@ -302,6 +306,12 @@ export default function PlanningList() {
     setOpenUploadDialog(false);
   };
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Plannings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Plannings">
       <Container maxWidth={false}>
@@ -322,10 +332,11 @@ export default function PlanningList() {
               <Button variant="outlined" component="label" onClick={() => setOpenUploadDialog(true)}>
                 Import Excel
               </Button>
-
-              <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={() => handleAdd()}>
-                New
-              </Button>
+              {ability.can(RoleAction.Create, RoleSubject.Plannings) && (
+                <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={() => handleAdd()}>
+                  New
+                </Button>
+              )}
             </Stack>
           }
         />

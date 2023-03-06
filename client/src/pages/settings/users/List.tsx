@@ -11,8 +11,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { paramCase } from 'change-case';
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterUser } from '../../../@types/user';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -24,8 +24,10 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { UserTableRow, UserTableToolbar } from '../../../sections/settings/users/list';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
   { id: 'firstName', label: 'First Name', align: 'left' },
@@ -143,6 +145,12 @@ export default function UserList() {
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.UserSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Administrator - User List">
       <Container maxWidth={false}>
@@ -154,16 +162,20 @@ export default function UserList() {
               name: 'Users',
             },
           ]}
-          action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="eva:plus-fill" />}
-              component={RouterLink}
-              to={PATH_SETTINGS.users.new}
-            >
-              New
-            </Button>
-          }
+          {...(ability.can(RoleAction.Create, RoleSubject.UserSettings)
+            ? {
+                action: (
+                  <Button
+                    variant="contained"
+                    startIcon={<Iconify icon="eva:plus-fill" />}
+                    component={RouterLink}
+                    to={PATH_SETTINGS.users.new}
+                  >
+                    New
+                  </Button>
+                ),
+              }
+            : undefined)}
         />
 
         <Card>

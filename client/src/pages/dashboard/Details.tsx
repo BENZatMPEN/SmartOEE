@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Container, Stack } from '@mui/material';
-import { useEffect } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, Outlet, useParams } from 'react-router-dom';
 import { OeeBatchA, OeeBatchP, OeeBatchQ, OeeStats, OeeTimeline } from '../../@types/oeeBatch';
 import { NavSectionHorizontal } from '../../components/nav-section';
 import Page from '../../components/Page';
@@ -22,9 +22,11 @@ import {
 } from '../../redux/actions/oeeBatchAction';
 import { emptySelectedOee, getOee } from '../../redux/actions/oeeDashboardAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_DASHBOARD } from '../../routes/paths';
+import { PATH_DASHBOARD, PATH_PAGES } from '../../routes/paths';
 import DashboardDetailsHeader from '../../sections/dashboard/details/DashboardDetailsHeader';
 import DashboardDetailsPanel from '../../sections/dashboard/details/DashboardDetailsPanel';
+import { RoleAction, RoleSubject } from '../../@types/role';
+import { AbilityContext } from '../../caslContext';
 
 export default function Details() {
   const { id } = useParams();
@@ -231,6 +233,12 @@ export default function Details() {
   }, [socket, currentBatchId, dispatch]);
 
   const isNotFound = !isLoading && !selectedOee;
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Dashboard)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={title}>

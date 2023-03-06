@@ -1,9 +1,13 @@
 import { Card, CardContent, Container } from '@mui/material';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import Page from '../../../components/Page';
 import { emptyCurrentSite, getSite } from '../../../redux/actions/siteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import SiteForm from '../../../sections/settings/site/details/SiteForm';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
+import { Navigate } from 'react-router-dom';
+import { PATH_PAGES } from '../../../routes/paths';
 
 export default function SiteDetails() {
   const dispatch = useDispatch();
@@ -25,6 +29,12 @@ export default function SiteDetails() {
       };
     })();
   }, [dispatch, selectedSite]);
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.SiteSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Site Settings">

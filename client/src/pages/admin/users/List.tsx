@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterUser } from '../../../@types/user';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -24,7 +24,7 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteUser, deleteUsers, getUserPagedList } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
+import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import { UserTableRow, UserTableToolbar } from '../../../sections/admin/users/list';
 
 const TABLE_HEAD = [
@@ -60,6 +60,8 @@ export default function AdminUserList() {
   const dispatch = useDispatch();
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.adminUser);
+
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const [filterName, setFilterName] = useState('');
 
@@ -142,6 +144,10 @@ export default function AdminUserList() {
   const denseHeight = dense ? 60 : 80;
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
+
+  if (userProfile && !userProfile.isAdmin) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Administrator - User List">

@@ -3,6 +3,11 @@ import Page from '../../components/Page';
 import AnalyticCriteriaForm from '../../sections/analytics/view/AnalyticCriteriaForm';
 import { RootState, useSelector } from '../../redux/store';
 import AnalyticChart from '../../sections/analytics/AnalyticChart';
+import { useContext } from 'react';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
+import { Navigate } from 'react-router-dom';
+import { PATH_PAGES } from '../../routes/paths';
 
 export default function AnalyticSingle() {
   const { currentCriteria: criteria } = useSelector((state: RootState) => state.analytic);
@@ -19,6 +24,12 @@ export default function AnalyticSingle() {
     }
 
     return `_${ids.join('_')}`;
+  }
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Analytics)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
   }
 
   return (

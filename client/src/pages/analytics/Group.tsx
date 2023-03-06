@@ -14,7 +14,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Layouts, Responsive, WidthProvider } from 'react-grid-layout';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
@@ -28,8 +28,11 @@ import AnalyticGroupCriteriaForm from '../../sections/analytics/group/AnalyticGr
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import axios from '../../utils/axios';
 import { updateCurrentAnalytics } from '../../redux/actions/analyticAction';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
+import { PATH_PAGES } from '../../routes/paths';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -194,6 +197,12 @@ export default function AnalyticGroup() {
       return <></>;
     }
   };
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Analytics)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Group Analytics">

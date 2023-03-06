@@ -10,6 +10,8 @@ import { RootState, useDispatch, useSelector } from '../../redux/store';
 import DashboardHeader from '../../sections/dashboard/DashboardHeader';
 import DashboardOeeGridItem from '../../sections/dashboard/DashboardOeeGridItem';
 import DashboardOeeTimelineItem from '../../sections/dashboard/DashboardOeeTimelineItem';
+import { PATH_PAGES } from '../../routes/paths';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 export default function List() {
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
@@ -23,8 +25,6 @@ export default function List() {
   const { socket } = useWebSocket();
 
   const { oees } = oeeStatus;
-
-  const ability = useContext(AbilityContext);
 
   useEffect(() => {
     (async () => {
@@ -48,11 +48,15 @@ export default function List() {
     };
   }, [dispatch, socket, selectedSite]);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Dashboard)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Dashboard">
       <Container maxWidth={false}>
-        {/*{ability.can(RoleAction.Update, RoleSubject.Dashboard) && <div>Can Update</div>}*/}
-
         <DashboardHeader />
 
         {isLoading ? (

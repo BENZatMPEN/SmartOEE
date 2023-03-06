@@ -15,13 +15,13 @@ const RootStyle = styled('div')(({ theme }) => ({
 
 export default function Page404() {
   return (
-    <Page title="404 Page Not Found" sx={{ height: 1 }}>
+    <Page title="403 Fobidden" sx={{ height: 1 }}>
       <RootStyle>
         <Container component={MotionContainer}>
           <Box sx={{ maxWidth: 480, margin: 'auto', textAlign: 'center' }}>
             <m.div variants={varBounce().in}>
               <Typography variant="h3" paragraph>
-                Sorry, page not found!
+                You don't have permission
               </Typography>
             </m.div>
 

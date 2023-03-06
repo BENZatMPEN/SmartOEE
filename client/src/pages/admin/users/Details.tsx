@@ -2,11 +2,11 @@ import { Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentUser, getUser } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
+import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import UserForm from '../../../sections/admin/users/details/AdminUserForm';
 
 export default function AdminUserDetails() {
@@ -17,6 +17,8 @@ export default function AdminUserDetails() {
   const { enqueueSnackbar } = useSnackbar();
 
   const { currentUser } = useSelector((state: RootState) => state.adminUser);
+
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const { pathname } = useLocation();
 
@@ -49,6 +51,10 @@ export default function AdminUserDetails() {
       dispatch(emptyCurrentUser());
     };
   }, [dispatch, enqueueSnackbar, id, isDuplicate, isEdit, navigate]);
+
+  if (userProfile && !userProfile.isAdmin) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={`User Settings: ${currentUser ? 'Edit User' : 'Create User'}`}>

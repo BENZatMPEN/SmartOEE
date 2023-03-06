@@ -274,6 +274,7 @@ export default function Router() {
       path: '*',
       element: <LogoOnlyLayout />,
       children: [
+        { path: '403', element: <Forbidden /> },
         { path: '404', element: <NotFound /> },
         { path: '*', element: <Navigate to="/404" replace /> },
       ],
@@ -372,3 +373,4 @@ const AdminUserSettingsDetails = Loadable(lazy(() => import('../pages/admin/user
 const AdminUserSettingsChangePassword = Loadable(lazy(() => import('../pages/admin/users/ChangePassword')));
 
 const NotFound = Loadable(lazy(() => import('../pages/Page404')));
+const Forbidden = Loadable(lazy(() => import('../pages/Page403')));

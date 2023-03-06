@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { paramCase } from 'change-case';
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterSite } from '../../../@types/site';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -24,7 +24,7 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteSite, deleteSites, getSitePagedList } from '../../../redux/actions/adminSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
+import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import { SiteTableRow, SiteTableToolbar } from '../../../sections/admin/sites/list';
 
 const TABLE_HEAD = [
@@ -61,6 +61,8 @@ export default function SiteList() {
   const dispatch = useDispatch();
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.adminSite);
+
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const [filterName, setFilterName] = useState('');
 
@@ -139,6 +141,10 @@ export default function SiteList() {
   const denseHeight = dense ? 60 : 80;
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
+
+  if (userProfile && !userProfile.isAdmin) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title="Settings - Site List">

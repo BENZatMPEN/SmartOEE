@@ -11,8 +11,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { paramCase } from 'change-case';
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterProduct } from '../../../@types/product';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -24,8 +24,10 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteProduct, deleteProducts, getProductPagedList } from '../../../redux/actions/productAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { ProductTableRow, ProductTableToolbar } from '../../../sections/settings/products/list';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
   { id: 'sku', label: 'SKU code', align: 'left' },
@@ -136,6 +138,12 @@ export default function ProductList() {
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.ProductSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Settings - Product List">
       <Container maxWidth={false}>
@@ -147,16 +155,20 @@ export default function ProductList() {
               name: 'Products',
             },
           ]}
-          action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="eva:plus-fill" />}
-              component={RouterLink}
-              to={PATH_SETTINGS.products.new}
-            >
-              New
-            </Button>
-          }
+          {...(ability.can(RoleAction.Create, RoleSubject.ProductSettings)
+            ? {
+                action: (
+                  <Button
+                    variant="contained"
+                    startIcon={<Iconify icon="eva:plus-fill" />}
+                    component={RouterLink}
+                    to={PATH_SETTINGS.products.new}
+                  >
+                    New
+                  </Button>
+                ),
+              }
+            : undefined)}
         />
 
         <Card>

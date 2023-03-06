@@ -252,7 +252,7 @@ export const initialAlertTemplate: AlertTemplate = {
 export const initialRoles: RoleSetting[] = [
   {
     subject: RoleSubject.Dashboard,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update],
+    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
   {
     subject: RoleSubject.Analytics,
@@ -304,7 +304,7 @@ export const initialRoles: RoleSetting[] = [
   },
   {
     subject: RoleSubject.SiteSettings,
-    actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
+    actions: [RoleAction.Read, RoleAction.Update],
   },
   {
     subject: RoleSubject.UserSettings,

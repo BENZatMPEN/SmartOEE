@@ -1,9 +1,10 @@
 import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useState } from 'react';
-import { Role } from '../../../../@types/role';
+import { useContext, useState } from 'react';
+import { Role, RoleAction, RoleSubject } from '../../../../@types/role';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
 import { fDateTime } from '../../../../utils/formatTime';
+import { AbilityContext } from '../../../../caslContext';
 
 type Props = {
   row: Role;
@@ -27,6 +28,13 @@ export default function RoleTableRow({ row, selected, onEditRow, onSelectRow, on
     setOpenMenuActions(null);
   };
 
+  const ability = useContext(AbilityContext);
+
+  const showMenu =
+    ability.can(RoleAction.Create, RoleSubject.RoleSettings) ||
+    ability.can(RoleAction.Update, RoleSubject.RoleSettings) ||
+    ability.can(RoleAction.Delete, RoleSubject.RoleSettings);
+
   return (
     <TableRow hover selected={selected}>
       <TableCell padding="checkbox">
@@ -40,47 +48,53 @@ export default function RoleTableRow({ row, selected, onEditRow, onSelectRow, on
       <TableCell align="left">{fDateTime(createdAt)}</TableCell>
 
       <TableCell align="right">
-        <TableMoreMenu
-          open={openMenu}
-          onOpen={handleOpenMenu}
-          onClose={handleCloseMenu}
-          actions={
-            <>
-              <MenuItem
-                onClick={() => {
-                  onEditRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:edit-fill'} />
-                Edit
-              </MenuItem>
+        {showMenu && (
+          <TableMoreMenu
+            open={openMenu}
+            onOpen={handleOpenMenu}
+            onClose={handleCloseMenu}
+            actions={
+              <>
+                {ability.can(RoleAction.Update, RoleSubject.RoleSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onEditRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:edit-fill'} />
+                    Edit
+                  </MenuItem>
+                )}
 
-              <MenuItem
-                onClick={() => {
-                  onDuplicateRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:copy-fill'} />
-                Duplicate
-              </MenuItem>
+                {ability.can(RoleAction.Create, RoleSubject.RoleSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDuplicateRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:copy-fill'} />
+                    Duplicate
+                  </MenuItem>
+                )}
 
-              <Divider sx={{ borderStyle: 'dashed' }} />
-
-              <MenuItem
-                onClick={() => {
-                  onDeleteRow();
-                  handleCloseMenu();
-                }}
-                sx={{ color: 'error.main' }}
-              >
-                <Iconify icon={'eva:trash-2-outline'} />
-                Delete
-              </MenuItem>
-            </>
-          }
-        />
+                {ability.can(RoleAction.Delete, RoleSubject.RoleSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDeleteRow();
+                      handleCloseMenu();
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Iconify icon={'eva:trash-2-outline'} />
+                    Delete
+                  </MenuItem>
+                )}
+              </>
+            }
+          />
+        )}
       </TableCell>
     </TableRow>
   );

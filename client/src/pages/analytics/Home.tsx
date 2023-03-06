@@ -1,10 +1,19 @@
 import { Container, Grid } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import Page from '../../components/Page';
-import { PATH_ANALYTICS } from '../../routes/paths';
+import { PATH_ANALYTICS, PATH_PAGES } from '../../routes/paths';
 import ButtonWidget from '../../sections/home/ButtonWidget';
+import { useContext } from 'react';
+import { AbilityContext } from '../../caslContext';
+import { RoleAction, RoleSubject } from '../../@types/role';
 
 export default function AnalyticHome() {
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.Analytics)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Analytics">
       <Container maxWidth={false}>

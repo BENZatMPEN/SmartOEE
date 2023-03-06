@@ -11,8 +11,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { paramCase } from 'change-case';
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterDeviceModel } from '../../../@types/deviceModel';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -28,8 +28,10 @@ import {
   getDeviceModelPagedList,
 } from '../../../redux/actions/deviceModelAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { DeviceModelTableRow, DeviceModelTableToolbar } from '../../../sections/settings/device-models/list';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },
@@ -142,6 +144,12 @@ export default function DeviceModelList() {
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.ModelSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Settings - Model List">
       <Container maxWidth={false}>
@@ -153,16 +161,20 @@ export default function DeviceModelList() {
               name: 'Models',
             },
           ]}
-          action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="eva:plus-fill" />}
-              component={RouterLink}
-              to={PATH_SETTINGS.deviceModels.new}
-            >
-              New
-            </Button>
-          }
+          {...(ability.can(RoleAction.Create, RoleSubject.ModelSettings)
+            ? {
+                action: (
+                  <Button
+                    variant="contained"
+                    startIcon={<Iconify icon="eva:plus-fill" />}
+                    component={RouterLink}
+                    to={PATH_SETTINGS.deviceModels.new}
+                  >
+                    New
+                  </Button>
+                ),
+              }
+            : undefined)}
         />
 
         <Card>

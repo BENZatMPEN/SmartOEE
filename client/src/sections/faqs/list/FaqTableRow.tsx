@@ -1,11 +1,13 @@
-import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
+import { Checkbox, MenuItem, TableCell, TableRow } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Faq } from '../../../@types/faq';
 import Iconify from '../../../components/Iconify';
 import { TableMoreMenu } from '../../../components/table';
 import { fCode } from '../../../utils/formatNumber';
 import { getFaqProcessStatusText } from '../../../utils/formatText';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 type Props = {
   row: Faq;
@@ -40,6 +42,14 @@ export default function FaqTableRow({
     setOpenMenuActions(null);
   };
 
+  const ability = useContext(AbilityContext);
+
+  const showMenu =
+    ability.can(RoleAction.Read, RoleSubject.Faqs) ||
+    ability.can(RoleAction.Create, RoleSubject.Faqs) ||
+    ability.can(RoleAction.Update, RoleSubject.Faqs) ||
+    ability.can(RoleAction.Delete, RoleSubject.Faqs);
+
   return (
     <TableRow hover selected={selected}>
       <TableCell padding="checkbox">
@@ -59,57 +69,65 @@ export default function FaqTableRow({
       <TableCell align="center">{getFaqProcessStatusText(status)}</TableCell>
 
       <TableCell align="right">
-        <TableMoreMenu
-          open={openMenu}
-          onOpen={handleOpenMenu}
-          onClose={handleCloseMenu}
-          actions={
-            <>
-              <MenuItem
-                onClick={() => {
-                  onDetailsRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:file-text-outline'} />
-                Details
-              </MenuItem>
+        {showMenu && (
+          <TableMoreMenu
+            open={openMenu}
+            onOpen={handleOpenMenu}
+            onClose={handleCloseMenu}
+            actions={
+              <>
+                {ability.can(RoleAction.Read, RoleSubject.Faqs) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDetailsRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:file-text-outline'} />
+                    Details
+                  </MenuItem>
+                )}
 
-              <MenuItem
-                onClick={() => {
-                  onEditRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:edit-fill'} />
-                Edit
-              </MenuItem>
+                {ability.can(RoleAction.Update, RoleSubject.Faqs) && (
+                  <MenuItem
+                    onClick={() => {
+                      onEditRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:edit-fill'} />
+                    Edit
+                  </MenuItem>
+                )}
 
-              <MenuItem
-                onClick={() => {
-                  onDuplicateRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:copy-fill'} />
-                Duplicate
-              </MenuItem>
+                {ability.can(RoleAction.Create, RoleSubject.Faqs) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDuplicateRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:copy-fill'} />
+                    Duplicate
+                  </MenuItem>
+                )}
 
-              <Divider sx={{ borderStyle: 'dashed' }} />
-
-              <MenuItem
-                onClick={() => {
-                  onDeleteRow();
-                  handleCloseMenu();
-                }}
-                sx={{ color: 'error.main' }}
-              >
-                <Iconify icon={'eva:trash-2-outline'} />
-                Delete
-              </MenuItem>
-            </>
-          }
-        />
+                {ability.can(RoleAction.Delete, RoleSubject.Faqs) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDeleteRow();
+                      handleCloseMenu();
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Iconify icon={'eva:trash-2-outline'} />
+                    Delete
+                  </MenuItem>
+                )}
+              </>
+            }
+          />
+        )}
       </TableCell>
     </TableRow>
   );

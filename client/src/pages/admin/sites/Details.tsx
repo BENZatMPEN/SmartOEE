@@ -2,11 +2,11 @@ import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentSite, getSite } from '../../../redux/actions/adminSiteAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR } from '../../../routes/paths';
+import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import SiteForm from '../../../sections/admin/sites/details/SiteForm';
 
 export default function SiteDetails() {
@@ -17,6 +17,8 @@ export default function SiteDetails() {
   const { enqueueSnackbar } = useSnackbar();
 
   const { currentSite, error, isLoading } = useSelector((state: RootState) => state.adminSite);
+
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const { pathname } = useLocation();
 
@@ -48,6 +50,10 @@ export default function SiteDetails() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  if (userProfile && !userProfile.isAdmin) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={`Site Settings: ${currentSite ? 'Edit Site' : 'Create Site'}`}>

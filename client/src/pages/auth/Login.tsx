@@ -3,6 +3,10 @@ import { styled, useTheme } from '@mui/material/styles';
 import Page from '../../components/Page';
 import useAuth from '../../hooks/useAuth';
 import { LoginForm } from '../../sections/auth/login';
+import Image from '../../components/Image';
+import logoLight from '../../assets/logo_light.png';
+import logoDark from '../../assets/logo_dark.png';
+import Logo from '../../components/Logo';
 
 const RootStyle = styled('div')(({ theme }) => ({
   [theme.breakpoints.up('md')]: {
@@ -80,22 +84,24 @@ export default function Login() {
 
         <Container maxWidth="sm">
           <ContentStyle>
-            <Stack direction="row" alignItems="center" sx={{ mb: theme.spacing(3) }}>
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h4" textAlign="center" gutterBottom>
-                  Sign in
-                </Typography>
+            <Stack alignItems="center" sx={{ mb: theme.spacing(3) }}>
+              <Box sx={{ width: 300, flexGrow: 1 }}>
+                {/*<Typography variant="h4" textAlign="center" gutterBottom>*/}
+                {/*  Sign in*/}
+                {/*</Typography>*/}
+
+                <Logo />
                 {/*<Typography sx={{ color: 'text.secondary' }}>Enter your details below.</Typography>*/}
               </Box>
 
               {/*<Tooltip title={capitalCase(method)} placement="right">*/}
-              {/*  <>*/}
-              {/*    <Image*/}
-              {/*      disabledEffect*/}
-              {/*      src={`https://minimal-assets-api-dev.vercel.app/assets/icons/auth/ic_${method}.png`}*/}
-              {/*      sx={{ width: 32, height: 32 }}*/}
-              {/*    />*/}
-              {/*  </>*/}
+              {/*<>*/}
+              {/*  <Image*/}
+              {/*    disabledEffect*/}
+              {/*    src={`https://minimal-assets-api-dev.vercel.app/assets/icons/auth/ic_${method}.png`}*/}
+              {/*    sx={{ width: 32, height: 32 }}*/}
+              {/*  />*/}
+              {/*</>*/}
               {/*</Tooltip>*/}
             </Stack>
 

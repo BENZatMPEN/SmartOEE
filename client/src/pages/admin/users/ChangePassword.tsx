@@ -2,11 +2,11 @@ import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentUser, getUser } from '../../../redux/actions/adminUserAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import ChangePasswordForm from '../../../sections/admin/users/details/AdminChangePasswordForm';
 
 export default function AdminChangePassword() {
@@ -17,6 +17,8 @@ export default function AdminChangePassword() {
   const { enqueueSnackbar } = useSnackbar();
 
   const { error, isLoading } = useSelector((state: RootState) => state.user);
+
+  const { userProfile } = useSelector((state: RootState) => state.auth);
 
   const { id } = useParams();
 
@@ -40,6 +42,10 @@ export default function AdminChangePassword() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  if (userProfile && !userProfile.isAdmin) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={`User Settings: Change User Password`}>

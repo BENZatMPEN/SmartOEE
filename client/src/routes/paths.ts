@@ -12,6 +12,11 @@ const ROOTS_HISTORY = '/history';
 const ROOTS_SETTINGS = '/settings';
 const ROOTS_ADMINISTRATOR = '/admin';
 
+export const PATH_PAGES = {
+  forbidden: '/403',
+  notFound: '/404',
+};
+
 export const PATH_AUTH = {
   root: ROOTS_AUTH,
   login: path(ROOTS_AUTH, '/login'),

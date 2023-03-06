@@ -1,10 +1,12 @@
 import { Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { OeeBatch } from '../../../../../@types/oeeBatch';
 import Iconify from '../../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../../components/table';
 import { RootState, useSelector } from '../../../../../redux/store';
 import { fDateTime } from '../../../../../utils/formatTime';
+import { AbilityContext } from '../../../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../../../@types/role';
 
 type Props = {
   row: OeeBatch;
@@ -27,6 +29,8 @@ export default function DashboardHistoryTableRow({ row, selected, onDeleteRow, o
   const handleCloseMenu = () => {
     setOpenMenuActions(null);
   };
+
+  const ability = useContext(AbilityContext);
 
   return (
     <TableRow hover>
@@ -66,21 +70,17 @@ export default function DashboardHistoryTableRow({ row, selected, onDeleteRow, o
                 Export
               </MenuItem>
 
-              {batchStoppedDate && (
-                <>
-                  <Divider sx={{ borderStyle: 'dashed' }} />
-
-                  <MenuItem
-                    onClick={() => {
-                      onDeleteRow();
-                      handleCloseMenu();
-                    }}
-                    sx={{ color: 'error.main' }}
-                  >
-                    <Iconify icon={'eva:trash-2-outline'} />
-                    Delete
-                  </MenuItem>
-                </>
+              {ability.can(RoleAction.Delete, RoleSubject.Dashboard) && batchStoppedDate && (
+                <MenuItem
+                  onClick={() => {
+                    onDeleteRow();
+                    handleCloseMenu();
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <Iconify icon={'eva:trash-2-outline'} />
+                  Delete
+                </MenuItem>
               )}
             </>
           }

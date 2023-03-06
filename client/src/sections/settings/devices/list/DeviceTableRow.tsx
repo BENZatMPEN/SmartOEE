@@ -1,9 +1,11 @@
 import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Device } from '../../../../@types/device';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
 import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
+import { AbilityContext } from '../../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../../@types/role';
 
 type Props = {
   row: Device;
@@ -36,6 +38,14 @@ export default function DeviceTableRow({
     setOpenMenuActions(null);
   };
 
+  const ability = useContext(AbilityContext);
+
+  const showMenu =
+    ability.can(RoleAction.Read, RoleSubject.DeviceSettings) ||
+    ability.can(RoleAction.Create, RoleSubject.DeviceSettings) ||
+    ability.can(RoleAction.Update, RoleSubject.DeviceSettings) ||
+    ability.can(RoleAction.Delete, RoleSubject.DeviceSettings);
+
   return (
     <TableRow hover selected={selected}>
       <TableCell padding="checkbox">
@@ -63,57 +73,65 @@ export default function DeviceTableRow({
       <TableCell align="left">{remark}</TableCell>
 
       <TableCell align="right">
-        <TableMoreMenu
-          open={openMenu}
-          onOpen={handleOpenMenu}
-          onClose={handleCloseMenu}
-          actions={
-            <>
-              <MenuItem
-                onClick={() => {
-                  onDetailsRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:file-text-outline'} />
-                Details
-              </MenuItem>
+        {showMenu && (
+          <TableMoreMenu
+            open={openMenu}
+            onOpen={handleOpenMenu}
+            onClose={handleCloseMenu}
+            actions={
+              <>
+                {ability.can(RoleAction.Read, RoleSubject.DeviceSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDetailsRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:file-text-outline'} />
+                    Details
+                  </MenuItem>
+                )}
 
-              <MenuItem
-                onClick={() => {
-                  onEditRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:edit-fill'} />
-                Edit
-              </MenuItem>
+                {ability.can(RoleAction.Update, RoleSubject.DeviceSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onEditRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:edit-fill'} />
+                    Edit
+                  </MenuItem>
+                )}
 
-              <MenuItem
-                onClick={() => {
-                  onDuplicateRow();
-                  handleCloseMenu();
-                }}
-              >
-                <Iconify icon={'eva:copy-fill'} />
-                Duplicate
-              </MenuItem>
+                {ability.can(RoleAction.Create, RoleSubject.DeviceSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDuplicateRow();
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Iconify icon={'eva:copy-fill'} />
+                    Duplicate
+                  </MenuItem>
+                )}
 
-              <Divider sx={{ borderStyle: 'dashed' }} />
-
-              <MenuItem
-                onClick={() => {
-                  onDeleteRow();
-                  handleCloseMenu();
-                }}
-                sx={{ color: 'error.main' }}
-              >
-                <Iconify icon={'eva:trash-2-outline'} />
-                Delete
-              </MenuItem>
-            </>
-          }
-        />
+                {ability.can(RoleAction.Delete, RoleSubject.DeviceSettings) && (
+                  <MenuItem
+                    onClick={() => {
+                      onDeleteRow();
+                      handleCloseMenu();
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Iconify icon={'eva:trash-2-outline'} />
+                    Delete
+                  </MenuItem>
+                )}
+              </>
+            }
+          />
+        )}
       </TableCell>
     </TableRow>
   );

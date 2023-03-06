@@ -1,13 +1,15 @@
 import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentUser, getUser } from '../../../redux/actions/userAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import ChangePasswordForm from '../../../sections/settings/users/details/ChangePasswordForm';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 export default function UserChangePassword() {
   const dispatch = useDispatch();
@@ -40,6 +42,12 @@ export default function UserChangePassword() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Update, RoleSubject.UserSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={`User Settings: Change User Password`}>

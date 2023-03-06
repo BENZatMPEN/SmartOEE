@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import GoogleMapReact from 'google-map-react';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { PercentSetting } from '../../../../@types/percentSetting';
@@ -29,6 +29,8 @@ import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import SitePercentSettings from './SitePercentSettings';
 import SiteAlertTemplate from './SiteAlertTemplate';
+import { RoleAction, RoleSubject } from '../../../../@types/role';
+import { AbilityContext } from '../../../../caslContext';
 
 interface MapProps {
   map: any;
@@ -188,6 +190,8 @@ export default function SiteForm() {
     setValue('defaultPercentSettings', newPercentSettings);
   };
 
+  const ability = useContext(AbilityContext);
+
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <FormHeader
@@ -202,16 +206,20 @@ export default function SiteForm() {
             ]}
           />
         }
-        action={
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={isSubmitting}
-            startIcon={<Iconify icon="eva:save-fill" />}
-          >
-            Save
-          </LoadingButton>
-        }
+        {...(ability.can(RoleAction.Update, RoleSubject.SiteSettings)
+          ? {
+              action: (
+                <LoadingButton
+                  type="submit"
+                  variant="contained"
+                  loading={isSubmitting}
+                  startIcon={<Iconify icon="eva:save-fill" />}
+                >
+                  Save
+                </LoadingButton>
+              ),
+            }
+          : undefined)}
       />
 
       <Grid container spacing={3}>

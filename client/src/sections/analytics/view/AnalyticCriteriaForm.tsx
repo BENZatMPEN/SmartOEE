@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import {
@@ -56,6 +56,8 @@ import {
   getAnalyticViewTypeText,
 } from '../../../utils/formatText';
 import { OptionItem } from '../../../@types/option';
+import { RoleAction, RoleSubject } from '../../../@types/role';
+import { AbilityContext } from '../../../caslContext';
 
 const VIEW_TYPES: AnalyticViewType[] = ['object', 'time'];
 
@@ -368,6 +370,8 @@ export default function AnalyticCriteriaForm() {
     return filtered.length > 0 ? filtered[0] : null;
   };
 
+  const ability = useContext(AbilityContext);
+
   return (
     <>
       <HeaderBreadcrumbs
@@ -389,9 +393,13 @@ export default function AnalyticCriteriaForm() {
               Load
             </Button>
 
-            <Button variant="contained" startIcon={<Iconify icon="eva:save-outline" />} onClick={handleOpenSave}>
-              Save
-            </Button>
+            {(ability.can(RoleAction.Create, RoleSubject.Analytics) ||
+              ability.can(RoleAction.Update, RoleSubject.Analytics) ||
+              ability.can(RoleAction.Delete, RoleSubject.Analytics)) && (
+              <Button variant="contained" startIcon={<Iconify icon="eva:save-outline" />} onClick={handleOpenSave}>
+                Save
+              </Button>
+            )}
           </Stack>
         }
       />
@@ -693,7 +701,7 @@ export default function AnalyticCriteriaForm() {
         <DialogTitle>Save</DialogTitle>
 
         <Stack spacing={3} sx={{ p: 3 }}>
-          {currentAnalytics && (
+          {ability.can(RoleAction.Update, RoleSubject.Analytics) && currentAnalytics && (
             <LoadingButton
               variant="contained"
               fullWidth
@@ -707,19 +715,21 @@ export default function AnalyticCriteriaForm() {
             </LoadingButton>
           )}
 
-          <LoadingButton
-            variant="outlined"
-            fullWidth
-            loading={isSubmitting}
-            onClick={() => {
-              handleSubmit(createNewCriteria)();
-              handleCloseSave();
-            }}
-          >
-            Create a new analytic
-          </LoadingButton>
+          {ability.can(RoleAction.Create, RoleSubject.Analytics) && (
+            <LoadingButton
+              variant="outlined"
+              fullWidth
+              loading={isSubmitting}
+              onClick={() => {
+                handleSubmit(createNewCriteria)();
+                handleCloseSave();
+              }}
+            >
+              Create a new analytic
+            </LoadingButton>
+          )}
 
-          {currentAnalytics && (
+          {ability.can(RoleAction.Delete, RoleSubject.Analytics) && currentAnalytics && (
             <LoadingButton
               variant="outlined"
               color="error"

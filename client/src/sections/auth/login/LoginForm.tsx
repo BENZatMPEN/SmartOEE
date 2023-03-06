@@ -9,6 +9,8 @@ import { FormProvider, RHFTextField } from '../../../components/hook-form';
 import Iconify from '../../../components/Iconify';
 import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from '../../../hooks/useIsMountedRef';
+import { AxiosError } from 'axios';
+import { PATH_SETTINGS } from '../../../routes/paths';
 
 type FormValuesProps = {
   email: string;
@@ -55,7 +57,15 @@ export default function LoginForm() {
       reset();
 
       if (isMountedRef.current) {
-        setError('afterSubmit', { ...error, message: error.message });
+        if (error instanceof AxiosError) {
+          if ('statusCode' in error.response?.data && error.response?.data.statusCode === 401) {
+            setError('afterSubmit', { ...error, message: 'Invalid Email or Password' });
+          } else {
+            setError('afterSubmit', { ...error, message: 'Unable to login now, Please try again.' });
+          }
+        } else {
+          setError('afterSubmit', { ...error, message: error.message });
+        }
       }
     }
   };

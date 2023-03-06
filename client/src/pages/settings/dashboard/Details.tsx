@@ -1,13 +1,15 @@
 import { Card, CardContent, Container } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import { emptyCurrentDashboard, getDashboard } from '../../../redux/actions/dashboardAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import DashboardForm from '../../../sections/settings/dashboard/details/DashboardForm';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 export default function DashboardDetails() {
   const dispatch = useDispatch();
@@ -48,6 +50,16 @@ export default function DashboardDetails() {
       }
     }
   }, [error, enqueueSnackbar, navigate]);
+
+  const ability = useContext(AbilityContext);
+
+  if (!isEdit && !ability.can(RoleAction.Create, RoleSubject.DashboardSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
+  if (isEdit && !ability.can(RoleAction.Update, RoleSubject.DashboardSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
 
   return (
     <Page title={`Dashboard Settings: ${currentDashboard ? 'Edit Dashboard' : 'Create Dashboard'}`}>

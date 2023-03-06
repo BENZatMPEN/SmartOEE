@@ -11,8 +11,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { paramCase } from 'change-case';
-import { useEffect, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import { FilterDevice } from '../../../@types/device';
 import DeleteConfirmationDialog from '../../../components/DeleteConfirmationDialog';
 import HeaderBreadcrumbs from '../../../components/HeaderBreadcrumbs';
@@ -24,8 +24,10 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteDevice, deleteDevices, getDevicePagedList } from '../../../redux/actions/deviceAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { DeviceTableRow, DeviceTableToolbar } from '../../../sections/settings/devices/list';
+import { AbilityContext } from '../../../caslContext';
+import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', align: 'left' },
@@ -147,6 +149,12 @@ export default function DeviceList() {
 
   const isNotFound = (!pagedList.list.length && !!filterName) || (!isLoading && !pagedList.list.length);
 
+  const ability = useContext(AbilityContext);
+
+  if (!ability.can(RoleAction.Read, RoleSubject.DeviceSettings)) {
+    return <Navigate to={PATH_PAGES.forbidden} />;
+  }
+
   return (
     <Page title="Settings - Device List">
       <Container maxWidth={false}>
@@ -158,16 +166,20 @@ export default function DeviceList() {
               name: 'Devices',
             },
           ]}
-          action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="eva:plus-fill" />}
-              component={RouterLink}
-              to={PATH_SETTINGS.devices.new}
-            >
-              New
-            </Button>
-          }
+          {...(ability.can(RoleAction.Create, RoleSubject.DeviceSettings)
+            ? {
+                action: (
+                  <Button
+                    variant="contained"
+                    startIcon={<Iconify icon="eva:plus-fill" />}
+                    component={RouterLink}
+                    to={PATH_SETTINGS.devices.new}
+                  >
+                    New
+                  </Button>
+                ),
+              }
+            : undefined)}
         />
 
         <Card>
