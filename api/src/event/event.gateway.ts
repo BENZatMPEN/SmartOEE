@@ -17,7 +17,7 @@ import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { Read } from '../common/type/read';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TagReadEntity } from '../common/entities/tag-read-entity';
+import { TagReadEntity } from '../common/entities/tag-read.entity';
 import configuration from '../configuration';
 import { ConfigType } from '@nestjs/config';
 import { UserService } from '../user/user.service';

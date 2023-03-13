@@ -5,7 +5,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { ProductEntity } from '../common/entities/product-entity';
+import { ProductEntity } from '../common/entities/product.entity';
 import { OptionItem } from '../common/type/option-item';
 import { FileService } from '../common/services/file.service';
 
@@ -23,7 +23,7 @@ export class ProductService {
       .createQueryBuilder()
       .where('deleted = false')
       .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or sku like :search or name like :search or remark like :search', {
+      .andWhere('(:search is null or sku like :search or name like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

@@ -6,6 +6,8 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
+  lineId: string;
   isAdmin: boolean;
   imageName: string;
   roles: Role[];
@@ -18,6 +20,8 @@ export interface EditProfile {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
+  lineId: string;
   image: File | null;
 }
 
@@ -25,6 +29,8 @@ export interface EditUser {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
+  lineId: string;
   image: File | null;
   siteIds: number[];
   roleId: number;
@@ -34,6 +40,8 @@ export interface EditAdminUser {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
+  lineId: string;
   image: File | null;
   isAdmin: boolean;
   siteIds: number[];

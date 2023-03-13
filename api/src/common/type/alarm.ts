@@ -30,6 +30,22 @@ export class AlarmCondition {
   @Type(() => Boolean)
   oeeLow: boolean;
 
+  @IsBoolean()
+  @Type(() => Boolean)
+  aHigh: boolean;
+
+  @IsBoolean()
+  @Type(() => Boolean)
+  pHigh: boolean;
+
+  @IsBoolean()
+  @Type(() => Boolean)
+  qHigh: boolean;
+
+  @IsBoolean()
+  @Type(() => Boolean)
+  oeeHigh: boolean;
+
   @IsArray()
   @Type(() => Number)
   oees: number[];

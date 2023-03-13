@@ -5,7 +5,7 @@ import { UpdateAlarmDto } from './dto/update-alarm.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { AlarmEntity } from '../common/entities/alarm-entity';
+import { AlarmEntity } from '../common/entities/alarm.entity';
 
 @Injectable()
 export class AlarmService {

@@ -3,7 +3,7 @@ import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
-import { PlanningEntity } from '../common/entities/planning-entity';
+import { PlanningEntity } from '../common/entities/planning.entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { ImportPlanningDto } from './dto/import-planning.dto';
 

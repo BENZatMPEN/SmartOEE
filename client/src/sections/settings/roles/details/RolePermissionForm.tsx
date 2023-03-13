@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { RoleAction, RoleSetting, RoleSubject } from '../../../../@types/role';
 import { initialRoles } from '../../../../constants';
-import { getRoleActionText, getRoleSubjectText } from '../../../../utils/formatText';
+import { fRoleActionText, fRoleSubjectText } from '../../../../utils/textHelper';
 
 export const roleMaps: RoleSetting[] = initialRoles;
 
@@ -35,12 +35,12 @@ export function RolePermissionForm({ roles, onUpdated }: Props) {
           {roleMaps.map((roleMap) => (
             <TableRow key={roleMap.subject} hover>
               <TableCell>
-                <Typography variant={'subtitle1'}>{getRoleSubjectText(roleMap.subject)}</Typography>
+                <Typography variant={'subtitle1'}>{fRoleSubjectText(roleMap.subject)}</Typography>
               </TableCell>
               {roleMap.actions.map((action) => (
                 <TableCell key={action}>
                   <FormControlLabel
-                    label={getRoleActionText(action)}
+                    label={fRoleActionText(action)}
                     control={
                       <Checkbox
                         checked={containRole(roleMap.subject, action)}

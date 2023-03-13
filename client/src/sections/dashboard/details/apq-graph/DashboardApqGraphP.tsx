@@ -8,7 +8,7 @@ import useWebSocket from '../../../../hooks/useWebSocket';
 import { getOeeBatchParetoP, updateBatchParetoP } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
-import { chartTitle, getTimeUnitShortText, getTimeUnitText } from '../../../../utils/formatText';
+import { fChartTitle, fTimeUnitShortText, fTimeUnitText } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
@@ -124,14 +124,14 @@ export default function DashboardApqGraphP() {
       ...options,
       labels: labels,
       title: {
-        text: chartTitle(currentBatch, batchStatsTime),
+        text: fChartTitle(currentBatch, batchStatsTime),
         align: 'center',
       },
     });
 
     setSeries([
       {
-        name: getTimeUnitText(timeUnit),
+        name: fTimeUnitText(timeUnit),
         type: 'column',
         data: counts.map((item) => convertToUnit(item, timeUnit)),
         color: '#00CCFF',
@@ -180,7 +180,7 @@ export default function DashboardApqGraphP() {
                 <Grid container spacing={2} alignItems="center">
                   <Grid item xs={5}>
                     <Typography variant="body1" textAlign="right">
-                      {`Cycle Time (${getTimeUnitShortText(timeUnit)} / pc.)`}
+                      {`Cycle Time (${fTimeUnitShortText(timeUnit)} / pc.)`}
                     </Typography>
                   </Grid>
 

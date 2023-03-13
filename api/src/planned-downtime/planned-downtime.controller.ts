@@ -18,7 +18,7 @@ import { PlannedDowntimeService } from './planned-downtime.service';
 import { CreatePlannedDowntimeDto } from './dto/create-planned-downtime.dto';
 import { FilterPlannedDowntimeDto } from './dto/filter-planned-downtime.dto';
 import { UpdatePlannedDowntimeDto } from './dto/update-planned-downtime.dto';
-import { PlannedDowntimeEntity } from '../common/entities/planned-downtime-entity';
+import { PlannedDowntimeEntity } from '../common/entities/planned-downtime.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)

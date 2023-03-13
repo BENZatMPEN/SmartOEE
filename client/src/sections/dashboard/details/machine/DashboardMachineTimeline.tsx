@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { RootState, useSelector } from '../../../../redux/store';
 import { getColor } from '../../../../utils/colorHelper';
-import { getBatchStatus } from '../../../../utils/formatText';
+import { fBatchStatusText } from '../../../../utils/textHelper';
 
 export default function DashboardMachineTimeline() {
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
@@ -58,7 +58,7 @@ export default function DashboardMachineTimeline() {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return getBatchStatus(seriesName);
+            return fBatchStatusText(seriesName);
           },
         },
         formatter(val: any, opts?: any): string {

@@ -4,17 +4,17 @@ import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
-import { OeeEntity } from 'src/common/entities/oee-entity';
-import { OeeProductEntity } from 'src/common/entities/oee-product-entity';
-import { OeeMachineEntity } from 'src/common/entities/oee-machine-entity';
-import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { EntityManager, In, Repository } from 'typeorm';
+import { OeeEntity } from 'src/common/entities/oee.entity';
+import { OeeProductEntity } from 'src/common/entities/oee-product.entity';
+import { OeeMachineEntity } from 'src/common/entities/oee-machine.entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { OeeStatus, OeeStatusItem } from '../common/type/oee-status';
 import { initialOeeBatchStats } from '../common/type/oee-stats';
 import { OptionItem } from '../common/type/option-item';
-import { SiteEntity } from '../common/entities/site-entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
-import { PlanningEntity } from '../common/entities/planning-entity';
+import { PlanningEntity } from '../common/entities/planning.entity';
 import * as dayjs from 'dayjs';
 
 @Injectable()
@@ -39,16 +39,15 @@ export class OeeService {
   async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.oeeRepository
-      .createQueryBuilder()
-      .where('deleted = false')
-      .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(
-        ':search is null or oeeCode like :search or oeeType like :search or location like :search or remark like :search',
-        {
-          search: filterDto.search ? `%${filterDto.search}%` : null,
-        },
-      )
-      .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
+      .createQueryBuilder('o')
+      .leftJoinAndSelect('o.oeeMachines', 'oom')
+      .leftJoinAndSelect('oom.machine', 'oomm')
+      .where('o.deleted = false')
+      .andWhere('o.siteId = :siteId', { siteId: filterDto.siteId })
+      .andWhere('(:search is null or o.oeeCode like :search or o.oeeType like :search or o.location like :search)', {
+        search: filterDto.search ? `%${filterDto.search}%` : null,
+      })
+      .orderBy(`o.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
       .getManyAndCount();
@@ -222,6 +221,10 @@ export class OeeService {
     }
 
     const { oeeProducts, oeeMachines, ...dto } = createDto;
+    if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
+      throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
+    }
+
     const oee = await this.oeeRepository.save({
       ...dto,
       imageName,
@@ -258,7 +261,12 @@ export class OeeService {
   }
 
   async update(id: number, updateDto: UpdateOeeDto, imageName: string, siteId: number): Promise<OeeEntity> {
+    const site = await this.siteRepository.findOneBy({ id: siteId });
     const { oeeProducts, oeeMachines, ...dto } = updateDto;
+    if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
+      throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
+    }
+
     const updatingOee = await this.oeeRepository.findOneBy({ id, siteId });
     const { imageName: existingImageName } = updatingOee;
     if (imageName && existingImageName) {

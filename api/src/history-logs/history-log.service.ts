@@ -3,7 +3,7 @@ import { FilterHistoryLogDto } from './dto/filter-history-log.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HistoryLogEntity } from '../common/entities/history-log-entity';
+import { HistoryLogEntity } from '../common/entities/history-log.entity';
 
 @Injectable()
 export class HistoryLogService {

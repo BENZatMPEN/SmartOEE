@@ -31,7 +31,7 @@ import { createAlarm, updateAlarm } from '../../../../redux/actions/alarmAction'
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
 import axios from '../../../../utils/axios';
-import { getAlarmType } from '../../../../utils/formatText';
+import { fAlarmTypeText } from '../../../../utils/textHelper';
 
 interface FormValuesProps extends EditAlarm {
   emails: AlarmEmailDataItem[];
@@ -242,7 +242,7 @@ export default function AlarmForm({ isEdit }: Props) {
                   typography: 'body1',
                 }}
               >
-                {getAlarmType(ALARM_TYPE_EMAIL)}
+                {fAlarmTypeText(ALARM_TYPE_EMAIL)}
               </MenuItem>
 
               <MenuItem
@@ -254,7 +254,7 @@ export default function AlarmForm({ isEdit }: Props) {
                   typography: 'body1',
                 }}
               >
-                {getAlarmType(ALARM_TYPE_LINE)}
+                {fAlarmTypeText(ALARM_TYPE_LINE)}
               </MenuItem>
             </RHFSelect>
           </Grid>
@@ -304,21 +304,55 @@ export default function AlarmForm({ isEdit }: Props) {
             <Card>
               <CardHeader title="When to Notify" />
               <CardContent>
-                <Stack direction="row">
-                  <RHFSwitch name="condition.aParams" label="Breakdown" />
+                <Grid container>
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.aParams" label="Breakdown" />
+                  </Grid>
 
-                  <RHFSwitch name="condition.pParams" label="Minor Loss" />
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.pParams" label="Minor Loss" />
+                  </Grid>
 
-                  <RHFSwitch name="condition.qParams" label="No Good" />
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.qParams" label="No Good" />
+                  </Grid>
+                </Grid>
 
-                  <RHFSwitch name="condition.oeeLow" label="Low OEE" />
+                <Grid container>
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.oeeLow" label="Low OEE" />
+                  </Grid>
 
-                  <RHFSwitch name="condition.aLow" label="Low Availability" />
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.aLow" label="Low Availability" />
+                  </Grid>
 
-                  <RHFSwitch name="condition.pLow" label="Low Performance" />
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.pLow" label="Low Performance" />
+                  </Grid>
 
-                  <RHFSwitch name="condition.qLow" label="Low Quality" />
-                </Stack>
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.qLow" label="Low Quality" />
+                  </Grid>
+                </Grid>
+
+                <Grid container>
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.oeeHigh" label="High OEE" />
+                  </Grid>
+
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.aHigh" label="High Availability" />
+                  </Grid>
+
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.pHigh" label="High Performance" />
+                  </Grid>
+
+                  <Grid item lg={3}>
+                    <RHFSwitch name="condition.qHigh" label="High Quality" />
+                  </Grid>
+                </Grid>
               </CardContent>
             </Card>
           </Grid>

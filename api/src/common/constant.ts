@@ -83,15 +83,29 @@ export const defaultPercentSettings: PercentSetting[] = [
 ];
 
 export const defaultAlertTemplate: AlertTemplate = {
-  aParamWithoutParam: 'Breakdown has occurred at {{time}} - {{seconds}} seconds.',
-  aParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
-  pParamWithoutParam: 'Minor Loss has occurred at {{time}} - {{seconds}} seconds.',
-  pParamWithParam: '{{paramName}} has occurred at {{time}} - {{seconds}} seconds.',
-  qParamWithParam: '{{paramName}} has increased from {{previousAmount}} to {{currentAmount}}.',
-  oeeLow: 'OEE low - previous: {{previousPercent}}, current: {{currentPercent}}',
-  aLow: 'A low - previous: {{previousPercent}}, current: {{currentPercent}}',
-  pLow: 'P low - previous: {{previousPercent}}, current: {{currentPercent}}',
-  qLow: 'Q low - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aParamWithoutParam:
+    'Breakdown has occurred on {{oeeCode}} - {{productionName}} - {{sku}} at {{time}} - {{seconds}} seconds.',
+  aParamWithParam:
+    '{{paramName}} has occurred on {{oeeCode}} - {{productionName}} - {{sku}} at {{time}} - {{seconds}} seconds.',
+  pParamWithoutParam:
+    'Minor Loss has occurred on {{oeeCode}} - {{productionName}} - {{sku}} at {{time}} - {{seconds}} seconds.',
+  pParamWithParam:
+    '{{paramName}} has occurred on {{oeeCode}} - {{productionName}} - {{sku}} at {{time}} - {{seconds}} seconds.',
+  qParamWithParam:
+    '{{paramName}} has increased from {{previousAmount}} to {{currentAmount}} on {{oeeCode}} - {{productionName}} - {{sku}}.',
+  oeeLow:
+    'OEE low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aLow: 'A low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  pLow: 'P low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  qLow: 'Q low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  oeeHigh:
+    'OEE high on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aHigh:
+    'A high on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  pHigh:
+    'P high on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  qHigh:
+    'Q high on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
 };
 
 export const defaultRoles: RoleSetting[] = [

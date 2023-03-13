@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RoleEntity } from '../common/entities/role-entity';
-import { SiteEntity } from '../common/entities/site-entity';
+import { RoleEntity } from '../common/entities/role.entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { CaslModule } from '../casl/casl.module';
 import { AuthService } from '../auth/auth.service';
 import { LogService } from '../common/services/log.service';
 import { JwtService } from '@nestjs/jwt';
-import { HistoryLogEntity } from '../common/entities/history-log-entity';
+import { HistoryLogEntity } from '../common/entities/history-log.entity';
 import { FileService } from '../common/services/file.service';
 import { EmailExistsRule } from '../common/validations/email-exists.validator';
 

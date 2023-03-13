@@ -5,11 +5,11 @@ import { UpdateDeviceModelDto } from './dto/update-device-model.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { DeviceModelEntity } from '../common/entities/device-model-entity';
-import { DeviceModelTagEntity } from '../common/entities/device-model-tag-entity';
-import { SiteEntity } from '../common/entities/site-entity';
-import { DeviceEntity } from '../common/entities/device-entity';
-import { DeviceTagEntity } from '../common/entities/device-tag-entity';
+import { DeviceModelEntity } from '../common/entities/device-model.entity';
+import { DeviceModelTagEntity } from '../common/entities/device-model-tag.entity';
+import { SiteEntity } from '../common/entities/site.entity';
+import { DeviceEntity } from '../common/entities/device.entity';
+import { DeviceTagEntity } from '../common/entities/device-tag.entity';
 
 @Injectable()
 export class DeviceModelService {
@@ -36,7 +36,7 @@ export class DeviceModelService {
       .createQueryBuilder()
       .where('deleted = false')
       .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or name like :search or remark like :search', {
+      .andWhere('(:search is null or name like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

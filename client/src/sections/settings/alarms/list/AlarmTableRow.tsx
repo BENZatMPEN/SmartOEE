@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import { Alarm } from '../../../../@types/alarm';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
-import { getAlarmType } from '../../../../utils/formatText';
+import { fAlarmTypeText } from '../../../../utils/textHelper';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 import { AbilityContext } from '../../../../caslContext';
 
@@ -44,7 +44,7 @@ export default function AlarmTableRow({ row, selected, onEditRow, onSelectRow, o
 
       <TableCell align="left">{name}</TableCell>
 
-      <TableCell align="left">{getAlarmType(type)}</TableCell>
+      <TableCell align="left">{fAlarmTypeText(type)}</TableCell>
 
       <TableCell padding="checkbox">
         <Checkbox checked={notify} />

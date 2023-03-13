@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Controller, Get } from '@nestjs/common';
-import { SiteEntity } from './common/entities/site-entity';
+import { SiteEntity } from './common/entities/site.entity';
 import { EntityManager } from 'typeorm';
 import { UserService } from './user/user.service';
 import { RoleService } from './role/role.service';
@@ -31,21 +31,21 @@ import {
 import { PlannedDowntimeService } from './planned-downtime/planned-downtime.service';
 import { DeviceModelTagDto } from './device-model/dto/device-model-tag.dto';
 import { DeviceModelService } from './device-model/device-model.service';
-import { DeviceEntity } from './common/entities/device-entity';
+import { DeviceEntity } from './common/entities/device.entity';
 import { DeviceService } from './device/device.service';
 import { DeviceTagDto } from './device/dto/device-tag.dto';
 import { ProductService } from './product/product.service';
-import { ProductEntity } from './common/entities/product-entity';
+import { ProductEntity } from './common/entities/product.entity';
 import { MachineService } from './machine/machine.service';
 import { MachineParameterDto } from './machine/dto/machine-parameter.dto';
-import { DeviceTagEntity } from './common/entities/device-tag-entity';
-import { MachineEntity } from './common/entities/machine-entity';
-import { OeeProductEntity } from './common/entities/oee-product-entity';
-import { OeeMachineEntity } from './common/entities/oee-machine-entity';
+import { DeviceTagEntity } from './common/entities/device-tag.entity';
+import { MachineEntity } from './common/entities/machine.entity';
+import { OeeProductEntity } from './common/entities/oee-product.entity';
+import { OeeMachineEntity } from './common/entities/oee-machine.entity';
 import { OeeService } from './oee/oee.service';
 import { FaqService } from './faq/faq.service';
 import { ProblemSolutionService } from './problem-solution/problem-solution.service';
-import { OeeEntity } from './common/entities/oee-entity';
+import { OeeEntity } from './common/entities/oee.entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
 import * as dayjs from 'dayjs';
 import { AnalyticService } from './analytic/analytic.service';
@@ -139,6 +139,7 @@ export class AppController {
           defaultPercentSettings: defaultPercentSettings,
           oeeLimit: -1,
           userLimit: -1,
+          mcLimit: -1,
           cutoffTime: new Date(),
           alertTemplate: defaultAlertTemplate,
         },
@@ -154,6 +155,8 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'Super',
         lastName: 'Admin',
+        phoneNumber: '',
+        lineId: '',
         isAdmin: true,
         siteIds: [],
       },
@@ -175,6 +178,8 @@ export class AppController {
         password: 'P@ssword1',
         firstName: 'Poller',
         lastName: 'User',
+        phoneNumber: '',
+        lineId: '',
         siteIds: [sites[0].id],
         roleId: pollerRole.id,
       },

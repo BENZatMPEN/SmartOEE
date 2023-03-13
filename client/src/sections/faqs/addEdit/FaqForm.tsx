@@ -35,7 +35,7 @@ import { createFaq, updateFaq } from '../../../redux/actions/faqAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_FAQS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
-import { getFaqProcessStatusText } from '../../../utils/formatText';
+import { fFaqProcessStatusText } from '../../../utils/textHelper';
 import { getFileUrl } from '../../../utils/imageHelper';
 
 interface FormValuesProps extends EditFaq {
@@ -336,7 +336,7 @@ export default function FaqForm({ isEdit }: Props) {
                       typography: 'body2',
                     }}
                   >
-                    {getFaqProcessStatusText(option)}
+                    {fFaqProcessStatusText(option)}
                   </MenuItem>
                 ))}
               </RHFSelect>

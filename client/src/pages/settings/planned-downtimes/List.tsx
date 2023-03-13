@@ -37,9 +37,9 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', align: 'left' },
-  { id: 'type', label: 'Type', align: 'left' },
-  { id: 'timing', label: 'Timing', align: 'left' },
+  { id: 'name', label: 'Name', align: 'left', sort: true },
+  { id: 'type', label: 'Type', align: 'left', sort: true },
+  { id: 'timing', label: 'Timing', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -59,8 +59,8 @@ export default function PlannedDowntimeList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'name',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -73,14 +73,14 @@ export default function PlannedDowntimeList() {
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterPlannedDowntime = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -90,23 +90,25 @@ export default function PlannedDowntimeList() {
     await dispatch(getPlannedDowntimePagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deletePlannedDowntime(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deletePlannedDowntimes(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -182,9 +184,11 @@ export default function PlannedDowntimeList() {
         <Card>
           <PlannedDowntimeTableToolbar
             filterName={filterName}
-            onFilterName={handleFilterName}
+            onFilterName={setFilterName}
             onSearch={handleSearch}
+            onReset={handleReset}
           />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

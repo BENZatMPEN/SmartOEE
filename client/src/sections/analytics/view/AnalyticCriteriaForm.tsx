@@ -49,12 +49,12 @@ import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_ANALYTICS } from '../../../routes/paths';
 import { fCode } from '../../../utils/formatNumber';
 import {
-  getAnalyticChartSubTypeText,
-  getAnalyticChartTypeText,
-  getAnalyticComparisonTypeText,
-  getAnalyticDurationText,
-  getAnalyticViewTypeText,
-} from '../../../utils/formatText';
+  fAnalyticChartSubTypeText,
+  fAnalyticChartTypeText,
+  fAnalyticComparisonTypeText,
+  fAnalyticDurationText,
+  fAnalyticViewTypeText,
+} from '../../../utils/textHelper';
 import { OptionItem } from '../../../@types/option';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 import { AbilityContext } from '../../../caslContext';
@@ -431,7 +431,7 @@ export default function AnalyticCriteriaForm() {
                         typography: 'body2',
                       }}
                     >
-                      {getAnalyticChartTypeText(item)}
+                      {fAnalyticChartTypeText(item)}
                     </MenuItem>
                   ))}
                 </RHFSelect>
@@ -456,7 +456,7 @@ export default function AnalyticCriteriaForm() {
                         typography: 'body2',
                       }}
                     >
-                      {getAnalyticViewTypeText(item)}
+                      {fAnalyticViewTypeText(item)}
                     </MenuItem>
                   ))}
                 </RHFSelect>
@@ -480,7 +480,7 @@ export default function AnalyticCriteriaForm() {
                         typography: 'body2',
                       }}
                     >
-                      {getAnalyticChartSubTypeText(item)}
+                      {fAnalyticChartSubTypeText(item)}
                     </MenuItem>
                   ))}
                 </RHFSelect>
@@ -506,7 +506,7 @@ export default function AnalyticCriteriaForm() {
                         typography: 'body2',
                       }}
                     >
-                      {getAnalyticDurationText(item)}
+                      {fAnalyticDurationText(item)}
                     </MenuItem>
                   ))}
                 </RHFSelect>
@@ -539,7 +539,7 @@ export default function AnalyticCriteriaForm() {
                         typography: 'body2',
                       }}
                     >
-                      {getAnalyticComparisonTypeText(item)}
+                      {fAnalyticComparisonTypeText(item)}
                     </MenuItem>
                   ))}
                 </RHFSelect>

@@ -31,7 +31,7 @@ import useToggle from '../../../../hooks/useToggle';
 import { createOee, updateOee } from '../../../../redux/actions/oeeAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import { getOeeTabLabel, getTimeUnitText } from '../../../../utils/formatText';
+import { fOeeTabLabel, fOeeTypeText, fTimeUnitText } from '../../../../utils/textHelper';
 import { getFileUrl } from '../../../../utils/imageHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import OeeMachineDialog from './OeeMachineDialog';
@@ -373,7 +373,7 @@ export default function OeeForm({ isEdit }: Props) {
                               typography: 'body2',
                             }}
                           >
-                            {oeeType}
+                            {fOeeTypeText(oeeType)}
                           </MenuItem>
                         ))}
                       </RHFSelect>
@@ -410,7 +410,7 @@ export default function OeeForm({ isEdit }: Props) {
                       <RHFTextField
                         type="number"
                         name="minorStopSeconds"
-                        label={`Minor Stop (${getTimeUnitText(values.timeUnit)})`}
+                        label={`Minor Stop (${fTimeUnitText(values.timeUnit)})`}
                       />
                     </Grid>
 
@@ -418,7 +418,7 @@ export default function OeeForm({ isEdit }: Props) {
                       <RHFTextField
                         type="number"
                         name="breakdownSeconds"
-                        label={`Breakdown Condition (${getTimeUnitText(values.timeUnit)})`}
+                        label={`Breakdown Condition (${fTimeUnitText(values.timeUnit)})`}
                       />
                     </Grid>
 
@@ -499,7 +499,7 @@ export default function OeeForm({ isEdit }: Props) {
       />
 
       <OeeTagDialog
-        title={editingTag ? getOeeTabLabel(editingTag.key) : ''}
+        title={editingTag ? fOeeTabLabel(editingTag.key) : ''}
         open={openTagForm}
         onClose={onCloseTagForm}
         editingTag={editingTag}

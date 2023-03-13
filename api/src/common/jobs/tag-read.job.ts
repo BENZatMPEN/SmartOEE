@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { OeeService } from '../../oee/oee.service';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TagReadEntity } from '../entities/tag-read-entity';
+import { TagReadEntity } from '../entities/tag-read.entity';
 import { Repository } from 'typeorm';
 import * as dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HistoryLogEntity } from '../entities/history-log-entity';
+import { HistoryLogEntity } from '../entities/history-log.entity';
 import { Repository } from 'typeorm';
 import { HISTORY_LOG_TYPE_ACTION, HISTORY_LOG_TYPE_ALARM } from '../constant';
 

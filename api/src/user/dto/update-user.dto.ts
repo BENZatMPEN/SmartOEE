@@ -15,6 +15,14 @@ export class UpdateUserDto {
   @IsString()
   readonly lastName: string;
 
+  @IsString()
+  @IsOptional()
+  readonly phoneNumber: string;
+
+  @IsString()
+  @IsOptional()
+  readonly lineId: string;
+
   @IsNumber()
   @Type(() => Number)
   readonly roleId: number;

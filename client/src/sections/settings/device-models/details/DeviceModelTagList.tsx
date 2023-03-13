@@ -8,7 +8,7 @@ import {
   DEVICE_MODEL_READ_FUNCTIONS,
   DEVICE_MODEL_WRITE_FUNCTIONS,
 } from '../../../../constants';
-import { getDeviceModelReadFuncText, getDeviceModelWriteFuncText } from '../../../../utils/formatText';
+import { fDeviceModelReadFuncText, fDeviceModelWriteFuncText } from '../../../../utils/textHelper';
 
 export default function DeviceModelTagList() {
   const { control, getValues, setValue, watch } = useFormContext();
@@ -117,7 +117,7 @@ export default function DeviceModelTagList() {
                               typography: 'body2',
                             }}
                           >
-                            {getDeviceModelReadFuncText(option)}
+                            {fDeviceModelReadFuncText(option)}
                           </MenuItem>
                         ))}
                       </RHFSelect>
@@ -199,7 +199,7 @@ export default function DeviceModelTagList() {
                               typography: 'body2',
                             }}
                           >
-                            {getDeviceModelWriteFuncText(option)}
+                            {fDeviceModelWriteFuncText(option)}
                           </MenuItem>
                         ))}
                       </RHFSelect>

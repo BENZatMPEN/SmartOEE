@@ -5,7 +5,7 @@ import { FilterRoleDto } from './dto/filter-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RoleEntity } from '../common/entities/role-entity';
+import { RoleEntity } from '../common/entities/role.entity';
 import { OptionItem } from '../common/type/option-item';
 
 @Injectable()
@@ -20,11 +20,10 @@ export class RoleService {
     const [rows, count] = await this.roleRepository
       .createQueryBuilder()
       .where('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or name like :search')
+      .andWhere('(:search is null or name like :search)', { search: filterDto.search ? `%${filterDto.search}%` : null })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
-      .setParameters({ search: filterDto.search ? `%${filterDto.search}%` : null })
       .getManyAndCount();
 
     return { list: rows, count: count };

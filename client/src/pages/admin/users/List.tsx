@@ -28,10 +28,10 @@ import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import { UserTableRow, UserTableToolbar } from '../../../sections/admin/users/list';
 
 const TABLE_HEAD = [
-  { id: 'firstName', label: 'First Name', align: 'left' },
-  { id: 'lastName', label: 'Last Name', align: 'left' },
-  { id: 'email', label: 'Email', align: 'left' },
-  { id: 'createdAt', label: 'Created Date', align: 'left' },
+  { id: 'firstName', label: 'First Name', align: 'left', sort: true },
+  { id: 'lastName', label: 'Last Name', align: 'left', sort: true },
+  { id: 'email', label: 'Email', align: 'left', sort: true },
+  { id: 'createdAt', label: 'Created Date', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -63,18 +63,18 @@ export default function AdminUserList() {
 
   const { userProfile } = useSelector((state: RootState) => state.auth);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterUser = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -84,24 +84,25 @@ export default function AdminUserList() {
     await dispatch(getUserPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setPage(0);
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteUser(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteUsers(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -173,7 +174,13 @@ export default function AdminUserList() {
         />
 
         <Card>
-          <UserTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <UserTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

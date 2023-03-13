@@ -30,14 +30,14 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', align: 'left' },
-  { id: 'address', label: 'Address', align: 'left' },
-  { id: 'port', label: 'Port', align: 'left' },
-  { id: 'deviceId', label: 'ID', align: 'left' },
-  { id: 'modelType', label: 'Model', align: 'left' },
-  { id: 'connection', label: 'Connection', align: 'left' },
-  { id: 'stopped', label: 'Status', align: 'center' },
-  { id: 'remark', label: 'Remark', align: 'left' },
+  { id: 'name', label: 'Name', align: 'left', sort: true },
+  { id: 'address', label: 'Address', align: 'left', sort: false },
+  { id: 'port', label: 'Port', align: 'left', sort: false },
+  { id: 'deviceId', label: 'ID', align: 'left', sort: false },
+  { id: 'modelType', label: 'Model', align: 'left', sort: false },
+  { id: 'connection', label: 'Connection', align: 'left', sort: false },
+  { id: 'stopped', label: 'Status', align: 'center', sort: false },
+  { id: 'remark', label: 'Remark', align: 'left', sort: false },
   { id: '' },
 ];
 
@@ -57,8 +57,8 @@ export default function DeviceList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'name',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -67,18 +67,18 @@ export default function DeviceList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.device);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterDevice = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -88,24 +88,25 @@ export default function DeviceList() {
     await dispatch(getDevicePagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setPage(0);
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteDevice(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteDevices(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -183,7 +184,13 @@ export default function DeviceList() {
         />
 
         <Card>
-          <DeviceTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <DeviceTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

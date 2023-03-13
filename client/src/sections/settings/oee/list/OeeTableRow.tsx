@@ -1,11 +1,11 @@
-import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Checkbox, MenuItem, TableCell, TableRow } from '@mui/material';
 import { useContext, useState } from 'react';
 import { Oee } from '../../../../@types/oee';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 import { AbilityContext } from '../../../../caslContext';
+import { fOeeTypeText } from '../../../../utils/textHelper';
 
 type Props = {
   row: Oee;
@@ -17,8 +17,6 @@ type Props = {
 };
 
 export default function OeeTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
-  const theme = useTheme();
-
   const { id, oeeCode, oeeMachines, location, oeeType } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
@@ -64,7 +62,7 @@ export default function OeeTableRow({ row, selected, onEditRow, onSelectRow, onD
 
       <TableCell align="left">{location}</TableCell>
 
-      <TableCell align="left">{oeeType}</TableCell>
+      <TableCell align="left">{fOeeTypeText(oeeType)}</TableCell>
 
       <TableCell align="right">
         {showMenu && (

@@ -13,7 +13,7 @@ import {
 import { AnalyticService } from './analytic.service';
 import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
-import { AnalyticEntity } from '../common/entities/analytic-entity';
+import { AnalyticEntity } from '../common/entities/analytic.entity';
 import { ChartFilterDto } from './dto/chart-filter-dto';
 
 // @UseGuards(JwtAuthGuard)

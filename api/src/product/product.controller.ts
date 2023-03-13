@@ -19,7 +19,7 @@ import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductEntity } from '../common/entities/product-entity';
+import { ProductEntity } from '../common/entities/product.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OptionItem } from '../common/type/option-item';

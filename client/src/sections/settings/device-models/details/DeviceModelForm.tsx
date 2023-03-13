@@ -21,7 +21,7 @@ import {
 import { createDeviceModel, updateDeviceModel } from '../../../../redux/actions/deviceModelAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
-import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
+import { fDeviceModelConnectionTypeText, fDeviceModelTypeText } from '../../../../utils/textHelper';
 import DeviceModelTagList from './DeviceModelTagList';
 
 interface Props {
@@ -167,7 +167,7 @@ export default function DeviceModelForm({ isEdit }: Props) {
                             typography: 'body1',
                           }}
                         >
-                          {getDeviceModelTypeText(option)}
+                          {fDeviceModelTypeText(option)}
                         </MenuItem>
                       ))}
                     </RHFSelect>
@@ -191,7 +191,7 @@ export default function DeviceModelForm({ isEdit }: Props) {
                             typography: 'body1',
                           }}
                         >
-                          {getDeviceModelConnectionTypeText(option)}
+                          {fDeviceModelConnectionTypeText(option)}
                         </MenuItem>
                       ))}
                     </RHFSelect>

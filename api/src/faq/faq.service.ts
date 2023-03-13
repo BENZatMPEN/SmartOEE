@@ -5,9 +5,9 @@ import { UpdateFaqDto } from './dto/update-faq.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { AttachmentEntity } from '../common/entities/attachment-entity';
-import { FaqEntity } from '../common/entities/faq-entity';
-import { FaqAttachmentEntity } from '../common/entities/faq-attachment-entity';
+import { AttachmentEntity } from '../common/entities/attachment.entity';
+import { FaqEntity } from '../common/entities/faq.entity';
+import { FaqAttachmentEntity } from '../common/entities/faq-attachment.entity';
 import { FileService } from '../common/services/file.service';
 import { FileInfo } from '../common/type/file-info';
 
@@ -41,7 +41,7 @@ export class FaqService {
       ])
       .where('faq.deleted = false')
       .andWhere('faq.siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or faq.topic like :search or faq.remark like :search', {
+      .andWhere('(:search is null or faq.topic like :search or faq.remark like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`faq.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

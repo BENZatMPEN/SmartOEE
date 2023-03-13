@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 import { FilterAdminUserDto } from './dto/filter-admin-user.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import * as bcrypt from 'bcrypt';
-import { SiteEntity } from '../common/entities/site-entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { ChangePasswordDto } from '../user/dto/change-password.dto';
 
@@ -27,7 +27,7 @@ export class AdminUserService {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.userRepository
       .createQueryBuilder()
-      .where(':search is null or firstName like :search or lastName like :search or email like :search')
+      .where('(:search is null or firstName like :search or lastName like :search or email like :search)')
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)

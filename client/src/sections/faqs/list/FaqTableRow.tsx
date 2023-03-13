@@ -5,7 +5,7 @@ import { Faq } from '../../../@types/faq';
 import Iconify from '../../../components/Iconify';
 import { TableMoreMenu } from '../../../components/table';
 import { fCode } from '../../../utils/formatNumber';
-import { getFaqProcessStatusText } from '../../../utils/formatText';
+import { fFaqProcessStatusText } from '../../../utils/textHelper';
 import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
@@ -66,7 +66,7 @@ export default function FaqTableRow({
         {approvedByUser ? `${approvedByUser.firstName} ${approvedByUser.lastName}` : '-'}
       </TableCell>
 
-      <TableCell align="center">{getFaqProcessStatusText(status)}</TableCell>
+      <TableCell align="center">{fFaqProcessStatusText(status)}</TableCell>
 
       <TableCell align="right">
         {showMenu && (

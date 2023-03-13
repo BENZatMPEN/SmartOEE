@@ -17,7 +17,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { FilterRoleDto } from './dto/filter-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RoleService } from './role.service';
-import { RoleEntity } from '../common/entities/role-entity';
+import { RoleEntity } from '../common/entities/role.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionItem } from '../common/type/option-item';
 

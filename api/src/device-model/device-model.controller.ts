@@ -4,7 +4,7 @@ import { DeviceModelService } from './device-model.service';
 import { CreateDeviceModelDto } from './dto/create-device-model.dto';
 import { FilterDeviceModelDto } from './dto/filter-device-model.dto';
 import { UpdateDeviceModelDto } from './dto/update-device-model.dto';
-import { DeviceModelEntity } from '../common/entities/device-model-entity';
+import { DeviceModelEntity } from '../common/entities/device-model.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)

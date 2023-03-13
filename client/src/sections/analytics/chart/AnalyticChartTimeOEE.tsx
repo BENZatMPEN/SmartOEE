@@ -6,7 +6,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import {
   Box,
   Divider,
@@ -153,7 +153,7 @@ export default function AnalyticChartTimeOEE({ criteria, group }: Props) {
         ...options,
         labels: sumRows.map((item: any) => new Date(item.key).getTime()),
         title: {
-          text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+          text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
           align: 'center',
         },
       });

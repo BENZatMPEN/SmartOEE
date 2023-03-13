@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Card, CardContent, Grid, Stack } from '@mui/material';
+import { Card, CardContent, Grid, Stack } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useCallback, useEffect } from 'react';
@@ -9,7 +9,7 @@ import * as Yup from 'yup';
 import { EditProfile } from '../../@types/user';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import FormHeader from '../../components/FormHeader';
-import { FormProvider, RHFSwitch, RHFTextField, RHFUploadSingleFile } from '../../components/hook-form';
+import { FormProvider, RHFTextField, RHFUploadSingleFile } from '../../components/hook-form';
 import Iconify from '../../components/Iconify';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { getFileUrl } from '../../utils/imageHelper';
@@ -32,6 +32,8 @@ export default function UserProfileForm() {
     defaultValues: {
       firstName: '',
       lastName: '',
+      phoneNumber: '',
+      lineId: '',
       email: '',
       image: null,
     },
@@ -39,6 +41,8 @@ export default function UserProfileForm() {
       firstName: userProfile?.firstName || '',
       lastName: userProfile?.lastName || '',
       email: userProfile?.email || '',
+      phoneNumber: userProfile?.phoneNumber || '',
+      lineId: userProfile?.lineId || '',
       image: null,
     },
   });
@@ -134,6 +138,14 @@ export default function UserProfileForm() {
 
                   <Grid item xs={12} sm={6}>
                     <RHFTextField name="email" label="Email" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField name="phoneNumber" label="Phone Number" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField name="lineId" label="Line ID" />
                   </Grid>
                 </Grid>
               </CardContent>

@@ -6,7 +6,7 @@ import { ProblemSolution } from '../../../@types/problemSolution';
 import Iconify from '../../../components/Iconify';
 import Label from '../../../components/Label';
 import { PS_PROCESS_STATUS_APPROVED, PS_PROCESS_STATUS_COMPLETED, PS_PROCESS_STATUS_WAITING } from '../../../constants';
-import { getPsProcessStatusText } from '../../../utils/formatText';
+import { fPsProcessStatusText } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 import { getFileUrl } from '../../../utils/imageHelper';
 
@@ -44,7 +44,7 @@ export default function ProblemSolutionSummary({ problemSolution, ...other }: Pr
           }
           sx={{ textTransform: 'uppercase' }}
         >
-          {getPsProcessStatusText(status)}
+          {fPsProcessStatusText(status)}
         </Label>
       </Box>
 
@@ -131,7 +131,7 @@ export default function ProblemSolutionSummary({ problemSolution, ...other }: Pr
                     }
                     sx={{ textTransform: 'uppercase' }}
                   >
-                    {getPsProcessStatusText(item.status)}
+                    {fPsProcessStatusText(item.status)}
                   </Label>
                 </Box>
 

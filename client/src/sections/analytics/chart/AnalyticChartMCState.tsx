@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
 import { AxiosError } from 'axios';
@@ -89,7 +89,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
             categories: sumRows.map((row: any) => row.key),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -111,7 +111,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
               ...pieOption,
               labels: ['Running', 'Planned', 'Breakdown', 'M/C Setup', 'Standby'],
               title: {
-                text: analyticChartTitle(row.key, criteria.fromDate, criteria.toDate),
+                text: fAnalyticChartTitle(row.key, criteria.fromDate, criteria.toDate),
               },
             } as ApexOptions;
           }),

@@ -1,6 +1,6 @@
 import { Box, Button, Grid, Stack, Typography } from '@mui/material';
 import { OeeTag } from '../../../../@types/oee';
-import { getOeeTabLabel } from '../../../../utils/formatText';
+import { fOeeTabLabel } from '../../../../utils/textHelper';
 
 type Props = {
   tags: OeeTag[];
@@ -18,7 +18,7 @@ export function OeeTagList({ tags, onEdit }: Props) {
         {tags.map((tag) => (
           <Grid key={tag.key} item xs={12} sm={4}>
             <Stack direction="row" spacing={3} alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2">{getOeeTabLabel(tag.key)}</Typography>
+              <Typography variant="subtitle2">{fOeeTabLabel(tag.key)}</Typography>
               <Button
                 onClick={() => {
                   handleEditTag(tag);

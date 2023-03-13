@@ -23,14 +23,14 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
 import { deleteRole, deleteRoles, getRolePagedList } from '../../../redux/actions/roleAction';
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
-import { PATH_ADMINISTRATOR, PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
+import { PATH_PAGES, PATH_SETTINGS } from '../../../routes/paths';
 import { RoleTableRow, RoleTableToolbar } from '../../../sections/settings/roles/list';
 import { AbilityContext } from '../../../caslContext';
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', align: 'left' },
-  { id: 'remark', label: 'Remark', align: 'left' },
-  { id: 'createdAt', label: 'Created Date', align: 'left' },
+  { id: 'name', label: 'Name', align: 'left', sort: true },
+  { id: 'remark', label: 'Remark', align: 'left', sort: false },
+  { id: 'createdAt', label: 'Created Date', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -50,8 +50,8 @@ export default function RoleList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'name',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -60,20 +60,18 @@ export default function RoleList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.role);
 
-  const { currentSite } = useSelector((state: RootState) => state.site);
-
   const [filterName, setFilterName] = useState('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterRole = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -83,24 +81,25 @@ export default function RoleList() {
     await dispatch(getRolePagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setPage(0);
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteRole(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteRoles(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -174,7 +173,13 @@ export default function RoleList() {
         />
 
         <Card>
-          <RoleTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <RoleTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

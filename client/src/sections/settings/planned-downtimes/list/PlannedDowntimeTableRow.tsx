@@ -6,6 +6,7 @@ import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 import { AbilityContext } from '../../../../caslContext';
+import { fDowntimeTimingText, fDowntimeTypeText } from '../../../../utils/textHelper';
 
 type Props = {
   row: PlannedDowntime;
@@ -51,11 +52,11 @@ export default function PlannedDowntimeTableRow({
 
       <TableCell align="left">{row.name}</TableCell>
 
-      <TableCell align="left">{row.type}</TableCell>
+      <TableCell align="left">{fDowntimeTypeText(row.type)}</TableCell>
 
       <TableCell align="left">
-        {row.timing}
-        {row.timing === 'timer' ? ` (${row.seconds / 60})` : ''}
+        {fDowntimeTimingText(row.timing)}
+        {row.timing === 'timer' ? ` (${row.seconds / 60} min.)` : ''}
       </TableCell>
 
       <TableCell align="right">

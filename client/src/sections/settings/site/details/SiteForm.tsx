@@ -294,7 +294,9 @@ export default function SiteForm() {
                   <SiteAlertTemplate
                     label="A without name"
                     value={values.alertTemplate?.aParamWithoutParam || ''}
-                    description={"Variables: {'{{time}} = Timestamp, {{seconds}} = Total seconds'}"}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{time}} = Timestamp, {{seconds}} = Total seconds'
+                    }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
                       setValue('alertTemplate', {
@@ -308,7 +310,7 @@ export default function SiteForm() {
                     label="A with name"
                     value={values.alertTemplate?.aParamWithParam || ''}
                     description={
-                      "Variables: {'{{paramName}} = Breakdown Name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{paramName}} = Breakdown Name, {{time}} = Timestamp, {{seconds}} = Total seconds'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -322,7 +324,9 @@ export default function SiteForm() {
                   <SiteAlertTemplate
                     label="P without name"
                     value={values.alertTemplate?.pParamWithoutParam || ''}
-                    description={"Variables: {'{{time}} = Timestamp, {{seconds}} = Total seconds'}"}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{time}} = Timestamp, {{seconds}} = Total seconds'
+                    }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
                       setValue('alertTemplate', {
@@ -336,7 +340,7 @@ export default function SiteForm() {
                     label="P with name"
                     value={values.alertTemplate?.pParamWithParam || ''}
                     description={
-                      "Variables: {'{{paramName}} = Minor Loss Name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{paramName}} = Minor Loss Name, {{time}} = Timestamp, {{seconds}} = Total seconds'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -351,7 +355,7 @@ export default function SiteForm() {
                     label="Q with name"
                     value={values.alertTemplate?.qParamWithParam || ''}
                     description={
-                      "Variables: {'{{paramName}} = Loss name, {{time}} = Timestamp, {{seconds}} = Total seconds'}"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{paramName}} = Loss name, {{time}} = Timestamp, {{seconds}} = Total seconds'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -366,7 +370,7 @@ export default function SiteForm() {
                     label="OEE Low"
                     value={values.alertTemplate?.oeeLow || ''}
                     description={
-                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -381,7 +385,7 @@ export default function SiteForm() {
                     label="A Low"
                     value={values.alertTemplate?.aLow || ''}
                     description={
-                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -396,7 +400,7 @@ export default function SiteForm() {
                     label="P Low"
                     value={values.alertTemplate?.pLow || ''}
                     description={
-                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
@@ -411,13 +415,73 @@ export default function SiteForm() {
                     label="Q Low"
                     value={values.alertTemplate?.qLow || ''}
                     description={
-                      "Variables: {'{{previousPercent}} = Previous Value, {{currentPercent}} = Current Value"
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
                     }
                     onChange={(value) => {
                       const currentValue = getValues('alertTemplate');
                       setValue('alertTemplate', {
                         ...currentValue,
                         qLow: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="OEE High"
+                    value={values.alertTemplate?.oeeHigh || ''}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        oeeHigh: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="A High"
+                    value={values.alertTemplate?.aHigh || ''}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        aHigh: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="P High"
+                    value={values.alertTemplate?.pHigh || ''}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        pHigh: value,
+                      });
+                    }}
+                  />
+
+                  <SiteAlertTemplate
+                    label="Q High"
+                    value={values.alertTemplate?.qHigh || ''}
+                    description={
+                      'Variables: {{oeeCode}} = OEE Code, {{productionName}} = Production Name, {{sku}} = Product SKU, {{previousPercent}} = Previous Value, {{currentPercent}} = Current Value'
+                    }
+                    onChange={(value) => {
+                      const currentValue = getValues('alertTemplate');
+                      setValue('alertTemplate', {
+                        ...currentValue,
+                        qHigh: value,
                       });
                     }}
                   />

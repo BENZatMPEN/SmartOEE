@@ -4,7 +4,7 @@ import { useContext, useState } from 'react';
 import { DeviceModel } from '../../../../@types/deviceModel';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
-import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
+import { fDeviceModelConnectionTypeText, fDeviceModelTypeText } from '../../../../utils/textHelper';
 import { AbilityContext } from '../../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 
@@ -53,9 +53,9 @@ export default function DeviceModelTableRow({
 
       <TableCell align="left">{remark ? parse(remark) : ''}</TableCell>
 
-      <TableCell align="left">{getDeviceModelTypeText(modelType)}</TableCell>
+      <TableCell align="left">{fDeviceModelTypeText(modelType)}</TableCell>
 
-      <TableCell align="left">{getDeviceModelConnectionTypeText(connectionType)}</TableCell>
+      <TableCell align="left">{fDeviceModelConnectionTypeText(connectionType)}</TableCell>
 
       <TableCell align="right">
         {showMenu && (

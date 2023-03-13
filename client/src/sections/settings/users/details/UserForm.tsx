@@ -63,6 +63,8 @@ export default function UserForm({ isEdit }: Props) {
         firstName: currentUser?.firstName || '',
         lastName: currentUser?.lastName || '',
         email: currentUser?.email || '',
+        phoneNumber: currentUser?.phoneNumber || '',
+        lineId: currentUser?.lineId || '',
         password: '',
         confirmPassword: '',
         isNew: !isEdit,
@@ -136,6 +138,8 @@ export default function UserForm({ isEdit }: Props) {
       firstName: '',
       lastName: '',
       email: '',
+      phoneNumber: '',
+      lineId: '',
       password: '',
       confirmPassword: '',
       isNew: false,
@@ -258,6 +262,14 @@ export default function UserForm({ isEdit }: Props) {
 
                   <Grid item xs={12} sm={6}>
                     <RHFTextField name="email" label="Email" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField name="phoneNumber" label="Phone Number" />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField name="lineId" label="Line ID" />
                   </Grid>
 
                   <Grid item xs={12} sm={6}>

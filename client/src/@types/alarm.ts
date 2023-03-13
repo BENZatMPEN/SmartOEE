@@ -34,6 +34,10 @@ export type AlarmCondition = {
   pLow: boolean;
   qLow: boolean;
   oeeLow: boolean;
+  aHigh: boolean;
+  pHigh: boolean;
+  qHigh: boolean;
+  oeeHigh: boolean;
   oees: number[];
 };
 
@@ -45,6 +49,10 @@ export const initAlarmCondition: AlarmCondition = {
   pLow: true,
   qLow: true,
   oeeLow: true,
+  aHigh: true,
+  pHigh: true,
+  qHigh: true,
+  oeeHigh: true,
   oees: [],
 };
 

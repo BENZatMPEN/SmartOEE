@@ -13,7 +13,7 @@ import { FormProvider, RHFSelect, RHFTextField } from '../../../components/hook-
 import Iconify from '../../../components/Iconify';
 import { DOWNTIME_TIMING_TIMER, DOWNTIME_TIMINGS, DOWNTIME_TYPES } from '../../../constants';
 import axios from '../../../utils/axios';
-import { getDowntimeTimingText, getDowntimeTypeText } from '../../../utils/formatText';
+import { fDowntimeTimingText, fDowntimeTypeText } from '../../../utils/textHelper';
 
 type FormValuesProps = {
   name: string;
@@ -201,7 +201,7 @@ export default function DashboardDetailsPlannedDowntimeDialog({ oeeBatch, open, 
                     typography: 'body2',
                   }}
                 >
-                  {getDowntimeTypeText(option)}
+                  {fDowntimeTypeText(option)}
                 </MenuItem>
               ))}
             </RHFSelect>
@@ -224,7 +224,7 @@ export default function DashboardDetailsPlannedDowntimeDialog({ oeeBatch, open, 
                     typography: 'body2',
                   }}
                 >
-                  {getDowntimeTimingText(option)}
+                  {fDowntimeTimingText(option)}
                 </MenuItem>
               ))}
             </RHFSelect>

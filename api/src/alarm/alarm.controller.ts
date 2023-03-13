@@ -18,7 +18,7 @@ import { CreateAlarmDto } from './dto/create-alarm.dto';
 import { FilterAlarmDto } from './dto/filter-alarm.dto';
 import { UpdateAlarmDto } from './dto/update-alarm.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { AlarmEntity } from '../common/entities/alarm-entity';
+import { AlarmEntity } from '../common/entities/alarm.entity';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)

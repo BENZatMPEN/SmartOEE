@@ -31,8 +31,8 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'title', label: 'Title', align: 'left' },
-  { id: 'link', label: 'Link', align: 'left' },
+  { id: 'title', label: 'Title', align: 'left', sort: true },
+  { id: 'link', label: 'Link', align: 'left', sort: false },
   { id: '' },
 ];
 
@@ -52,8 +52,8 @@ export default function DashboardList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'title',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -62,18 +62,18 @@ export default function DashboardList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.dashboard);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterDashboard = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -83,24 +83,25 @@ export default function DashboardList() {
     await dispatch(getDashboardPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setPage(0);
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteDashboard(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteDashboards(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -175,7 +176,13 @@ export default function DashboardList() {
         />
 
         <Card>
-          <DashboardTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <DashboardTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

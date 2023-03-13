@@ -5,10 +5,10 @@ import { UpdateAdminSiteDto } from './dto/update-admin-site.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { SiteEntity } from '../common/entities/site-entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { OptionItem } from '../common/type/option-item';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 
 @Injectable()
 export class AdminSiteService {
@@ -23,7 +23,7 @@ export class AdminSiteService {
     const [rows, count] = await this.siteRepository
       .createQueryBuilder()
       .where('deleted = false')
-      .andWhere(':search is null or name like :search or branch like :search')
+      .andWhere('(:search is null or name like :search or branch like :search)')
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)

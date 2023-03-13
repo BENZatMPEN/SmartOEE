@@ -14,7 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import { EditOee, OeeProduct } from '../../../../@types/oee';
 import Iconify from '../../../../components/Iconify';
 import { TableNoData } from '../../../../components/table';
-import { getTimeUnitText } from '../../../../utils/formatText';
+import { fTimeUnitText } from '../../../../utils/textHelper';
 import OeeProductTableRow from './OeeProductTableRow';
 
 type Props = {
@@ -67,7 +67,7 @@ export default function OeeProductTable({ onAdd, onEdit, onDelete, oeeProducts, 
 
               <TableCell align={'left'}>Name</TableCell>
 
-              <TableCell align={'left'}>Standard Speed ({getTimeUnitText(editingOee.timeUnit)})</TableCell>
+              <TableCell align={'left'}>Standard Speed ({fTimeUnitText(editingOee.timeUnit)})</TableCell>
 
               <TableCell></TableCell>
             </TableRow>

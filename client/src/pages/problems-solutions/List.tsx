@@ -28,18 +28,18 @@ import {
   getProblemSolutionPagedList,
 } from '../../redux/actions/problemSolutionAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_PAGES, PATH_PROBLEMS_SOLUTIONS, PATH_SETTINGS } from '../../routes/paths';
+import { PATH_PAGES, PATH_PROBLEMS_SOLUTIONS } from '../../routes/paths';
 import { ProblemSolutionTableRow, ProblemSolutionTableToolbar } from '../../sections/problems-solutions/list';
 import { AbilityContext } from '../../caslContext';
 import { RoleAction, RoleSubject } from '../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'id', label: 'Project Code', align: 'left' },
-  { id: 'name', label: 'Project Name', align: 'left' },
-  { id: 'headProjectUserId', label: 'Project Head', align: 'left' },
-  { id: 'approvedByUserId', label: 'Approved By', align: 'left' },
-  { id: 'startDate', label: 'Timeline', align: 'left' },
-  { id: 'status', label: 'Project Status', align: 'left' },
+  { id: 'id', label: 'Project Code', align: 'left', sort: true },
+  { id: 'name', label: 'Project Name', align: 'left', sort: true },
+  { id: 'headProjectUserId', label: 'Project Head', align: 'left', sort: false },
+  { id: 'approvedByUserId', label: 'Approved By', align: 'left', sort: false },
+  { id: 'startDate', label: 'Timeline', align: 'left', sort: true },
+  { id: 'status', label: 'Project Status', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -59,8 +59,8 @@ export default function ProblemSolutionList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'id',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -69,18 +69,18 @@ export default function ProblemSolutionList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.problemSolution);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterProblemSolution = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -90,23 +90,25 @@ export default function ProblemSolutionList() {
     await dispatch(getProblemSolutionPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteProblemSolution(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteProblemSolutions(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -186,9 +188,11 @@ export default function ProblemSolutionList() {
         <Card>
           <ProblemSolutionTableToolbar
             filterName={filterName}
-            onFilterName={handleFilterName}
+            onFilterName={setFilterName}
             onSearch={handleSearch}
+            onReset={handleReset}
           />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

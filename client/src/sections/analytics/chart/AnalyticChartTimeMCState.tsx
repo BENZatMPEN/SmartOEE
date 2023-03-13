@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
@@ -85,7 +85,7 @@ export default function AnalyticChartTimeMCState({ criteria, group }: Props) {
             categories: sumRows.map((row: any) => dayjs(row.key).toDate().getTime()),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });

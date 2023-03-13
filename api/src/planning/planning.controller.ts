@@ -19,7 +19,7 @@ import { PlanningService } from './planning.service';
 import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PlanningEntity } from '../common/entities/planning-entity';
+import { PlanningEntity } from '../common/entities/planning.entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as XLSX from 'xlsx';

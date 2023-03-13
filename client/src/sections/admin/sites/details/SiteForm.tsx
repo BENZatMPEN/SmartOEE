@@ -75,6 +75,7 @@ export default function SiteForm({ isEdit }: Props) {
       image: null,
       oeeLimit: -1,
       userLimit: -1,
+      mcLimit: -1,
       alertTemplate: initialAlertTemplate,
     },
     values: {
@@ -92,6 +93,7 @@ export default function SiteForm({ isEdit }: Props) {
       image: null,
       oeeLimit: currentSite?.oeeLimit || -1,
       userLimit: currentSite?.userLimit || -1,
+      mcLimit: currentSite?.mcLimit || -1,
     },
   });
 
@@ -296,6 +298,17 @@ export default function SiteForm({ isEdit }: Props) {
                       label="User Limit"
                       onChange={(event) => {
                         setValue('userLimit', Number(event.target.value));
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <RHFTextField
+                      type="number"
+                      name="mcLimit"
+                      label="M/C Limit"
+                      onChange={(event) => {
+                        setValue('mcLimit', Number(event.target.value));
                       }}
                     />
                   </Grid>

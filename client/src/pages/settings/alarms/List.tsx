@@ -30,9 +30,9 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', align: 'left' },
-  { id: 'type', label: 'Type', align: 'left' },
-  { id: 'notify', label: 'Notify', align: 'center' },
+  { id: 'name', label: 'Name', align: 'left', sort: true },
+  { id: 'type', label: 'Type', align: 'left', sort: false },
+  { id: 'notify', label: 'Notify', align: 'center', sort: false },
   { id: '' },
 ];
 
@@ -52,8 +52,8 @@ export default function AlarmList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'name',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -62,18 +62,18 @@ export default function AlarmList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.alarm);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterAlarm = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -83,23 +83,25 @@ export default function AlarmList() {
     await dispatch(getAlarmPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteAlarm(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteAlarms(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -173,7 +175,13 @@ export default function AlarmList() {
         />
 
         <Card>
-          <AlarmTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <AlarmTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

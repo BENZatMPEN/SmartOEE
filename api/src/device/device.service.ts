@@ -5,9 +5,9 @@ import { UpdateDeviceDto } from './dto/update-device.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { DeviceEntity } from '../common/entities/device-entity';
-import { DeviceTagEntity } from '../common/entities/device-tag-entity';
-import { SiteEntity } from '../common/entities/site-entity';
+import { DeviceEntity } from '../common/entities/device.entity';
+import { DeviceTagEntity } from '../common/entities/device-tag.entity';
+import { SiteEntity } from '../common/entities/site.entity';
 
 @Injectable()
 export class DeviceService {
@@ -21,13 +21,14 @@ export class DeviceService {
   ) {}
 
   async findFilter(filterDto: FilterDeviceDto): Promise<PagedLisDto<DeviceEntity>> {
+    console.log(filterDto.siteId);
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.deviceRepository
       .createQueryBuilder('d')
       .leftJoinAndSelect('d.deviceModel', 'dm')
       .where('d.deleted = false')
       .andWhere('d.siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or d.name like :search or d.remark like :search', {
+      .andWhere('(:search is null or d.name like :search or d.address like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`d.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

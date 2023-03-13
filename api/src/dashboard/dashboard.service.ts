@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DashboardEntity } from '../common/entities/dashboard-entity';
+import { DashboardEntity } from '../common/entities/dashboard.entity';
 import { FilterDashboardDto } from './dto/filter-dashboard.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { UpdateDashboardDto } from './dto/update-dashboard.dto';
@@ -19,12 +19,13 @@ export class DashboardService {
     const [rows, count] = await this.dashboardRepository
       .createQueryBuilder()
       .where('deleted = false')
-      .andWhere('siteId = :siteId')
-      .andWhere(':search is null or title like :search')
+      .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
+      .andWhere('(:search is null or title like :search)', {
+        search: filterDto.search ? `%${filterDto.search}%` : null,
+      })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
-      .setParameters({ siteId: filterDto.siteId, search: filterDto.search ? `%${filterDto.search}%` : null })
       .getManyAndCount();
 
     return { list: rows, count: count };

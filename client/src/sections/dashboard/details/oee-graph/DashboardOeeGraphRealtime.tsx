@@ -12,7 +12,7 @@ import {
 } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fPercent } from '../../../../utils/formatNumber';
-import { chartTitle } from '../../../../utils/formatText';
+import { fChartTitle } from '../../../../utils/textHelper';
 
 const samplingOpts = [900, 1800, 3600];
 
@@ -204,7 +204,7 @@ export default function DashboardOeeGraphRealtime() {
         ],
       },
       title: {
-        text: chartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
+        text: fChartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
         align: 'center',
       },
     });
@@ -238,7 +238,7 @@ export default function DashboardOeeGraphRealtime() {
         categories: batchStatsLine.map((item) => item.timestamp.getTime()),
       },
       title: {
-        text: chartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
+        text: fChartTitle(currentBatch, batchStatsTime, selectedOee?.productionName || ''),
         align: 'center',
       },
     });

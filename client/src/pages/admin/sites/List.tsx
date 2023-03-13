@@ -28,11 +28,11 @@ import { PATH_ADMINISTRATOR, PATH_PAGES } from '../../../routes/paths';
 import { SiteTableRow, SiteTableToolbar } from '../../../sections/admin/sites/list';
 
 const TABLE_HEAD = [
-  { id: 'id', label: 'ID', align: 'left' },
-  { id: 'name', label: 'Site Name', align: 'left' },
-  { id: 'branch', label: 'Branch', align: 'left' },
-  { id: 'createdAt', label: 'Created Date', align: 'left' },
-  { id: 'active', label: 'Active', align: 'center' },
+  { id: 'id', label: 'ID', align: 'left', sort: false },
+  { id: 'name', label: 'Site Name', align: 'left', sort: true },
+  { id: 'branch', label: 'Branch', align: 'left', sort: true },
+  { id: 'createdAt', label: 'Created Date', align: 'left', sort: true },
+  { id: 'active', label: 'Active', align: 'center', sort: true },
   { id: '' },
 ];
 
@@ -52,8 +52,8 @@ export default function SiteList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'name',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -64,18 +64,18 @@ export default function SiteList() {
 
   const { userProfile } = useSelector((state: RootState) => state.auth);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterSite = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -85,24 +85,25 @@ export default function SiteList() {
     await dispatch(getSitePagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setPage(0);
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteSite(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteSites(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -170,7 +171,13 @@ export default function SiteList() {
         />
 
         <Card>
-          <SiteTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <SiteTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

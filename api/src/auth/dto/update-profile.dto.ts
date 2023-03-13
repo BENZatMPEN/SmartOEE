@@ -1,7 +1,4 @@
-import { IsArray, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
-import { EmailExists } from '../../common/validations/email-exists.validator';
-import { Type } from 'class-transformer';
-import { REQUEST_PARAM_ID } from '../../common/interceptors/request-param.interceptor';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString()
@@ -13,4 +10,12 @@ export class UpdateProfileDto {
 
   @IsString()
   readonly lastName: string;
+
+  @IsString()
+  @IsOptional()
+  readonly phoneNumber: string;
+
+  @IsString()
+  @IsOptional()
+  readonly lineId: string;
 }

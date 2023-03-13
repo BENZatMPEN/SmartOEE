@@ -16,7 +16,7 @@ import { AnyFilesInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { ProblemSolutionTaskService } from './problem-solution-task.service';
 import { CreateProblemSolutionTaskDto } from './dto/create-problem-solution-task.dto';
 import { UpdateProblemSolutionTaskDto } from './dto/update-problem-solution-task.dto';
-import { ProblemSolutionTaskEntity } from '../common/entities/problem-solution-task-entity';
+import { ProblemSolutionTaskEntity } from '../common/entities/problem-solution-task.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInfo } from '../common/type/file-info';
 import { FileService } from '../common/services/file.service';

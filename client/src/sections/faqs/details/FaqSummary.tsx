@@ -8,7 +8,7 @@ import {
   FAQ_PROCESS_STATUS_COMPLETED,
   FAQ_PROCESS_STATUS_WAITING,
 } from '../../../constants';
-import { getFaqProcessStatusText } from '../../../utils/formatText';
+import { fFaqProcessStatusText } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 
 const RootStyle = styled('div')(({ theme }) => ({
@@ -41,7 +41,7 @@ export default function FaqSummary({ faq, ...other }: Props) {
           }
           sx={{ textTransform: 'uppercase' }}
         >
-          {getFaqProcessStatusText(status)}
+          {fFaqProcessStatusText(status)}
         </Label>
       </Box>
 

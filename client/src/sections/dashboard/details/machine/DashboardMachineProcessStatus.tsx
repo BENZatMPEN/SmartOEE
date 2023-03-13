@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { initialOeeStats } from '../../../../constants';
 import { RootState, useSelector } from '../../../../redux/store';
 import { fSeconds } from '../../../../utils/formatNumber';
-import { getBatchStatus } from '../../../../utils/formatText';
+import { fBatchStatusText } from '../../../../utils/textHelper';
 import { fDate, fTime } from '../../../../utils/formatTime';
 
 export default function DashboardMachineProcessStatus() {
@@ -23,7 +23,7 @@ export default function DashboardMachineProcessStatus() {
       <CardHeader title="Process Status" />
       <CardContent>
         <Stack spacing={1}>
-          <StatusItem title="Status:" value={getBatchStatus(status)} />
+          <StatusItem title="Status:" value={fBatchStatusText(status)} />
 
           <StatusItem title="Start Date:" value={batchStartedDate ? fDate(batchStartedDate) : ''} />
 

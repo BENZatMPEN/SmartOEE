@@ -4,7 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { RoleAction, RoleSubject } from '../common/type/role-setting';
 import { AuthService } from '../auth/auth.service';
-import { RoleEntity } from '../common/entities/role-entity';
+import { RoleEntity } from '../common/entities/role.entity';
 
 type Subjects = InferSubjects<RoleSubject> | 'all';
 

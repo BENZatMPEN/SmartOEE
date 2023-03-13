@@ -19,7 +19,7 @@ import { AdminSiteService } from './admin-site.service';
 import { CreateAdminSiteDto } from './dto/create-admin-site.dto';
 import { FilterAdminSiteDto } from './dto/filter-admin-site.dto';
 import { UpdateAdminSiteDto } from './dto/update-admin-site.dto';
-import { SiteEntity } from '../common/entities/site-entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { OptionItem } from '../common/type/option-item';

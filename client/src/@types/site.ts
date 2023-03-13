@@ -1,5 +1,4 @@
 import { PercentSetting } from './percentSetting';
-import { initialAlertTemplate } from '../constants';
 import { AlertTemplate } from './alertTemplate';
 
 export type Site = {
@@ -19,6 +18,7 @@ export type Site = {
   cutoffTime: Date;
   oeeLimit: number;
   userLimit: number;
+  mcLimit: number;
   alertTemplate: AlertTemplate;
 };
 
@@ -36,6 +36,7 @@ export interface EditSite {
   image: File | null;
   oeeLimit?: number;
   userLimit?: number;
+  mcLimit?: number;
   alertTemplate: AlertTemplate;
 }
 

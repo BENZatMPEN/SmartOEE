@@ -5,7 +5,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import {
@@ -134,7 +134,7 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
         ...defaultOptions,
         labels: sumRows.map((item: any) => item.key),
         title: {
-          text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+          text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
           align: 'center',
         },
       });

@@ -5,7 +5,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 import { RootState, useSelector } from '../../../redux/store';
 import { useSnackbar } from 'notistack';
@@ -203,7 +203,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
             categories: sumRows.map((item: any) => dayjs(new Date(item.key)).format('DD/MM/YYYY HH:mm')),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -219,7 +219,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
           ...barOptions,
           labels: sumRows.map((item: any) => new Date(item.key).getTime()),
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -253,7 +253,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
             categories: sumRows.map((row: any) => dayjs(row.key).format('DD/MM/YYYY HH:mm')),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });

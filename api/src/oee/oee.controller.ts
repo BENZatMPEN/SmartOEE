@@ -20,15 +20,15 @@ import { OeeService } from './oee.service';
 import { CreateOeeDto } from './dto/create-oee.dto';
 import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
-import { OeeEntity } from '../common/entities/oee-entity';
-import { ProductEntity } from '../common/entities/product-entity';
+import { OeeEntity } from '../common/entities/oee.entity';
+import { ProductEntity } from '../common/entities/product.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { MachineEntity } from '../common/entities/machine-entity';
-import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
+import { MachineEntity } from '../common/entities/machine.entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { OeeStatus } from '../common/type/oee-status';
 import { OptionItem } from '../common/type/option-item';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
-import { PlanningEntity } from '../common/entities/planning-entity';
+import { PlanningEntity } from '../common/entities/planning.entity';
 import { OEE_TYPE_STANDALONE } from '../common/constant';
 
 @UseGuards(JwtAuthGuard)

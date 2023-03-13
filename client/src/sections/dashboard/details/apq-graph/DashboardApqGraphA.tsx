@@ -8,7 +8,7 @@ import useWebSocket from '../../../../hooks/useWebSocket';
 import { getOeeBatchParetoA, updateBatchParetoA } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fNumber, fNumber2, fPercent, fSeconds } from '../../../../utils/formatNumber';
-import { chartTitle, getTimeUnitText } from '../../../../utils/formatText';
+import { fChartTitle, fTimeUnitText } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
@@ -119,14 +119,14 @@ export default function DashboardApqGraphA() {
       ...options,
       labels: labels,
       title: {
-        text: chartTitle(currentBatch, batchStatsTime),
+        text: fChartTitle(currentBatch, batchStatsTime),
         align: 'center',
       },
     });
 
     setSeries([
       {
-        name: getTimeUnitText(timeUnit),
+        name: fTimeUnitText(timeUnit),
         type: 'column',
         data: counts.map((item) => convertToUnit(item, timeUnit)),
         color: '#FF6699',

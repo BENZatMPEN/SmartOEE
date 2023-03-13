@@ -30,8 +30,8 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'sku', label: 'SKU code', align: 'left' },
-  { id: 'name', label: 'Product Name', align: 'left' },
+  { id: 'sku', label: 'SKU code', align: 'left', sort: true },
+  { id: 'name', label: 'Product Name', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -51,8 +51,8 @@ export default function ProductList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'sku',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -61,18 +61,18 @@ export default function ProductList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.product);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterProduct = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -82,23 +82,25 @@ export default function ProductList() {
     await dispatch(getProductPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteProduct(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteProducts(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -172,7 +174,13 @@ export default function ProductList() {
         />
 
         <Card>
-          <ProductTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <ProductTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

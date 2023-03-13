@@ -15,7 +15,7 @@ import {
   PS_PROCESS_STATUS_ON_PROCESS,
   PS_PROCESS_STATUS_WAITING,
 } from '../../../constants';
-import { getPsProcessStatusText } from '../../../utils/formatText';
+import { fPsProcessStatusText } from '../../../utils/textHelper';
 import { ProblemSolutionFormValuesProps } from './ProblemSolutionForm';
 
 interface Props {
@@ -216,7 +216,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
                         typography: 'body2',
                       }}
                     >
-                      {getPsProcessStatusText(option)}
+                      {fPsProcessStatusText(option)}
                     </MenuItem>
                   ))}
                 </RHFSelect>

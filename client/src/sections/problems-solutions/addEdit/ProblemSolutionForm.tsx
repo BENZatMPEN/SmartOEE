@@ -40,7 +40,7 @@ import { createProblemSolution, updateProblemSolution } from '../../../redux/act
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { PATH_PROBLEMS_SOLUTIONS } from '../../../routes/paths';
 import axios from '../../../utils/axios';
-import { getPsProcessStatusText } from '../../../utils/formatText';
+import { fPsProcessStatusText } from '../../../utils/textHelper';
 import { getFileUrl } from '../../../utils/imageHelper';
 import ProblemSolutionTaskList from './ProblemSolutionTaskList';
 
@@ -459,7 +459,7 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
                       typography: 'body2',
                     }}
                   >
-                    {getPsProcessStatusText(option)}
+                    {fPsProcessStatusText(option)}
                   </MenuItem>
                 ))}
               </RHFSelect>

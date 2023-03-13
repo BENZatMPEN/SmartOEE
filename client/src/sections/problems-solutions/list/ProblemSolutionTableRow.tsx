@@ -5,7 +5,7 @@ import { ProblemSolution } from '../../../@types/problemSolution';
 import Iconify from '../../../components/Iconify';
 import { TableMoreMenu } from '../../../components/table';
 import { fCode } from '../../../utils/formatNumber';
-import { getPsProcessStatusText } from '../../../utils/formatText';
+import { fPsProcessStatusText } from '../../../utils/textHelper';
 import { fShortDate } from '../../../utils/formatTime';
 import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
@@ -74,7 +74,7 @@ export default function ProblemSolutionTableRow({
         {fShortDate(startDate)} - {fShortDate(endDate)}
       </TableCell>
 
-      <TableCell align="center">{getPsProcessStatusText(status)}</TableCell>
+      <TableCell align="center">{fPsProcessStatusText(status)}</TableCell>
 
       <TableCell align="right">
         {showMenu && (

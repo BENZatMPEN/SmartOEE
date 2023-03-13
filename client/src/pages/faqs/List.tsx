@@ -24,17 +24,17 @@ import { ROWS_PER_PAGE_OPTIONS } from '../../constants';
 import useTable from '../../hooks/useTable';
 import { deleteFaq, deleteFaqs, getFaqPagedList } from '../../redux/actions/faqAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
-import { PATH_FAQS, PATH_PAGES, PATH_SETTINGS } from '../../routes/paths';
+import { PATH_FAQS, PATH_PAGES } from '../../routes/paths';
 import { FaqTableRow, FaqTableToolbar } from '../../sections/faqs/list';
 import { AbilityContext } from '../../caslContext';
 import { RoleAction, RoleSubject } from '../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'id', label: 'Code', align: 'left' },
-  { id: 'topic', label: 'Topic', align: 'left' },
-  { id: 'createdByUserId', label: 'Creator', align: 'left' },
-  { id: 'approvedByUserId', label: 'Approved By', align: 'left' },
-  { id: 'status', label: 'Status', align: 'left' },
+  { id: 'id', label: 'Code', align: 'left', sort: true },
+  { id: 'topic', label: 'Topic', align: 'left', sort: true },
+  { id: 'createdByUserId', label: 'Creator', align: 'left', sort: false },
+  { id: 'approvedByUserId', label: 'Approved By', align: 'left', sort: false },
+  { id: 'status', label: 'Status', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -54,8 +54,8 @@ export default function FaqList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'id',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -64,18 +64,18 @@ export default function FaqList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.faq);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterFaq = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -85,23 +85,25 @@ export default function FaqList() {
     await dispatch(getFaqPagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteFaq(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteFaqs(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -179,7 +181,13 @@ export default function FaqList() {
         />
 
         <Card>
-          <FaqTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <FaqTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
+
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               {selected.length > 0 && (

@@ -10,6 +10,7 @@ import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from '../../../hooks/useIsMountedRef';
 import { RootState, useSelector } from '../../../redux/store';
 import { PATH_AUTH } from '../../../routes/paths';
+import { getFileUrl } from '../../../utils/imageHelper';
 
 const MENU_OPTIONS = [
   // {
@@ -87,7 +88,10 @@ export default function AccountPopover() {
             }),
           }}
         >
-          <Avatar src={defaultUser} alt={userProfile.email} />
+          <Avatar
+            src={userProfile.imageName ? getFileUrl(userProfile.imageName) : defaultUser}
+            alt={userProfile.email}
+          />
         </IconButtonAnimate>
 
         <MenuPopover

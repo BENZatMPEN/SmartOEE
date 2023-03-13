@@ -5,9 +5,9 @@ import { UpdateProblemSolutionDto } from './dto/update-problem-solution.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { AttachmentEntity } from '../common/entities/attachment-entity';
-import { ProblemSolutionEntity } from '../common/entities/problem-solution-entity';
-import { ProblemSolutionAttachmentEntity } from '../common/entities/problem-solution-attachment-entity';
+import { AttachmentEntity } from '../common/entities/attachment.entity';
+import { ProblemSolutionEntity } from '../common/entities/problem-solution.entity';
+import { ProblemSolutionAttachmentEntity } from '../common/entities/problem-solution-attachment.entity';
 import { FileInfo } from '../common/type/file-info';
 
 @Injectable()
@@ -42,7 +42,7 @@ export class ProblemSolutionService {
       ])
       .where('ps.deleted = false')
       .andWhere('ps.siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or ps.name like :search or ps.remark like :search', {
+      .andWhere('(:search is null or ps.name like :search or ps.remark like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`ps.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

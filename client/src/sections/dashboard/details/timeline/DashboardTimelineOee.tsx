@@ -5,7 +5,7 @@ import ReactApexChart from 'react-apexcharts';
 import { OeeTimeline } from '../../../../@types/oeeBatch';
 import { RootState, useSelector } from '../../../../redux/store';
 import { getColor } from '../../../../utils/colorHelper';
-import { getBatchStatus } from '../../../../utils/formatText';
+import { fBatchStatusText } from '../../../../utils/textHelper';
 import isBetween from 'dayjs/plugin/isBetween';
 
 dayjs.extend(isBetween);
@@ -60,7 +60,7 @@ export default function DashboardTimelineOee() {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return getBatchStatus(seriesName);
+            return fBatchStatusText(seriesName);
           },
         },
       },

@@ -18,7 +18,7 @@ import { MachineService } from './machine.service';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { FilterMachineDto } from './dto/filter-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
-import { MachineEntity } from '../common/entities/machine-entity';
+import { MachineEntity } from '../common/entities/machine.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MachineWidgetDto } from './dto/machine-widget.dto';

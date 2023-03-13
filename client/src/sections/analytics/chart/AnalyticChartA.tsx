@@ -5,7 +5,7 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
 import { fNumber2, fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle, getTimeUnitText } from '../../../utils/formatText';
+import { fAnalyticChartTitle, fTimeUnitText } from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
@@ -182,7 +182,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
             categories: sumRows.map((item: any) => item.key),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -210,7 +210,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
           ...barOptions,
           labels: sumRows.map((item: any) => item.key),
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -234,14 +234,14 @@ export default function AnalyticChartA({ criteria, group }: Props) {
           ...paretoOptions,
           labels: labels,
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
 
         setSeries([
           {
-            name: getTimeUnitText(TIME_UNIT_MINUTE),
+            name: fTimeUnitText(TIME_UNIT_MINUTE),
             type: 'column',
             color: '#FF6699',
             data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),

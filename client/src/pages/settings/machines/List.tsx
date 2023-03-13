@@ -30,9 +30,9 @@ import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
 
 const TABLE_HEAD = [
-  { id: 'code', label: 'M/C Code', align: 'left' },
-  { id: 'name', label: 'Machine Name', align: 'left' },
-  { id: 'location', label: 'Location', align: 'left' },
+  { id: 'code', label: 'M/C Code', align: 'left', sort: true },
+  { id: 'name', label: 'Machine Name', align: 'left', sort: true },
+  { id: 'location', label: 'Location', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -52,8 +52,8 @@ export default function MachineList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'createdAt',
-    defaultOrder: 'desc',
+    defaultOrderBy: 'code',
+    defaultOrder: 'asc',
   });
 
   const navigate = useNavigate();
@@ -62,18 +62,18 @@ export default function MachineList() {
 
   const { pagedList, isLoading } = useSelector((state: RootState) => state.machine);
 
-  const [filterName, setFilterName] = useState('');
+  const [filterName, setFilterName] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      await refreshData();
+      await refreshData(filterName);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy, page, rowsPerPage]);
 
-  const refreshData = async () => {
+  const refreshData = async (filterTerm: string = '') => {
     const filter: FilterMachine = {
-      search: filterName,
+      search: filterTerm,
       order: order,
       orderBy: orderBy,
       page: page,
@@ -83,23 +83,25 @@ export default function MachineList() {
     await dispatch(getMachinePagedList(filter));
   };
 
-  const handleFilterName = (filterName: string) => {
-    setFilterName(filterName);
-  };
-
   const handleSearch = async () => {
     setPage(0);
+    await refreshData(filterName);
+  };
+
+  const handleReset = async () => {
+    setPage(0);
+    setFilterName('');
     await refreshData();
   };
 
   const handleDeleteRow = async (id: number) => {
     await dispatch(deleteMachine(id));
-    await refreshData();
+    await refreshData(filterName);
   };
 
   const handleDeleteRows = async (selectedIds: number[]) => {
     await dispatch(deleteMachines(selectedIds));
-    await refreshData();
+    await refreshData(filterName);
     setSelected([]);
   };
 
@@ -173,7 +175,12 @@ export default function MachineList() {
         />
 
         <Card>
-          <MachineTableToolbar filterName={filterName} onFilterName={handleFilterName} onSearch={handleSearch} />
+          <MachineTableToolbar
+            filterName={filterName}
+            onFilterName={setFilterName}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

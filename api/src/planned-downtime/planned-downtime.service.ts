@@ -5,7 +5,7 @@ import { UpdatePlannedDowntimeDto } from './dto/update-planned-downtime.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { PlannedDowntimeEntity } from '../common/entities/planned-downtime-entity';
+import { PlannedDowntimeEntity } from '../common/entities/planned-downtime.entity';
 
 @Injectable()
 export class PlannedDowntimeService {
@@ -20,7 +20,7 @@ export class PlannedDowntimeService {
       .createQueryBuilder()
       .where('deleted = false')
       .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or name like :search', { search: filterDto.search ? `%${filterDto.search}%` : null })
+      .andWhere('(:search is null or name like :search)', { search: filterDto.search ? `%${filterDto.search}%` : null })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)

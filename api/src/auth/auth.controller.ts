@@ -18,7 +18,7 @@ import { LocalAuthGuard } from './local-auth.guard';
 import { TokenDto } from './dto/token.dto';
 import { AuthUserDto } from './dto/auth-user.dto';
 import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 import { InjectParamIdTo } from '../common/decorators/request-interceptor.dectorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';

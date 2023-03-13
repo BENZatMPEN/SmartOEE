@@ -1,9 +1,9 @@
-import { Checkbox, Divider, MenuItem, TableCell, TableRow } from '@mui/material';
+import { Checkbox, MenuItem, TableCell, TableRow } from '@mui/material';
 import { useContext, useState } from 'react';
 import { Device } from '../../../../@types/device';
 import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
-import { getDeviceModelConnectionTypeText, getDeviceModelTypeText } from '../../../../utils/formatText';
+import { fDeviceModelConnectionTypeText, fDeviceModelTypeText } from '../../../../utils/textHelper';
 import { AbilityContext } from '../../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 
@@ -60,14 +60,18 @@ export default function DeviceTableRow({
 
       <TableCell align="left">{deviceId}</TableCell>
 
-      <TableCell align="left">{deviceModel?.modelType ? getDeviceModelTypeText(deviceModel.modelType) : ''}</TableCell>
+      <TableCell align="left">{deviceModel?.modelType ? fDeviceModelTypeText(deviceModel.modelType) : ''}</TableCell>
 
       <TableCell align="left">
-        {deviceModel?.connectionType ? getDeviceModelConnectionTypeText(deviceModel.connectionType) : ''}
+        {deviceModel?.connectionType ? fDeviceModelConnectionTypeText(deviceModel.connectionType) : ''}
       </TableCell>
 
       <TableCell align="center">
-        <Checkbox checked={stopped} />
+        {stopped ? (
+          <Iconify icon={'eva:stop-circle-fill'} sx={{ color: 'error.main', width: 25, height: 25 }} />
+        ) : (
+          <Iconify icon={'eva:play-circle-fill'} sx={{ color: 'success.main', width: 25, height: 25 }} />
+        )}
       </TableCell>
 
       <TableCell align="left">{remark}</TableCell>

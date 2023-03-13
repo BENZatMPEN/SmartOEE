@@ -4,7 +4,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fNumber, fNumber2, fPercent } from '../../../utils/formatNumber';
-import { analyticChartTitle } from '../../../utils/formatText';
+import { fAnalyticChartTitle } from '../../../utils/textHelper';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -182,7 +182,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
             categories: sumRows.map((item: any) => item.key),
           },
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -210,7 +210,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
           ...barOptions,
           labels: sumRows.map((item: any) => item.key),
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });
@@ -234,7 +234,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
           ...paretoOptions,
           labels: labels,
           title: {
-            text: analyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
+            text: fAnalyticChartTitle(criteria.title, criteria.fromDate, criteria.toDate),
             align: 'center',
           },
         });

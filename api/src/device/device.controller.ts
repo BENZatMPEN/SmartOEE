@@ -18,7 +18,7 @@ import { DeviceService } from './device.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { FilterDeviceDto } from './dto/filter-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
-import { DeviceEntity } from '../common/entities/device-entity';
+import { DeviceEntity } from '../common/entities/device.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)

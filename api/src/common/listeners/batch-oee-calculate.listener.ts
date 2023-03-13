@@ -46,13 +46,13 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ReadItem } from '../type/read';
 import { OeeTag, OeeTagMCStatus, OeeTagOutBatchStatus } from '../type/oee-tag';
 import { OeeBatchMcState } from '../type/oee-status';
-import { OeeBatchEntity } from '../entities/oee-batch-entity';
+import { OeeBatchEntity } from '../entities/oee-batch.entity';
 import {
   AnalyticAParamUpdateEvent,
   AnalyticPParamUpdateEvent,
   AnalyticQParamUpdateEvent,
 } from '../events/analytic.event';
-import { OeeBatchPlannedDowntimeEntity } from '../entities/oee-batch-planned-downtime-entity';
+import { OeeBatchPlannedDowntimeEntity } from '../entities/oee-batch-planned-downtime.entity';
 
 @Injectable()
 export class BatchOeeCalculateListener {
@@ -461,59 +461,146 @@ export class BatchOeeCalculateListener {
       this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
 
       // notify
-      await this.notifyLow(batch.siteId, batch.oeeId, oeeStats, currentStats);
+      await this.notifyParams(batch.siteId, batch.oeeId, batch.id, oeeStats, currentStats);
     } catch (error) {
       this.logger.log('exception', error);
     }
   }
 
-  private getPercentSettings(settings: PercentSetting[]): { oeeLow: number; aLow: number; pLow: number; qLow: number } {
+  private getPercentSettings(settings: PercentSetting[]): {
+    oeeLow: number;
+    aLow: number;
+    pLow: number;
+    qLow: number;
+    oeeHigh: number;
+    aHigh: number;
+    pHigh: number;
+    qHigh: number;
+  } {
     return {
       oeeLow: settings.filter((item) => item.type === OEE_TYPE_OEE)[0].settings.low,
       aLow: settings.filter((item) => item.type === OEE_TYPE_A)[0].settings.low,
       pLow: settings.filter((item) => item.type === OEE_TYPE_P)[0].settings.low,
       qLow: settings.filter((item) => item.type === OEE_TYPE_Q)[0].settings.low,
+      oeeHigh: settings.filter((item) => item.type === OEE_TYPE_OEE)[0].settings.high,
+      aHigh: settings.filter((item) => item.type === OEE_TYPE_A)[0].settings.high,
+      pHigh: settings.filter((item) => item.type === OEE_TYPE_P)[0].settings.high,
+      qHigh: settings.filter((item) => item.type === OEE_TYPE_Q)[0].settings.high,
     };
   }
 
-  private async notifyLow(
+  private async notifyParams(
     siteId: number,
     oeeId: number,
+    batchId: number,
     previousStatus: OeeStats,
     currentStatus: OeeStats,
   ): Promise<void> {
     const oee = await this.oeeService.findById(oeeId);
     const site = await this.siteService.findById(oee.siteId);
-    const percentSettings: { oeeLow: number; aLow: number; pLow: number; qLow: number } = this.getPercentSettings(
-      oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings,
-    );
+    const percentSettings: {
+      oeeLow: number;
+      aLow: number;
+      pLow: number;
+      qLow: number;
+      oeeHigh: number;
+      aHigh: number;
+      pHigh: number;
+      qHigh: number;
+    } = this.getPercentSettings(oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings);
 
+    // low
     if (
-      (previousStatus.oeePercent > percentSettings.oeeLow || previousStatus.qPercent > currentStatus.qPercent) &&
+      (previousStatus.oeePercent > percentSettings.oeeLow || previousStatus.oeePercent > currentStatus.oeePercent) &&
       currentStatus.oeePercent < percentSettings.oeeLow
     ) {
-      await this.notificationService.notifyOeeLow(siteId, oeeId, previousStatus.oeePercent, currentStatus.oeePercent);
+      await this.notificationService.notifyOeeLow(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.oeePercent,
+        currentStatus.oeePercent,
+      );
     }
 
     if (
       (previousStatus.aPercent > percentSettings.aLow || previousStatus.aPercent > currentStatus.aPercent) &&
       currentStatus.aPercent < percentSettings.aLow
     ) {
-      await this.notificationService.notifyALow(siteId, oeeId, previousStatus.aPercent, currentStatus.aPercent);
+      await this.notificationService.notifyALow(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.aPercent,
+        currentStatus.aPercent,
+      );
     }
 
     if (
       (previousStatus.pPercent > percentSettings.pLow || previousStatus.pPercent > currentStatus.pPercent) &&
       currentStatus.pPercent < percentSettings.pLow
     ) {
-      await this.notificationService.notifyPLow(siteId, oeeId, previousStatus.pPercent, currentStatus.pPercent);
+      await this.notificationService.notifyPLow(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.pPercent,
+        currentStatus.pPercent,
+      );
     }
 
     if (
       (previousStatus.qPercent > percentSettings.qLow || previousStatus.qPercent > currentStatus.qPercent) &&
       currentStatus.qPercent < percentSettings.qLow
     ) {
-      await this.notificationService.notifyQLow(siteId, oeeId, previousStatus.qPercent, currentStatus.qPercent);
+      await this.notificationService.notifyQLow(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.qPercent,
+        currentStatus.qPercent,
+      );
+    }
+
+    // high
+    if (previousStatus.oeePercent < currentStatus.oeePercent && currentStatus.oeePercent > 100.0) {
+      await this.notificationService.notifyOeeHigh(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.oeePercent,
+        currentStatus.oeePercent,
+      );
+    }
+
+    if (previousStatus.aPercent < currentStatus.aPercent && currentStatus.aPercent > 100.0) {
+      await this.notificationService.notifyAHigh(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.aPercent,
+        currentStatus.aPercent,
+      );
+    }
+
+    if (previousStatus.pPercent < currentStatus.pPercent && currentStatus.pPercent > 100.0) {
+      await this.notificationService.notifyPHigh(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.pPercent,
+        currentStatus.pPercent,
+      );
+    }
+
+    if (previousStatus.qPercent < currentStatus.qPercent && currentStatus.qPercent > 100.0) {
+      await this.notificationService.notifyQHigh(
+        siteId,
+        oeeId,
+        batchId,
+        previousStatus.qPercent,
+        currentStatus.qPercent,
+      );
     }
   }
 
@@ -741,211 +828,5 @@ export class BatchOeeCalculateListener {
       batchId: batch.id,
       createLog: false,
     });
-
-    // for (const updatingQ of updatingQs) {
-    //   const { param, currentRead } = updatingQ;
-    //
-    //   this.logger.log(`Q - Id: ${param.id} (${param.tagId}) - previous: ${param.autoAmount}, current: ${currentRead}`);
-    //
-    //   await Promise.all([
-    //     this.oeeBatchService.updateBatchQ({
-    //       id: param.id,
-    //       tagId: param.tagId,
-    //       autoAmount: currentRead,
-    //       totalAmount: param.manualAmount + currentRead,
-    //     }),
-    //     this.notificationService.notifyQParam(
-    //       batch.siteId,
-    //       batch.oeeId,
-    //       batch.id,
-    //       param.tagId,
-    //       param.autoAmount,
-    //       currentRead,
-    //     ),
-    //   ]);
-    //
-    //   const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
-    //     siteId,
-    //     oeeId,
-    //     productId: product.id,
-    //     oeeBatchId: batch.id,
-    //     param: {
-    //       autoAmount: currentRead,
-    //       manualAmount: currentRead,
-    //       tagId: updatingQ.tagId,
-    //       machineId: updatingQ.machineId,
-    //       machineParameterId: updatingQ.machineParameterId,
-    //     },
-    //   };
-    //   await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
-    // }
   }
-
-  // async handleBatchOeeCalculate(event: BatchOeeCalculateEvent) {
-  //   const { batchId, currentMcState } = event;
-  //
-  //   try {
-  //     const batch = await this.oeeBatchService.findById(batchId);
-  //     const { batchStartedDate, standardSpeedSeconds, oeeStats, minorStopSeconds, breakdownSeconds } = batch;
-  //     const { batchStatus, total, totalNg, stopSeconds, timestamp } = currentMcState;
-  //     const readTimestamp = new Date(timestamp);
-  //     const { totalManualDefects } = oeeStats;
-  //
-  //     const childrenResult = await Promise.all([
-  //       this.oeeBatchService.findBatchAsById(batch.id),
-  //       this.oeeBatchService.findBatchPsById(batch.id),
-  //       this.oeeBatchService.findBatchQsById(batch.id),
-  //       this.oeeBatchService.findBatchPlannedDowntimesById(batch.id),
-  //     ]);
-  //
-  //     const aParams = childrenResult[0];
-  //     const pParams = childrenResult[1];
-  //     const qParams = childrenResult[2];
-  //     const plannedDowntimes = childrenResult[3] || [];
-  //
-  //     const startTime = dayjs(batchStartedDate);
-  //     const endTime = dayjs().startOf('s');
-  //
-  //     const runningSeconds = endTime.diff(startTime, 's');
-  //     const plannedDowntimeSeconds = plannedDowntimes
-  //       .filter((item) => item.type === PLANNED_DOWNTIME_TYPE_PLANNED)
-  //       .reduce((acc, item) => {
-  //         const endedAt = item.expiredAt ? item.expiredAt : endTime;
-  //         return acc + dayjs(endedAt).diff(item.createdAt, 's');
-  //       }, 0);
-  //
-  //     const aStopSeconds = 0; //stopSeconds >= breakdownSeconds ? stopSeconds : 0;
-  //     const totalBreakdownCount = aParams.length;
-  //     const totalBreakdownSeconds = aParams.reduce((acc, x) => acc + x.seconds, 0) + aStopSeconds;
-  //     const runningAfterPlannedSeconds = runningSeconds - plannedDowntimeSeconds;
-  //     const actualRunningSeconds = runningAfterPlannedSeconds - totalBreakdownSeconds;
-  //
-  //     // calculate A
-  //     const aPercent = actualRunningSeconds / runningAfterPlannedSeconds;
-  //
-  //     // calculate P
-  //     const speedLossList = pParams.filter((x) => x.isSpeedLoss);
-  //     const minorStopList = pParams.filter((x) => !x.isSpeedLoss);
-  //     const totalSpeedLossCount = speedLossList.length;
-  //     const totalSpeedLossSeconds = speedLossList.reduce((acc, x) => acc + x.seconds, 0);
-  //     const totalMinorStopCount = minorStopList.length;
-  //     const totalMinorStopSeconds = minorStopList.reduce((acc, x) => acc + x.seconds, 0);
-  //     const pStopSeconds = 0; //stopSeconds >= standardSpeedSeconds && stopSeconds <= minorStopSeconds ? stopSeconds : 0;
-  //     const pPercent = total === 0 ? 1 : (standardSpeedSeconds * total) / (actualRunningSeconds - pStopSeconds);
-  //
-  //     // calculate Q
-  //     const totalAllDefects = totalNg + totalManualDefects;
-  //     const sumManual = qParams.reduce((acc, x) => acc + x.manualAmount, 0);
-  //     const totalOtherDefects = totalManualDefects - sumManual;
-  //     const qPercent = total === 0 ? 1 : (total - totalAllDefects) / total;
-  //
-  //     // calculate OEE
-  //     const oeePercent = aPercent * pPercent * qPercent;
-  //
-  //     const target = actualRunningSeconds / standardSpeedSeconds;
-  //     const efficiency = ((total - totalNg + totalManualDefects) / target) * 100;
-  //     const totalStopSeconds = totalBreakdownSeconds + totalSpeedLossSeconds + totalMinorStopSeconds;
-  //     // M/C setup is already INCLUDED in Breakdown - only show in the client
-  //     const machineSetupSeconds = plannedDowntimes
-  //       .filter((item) => item.type === PLANNED_DOWNTIME_TYPE_MC_SETUP)
-  //       .reduce((acc, item) => {
-  //         const endedAt = item.expiredAt ? item.expiredAt : endTime;
-  //         return acc + dayjs(endedAt).diff(item.createdAt, 's');
-  //       }, 0);
-  //
-  //     const currentStats = {
-  //       aPercent: aPercent * 100,
-  //       pPercent: pPercent * 100,
-  //       qPercent: qPercent * 100,
-  //       oeePercent: oeePercent * 100,
-  //       // A & P
-  //       runningSeconds,
-  //       actualRunningSeconds,
-  //       plannedDowntimeSeconds,
-  //       machineSetupSeconds,
-  //       totalStopSeconds,
-  //       totalBreakdownCount,
-  //       totalBreakdownSeconds,
-  //       totalSpeedLossCount,
-  //       totalSpeedLossSeconds,
-  //       totalMinorStopCount,
-  //       totalMinorStopSeconds,
-  //       // Q
-  //       totalCount: total,
-  //       totalAutoDefects: totalNg,
-  //       totalManualDefects,
-  //       totalOtherDefects,
-  //       target,
-  //       efficiency,
-  //       // FYI
-  //       aStopSeconds,
-  //       pStopSeconds,
-  //     };
-  //
-  //     this.logger.log('calculated oee:', currentStats);
-  //
-  //     await this.oeeBatchService.update1(batch.id, { oeeStats: currentStats });
-  //
-  //     // const tempTime = dayjs(readTimestamp);
-  //     // if (tempTime.second() % 5 === 0 || batchStatus === OEE_BATCH_STATUS_ENDED) {
-  //     await this.oeeBatchService.saveBatchStats(batch.oeeId, batch.product.id, batch.id, oeeStats, readTimestamp);
-  //     // await this.analyticService.saveOeeStats(
-  //     //   batch.siteId,
-  //     //   batch.oeeId,
-  //     //   batch.product.id,
-  //     //   batch.id,
-  //     //   oeeStats,
-  //     //   batch.standardSpeedSeconds,
-  //     //   dayjs().startOf('s').toDate(),
-  //     // );
-  //     await this.oeeBatchService.createBatchLog(batch.id);
-  //     // }
-  //
-  //     // send to socket
-  //     this.socketService.socket.to(`site_${batch.siteId}`).emit(`stats_${batchId}.updated`, currentStats);
-  //
-  //     // notify
-  //     // this.notifyLow(batch.siteId, batch.oeeId, batch.oeeStatus, currentStatus),
-  //   } catch (error) {
-  //     this.logger.log('exception', error);
-  //   }
-  // }
-
-  // async private  notifyLow(
-  //   siteId: number,
-  //   oeeId: number,
-  //   previousStatus: OeeStats,
-  //   currentStatus: OeeStats,
-  // ): Promise<void> {
-  //   const oee = await this.oeeService.findById(oeeId);
-  //   const site = await this.siteService.findById(oee.siteId);
-  //   const percentSettings: { oeeLow: number; aLow: number; pLow: number; qLow: number } = this.getPercentSettings(
-  //     oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings,
-  //   );
-  //
-  //   if (previousStatus.oeePercent > percentSettings.oeeLow && currentStatus.oeePercent < percentSettings.oeeLow) {
-  //     await this.notificationService.notifyOeeLow(siteId, oeeId, previousStatus.oeePercent, currentStatus.oeePercent);
-  //   }
-  //
-  //   if (previousStatus.aPercent > percentSettings.aLow && currentStatus.aPercent < percentSettings.aLow) {
-  //     await this.notificationService.notifyALow(siteId, oeeId, previousStatus.aPercent, currentStatus.aPercent);
-  //   }
-  //
-  //   if (previousStatus.pPercent > percentSettings.pLow && currentStatus.pPercent < percentSettings.pLow) {
-  //     await this.notificationService.notifyPLow(siteId, oeeId, previousStatus.pPercent, currentStatus.pPercent);
-  //   }
-  //
-  //   if (previousStatus.qPercent > percentSettings.qLow && currentStatus.qPercent < percentSettings.qLow) {
-  //     await this.notificationService.notifyQLow(siteId, oeeId, previousStatus.qPercent, currentStatus.qPercent);
-  //   }
-  // }
-  //
-  // private getPercentSettings(settings: PercentSetting[]): { oeeLow: number; aLow: number; pLow: number; qLow: number } {
-  //   return {
-  //     oeeLow: settings.filter((item) => item.type === OEE_TYPE_OEE)[0].settings.low,
-  //     aLow: settings.filter((item) => item.type === OEE_TYPE_A)[0].settings.low,
-  //     pLow: settings.filter((item) => item.type === OEE_TYPE_P)[0].settings.low,
-  //     qLow: settings.filter((item) => item.type === OEE_TYPE_Q)[0].settings.low,
-  //   };
-  // }
 }

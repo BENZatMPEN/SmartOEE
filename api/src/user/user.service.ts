@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { RoleEntity } from '../common/entities/role-entity';
-import { SiteEntity } from '../common/entities/site-entity';
+import { RoleEntity } from '../common/entities/role.entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
@@ -31,11 +31,12 @@ export class UserService {
     const [rows, count] = await this.userRepository
       .createQueryBuilder('u')
       .innerJoin('u.sites', 'us', 'us.id = :siteId', { siteId: filterDto.siteId })
-      .where(':search is null or u.firstName like :search or u.lastName like :search or u.email like :search')
+      .where('(:search is null or u.firstName like :search or u.lastName like :search or u.email like :search)', {
+        search: filterDto.search ? `%${filterDto.search}%` : null,
+      })
       .orderBy(`u.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
-      .setParameters({ search: filterDto.search ? `%${filterDto.search}%` : null })
       .getManyAndCount();
 
     return { list: rows, count: count };

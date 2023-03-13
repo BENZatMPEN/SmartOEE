@@ -3,15 +3,15 @@ import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, IsNull, Repository } from 'typeorm';
-import { OeeEntity } from 'src/common/entities/oee-entity';
-import { OeeBatchEntity } from '../common/entities/oee-batch-entity';
-import { OeeMachineEntity } from '../common/entities/oee-machine-entity';
-import { OeeProductEntity } from '../common/entities/oee-product-entity';
+import { OeeEntity } from 'src/common/entities/oee.entity';
+import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
+import { OeeMachineEntity } from '../common/entities/oee-machine.entity';
+import { OeeProductEntity } from '../common/entities/oee-product.entity';
 import * as dayjs from 'dayjs';
-import { OeeBatchQEntity } from '../common/entities/oee-batch-q-entity';
-import { OeeBatchPlannedDowntimeEntity } from '../common/entities/oee-batch-planned-downtime-entity';
-import { OeeBatchAEntity } from '../common/entities/oee-batch-a-entity';
-import { OeeBatchPEntity } from '../common/entities/oee-batch-p-entity';
+import { OeeBatchQEntity } from '../common/entities/oee-batch-q.entity';
+import { OeeBatchPlannedDowntimeEntity } from '../common/entities/oee-batch-planned-downtime.entity';
+import { OeeBatchAEntity } from '../common/entities/oee-batch-a.entity';
+import { OeeBatchPEntity } from '../common/entities/oee-batch-p.entity';
 import { UpdateOeeBatchADto } from './dto/update-oee-batch-a.dto';
 import { initialOeeBatchStats, OeeStats } from '../common/type/oee-stats';
 import { UpdateOeeBatchPDto } from './dto/update-oee-batch-p.dto';
@@ -23,13 +23,13 @@ import {
   OEE_PARAM_TYPE_Q,
   OEE_TAG_OUT_RESET,
 } from '../common/constant';
-import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history-entity';
+import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FilterOeeBatchDto } from './dto/filter-oee-batch.dto';
 import { initialOeeBatchMcState, OeeBatchMcState } from '../common/type/oee-status';
-import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline-entity';
-import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs-entity';
-import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats-entity';
+import { OeeBatchStatsTimelineEntity } from '../common/entities/oee-batch-stats-timeline.entity';
+import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs.entity';
+import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats.entity';
 import { OptionItem } from '../common/type/option-item';
 import { fLotNumber } from '../common/utils/formatNumber';
 import {

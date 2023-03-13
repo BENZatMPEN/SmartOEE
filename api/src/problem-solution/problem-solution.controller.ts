@@ -18,7 +18,7 @@ import { ProblemSolutionService } from './problem-solution.service';
 import { CreateProblemSolutionDto } from './dto/create-problem-solution.dto';
 import { FilterProblemSolutionDto } from './dto/filter-problem-solution.dto';
 import { UpdateProblemSolutionDto } from './dto/update-problem-solution.dto';
-import { ProblemSolutionEntity } from '../common/entities/problem-solution-entity';
+import { ProblemSolutionEntity } from '../common/entities/problem-solution.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ReqDec } from '../common/decorators/req-dec';
 import { SiteIdPipe } from '../common/pipe/site-id.pipe';

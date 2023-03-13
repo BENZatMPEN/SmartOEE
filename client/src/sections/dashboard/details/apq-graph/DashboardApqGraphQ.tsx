@@ -8,7 +8,7 @@ import useWebSocket from '../../../../hooks/useWebSocket';
 import { getOeeBatchParetoQ, updateBatchParetoQ } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
-import { chartTitle } from '../../../../utils/formatText';
+import { fChartTitle } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import DashboardPieChart from '../../DashboardPieChart';
 
@@ -113,7 +113,7 @@ export default function DashboardApqGraphQ() {
       ...options,
       labels: labels,
       title: {
-        text: chartTitle(currentBatch, batchStatsTime),
+        text: fChartTitle(currentBatch, batchStatsTime),
         align: 'center',
       },
     });

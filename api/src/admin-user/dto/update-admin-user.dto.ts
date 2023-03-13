@@ -15,6 +15,14 @@ export class UpdateAdminUserDto {
   @IsString()
   readonly lastName: string;
 
+  @IsString()
+  @IsOptional()
+  readonly phoneNumber: string;
+
+  @IsString()
+  @IsOptional()
+  readonly lineId: string;
+
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   readonly isAdmin: boolean;

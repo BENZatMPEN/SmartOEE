@@ -11,7 +11,7 @@ import { PATH_DASHBOARD } from '../../routes/paths';
 import axios from '../../utils/axios';
 import { getColor } from '../../utils/colorHelper';
 import { fPercent } from '../../utils/formatNumber';
-import { getBatchStatus } from '../../utils/formatText';
+import { fBatchStatusText } from '../../utils/textHelper';
 
 type Props = {
   oeeStatusItem: OeeStatusItem;
@@ -88,7 +88,7 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return getBatchStatus(seriesName);
+            return fBatchStatusText(seriesName);
           },
         },
         formatter(val: any, opts?: any): string {

@@ -5,9 +5,9 @@ import { UpdateMachineDto } from './dto/update-machine.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { MachineEntity } from '../common/entities/machine-entity';
-import { MachineParameterEntity } from '../common/entities/machine-parameter-entity';
-import { WidgetEntity } from '../common/entities/widget-entity';
+import { MachineEntity } from '../common/entities/machine.entity';
+import { MachineParameterEntity } from '../common/entities/machine-parameter.entity';
+import { WidgetEntity } from '../common/entities/widget.entity';
 import { FileService } from '../common/services/file.service';
 import { MachineWidgetDto } from './dto/machine-widget.dto';
 
@@ -29,7 +29,7 @@ export class MachineService {
       .createQueryBuilder()
       .where('deleted = false')
       .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere(':search is null or name like :search or remark like :search', {
+      .andWhere('(:search is null or code like :search or name like :search or location like :search)', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')

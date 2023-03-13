@@ -7,7 +7,7 @@ import { FormProvider, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import Scrollbar from '../../../../components/Scrollbar';
 import axios from '../../../../utils/axios';
-import { getTimeUnitText } from '../../../../utils/formatText';
+import { fTimeUnitText } from '../../../../utils/textHelper';
 
 type FormValuesProps = {
   searchTerm: string;
@@ -131,7 +131,7 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
           <TextField
             type="number"
             fullWidth
-            label={`Standard speed (${getTimeUnitText(currentOee.timeUnit)})`}
+            label={`Standard speed (${fTimeUnitText(currentOee.timeUnit)})`}
             size="small"
             InputLabelProps={{ shrink: true }}
             value={selectedProduct?.standardSpeedSeconds || 0}

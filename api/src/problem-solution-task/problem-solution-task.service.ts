@@ -3,9 +3,9 @@ import { CreateProblemSolutionTaskDto } from './dto/create-problem-solution-task
 import { UpdateProblemSolutionTaskDto } from './dto/update-problem-solution-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AttachmentEntity } from '../common/entities/attachment-entity';
-import { ProblemSolutionTaskEntity } from '../common/entities/problem-solution-task-entity';
-import { ProblemSolutionTaskAttachmentEntity } from '../common/entities/problem-solution-task-attachment-entity';
+import { AttachmentEntity } from '../common/entities/attachment.entity';
+import { ProblemSolutionTaskEntity } from '../common/entities/problem-solution-task.entity';
+import { ProblemSolutionTaskAttachmentEntity } from '../common/entities/problem-solution-task-attachment.entity';
 import { FileInfo } from '../common/type/file-info';
 
 @Injectable()

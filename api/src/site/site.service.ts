@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { SiteEntity } from '../common/entities/site-entity';
+import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
-import { UserEntity } from '../common/entities/user-entity';
+import { UserEntity } from '../common/entities/user.entity';
 import { OptionItem } from '../common/type/option-item';
 
 @Injectable()

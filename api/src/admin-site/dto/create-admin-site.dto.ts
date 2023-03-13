@@ -45,6 +45,10 @@ export class CreateAdminSiteDto {
   @Type(() => Number)
   readonly userLimit: number;
 
+  @IsNumber()
+  @Type(() => Number)
+  readonly mcLimit: number;
+
   @IsDate()
   @Type(() => Date)
   readonly cutoffTime: Date;

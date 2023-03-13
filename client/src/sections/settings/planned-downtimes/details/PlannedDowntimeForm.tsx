@@ -15,6 +15,7 @@ import { DOWNTIME_TIMINGS, DOWNTIME_TYPES } from '../../../../constants';
 import { createPlannedDowntime, updatePlannedDowntime } from '../../../../redux/actions/plannedDowntimeAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
 import { PATH_SETTINGS } from '../../../../routes/paths';
+import { fDowntimeTimingText, fDowntimeTypeText } from '../../../../utils/textHelper';
 
 interface FormValuesProps extends EditPlannedDowntime {
   minutes: number;
@@ -137,7 +138,7 @@ export default function PlannedDowntimeForm({ isEdit }: Props) {
                     typography: 'body2',
                   }}
                 >
-                  {option}
+                  {fDowntimeTypeText(option)}
                 </MenuItem>
               ))}
             </RHFSelect>
@@ -156,7 +157,7 @@ export default function PlannedDowntimeForm({ isEdit }: Props) {
                     typography: 'body2',
                   }}
                 >
-                  {option}
+                  {fDowntimeTimingText(option)}
                 </MenuItem>
               ))}
             </RHFSelect>

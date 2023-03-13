@@ -10,11 +10,11 @@ import * as dayjs from 'dayjs';
 import { initialOeeBatchStats, OeeStats } from '../type/oee-stats';
 import { AnalyticData } from '../type/analytic-data';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OeeBatchEntity } from '../entities/oee-batch-entity';
+import { OeeBatchEntity } from '../entities/oee-batch.entity';
 import { Repository } from 'typeorm';
-import { OeeBatchStatsEntity } from '../entities/oee-batch-stats-entity';
-import { AnalyticStatsEntity } from '../entities/analytic-stats-entity';
-import { AnalyticStatsParamEntity } from '../entities/analytic-stats-param-entity';
+import { OeeBatchStatsEntity } from '../entities/oee-batch-stats.entity';
+import { AnalyticStatsEntity } from '../entities/analytic-stats.entity';
+import { AnalyticStatsParamEntity } from '../entities/analytic-stats-param.entity';
 import { OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from '../constant';
 
 @Injectable()
