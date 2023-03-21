@@ -371,21 +371,89 @@ sudo docker compose -f ./docker-compose-web.yaml up -d
 
 # On-Cloud (Poller)
 
-TBA
 
-## 3. ตั้งค่า environment variables ใน docker-compose-poller.yaml
+## 1. ตั้งค่า environment variables ใน docker-compose-poller.yaml
+
+เข้า folder SmartOEE
+
+```
+cd SmartOEE
+```
+
+แล้วแก้ไข้ไฟล์ docker-compose-poller.yaml
 
 #### environment
 
 | Variable      | Value                   | Description                                                                       |
 | ------------- | ----------------------- | --------------------------------------------------------------------------------- |
 | SITE_ID       | 1                       | เป็น ID ของ Site ที่ส่งข้อมูลให้ (ต้องสร้างจาก web ก่อน)                                    |
-| BASE_API_URL  | http://0.0.0.0:3000/api | URL ของ API เช่น http://192.168.0.1/api หรือ http://example.com/api                 |
-| BASE_WS_URL   | http://0.0.0.0:3000     | URL ของ API เช่น http://192.168.0.1 หรือ http://example.com                         |
+| BASE_API_URL  | http://0.0.0.0:3000/api | URL ของ API ที่ต้องการส่งค่าไป เช่น http://192.168.0.1/api หรือ http://example.com/api   |
+| BASE_WS_URL   | http://0.0.0.0:3000     | URL ของ API ที่ต้องการส่งค่าไป เช่น http://192.168.0.1 หรือ http://example.com           |
 | READ_INTERVAL | 0/3 * * * * *           | รอบที่ต้องการติดต่อกับ PLC (ค่าตั้งต้น 3 วินาที - cron format)                                |
 | SYNC_INTERVAL | 0/3 * * * * *           | รอบที่ต้องการติดต่อ API เพื่อทำการตรวจสอบข้อมูลที่มีการเปลี่ยนแปลง (ค่าตั้งต้น 3 วินาที - cron format) |
 | API_USER      | poller@user.com         | ชื่อ account (default) ที่ใช้สำหรับติดต่อ API ถ้ามีการเปลี่ยนที่หน้าเว็บจะต้องทำการแก้ไขค่านี้ด้วย        |
 | API_PASS      | P@ssword1               | รหัส account (default) ที่ใช้สำหรับติดต่อ API ถ้ามีการเปลี่ยนที่หน้าเว็บจะต้องทำการแก้ไขค่านี้ด้วย       |
+
+## 2. รัน docker-compose-poller.yaml build
+
+ทุกครั้งที่มีการเปลี่ยนค่าใน docker-compose-poller.yaml จะต้องทำการรัน docker compose build ทุกครั้ง
+
+```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
+docker compose -f ./docker-compose-poller.yaml build
+
+# หรือ
+
+sudo docker compose -f ./docker-compose-poller.yaml build
+```
+
+## 3. รัน docker-compose-poller.yaml up
+
+เริ่มการทำงานของโปรแกรมทั้งหมดโดยใช้คำสั่ง docker compose up
+
+```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
+docker compose -f ./docker-compose-poller.yaml up -d
+
+# หรือ
+
+sudo docker compose -f ./docker-compose-poller.yaml up -d
+```
+
+## การอัพเดต code (ใช้ git หรือ copy file)
+
+ในกรณีใช้ git
+
+```
+# อยู่ใน folder ที่ clone มา (SmartOEE)
+
+# หยุด docker compsoe
+
+docker compose -f ./docker-compose-poller.yaml down
+
+git pull
+```
+แล้วใช้คำสั่ง docker compose build
+
+```
+docker compose -f ./docker-compose-poller.yaml build
+
+# หรือ
+
+sudo docker compose -f ./docker-compose-poller.yaml build
+```
+
+จากนั้นรัน docker compose เพื่อเริ่มต้นการทำงาน
+
+```
+docker compose -f ./docker-compose-poller.yaml up -d
+
+# หรือ
+
+sudo docker compose -f ./docker-compose-poller.yaml up -d
+```
 
 ## Backup
 
