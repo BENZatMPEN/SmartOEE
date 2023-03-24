@@ -18,6 +18,7 @@ import { OeeBatchStatsEntity } from '../common/entities/oee-batch-stats.entity';
 import { OeeBatchLogEntity } from '../common/entities/oee-batch-logs.entity';
 import { PlanningEntity } from '../common/entities/planning.entity';
 import { PlanningService } from '../planning/planning.service';
+import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PlanningService } from '../planning/planning.service';
       OeeBatchStatsTimelineEntity,
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
+      OeeBatchJobEntity,
       TagReadEntity,
       PlanningEntity,
     ]),

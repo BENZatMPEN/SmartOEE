@@ -32,13 +32,13 @@ export class AnalyticEventsListener {
     private readonly analyticStatsParamRepository: Repository<AnalyticStatsParamEntity>,
   ) {}
 
-  @OnEvent('analytic-oee.update')
+  @OnEvent('analytic-oee.update', { async: true })
   async handleAnalyticOeeUpdateEvent(event: AnalyticOeeUpdateEvent) {
     const { batchId, oeeStats } = event;
     await this.collectOeeStatsFromBatch(batchId, oeeStats);
   }
 
-  @OnEvent('analytic-a-params.update')
+  @OnEvent('analytic-a-params.update', { async: true })
   async handleAnalyticAParamsUpdateEvent(event: AnalyticAParamUpdateEvent) {
     const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
@@ -55,7 +55,7 @@ export class AnalyticEventsListener {
     );
   }
 
-  @OnEvent('analytic-p-params.update')
+  @OnEvent('analytic-p-params.update', { async: true })
   async handleAnalyticPParamsUpdateEvent(event: AnalyticPParamUpdateEvent) {
     const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
@@ -72,7 +72,7 @@ export class AnalyticEventsListener {
     );
   }
 
-  @OnEvent('analytic-q-params.update')
+  @OnEvent('analytic-q-params.update', { async: true })
   async handleAnalyticQParamsUpdateEvent(event: AnalyticQParamUpdateEvent) {
     const { siteId, oeeId, productId, oeeBatchId, params } = event;
     const timestamp = dayjs().startOf('s');
@@ -89,7 +89,7 @@ export class AnalyticEventsListener {
     );
   }
 
-  async collectOeeStatsFromBatch(batchId: number, currentOeeStats: OeeStats): Promise<void> {
+  private async collectOeeStatsFromBatch(batchId: number, currentOeeStats: OeeStats): Promise<void> {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { siteId, oeeId, product, standardSpeedSeconds } = batch;
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, IsNull, Repository } from 'typeorm';
+import { EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { OeeEntity } from 'src/common/entities/oee.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { OeeMachineEntity } from '../common/entities/oee-machine.entity';
@@ -40,6 +40,7 @@ import {
 import { AnalyticQParam } from '../common/type/analytic-data';
 import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
 import { SocketService } from '../common/services/socket.service';
+import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
 
 export type ParetoData = {
   labels: string[];
@@ -79,6 +80,8 @@ export class OeeBatchService {
     private readonly oeeBatchStatsRepository: Repository<OeeBatchStatsEntity>,
     @InjectRepository(OeeBatchLogEntity)
     private readonly oeeBatchLogRepository: Repository<OeeBatchLogEntity>,
+    @InjectRepository(OeeBatchJobEntity)
+    private readonly oeeBatchJobRepository: Repository<OeeBatchJobEntity>,
     private readonly eventEmitter: EventEmitter2,
     private readonly entityManager: EntityManager,
     private readonly socketService: SocketService,
@@ -104,6 +107,10 @@ export class OeeBatchService {
 
   findById(id: number): Promise<OeeBatchEntity> {
     return this.oeeBatchRepository.findOneBy({ id });
+  }
+
+  findWithOeeById(id: number): Promise<OeeBatchEntity> {
+    return this.oeeBatchRepository.findOne({ where: { id }, relations: ['oee'] });
   }
 
   async findOptions(siteId: number): Promise<OptionItem[]> {
@@ -240,12 +247,18 @@ export class OeeBatchService {
         updatedAt: new Date(),
       });
 
-      const tagOutRest = this.findOeeTag(oeeBatch.oee.tags, OEE_TAG_OUT_RESET);
-      if (tagOutRest !== null) {
-        const tagOutResetData: OeeTagOutReset = tagOutRest.data;
+      await this.oeeBatchJobRepository.save({
+        oeeBatchId: oeeBatch.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const tagOutReset = this.findOeeTag(OEE_TAG_OUT_RESET, oeeBatch.oee.tags);
+      if (tagOutReset !== null) {
+        const tagOutResetData: OeeTagOutReset = tagOutReset.data;
         this.socketService.socket.to(`site_${oeeBatch.siteId}`).emit(`tag_out`, {
-          deviceId: tagOutRest.deviceId,
-          tagId: tagOutRest.tagId,
+          deviceId: tagOutReset.deviceId,
+          tagId: tagOutReset.tagId,
           value: tagOutResetData.reset,
         });
       }
@@ -254,7 +267,7 @@ export class OeeBatchService {
     return batchStartedDate;
   }
 
-  private findOeeTag(oeeTags: OeeTag[], key: string): OeeTag {
+  private findOeeTag(key: string, oeeTags: OeeTag[]): OeeTag {
     const itemIndex = oeeTags.findIndex((item) => item.key === key && item.tagId);
     if (itemIndex < 0) {
       return null;
@@ -263,7 +276,15 @@ export class OeeBatchService {
   }
 
   async endBatch(id: number): Promise<void> {
-    const oeeBatch = await this.findRunningBatchById(id);
+    const oeeBatch = await this.oeeBatchRepository.findOneBy({
+      id,
+      batchStartedDate: Not(IsNull()),
+      batchStoppedDate: IsNull(),
+    });
+    // .createQueryBuilder()
+    // .where('id = :id', { id })
+    // .andWhere('batchStartedDate IS NOT NULL AND batchStoppedDate IS NULL')
+    // .getOne();
 
     if (oeeBatch) {
       await this.oeeBatchRepository.save({
@@ -324,14 +345,6 @@ export class OeeBatchService {
         updatedAt: new Date(),
       });
     }
-  }
-
-  findRunningBatchById(id: number): Promise<OeeBatchEntity> {
-    return this.oeeBatchRepository
-      .createQueryBuilder()
-      .where('id = :id', { id })
-      .andWhere('batchStartedDate IS NOT NULL AND batchStoppedDate IS NULL')
-      .getOne();
   }
 
   // async findWorkingBatchByOeeId(oeeId: number): Promise<OeeBatch> {

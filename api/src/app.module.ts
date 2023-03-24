@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
@@ -57,7 +57,7 @@ import { WidgetEntity } from './common/entities/widget.entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
 import { TagReadEntity } from './common/entities/tag-read.entity';
 import { OeeBatchEditHistoryEntity } from './common/entities/oee-batch-edit-history.entity';
-import { ScheduleModule } from '@nestjs/schedule';
+import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
 import { AlarmEntity } from './common/entities/alarm.entity';
 import { AlarmModule } from './alarm/alarm.module';
 import { PlanningEntity } from './common/entities/planning.entity';
@@ -78,7 +78,6 @@ import { AnalyticStatsEntity } from './common/entities/analytic-stats.entity';
 import { TagReadJob } from './common/jobs/tag-read.job';
 import { NotificationModule } from './common/services/notification.module';
 import { BatchEventsListener } from './common/listeners/batch-events.listener';
-import { BatchOeeCalculateListener } from './common/listeners/batch-oee-calculate.listener';
 import { AnalyticService } from './analytic/analytic.service';
 import { AnalyticEventsListener } from './common/listeners/analytic-events.listener';
 import { AnalyticStatsParamEntity } from './common/entities/analytic-stats-param.entity';
@@ -93,6 +92,13 @@ import { AdminSiteModule } from './admin-site/admin-site.module';
 import { AdminUserModule } from './admin-user/admin-user.module';
 import * as path from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { CronJob } from 'cron';
+import { DataStoreJob } from './common/jobs/data-store.job';
+import { BatchStatsJob } from './common/jobs/batch-stats.job';
+import { OeeBatchJobEntity } from './common/entities/oee-batch-job.entity';
+import { BatchAEventsListener } from './common/listeners/batch-a-events.listener';
+import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
+import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
 
 @Module({
   imports: [
@@ -138,6 +144,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
             OeeBatchStatsTimelineEntity,
             OeeBatchStatsEntity,
             OeeBatchLogEntity,
+            OeeBatchJobEntity,
             FaqEntity,
             FaqAttachmentEntity,
             AttachmentEntity,
@@ -184,6 +191,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
       OeeBatchStatsTimelineEntity,
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
+      OeeBatchJobEntity,
       FaqEntity,
       FaqAttachmentEntity,
       AttachmentEntity,
@@ -280,12 +288,41 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     AnalyticService,
     OeeStatsJob,
     TagReadJob,
+    DataStoreJob,
+    BatchStatsJob,
     BatchEventsListener,
-    BatchOeeCalculateListener,
+    BatchAEventsListener,
+    BatchPEventsListener,
+    BatchQEventsListener,
     AnalyticEventsListener,
     FileService,
     AdminSiteService,
     AdminUserService,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(
+    private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly tagReadJob: TagReadJob,
+    private readonly batchStatsJob: BatchStatsJob,
+    private readonly dataStoreJob: DataStoreJob,
+  ) {}
+
+  onModuleInit() {
+    const batchStatsJob = new CronJob(process.env.BATCH_STATS_JOB_INTERVAL, () => {
+      (async () => {
+        await this.batchStatsJob.handleCron();
+      })();
+    });
+    this.schedulerRegistry.addCronJob('batchStatsJob', batchStatsJob);
+    batchStatsJob.start();
+
+    const dataStoreJob = new CronJob(process.env.DATA_STORE_JOB_INTERVAL, () => {
+      (async () => {
+        await this.dataStoreJob.handleCron();
+      })();
+    });
+    this.schedulerRegistry.addCronJob('dataStoreJob', dataStoreJob);
+    dataStoreJob.start();
+  }
+}

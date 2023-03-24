@@ -16,6 +16,7 @@ import {
   DEVICE_MODEL_CONNECTION_TYPE_TCP,
   DEVICE_MODEL_CONNECTION_TYPES,
   DEVICE_MODEL_TYPE_MODBUS,
+  DEVICE_MODEL_TYPE_OPCUA,
   DEVICE_MODEL_TYPES,
 } from '../../../../constants';
 import { createDeviceModel, updateDeviceModel } from '../../../../redux/actions/deviceModelAction';
@@ -68,9 +69,12 @@ export default function DeviceModelForm({ isEdit }: Props) {
   });
 
   const {
+    watch,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
+
+  const values = watch();
 
   const onSubmit = async (data: EditDeviceModel) => {
     const deviceModel =
@@ -177,6 +181,7 @@ export default function DeviceModelForm({ isEdit }: Props) {
                     <RHFSelect
                       name="connectionType"
                       label="Connection Type"
+                      disabled={values.modelType === DEVICE_MODEL_TYPE_OPCUA}
                       InputLabelProps={{ shrink: true }}
                       SelectProps={{ native: false }}
                     >

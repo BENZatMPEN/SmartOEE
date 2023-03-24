@@ -1,6 +1,11 @@
 import { Button, Stack } from '@mui/material';
 import { ThreeDButton } from '../../../components/ThreeDButton';
-import { initialOeeStats, OEE_BATCH_STATUS_MC_SETUP, OEE_BATCH_STATUS_PLANNED } from '../../../constants';
+import {
+  initialOeeStats,
+  OEE_BATCH_STATUS_MC_SETUP,
+  OEE_BATCH_STATUS_PLANNED,
+  OEE_BATCH_STATUS_RUNNING,
+} from '../../../constants';
 import useQuery from '../../../hooks/useQuery';
 import useToggle from '../../../hooks/useToggle';
 import { updateBatch } from '../../../redux/actions/oeeBatchAction';
@@ -94,6 +99,11 @@ export default function DashboardDetailsControlPanel() {
       await axios.put(`/oee-batches/${currentBatch.id}/remove-planned-downtime`, null, {
         params: { oeeId: selectedOee.id },
       });
+      dispatch(
+        updateBatch({
+          status: OEE_BATCH_STATUS_RUNNING,
+        }),
+      );
     } catch (error) {
       console.log(error);
     }

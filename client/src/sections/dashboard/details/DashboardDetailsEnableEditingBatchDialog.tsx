@@ -47,7 +47,7 @@ export default function DashboardDetailsEnableEditingBatchDialog({ open, onClose
       await axios.post(`/oee-batches/${oeeBatch.id}/open-edit`, data);
 
       enqueueSnackbar('Enable editing batch!');
-      dispatch(enableEditBatch());
+      dispatch(enableEditBatch(true));
       onClose();
     } catch (error) {
       console.error(error);

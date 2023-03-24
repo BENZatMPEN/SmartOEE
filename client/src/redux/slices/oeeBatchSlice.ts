@@ -92,8 +92,8 @@ const oeeBatchSlice = createSlice({
       state.canEditBatch = batchStoppedDate === null;
       state.currentBatch = action.payload;
     },
-    enableEditBatch(state) {
-      state.canEditBatch = true;
+    enableEditBatch(state, action) {
+      state.canEditBatch = action.payload;
     },
     newBatch(state, action) {
       state.currentBatch = action.payload;

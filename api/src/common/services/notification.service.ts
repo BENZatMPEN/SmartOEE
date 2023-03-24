@@ -180,7 +180,8 @@ export class NotificationService {
     return this.oeeBatchRepository.findOne({ where: { id: oeeBatchId }, relations: ['oee'] });
   }
 
-  async notifyOeeLow(
+  async notifyOee(
+    name: string,
     siteId: number,
     oeeId: number,
     batchId: number,
@@ -189,7 +190,7 @@ export class NotificationService {
   ): Promise<void> {
     const site = await this.getSite(siteId);
     const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).oeeLow);
+    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate)[name]);
     const message = template({
       oeeCode: oeeBatch.oee.oeeCode,
       productionName: oeeBatch.oee.productionName,
@@ -197,182 +198,7 @@ export class NotificationService {
       previousPercent: previousPercent.toFixed(2),
       currentPercent: currentPercent.toFixed(2),
     });
-    await this.notify(siteId, oeeId, 'oeeLow', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyALow(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).aLow);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'aLow', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyPLow(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).pLow);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'pLow', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyQLow(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).qLow);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'qLow', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyOeeHigh(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).oeeHigh);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'oeeHigh', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyAHigh(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).aHigh);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'aHigh', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyPHigh(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).pHigh);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'pHigh', {
-      message,
-      subject: message,
-      text: message,
-      html: message,
-    });
-  }
-
-  async notifyQHigh(
-    siteId: number,
-    oeeId: number,
-    batchId: number,
-    previousPercent: number,
-    currentPercent: number,
-  ): Promise<void> {
-    const site = await this.getSite(siteId);
-    const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate).qHigh);
-    const message = template({
-      oeeCode: oeeBatch.oee.oeeCode,
-      productionName: oeeBatch.oee.productionName,
-      sku: oeeBatch.product.sku,
-      previousPercent: previousPercent.toFixed(2),
-      currentPercent: currentPercent.toFixed(2),
-    });
-    await this.notify(siteId, oeeId, 'qHigh', {
+    await this.notify(siteId, oeeId, name, {
       message,
       subject: message,
       text: message,

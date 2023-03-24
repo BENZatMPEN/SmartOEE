@@ -10,8 +10,8 @@ export class DeviceModelTagEntity {
   @Column({ type: 'varchar', length: 500 })
   name: string;
 
-  @Column({ type: 'int', default: 0 })
-  address: number;
+  @Column({ type: 'varchar', length: 100 })
+  address: string;
 
   @Column({ type: 'int', default: 0 })
   length: number;

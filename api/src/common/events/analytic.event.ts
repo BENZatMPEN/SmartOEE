@@ -4,6 +4,11 @@ import { AnalyticAParam, AnalyticPParam, AnalyticQParam } from '../type/analytic
 export class AnalyticOeeUpdateEvent {
   batchId: number;
   oeeStats: OeeStats;
+
+  constructor(batchId: number, oeeStats: OeeStats) {
+    this.batchId = batchId;
+    this.oeeStats = oeeStats;
+  }
 }
 
 export class AnalyticAParamUpdateEvent {
@@ -12,6 +17,14 @@ export class AnalyticAParamUpdateEvent {
   productId: number;
   oeeBatchId: number;
   params: AnalyticAParam[];
+
+  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticAParam[]) {
+    this.siteId = siteId;
+    this.oeeId = oeeId;
+    this.productId = productId;
+    this.oeeBatchId = oeeBatchId;
+    this.params = params;
+  }
 }
 
 export class AnalyticPParamUpdateEvent {
@@ -20,6 +33,14 @@ export class AnalyticPParamUpdateEvent {
   productId: number;
   oeeBatchId: number;
   params: AnalyticPParam[];
+
+  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticPParam[]) {
+    this.siteId = siteId;
+    this.oeeId = oeeId;
+    this.productId = productId;
+    this.oeeBatchId = oeeBatchId;
+    this.params = params;
+  }
 }
 
 export class AnalyticQParamUpdateEvent {
@@ -28,4 +49,12 @@ export class AnalyticQParamUpdateEvent {
   productId: number;
   oeeBatchId: number;
   params: AnalyticQParam[];
+
+  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticQParam[]) {
+    this.siteId = siteId;
+    this.oeeId = oeeId;
+    this.productId = productId;
+    this.oeeBatchId = oeeBatchId;
+    this.params = params;
+  }
 }

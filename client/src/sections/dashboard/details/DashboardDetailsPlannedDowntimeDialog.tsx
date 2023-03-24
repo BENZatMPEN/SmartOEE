@@ -14,6 +14,8 @@ import Iconify from '../../../components/Iconify';
 import { DOWNTIME_TIMING_TIMER, DOWNTIME_TIMINGS, DOWNTIME_TYPES } from '../../../constants';
 import axios from '../../../utils/axios';
 import { fDowntimeTimingText, fDowntimeTypeText } from '../../../utils/textHelper';
+import { updateBatch } from '../../../redux/actions/oeeBatchAction';
+import { useDispatch } from '../../../redux/store';
 
 type FormValuesProps = {
   name: string;
@@ -31,6 +33,8 @@ type Props = {
 
 export default function DashboardDetailsPlannedDowntimeDialog({ oeeBatch, open, onClose }: Props) {
   const theme = useTheme();
+
+  const dispatch = useDispatch();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -75,6 +79,11 @@ export default function DashboardDetailsPlannedDowntimeDialog({ oeeBatch, open, 
         seconds,
       });
       enqueueSnackbar('Planned Downtime has been set!');
+      dispatch(
+        updateBatch({
+          status: data.type,
+        }),
+      );
       onClose();
     } catch (error) {
       console.log(error);

@@ -6,6 +6,7 @@ import Iconify from '../../../../components/Iconify';
 import {
   DEVICE_MODEL_DATA_TYPES,
   DEVICE_MODEL_READ_FUNCTIONS,
+  DEVICE_MODEL_TYPE_OPCUA,
   DEVICE_MODEL_WRITE_FUNCTIONS,
 } from '../../../../constants';
 import { fDeviceModelReadFuncText, fDeviceModelWriteFuncText } from '../../../../utils/textHelper';
@@ -23,7 +24,7 @@ export default function DeviceModelTagList() {
   const handleAdd = () => {
     append({
       name: '',
-      address: 0,
+      address: '',
       length: getLengthByDataType(DEVICE_MODEL_DATA_TYPES[0]),
       dataType: DEVICE_MODEL_DATA_TYPES[0],
       readFunc: 1,
@@ -90,11 +91,10 @@ export default function DeviceModelTagList() {
                     <Grid item xs={2.4}>
                       <RHFTextField
                         size="small"
-                        type="number"
+                        type="text"
                         name={`tags[${index}].address`}
                         label="Address"
                         InputLabelProps={{ shrink: true }}
-                        onChange={(event) => setValue(`tags[${index}].address`, Number(event.target.value))}
                       />
                     </Grid>
 
@@ -103,6 +103,7 @@ export default function DeviceModelTagList() {
                         name={`tags[${index}].readFunc`}
                         label="Read Func"
                         size="small"
+                        disabled={values.modelType === DEVICE_MODEL_TYPE_OPCUA}
                         InputLabelProps={{ shrink: true }}
                         SelectProps={{ native: false }}
                       >
@@ -185,6 +186,7 @@ export default function DeviceModelTagList() {
                         name={`tags[${index}].writeFunc`}
                         label="Write Func"
                         size="small"
+                        disabled={values.modelType === DEVICE_MODEL_TYPE_OPCUA}
                         InputLabelProps={{ shrink: true }}
                         SelectProps={{ native: false }}
                       >

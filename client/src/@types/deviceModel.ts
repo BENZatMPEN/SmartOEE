@@ -29,7 +29,7 @@ export type FilterDeviceModel = {
 export type DeviceModelTag = {
   id: number;
   name: string;
-  address: number;
+  address: string;
   length: number;
   dataType: string;
   readFunc: number;

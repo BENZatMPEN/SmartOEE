@@ -16,7 +16,7 @@ export class BatchEventsListener {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @OnEvent('batch-mc-state.update')
+  @OnEvent('batch-mc-state.update', { async: true })
   async handleMcStateUpdateEvent(event: BatchMcStateUpdateEvent) {
     const { siteId, batchId, currentMcState } = event;
     const { batchStatus: currentStatus } = currentMcState;
@@ -30,11 +30,9 @@ export class BatchEventsListener {
       status: currentMcState.batchStatus,
       mcState: currentMcState,
     });
-
-    this.socketService.socket.to(``).emit(``, {});
   }
 
-  @OnEvent('batch-timeline.update')
+  @OnEvent('batch-timeline.update', { async: true })
   async handleTimelineUpdateEvent(event: BatchTimelineUpdateEvent) {
     const { siteId, batchId, previousMcState, currentMcState } = event;
     const { batchStatus: currentStatus, timestamp: currentTimestamp } = currentMcState;
@@ -51,11 +49,9 @@ export class BatchEventsListener {
     this.socketService.socket.to(`site_${siteId}`).emit(`batch-timeline_${batchId}.updated`, timelines);
   }
 
-  @OnEvent('batch-a-params.updated')
+  @OnEvent('batch-a-params.updated', { async: true })
   async handleAParamsUpdatedEvent(event: BatchParamsUpdatedEvent) {
     const { batchId } = event;
-
-    this.logger.log('a params updated-------------------------');
 
     const batch = await this.oeeBatchService.findById(batchId);
     const { siteId } = batch;
@@ -71,11 +67,9 @@ export class BatchEventsListener {
     this.socketService.socket.to(`site_${siteId}`).emit(`a-pareto_${batchId}.updated`, paretoData);
   }
 
-  @OnEvent('batch-p-params.updated')
+  @OnEvent('batch-p-params.updated', { async: true })
   async handlePParamsUpdatedEvent(event: BatchParamsUpdatedEvent) {
     const { batchId } = event;
-
-    this.logger.log('p params updated-------------------------');
 
     const batch = await this.oeeBatchService.findById(batchId);
     const { siteId } = batch;
@@ -91,11 +85,9 @@ export class BatchEventsListener {
     this.socketService.socket.to(`site_${siteId}`).emit(`p-pareto_${batchId}.updated`, paretoData);
   }
 
-  @OnEvent('batch-q-params.updated')
+  @OnEvent('batch-q-params.updated', { async: true })
   async handleQParamsUpdatedEvent(event: BatchParamsUpdatedEvent) {
     const { batchId } = event;
-
-    this.logger.log('q params updated-------------------------');
 
     const batch = await this.oeeBatchService.findById(batchId);
     const qParams = await this.oeeBatchService.findBatchQsById(batch.id);

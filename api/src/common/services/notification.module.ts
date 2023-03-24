@@ -28,6 +28,7 @@ import { OeeBatchLogEntity } from '../entities/oee-batch-logs.entity';
 import { SiteService } from '../../site/site.service';
 import { UserEntity } from '../entities/user.entity';
 import { FileService } from './file.service';
+import { OeeBatchJobEntity } from '../entities/oee-batch-job.entity';
 
 @Global()
 @Module({
@@ -46,6 +47,7 @@ import { FileService } from './file.service';
       OeeBatchStatsTimelineEntity,
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
+      OeeBatchJobEntity,
       TagReadEntity,
       AlarmEntity,
       HistoryLogEntity,

@@ -1,5 +1,5 @@
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class DeviceModelTagDto {
   @IsNumber()
@@ -9,9 +9,8 @@ export class DeviceModelTagDto {
   @IsString()
   readonly name: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  readonly address: number;
+  @IsString()
+  readonly address: string;
 
   @IsNumber()
   @Type(() => Number)

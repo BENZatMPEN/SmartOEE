@@ -8,8 +8,16 @@ import ModbusRTU from 'modbus-serial';
 import { Device } from './@types/device';
 import { io, ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
 import * as dayjs from 'dayjs';
-import * as crypto from 'crypto';
 import { DeviceModelTag } from './@types/deviceModel';
+import {
+  AttributeIds,
+  ClientSession,
+  DataType,
+  MessageSecurityMode,
+  OPCUAClient,
+  SecurityPolicy,
+  StatusCode,
+} from 'node-opcua';
 
 const bootstrap = async () => {
   // Prepare anything before the app running here
@@ -56,8 +64,6 @@ function wait(ms: number) {
 async function handleModbus(device: Device, writeData: WriteItem[]): Promise<DeviceTagResult | null> {
   const { id, deviceId, address, port } = device;
 
-  console.log(id, address, port, '-', 'start reading', dayjs().format('HH:mm:ss:SSS'));
-
   const tagResult: DeviceTagResult = {
     deviceId: id,
     reads: [],
@@ -68,12 +74,13 @@ async function handleModbus(device: Device, writeData: WriteItem[]): Promise<Dev
     await client.connectTCP(address, { port });
     await client.setID(deviceId);
 
-    if (writeData.length > 0) {
-      const writeItem = writeData.shift();
-      const tagIndex = device.tags.findIndex((tag) => tag.id === writeItem.tagId);
+    console.log(`[ID: ${id} - ${address} ${port}]`, 'connected', dayjs().format('HH:mm:ss:SSS'));
 
+    for (const writeItem of writeData) {
+      const tagIndex = device.tags.findIndex((tag) => tag.id === writeItem.tagId);
       if (tagIndex >= 0) {
         await writeModbusRegister(client, device.tags[tagIndex].deviceModelTag, writeItem.value);
+        console.log(`[ID: ${id} - ${address} ${port}]`, 'wrote', writeItem);
       }
     }
 
@@ -86,18 +93,17 @@ async function handleModbus(device: Device, writeData: WriteItem[]): Promise<Dev
           });
         }
       } catch (readErr) {
-        console.log('read error', readErr);
+        console.log(`[ID: ${id} - ${address} ${port}]`, 'read error', readErr);
       }
     }
 
     client.close(() => {
-      console.log(id, address, port, '- close', device.address, device.port);
+      console.log(`[ID: ${id} - ${address} ${port}]`, 'closed', dayjs().format('HH:mm:ss:SSS'));
     });
 
-    console.log(id, address, port, '-', 'end reading', dayjs().format('HH:mm:ss:SSS'));
     return tagResult;
   } catch (modbusErr) {
-    console.log('modbus error', modbusErr);
+    console.log(`[ID: ${id} - ${address} ${port}]`, 'modbus error', modbusErr);
     return null;
   }
 }
@@ -171,6 +177,111 @@ async function writeModbusRegister(client: ModbusRTU, modelTag: DeviceModelTag, 
   }
 }
 
+async function handleOpcUa(device: Device, writeData: WriteItem[]): Promise<DeviceTagResult | null> {
+  const { id, address, port } = device;
+
+  const tagResult: DeviceTagResult = {
+    deviceId: id,
+    reads: [],
+  };
+
+  try {
+    const connectionStrategy = {
+      initialDelay: 1000,
+      maxRetry: 1,
+    };
+
+    const client = OPCUAClient.create({
+      applicationName: 'MyClient',
+      connectionStrategy: connectionStrategy,
+      securityMode: MessageSecurityMode.None,
+      securityPolicy: SecurityPolicy.None,
+      endpointMustExist: false,
+    });
+
+    await client.connect(`${address}:${port}`);
+    const session = await client.createSession();
+
+    console.log(`[ID: ${id} - ${address} ${port}]`, 'connected', dayjs().format('HH:mm:ss:SSS'));
+
+    for (const writeItem of writeData) {
+      const tagIndex = device.tags.findIndex((tag) => tag.id === writeItem.tagId);
+      if (tagIndex >= 0) {
+        const statusCode = await writeOpcUaRegister(session, device.tags[tagIndex].deviceModelTag, writeItem.value);
+        if (statusCode.isGood()) {
+          console.log(`[ID: ${id} - ${address} ${port}]`, 'wrote', writeItem);
+        } else {
+          console.log(`[ID: ${id} - ${address} ${port}]`, 'wrote error', statusCode);
+        }
+      }
+    }
+
+    for (const tag of device.tags) {
+      try {
+        if (!tag.deviceModelTag.writeState) {
+          const dataValue = await session.read({
+            nodeId: tag.deviceModelTag.address,
+            attributeId: AttributeIds.Value,
+          });
+
+          tagResult.reads.push({
+            tagId: tag.id,
+            read: String(dataValue.value.value),
+          });
+        }
+      } catch (readErr) {
+        console.log(`[ID: ${id} - ${address} ${port}]`, 'read error', readErr);
+      }
+    }
+
+    await session.close();
+    await client.disconnect();
+    console.log(`[ID: ${id} - ${address} ${port}]`, 'closed', dayjs().format('HH:mm:ss:SSS'));
+
+    return tagResult;
+  } catch (modbusErr) {
+    console.log(`[ID: ${id} - ${address} ${port}]`, 'opcua error', modbusErr);
+    return null;
+  }
+}
+
+function writeOpcUaRegister(session: ClientSession, modelTag: DeviceModelTag, value: any): Promise<StatusCode> {
+  return session.write({
+    nodeId: modelTag.address,
+    attributeId: AttributeIds.Value,
+    value: {
+      value: {
+        value: value,
+        dataType: getOpcUaDataType(modelTag.dataType),
+      },
+    },
+  });
+}
+
+function getOpcUaDataType(dataType: string): DataType {
+  switch (dataType) {
+    case 'int16':
+    case 'int16s':
+      return DataType.Int16;
+
+    case 'int16u':
+      return DataType.UInt16;
+
+    case 'int32':
+    case 'int32s':
+      return DataType.Int32;
+
+    case 'int32u':
+      return DataType.UInt32;
+
+    case 'float':
+      return DataType.Float;
+
+    default:
+      return DataType.String;
+  }
+}
+
 bootstrap()
   .then(async () => {
     console.log('App started');
@@ -227,13 +338,9 @@ bootstrap()
       console.log('reconnect');
     });
 
-    // const writeData: { id: number; item: WriteItem }[] = [];
-
     const writeData: { [deviceId: number]: { id: number; item: WriteItem }[] } = {};
 
     socket.on('tag_out', (data: WriteItem) => {
-      console.log('[incoming]writeData', data);
-
       if (data.tagId > -1) {
         if (!writeData[data.deviceId]) {
           writeData[data.deviceId] = [];
@@ -247,8 +354,6 @@ bootstrap()
     });
 
     scheduleJob(READ_INTERVAL, () => {
-      console.log('reading...');
-
       try {
         fs.readFile('./data/site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
           if (fileErr) {
@@ -259,24 +364,16 @@ bootstrap()
           const site = JSON.parse(siteJson) as Site;
           const { devices } = site;
 
-          const deviceHandlers = devices.map(async (device) => {
-            const { id, address, port, stopped, deviceModel } = device;
-            if (stopped) {
-              console.log(address, port, 'has been stopped.');
-              return;
-            }
+          const deviceHandlers = devices
+            .filter((device) => !device.stopped && device.deviceModel)
+            .map(async (device) => {
+              const { id, address, port, deviceModel } = device;
 
-            if (!deviceModel) {
-              console.log('Model has been provided.');
-              return;
-            }
-
-            if (deviceModel.modelType === 'modbus') {
               let writingItems: { id: number; item: WriteItem }[] = [];
 
               if (writeData[id]) {
                 writingItems = writeData[id].filter((item) => item.id <= dayjs().toDate().getTime());
-                console.log('[writing]writeData', writingItems);
+                console.log(`[ID: ${id} - ${address} ${port}]`, 'capture writing data', writingItems);
                 writingItems.forEach((item) => {
                   const tempIndex = writeData[id].findIndex((tempItem) => tempItem.id === item.id);
                   if (tempIndex >= 0) {
@@ -285,15 +382,18 @@ bootstrap()
                 });
               }
 
-              return await handleModbus(
-                device,
-                writingItems.map((item) => item.item),
-              );
-            } else if (deviceModel.modelType === 'opcua') {
-              console.log('OPC UA had been implemented yet.');
-              // TODO: implement here
-            }
-          });
+              if (deviceModel.modelType === 'modbus') {
+                return await handleModbus(
+                  device,
+                  writingItems.map((item) => item.item),
+                );
+              } else if (deviceModel.modelType === 'opcua') {
+                return await handleOpcUa(
+                  device,
+                  writingItems.map((item) => item.item),
+                );
+              }
+            });
 
           (async () => {
             const readResults = await Promise.all(deviceHandlers);
@@ -306,7 +406,10 @@ bootstrap()
 
             try {
               socket.emit('tagReads', tagResult);
-              tempReads.forEach((item) => console.log(item.deviceId, item.reads));
+              tempReads.forEach((item) => {
+                console.log(`[ID: ${item.deviceId} - SiteID: ${site.id}]`);
+                console.log(item);
+              });
             } catch (socketErr) {
               console.log('sending error', socketErr);
             }
@@ -318,14 +421,11 @@ bootstrap()
     });
 
     scheduleJob(SYNC_INTERVAL, async () => {
-      console.log('syncing...');
-
       try {
         const siteResp = await axios.get<Site>(`sites/${SITE_ID}`);
         const { data: site } = siteResp;
 
         if (!site.sync) {
-          console.log('nothing to sync.');
           return;
         }
 
@@ -339,6 +439,7 @@ bootstrap()
           }
         });
         await axios.put(`sites/${SITE_ID}/synced`);
+        console.log('data synced');
       } catch (requestErr) {
         console.log(requestErr);
       }

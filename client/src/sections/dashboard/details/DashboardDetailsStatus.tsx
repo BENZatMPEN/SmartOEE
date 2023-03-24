@@ -5,6 +5,7 @@ import { fDateTime } from '../../../utils/formatTime';
 import { getColor } from '../../../utils/colorHelper';
 import {
   OEE_BATCH_STATUS_BREAKDOWN,
+  OEE_BATCH_STATUS_ENDED,
   OEE_BATCH_STATUS_MC_SETUP,
   OEE_BATCH_STATUS_PLANNED,
   OEE_BATCH_STATUS_RUNNING,
@@ -116,8 +117,12 @@ export default function DashboardDetailsStatus() {
             <Box
               sx={{
                 backgroundColor: status
-                  ? status === OEE_BATCH_STATUS_STANDBY || status === OEE_BATCH_STATUS_PLANNED
-                    ? getColor(status)
+                  ? status === OEE_BATCH_STATUS_STANDBY ||
+                    status === OEE_BATCH_STATUS_PLANNED ||
+                    status === OEE_BATCH_STATUS_ENDED
+                    ? getColor(
+                        status === OEE_BATCH_STATUS_PLANNED ? OEE_BATCH_STATUS_PLANNED : OEE_BATCH_STATUS_STANDBY,
+                      )
                     : 'lightgray'
                   : 'lightgray',
                 borderRadius: '6px',

@@ -50,26 +50,43 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     this.socketService.socket = server;
   }
 
-  async handleConnection(client: any, ...args: any[]): Promise<any> {
+  private getAuthUser(client: any): AuthUserDto | null {
     const authorization = client?.request.headers.authorization;
     if (!authorization) {
-      return;
+      return null;
     }
 
     try {
-      const authUser = jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
-      const user = await this.userService.findById(authUser.id);
-      const sites = user.isAdmin ? await this.siteService.findAll() : user.sites;
-      (sites || []).forEach((site) => {
-        client.join(`site_${site.id}`);
-      });
+      return jwt.verify(authorization, this.config.token.secret) as AuthUserDto;
+    } catch {
+      return null;
+    }
+  }
 
-      this.logger.log(`Client connected`);
-    } catch {}
+  async handleConnection(client: any, ...args: any[]): Promise<any> {
+    const authUser = this.getAuthUser(client);
+    if (!authUser) {
+      this.logger.log(`Client connected - anonymous`);
+      return;
+    }
+
+    const user = await this.userService.findById(authUser.id);
+    const sites = user.isAdmin ? await this.siteService.findAll() : user.sites;
+    (sites || []).forEach((site) => {
+      client.join(`site_${site.id}`);
+    });
+
+    this.logger.log(`Client connected - ${user.email}`);
   }
 
   handleDisconnect(client: any): any {
-    this.logger.log(`Client disconnected`);
+    const authUser = this.getAuthUser(client);
+    if (!authUser) {
+      this.logger.log(`Client disconnected - anonymous`);
+      return;
+    }
+
+    this.logger.log(`Client disconnected - ${authUser.email}`);
   }
 
   @SubscribeMessage('tagReads')

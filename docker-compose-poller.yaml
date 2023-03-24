@@ -9,7 +9,7 @@ services:
       SITE_ID: 1
       BASE_API_URL: http://api:3000/api
       BASE_WS_URL: http://api:3000
-      READ_INTERVAL: "0/10 * * * * *"
+      READ_INTERVAL: "0/3 * * * * *"
       SYNC_INTERVAL: "0/3 * * * * *"
       API_USER: poller@user.com
       API_PASS: P@ssword1
