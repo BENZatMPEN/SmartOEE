@@ -93,18 +93,126 @@ export class AnalyticEventsListener {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { siteId, oeeId, product, standardSpeedSeconds } = batch;
 
-    const currentTime = dayjs().minute() < 30 ? dayjs().startOf('h') : dayjs().startOf('h').add(30, 'm');
-    const previousStats = await this.oeeBatchStatsRepository
+    const cutoffTime = 30;
+    const currentTime = dayjs().minute() < cutoffTime ? dayjs().startOf('h') : dayjs().startOf('h').add(30, 'm');
+    const previousTime = currentTime.add(-cutoffTime, 'm');
+
+    // adjust the previous in case of timelapse
+    const count = await this.analyticStatsRepository.countBy({
+      siteId,
+      oeeId,
+      productId: product.id,
+      oeeBatchId: batch.id,
+    });
+
+    // 2 possible cases
+    if (count >= 2) {
+      const analyticStats = await this.analyticStatsRepository.findOneBy({
+        siteId,
+        oeeId,
+        productId: product.id,
+        oeeBatchId: batch.id,
+        timestamp: previousTime.toDate(),
+      });
+
+      // 1) first record of analytic - just get the last record of the period
+      // count === 2, the first and the current
+      if (count === 2) {
+        // previous period 11:00:00 - 11:29:59
+        // current period 11:30:00 - 11:59:59
+        const batchStats = await this.oeeBatchStatsRepository
+          .createQueryBuilder()
+          .where(`oeeBatchId = :oeeBatchId`, { oeeBatchId: batchId })
+          .andWhere('timestamp >= :from and timestamp <= :to', {
+            from: previousTime.toDate(),
+            to: currentTime.add(-1).toDate(),
+          })
+          .orderBy({ timestamp: 'DESC' })
+          .getOne();
+
+        const data: AnalyticData = {
+          standardSpeedSeconds: standardSpeedSeconds,
+          runningSeconds: batchStats.data.runningSeconds,
+          plannedDowntimeSeconds: batchStats.data.plannedDowntimeSeconds,
+          machineSetupSeconds: batchStats.data.machineSetupSeconds,
+          totalCount: batchStats.data.totalCount,
+          totalBreakdownSeconds: batchStats.data.totalBreakdownSeconds,
+          totalStopSeconds: batchStats.data.totalStopSeconds,
+          totalSpeedLossSeconds: batchStats.data.totalSpeedLossSeconds,
+          totalMinorStopSeconds: batchStats.data.totalMinorStopSeconds,
+          totalManualDefects: batchStats.data.totalManualDefects,
+          totalAutoDefects: batchStats.data.totalAutoDefects,
+          totalOtherDefects: batchStats.data.totalOtherDefects,
+        };
+
+        await this.analyticStatsRepository.save({
+          ...analyticStats,
+          data,
+        });
+      }
+      // 2) n>1-record of analytic - get the last record of the previous period and the last record of the previous previous period then diff
+      else {
+        // 12:00:01 - the current (12:00:00 - 12:29:59)
+        // 11:59:58 - last of the previous period (11:30:00 - 11:59:59)
+        // 11:29:59 - last of the previous previous period (11:00:00 - 11:29:59)
+        // (11:59:58) - (11:29:59)
+
+        // 11:29:59
+        const batchStats1 = await this.oeeBatchStatsRepository
+          .createQueryBuilder()
+          .where(`oeeBatchId = :oeeBatchId`, { oeeBatchId: batchId })
+          .andWhere('timestamp >= :from and timestamp <= :to', {
+            from: previousTime.add(-cutoffTime, 'm').toDate(),
+            to: previousTime.add(-1).toDate(),
+          })
+          .orderBy({ timestamp: 'DESC' })
+          .getOne();
+
+        // 11:59:58
+        const batchStats2 = await this.oeeBatchStatsRepository
+          .createQueryBuilder()
+          .where(`oeeBatchId = :oeeBatchId`, { oeeBatchId: batchId })
+          .andWhere('timestamp >= :from and timestamp <= :to', {
+            from: previousTime.toDate(),
+            to: currentTime.add(-1).toDate(),
+          })
+          .orderBy({ timestamp: 'DESC' })
+          .getOne();
+
+        const data: AnalyticData = {
+          standardSpeedSeconds: standardSpeedSeconds,
+          runningSeconds: batchStats2.data.runningSeconds - batchStats1.data.runningSeconds,
+          plannedDowntimeSeconds: batchStats2.data.plannedDowntimeSeconds - batchStats1.data.plannedDowntimeSeconds,
+          machineSetupSeconds: batchStats2.data.machineSetupSeconds - batchStats1.data.machineSetupSeconds,
+          totalCount: batchStats2.data.totalCount - batchStats1.data.totalCount,
+          totalBreakdownSeconds: batchStats2.data.totalBreakdownSeconds - batchStats1.data.totalBreakdownSeconds,
+          totalStopSeconds: batchStats2.data.totalStopSeconds - batchStats1.data.totalStopSeconds,
+          totalSpeedLossSeconds: batchStats2.data.totalSpeedLossSeconds - batchStats1.data.totalSpeedLossSeconds,
+          totalMinorStopSeconds: batchStats2.data.totalMinorStopSeconds - batchStats1.data.totalMinorStopSeconds,
+          totalManualDefects: batchStats2.data.totalManualDefects - batchStats1.data.totalManualDefects,
+          totalAutoDefects: batchStats2.data.totalAutoDefects - batchStats1.data.totalAutoDefects,
+          totalOtherDefects: batchStats2.data.totalOtherDefects - batchStats1.data.totalOtherDefects,
+        };
+
+        await this.analyticStatsRepository.save({
+          ...analyticStats,
+          data,
+        });
+      }
+    }
+
+    // update the current
+    const previousBatchStats = await this.oeeBatchStatsRepository
       .createQueryBuilder()
       .where(`oeeBatchId = :oeeBatchId`, { oeeBatchId: batchId })
       .andWhere('timestamp >= :from and timestamp <= :to', {
-        from: currentTime.add(-30, 'm').toDate(),
-        to: currentTime.toDate(),
+        from: previousTime.toDate(),
+        to: currentTime.add(-1).toDate(),
       })
       .orderBy({ timestamp: 'DESC' })
       .getOne();
 
-    const lastCutoffData = previousStats ? previousStats.data : initialOeeBatchStats;
+    const lastCutoffData = previousBatchStats ? previousBatchStats.data : initialOeeBatchStats;
     const {
       runningSeconds,
       plannedDowntimeSeconds,
@@ -119,7 +227,7 @@ export class AnalyticEventsListener {
       totalOtherDefects,
     } = currentOeeStats;
 
-    const newData: AnalyticData = {
+    const data: AnalyticData = {
       standardSpeedSeconds: standardSpeedSeconds,
       runningSeconds: runningSeconds - lastCutoffData.runningSeconds,
       plannedDowntimeSeconds: plannedDowntimeSeconds - lastCutoffData.plannedDowntimeSeconds,
@@ -149,7 +257,7 @@ export class AnalyticEventsListener {
       productId: product.id,
       oeeBatchId: batch.id,
       timestamp: currentTime.toDate(),
-      data: newData,
+      data,
     });
   }
 }

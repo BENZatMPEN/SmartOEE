@@ -7,7 +7,6 @@ import * as dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SocketService } from '../services/socket.service';
-import { SiteService } from '../../site/site.service';
 import { Read, ReadItem } from '../type/read';
 import {
   OEE_BATCH_STATUS_BREAKDOWN,
@@ -18,23 +17,9 @@ import {
   OEE_BATCH_STATUS_STANDBY,
   OEE_BATCH_STATUS_UNKNOWN,
   OEE_TAG_MC_STATE,
-  OEE_TAG_OUT_A,
   OEE_TAG_OUT_BATCH_STATUS,
-  OEE_TAG_OUT_BREAKING_TIME,
-  OEE_TAG_OUT_CYCLE_TIME,
-  OEE_TAG_OUT_OEE,
-  OEE_TAG_OUT_OPERATING_TIME,
-  OEE_TAG_OUT_P,
-  OEE_TAG_OUT_PLANNED_DOWNTIME,
-  OEE_TAG_OUT_PLANNED_QUANTITY,
-  OEE_TAG_OUT_Q,
-  OEE_TAG_OUT_TOTAL_NG,
   OEE_TAG_TOTAL,
   OEE_TAG_TOTAL_NG,
-  OEE_TYPE_A,
-  OEE_TYPE_OEE,
-  OEE_TYPE_P,
-  OEE_TYPE_Q,
   PLANNED_DOWNTIME_TIMING_AUTO,
   PLANNED_DOWNTIME_TIMING_MANUAL,
   PLANNED_DOWNTIME_TIMING_TIMER,
@@ -45,8 +30,6 @@ import { OeeTag, OeeTagMCStatus, OeeTagOutBatchStatus } from '../type/oee-tag';
 import { OeeBatchMcState } from '../type/oee-status';
 import { OeeBatchPlannedDowntimeEntity } from '../entities/oee-batch-planned-downtime.entity';
 import { OeeBatchEntity } from '../entities/oee-batch.entity';
-import { OeeStats } from '../type/oee-stats';
-import { PercentSetting } from '../type/percent-settings';
 import { Cron } from '@nestjs/schedule';
 import { logBatch } from '../utils/batchHelper';
 import { BatchAEvent } from '../events/batch-a.event';
@@ -306,8 +289,6 @@ export class TagReadJob {
       if (currentMcState.totalNg > previousMcState.totalNg) {
         await this.eventEmitter.emitAsync('batch-q-params.process', new BatchQEvent(batch, allReads));
       }
-
-      // await this.calculateBatchOee(batch, previousMcState, currentMcState, oeeTags);
 
       if (batch.toBeStopped) {
         logBatch(this.logger, batch.id, oeeCode, `batch stopped`);

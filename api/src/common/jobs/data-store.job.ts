@@ -39,7 +39,7 @@ export class DataStoreJob {
       oeeStats: batch.oeeStats,
     });
 
-    if (batch.batchStoppedDate) {
+    if (batch.batchStoppedDate && batchJob.batchJobEnded) {
       await this.oeeBatchJobRepository.save({
         id: batchJob.id,
         dataJobEnded: new Date(),
