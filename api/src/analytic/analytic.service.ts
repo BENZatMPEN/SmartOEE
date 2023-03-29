@@ -1285,19 +1285,19 @@ export class AnalyticService {
       totalCountByBatch,
     } = sumData;
 
-    const loadingTime = runningSeconds - plannedDowntimeSeconds;
-    const nonZeroLoadingTime = loadingTime === 0 ? 1 : loadingTime;
-    const operatingTime = loadingTime - totalBreakdownSeconds;
+    const loadingSeconds = runningSeconds - plannedDowntimeSeconds;
+    const nonZeroLoadingSeconds = loadingSeconds === 0 ? 1 : loadingSeconds;
+    const operatingSeconds = loadingSeconds - totalBreakdownSeconds;
 
     // calculate A
-    const aPercent = operatingTime / nonZeroLoadingTime;
+    const aPercent = operatingSeconds / nonZeroLoadingSeconds;
 
     // calculate P
     const totalP = Object.keys(totalCountByBatch).reduce((acc, key) => {
       acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
       return acc;
     }, 0);
-    const pPercent = totalP / nonZeroLoadingTime;
+    const pPercent = totalP / operatingSeconds;
 
     // calculate Q
     const totalAllDefects = totalAutoDefects + totalManualDefects;
