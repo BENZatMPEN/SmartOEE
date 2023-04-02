@@ -124,7 +124,7 @@ export class TagReadJob {
         logBatch(this.logger, batch.id, oeeCode, `batch started`);
         await this.eventEmitter.emitAsync(
           'batch-mc-state.update',
-          new BatchMcStateUpdateEvent(batch.siteId, batch.id, {
+          new BatchMcStateUpdateEvent(batch, {
             ...currentMcState,
             timestamp: batch.batchStartedDate,
           }),
@@ -240,6 +240,13 @@ export class TagReadJob {
         `batch status - previous: ${previousMcState.batchStatus}, current: ${currentMcState.batchStatus}`,
       );
 
+      await this.eventEmitter.emitAsync('batch-mc-state.update', new BatchMcStateUpdateEvent(batch, currentMcState));
+
+      await this.eventEmitter.emitAsync(
+        'batch-timeline.update',
+        new BatchTimelineUpdateEvent(batch, previousMcState, currentMcState),
+      );
+
       // send batch status
       const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
       if (tagOutBatchStatus !== null) {
@@ -253,16 +260,6 @@ export class TagReadJob {
           });
         }
       }
-
-      await this.eventEmitter.emitAsync(
-        'batch-mc-state.update',
-        new BatchMcStateUpdateEvent(batch.siteId, batch.id, currentMcState),
-      );
-
-      await this.eventEmitter.emitAsync(
-        'batch-timeline.update',
-        new BatchTimelineUpdateEvent(batch.siteId, batch.id, previousMcState, currentMcState),
-      );
 
       // check A or P
       if (

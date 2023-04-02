@@ -18,15 +18,15 @@ export class BatchEventsListener {
 
   @OnEvent('batch-mc-state.update', { async: true })
   async handleMcStateUpdateEvent(event: BatchMcStateUpdateEvent) {
-    const { siteId, batchId, currentMcState } = event;
+    const { batch, currentMcState } = event;
     const { batchStatus: currentStatus } = currentMcState;
 
-    await this.oeeBatchService.update1(batchId, {
+    await this.oeeBatchService.update1(batch.id, {
       status: currentStatus,
       mcState: currentMcState,
     });
 
-    this.socketService.socket.to(`site_${siteId}`).emit(`mc-state_${batchId}.changed`, {
+    this.socketService.socket.to(`site_${batch.siteId}`).emit(`mc-state_${batch.id}.changed`, {
       status: currentMcState.batchStatus,
       mcState: currentMcState,
     });
@@ -34,19 +34,20 @@ export class BatchEventsListener {
 
   @OnEvent('batch-timeline.update', { async: true })
   async handleTimelineUpdateEvent(event: BatchTimelineUpdateEvent) {
-    const { siteId, batchId, previousMcState, currentMcState } = event;
-    const { batchStatus: currentStatus, timestamp: currentTimestamp } = currentMcState;
+    const { batch, previousMcState, currentMcState } = event;
+    const { batchStatus: currentStatus } = currentMcState;
     const { batchStatus: previousStatus } = previousMcState;
 
-    const timeline = await this.oeeBatchService.findBatchLatestTimeline(batchId);
+    const timeline = await this.oeeBatchService.findBatchLatestTimeline(batch.id);
+
     if (!timeline || previousStatus !== currentStatus) {
-      await this.oeeBatchService.createBatchTimeline(batchId, currentStatus, new Date(currentTimestamp));
+      await this.oeeBatchService.createBatchTimeline(batch, currentStatus, new Date());
     } else {
-      await this.oeeBatchService.updateBatchTimeline(timeline.id, new Date(currentTimestamp));
+      await this.oeeBatchService.updateBatchTimeline(timeline.id, new Date());
     }
 
-    const timelines = await this.oeeBatchService.findBatchTimelinesByBatchId(batchId);
-    this.socketService.socket.to(`site_${siteId}`).emit(`batch-timeline_${batchId}.updated`, timelines);
+    const timelines = await this.oeeBatchService.findBatchTimelinesByBatchId(batch.id);
+    this.socketService.socket.to(`site_${batch.siteId}`).emit(`batch-timeline_${batch.id}.updated`, timelines);
   }
 
   @OnEvent('batch-a-params.updated', { async: true })

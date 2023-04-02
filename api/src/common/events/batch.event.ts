@@ -1,26 +1,23 @@
 import { OeeBatchMcState } from '../type/oee-status';
+import { OeeBatchEntity } from '../entities/oee-batch.entity';
 
 export class BatchMcStateUpdateEvent {
-  siteId: number;
-  batchId: number;
+  batch: OeeBatchEntity;
   currentMcState: OeeBatchMcState;
 
-  constructor(siteId: number, batchId: number, currentMcState: OeeBatchMcState) {
-    this.siteId = siteId;
-    this.batchId = batchId;
+  constructor(batch: OeeBatchEntity, currentMcState: OeeBatchMcState) {
+    this.batch = batch;
     this.currentMcState = currentMcState;
   }
 }
 
 export class BatchTimelineUpdateEvent {
-  siteId: number;
-  batchId: number;
+  batch: OeeBatchEntity;
   previousMcState: OeeBatchMcState;
   currentMcState: OeeBatchMcState;
 
-  constructor(siteId: number, batchId: number, previousMcState: OeeBatchMcState, currentMcState: OeeBatchMcState) {
-    this.siteId = siteId;
-    this.batchId = batchId;
+  constructor(batch: OeeBatchEntity, previousMcState: OeeBatchMcState, currentMcState: OeeBatchMcState) {
+    this.batch = batch;
     this.previousMcState = previousMcState;
     this.currentMcState = currentMcState;
   }

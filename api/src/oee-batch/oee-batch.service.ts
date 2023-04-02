@@ -632,16 +632,15 @@ export class OeeBatchService {
   findBatchLatestTimeline(batchId: number): Promise<OeeBatchStatsTimelineEntity> {
     return this.oeeBatchStatsTimelineRepository.findOne({
       where: { oeeBatchId: batchId },
-      order: { toDate: 'DESC' },
+      order: { fromDate: 'DESC' },
     });
   }
 
-  async createBatchTimeline(batchId: number, status: string, date: Date): Promise<void> {
-    const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
+  async createBatchTimeline(batch: OeeBatchEntity, status: string, date: Date): Promise<void> {
     await this.oeeBatchStatsTimelineRepository.save({
       oeeId: batch.oeeId,
       productId: batch.product.id,
-      oeeBatchId: batchId,
+      oeeBatchId: batch.id,
       status,
       fromDate: date,
       toDate: date,
