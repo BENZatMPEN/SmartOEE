@@ -143,10 +143,10 @@ export class BatchStatsJob {
       const totalMinorStopCount = minorStopList.length;
       const totalMinorStopSeconds = minorStopList.reduce((acc, x) => acc + x.seconds, 0);
       const pStopSeconds = stopSeconds >= standardSpeedSeconds && stopSeconds < breakdownSeconds ? stopSeconds : 0;
-      const currentPPercent = total === 0 ? 1 : (standardSpeedSeconds * total) / operatingSeconds;
+      const pPercent = total === 0 ? 1 : (standardSpeedSeconds * total) / operatingSeconds;
 
-      const usePreviousP = total - previousTotal === 0 && pStopSeconds === 0 && aStopSeconds === 0;
-      const pPercent = usePreviousP ? oeeStats.pPercent / 100 : currentPPercent;
+      // const usePreviousP = total - previousTotal === 0 && pStopSeconds === 0 && aStopSeconds === 0;
+      // const pPercent = usePreviousP ? oeeStats.pPercent / 100 : currentPPercent;
 
       // calculate Q
       const totalAllDefects = totalNg + totalManualDefects;
