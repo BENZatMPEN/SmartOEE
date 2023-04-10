@@ -515,14 +515,10 @@ export class OeeBatchService {
       machineParameterId: null,
     });
 
-    const analyticQParamsUpdateEvent: AnalyticQParamUpdateEvent = {
-      siteId,
-      oeeId,
-      productId: product.id,
-      oeeBatchId: batch.id,
-      params: analyticQParams,
-    };
-    await this.eventEmitter.emitAsync('analytic-q-params.update', analyticQParamsUpdateEvent);
+    await this.eventEmitter.emitAsync(
+      'analytic-q-params.update',
+      new AnalyticQParamUpdateEvent(siteId, oeeId, product.id, batch.id, analyticQParams),
+    );
 
     // then update the data
     await this.oeeBatchQRepository.save(
@@ -819,6 +815,7 @@ export class OeeBatchService {
       totalBreakdownSeconds,
       totalCount,
       totalAutoDefects,
+      totalManualDefects,
       oeePercent,
       aPercent,
       pPercent,
@@ -828,6 +825,7 @@ export class OeeBatchService {
       pStopSeconds,
     } = oeeStats;
 
+    const totalDefects = totalAutoDefects + totalManualDefects;
     await this.oeeBatchLogRepository.save({
       oeeId: batch.oeeId,
       productId: batch.product.id,
@@ -851,8 +849,8 @@ export class OeeBatchService {
         diff: plannedQuantity - totalCount,
         efficiency: efficiency,
         totalProduct: totalCount,
-        goodProduct: totalCount - totalAutoDefects,
-        defectProduct: totalAutoDefects,
+        goodProduct: totalCount - totalDefects,
+        defectProduct: totalDefects,
         batchStatus,
         pStopSeconds,
         oee: oeePercent,

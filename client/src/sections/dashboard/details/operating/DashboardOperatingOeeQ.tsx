@@ -113,12 +113,10 @@ export default function DashboardOperatingOeeQ() {
 
     try {
       await axios.post(`/oee-batches/${currentBatch.id}/q-params`, {
-        qParams: localQs.map((item) => {
-          return {
-            id: item.id,
-            manualAmount: item.manualAmount,
-          };
-        }),
+        qParams: localQs.map((item) => ({
+          id: item.id,
+          manualAmount: item.manualAmount,
+        })),
         totalManual: qStats.totalManual,
       });
 
