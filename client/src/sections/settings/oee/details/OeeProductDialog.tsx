@@ -31,14 +31,22 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
   const { reset, handleSubmit } = methods;
 
   const onSubmit = async (data: FormValuesProps) => {
-    setSearchTerm(data.searchTerm || '');
+    const term = (data.searchTerm || '').toUpperCase();
+    setFilteredProducts(
+      (products || []).filter(
+        (product) =>
+          term.length === 0 ||
+          product.sku.toUpperCase().indexOf(term) >= 0 ||
+          product.name.toUpperCase().indexOf(term) >= 0,
+      ),
+    );
   };
-
-  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const [selectedProduct, setSelectedProduct] = useState<OeeProduct>({} as OeeProduct);
 
   const [products, setProducts] = useState<Product[]>([]);
+
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -47,6 +55,7 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
     try {
       const response = await axios.get<Product[]>('/products/all');
       setProducts(response.data);
+      setFilteredProducts(response.data);
       setIsLoading(false);
     } catch {
       setIsLoading(false);
@@ -69,11 +78,6 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
         }
       }
     })();
-
-    return () => {
-      setSearchTerm('');
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleSelectOeeProduct = () => {
@@ -139,32 +143,25 @@ export default function OeeProductDialog({ open, onClose, editingProduct, curren
           />
 
           <Scrollbar sx={{ maxHeight: 400 }}>
-            {(products || [])
-              .filter(
-                (product) =>
-                  searchTerm.length === 0 ||
-                  product.sku.indexOf(searchTerm) >= 0 ||
-                  product.name.indexOf(searchTerm) >= 0,
-              )
-              .map((product) => (
-                <ListItemButton
-                  key={product.id}
-                  selected={selectedProduct?.productId === product.id}
-                  onClick={() => handleSelectItem(product)}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 1,
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Typography variant="subtitle2">{product.name}</Typography>
+            {filteredProducts.map((product) => (
+              <ListItemButton
+                key={product.id}
+                selected={selectedProduct?.productId === product.id}
+                onClick={() => handleSelectItem(product)}
+                sx={{
+                  p: 1.5,
+                  borderRadius: 1,
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <Typography variant="subtitle2">{product.name}</Typography>
 
-                  <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
-                    {product.sku}
-                  </Typography>
-                </ListItemButton>
-              ))}
+                <Typography variant="caption" sx={{ color: 'primary.main', my: 0.5, fontWeight: 'fontWeightMedium' }}>
+                  {product.sku}
+                </Typography>
+              </ListItemButton>
+            ))}
           </Scrollbar>
         </Stack>
       </Stack>

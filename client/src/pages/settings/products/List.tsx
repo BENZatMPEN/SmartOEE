@@ -32,6 +32,7 @@ import { RoleAction, RoleSubject } from '../../../@types/role';
 const TABLE_HEAD = [
   { id: 'sku', label: 'SKU code', align: 'left', sort: true },
   { id: 'name', label: 'Product Name', align: 'left', sort: true },
+  { id: 'createdAt', label: 'Created', align: 'left', sort: true },
   { id: '' },
 ];
 
@@ -51,8 +52,8 @@ export default function ProductList() {
     onChangePage,
     onChangeRowsPerPage,
   } = useTable({
-    defaultOrderBy: 'sku',
-    defaultOrder: 'asc',
+    defaultOrderBy: 'createdAt',
+    defaultOrder: 'desc',
   });
 
   const navigate = useNavigate();

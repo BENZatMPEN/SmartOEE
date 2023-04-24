@@ -49,6 +49,7 @@ function SettingsProvider({ children }: SettingsProviderProps) {
       ...settings,
       themeMode: (event.target as HTMLInputElement).value as ThemeMode,
     });
+    window.location.reload();
   };
 
   const onToggleMode = () => {

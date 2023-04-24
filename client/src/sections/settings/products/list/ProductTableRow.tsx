@@ -6,6 +6,7 @@ import Iconify from '../../../../components/Iconify';
 import { TableMoreMenu } from '../../../../components/table';
 import { RoleAction, RoleSubject } from '../../../../@types/role';
 import { AbilityContext } from '../../../../caslContext';
+import { fShortDate, fShortDateTime } from '../../../../utils/formatTime';
 
 type Props = {
   row: Product;
@@ -19,7 +20,7 @@ type Props = {
 export default function ProductTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow, onDuplicateRow }: Props) {
   const theme = useTheme();
 
-  const { name, sku } = row;
+  const { name, sku, createdAt } = row;
 
   const [openMenu, setOpenMenuActions] = useState<HTMLElement | null>(null);
 
@@ -47,6 +48,8 @@ export default function ProductTableRow({ row, selected, onEditRow, onSelectRow,
       <TableCell align="left">{sku}</TableCell>
 
       <TableCell align="left">{name}</TableCell>
+
+      <TableCell align="left">{fShortDateTime(createdAt)}</TableCell>
 
       <TableCell align="right">
         {showMenu && (

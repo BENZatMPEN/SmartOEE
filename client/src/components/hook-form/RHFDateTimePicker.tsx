@@ -93,7 +93,7 @@ export function RHFTimePicker({ name, label, size }: DateTimePickerProps) {
             value={field.value}
             onChange={(newValue: any) => {
               if (newValue) {
-                field.onChange(newValue.year(2000).startOf('y').toDate());
+                field.onChange(newValue.startOf('m').toDate());
               }
             }}
             renderInput={(params: any) => (
