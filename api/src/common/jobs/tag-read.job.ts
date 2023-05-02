@@ -87,7 +87,7 @@ export class TagReadJob {
     try {
       const batch = await this.oeeBatchService.findWithOeeById(batchId);
       const { oeeCode, tags: oeeTags } = batch.oee || { oeeCode: '', tags: [] };
-      const readTimestamp = new Date(tagRead.timestamp);
+      const readTimestamp = dayjs().startOf('s').toDate();
       const allReads = tagRead.deviceReads.map((item) => item.reads).flat();
 
       const tagMcState = this.findOeeTag(OEE_TAG_MC_STATE, oeeTags);
@@ -109,7 +109,11 @@ export class TagReadJob {
         return;
       }
 
-      const previousMcState = batch.mcState;
+      const previousMcState = {
+        ...batch.mcState,
+        timestamp: batch.batchStartedDate,
+      };
+
       const currentMcState: OeeBatchMcState = {
         mcStatus: currentTagMcState.read,
         total: Number(currentTagTotal.read),
@@ -120,17 +124,17 @@ export class TagReadJob {
         timestamp: readTimestamp,
       };
 
-      if (!previousMcState.timestamp) {
-        logBatch(this.logger, batch.id, oeeCode, `batch started`);
-        await this.eventEmitter.emitAsync(
-          'batch-mc-state.update',
-          new BatchMcStateUpdateEvent(batch, {
-            ...currentMcState,
-            timestamp: batch.batchStartedDate,
-          }),
-        );
-        return;
-      }
+      // if (!previousMcState.timestamp) {
+      //   logBatch(this.logger, batch.id, oeeCode, `batch started`);
+      //   await this.eventEmitter.emitAsync(
+      //     'batch-mc-state.update',
+      //     new BatchMcStateUpdateEvent(batch, {
+      //       ...currentMcState,
+      //       timestamp: batch.batchStartedDate,
+      //     }),
+      //   );
+      //   return;
+      // }
 
       const activePD = await this.oeeBatchService.findActivePlannedDowntimeById(batch.id);
       if (activePD) {
@@ -166,7 +170,7 @@ export class TagReadJob {
         (!activePD && currentMcState.total === previousMcState.total) ||
         (activePD && !activePD.expiredAt && activePD.type === PLANNED_DOWNTIME_TYPE_MC_SETUP)
       ) {
-        const stopDate = previousMcState.stopTimestamp ? previousMcState.stopTimestamp : dayjs().startOf('s').toDate();
+        const stopDate = previousMcState.stopTimestamp ? previousMcState.stopTimestamp : readTimestamp;
         currentMcState.stopTimestamp = stopDate;
         currentMcState.stopSeconds = dayjs().startOf('s').diff(stopDate, 's');
       } else {

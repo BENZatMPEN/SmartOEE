@@ -53,6 +53,7 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
+    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
   @OnEvent('analytic-p-params.update', { async: true })
@@ -70,6 +71,7 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
+    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
   @OnEvent('analytic-q-params.update', { async: true })
@@ -87,11 +89,15 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
+    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
-  private async collectOeeStatsFromBatch(batchId: number, currentOeeStats: OeeStats): Promise<void> {
+  private async collectOeeStatsFromBatch(batchId: number, currentOeeStats?: OeeStats): Promise<void> {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { siteId, oeeId, product, standardSpeedSeconds } = batch;
+    if (!currentOeeStats) {
+      currentOeeStats = batch.oeeStats;
+    }
 
     const cutoffTime = 30;
     const currentTime = dayjs().minute() < cutoffTime ? dayjs().startOf('h') : dayjs().startOf('h').add(30, 'm');

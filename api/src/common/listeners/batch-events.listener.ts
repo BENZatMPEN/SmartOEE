@@ -5,6 +5,8 @@ import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { SocketService } from '../services/socket.service';
 import * as dayjs from 'dayjs';
 import { OeeStats } from '../type/oee-stats';
+import { BatchAEvent } from '../events/batch-a.event';
+import { BatchPEvent } from '../events/batch-p.event';
 
 @Injectable()
 export class BatchEventsListener {
@@ -41,9 +43,9 @@ export class BatchEventsListener {
     const timeline = await this.oeeBatchService.findBatchLatestTimeline(batch.id);
 
     if (!timeline || previousStatus !== currentStatus) {
-      await this.oeeBatchService.createBatchTimeline(batch, currentStatus, new Date());
+      await this.oeeBatchService.createBatchTimeline(batch, currentStatus, currentMcState.timestamp);
     } else {
-      await this.oeeBatchService.updateBatchTimeline(timeline.id, new Date());
+      await this.oeeBatchService.updateBatchTimeline(timeline.id, currentMcState.timestamp);
     }
 
     const timelines = await this.oeeBatchService.findBatchTimelinesByBatchId(batch.id);
