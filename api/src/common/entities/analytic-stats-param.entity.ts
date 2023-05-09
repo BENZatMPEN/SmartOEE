@@ -1,4 +1,5 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { OeeBatchEntity } from './oee-batch.entity';
 
 @Entity('analyticStatsParams')
 export class AnalyticStatsParamEntity {
@@ -27,6 +28,9 @@ export class AnalyticStatsParamEntity {
   @Column({ type: 'int' })
   @Index()
   oeeBatchId: number;
+
+  @ManyToOne(() => OeeBatchEntity, { onDelete: 'CASCADE' })
+  oeeBatch: OeeBatchEntity;
 
   @Column({ type: 'int' })
   @Index()

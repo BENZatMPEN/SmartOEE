@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { fAnalyticChartTitle } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticMc } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
@@ -183,13 +183,13 @@ export default function AnalyticChartTimeMCState({ criteria, group }: Props) {
 
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <ExportXlsx headers={headers} rows={tableCleanUp(dataRows)} filename="mc-state" />
+          <ExportXlsx headers={headers.map(fAnalyticMc)} rows={tableCleanUp(dataRows)} filename="mc-state" />
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   {headers.map((item) => (
-                    <TableCell key={item}>{item}</TableCell>
+                    <TableCell key={item}>{fAnalyticMc(item)}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>

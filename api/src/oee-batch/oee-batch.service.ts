@@ -34,6 +34,7 @@ import { OptionItem } from '../common/type/option-item';
 import { fLotNumber } from '../common/utils/formatNumber';
 import {
   AnalyticAParamUpdateEvent,
+  AnalyticOeeUpdateEvent,
   AnalyticPParamUpdateEvent,
   AnalyticQParamUpdateEvent,
 } from '../common/events/analytic.event';
@@ -515,11 +516,6 @@ export class OeeBatchService {
       machineParameterId: null,
     });
 
-    await this.eventEmitter.emitAsync(
-      'analytic-q-params.update',
-      new AnalyticQParamUpdateEvent(siteId, oeeId, product.id, batch.id, analyticQParams),
-    );
-
     // then update the data
     await this.oeeBatchQRepository.save(
       updateDto.qParams.map((item) => {
@@ -534,7 +530,7 @@ export class OeeBatchService {
       totalManualDefects: updateDto.totalManual,
     });
 
-    // const batch = await this.findById(id);
+    const updatedBatch = await this.oeeBatchRepository.findOne({ where: { id } });
     // const calculateDto: OeeBatchCalculationDto = {
     //   oeeBatchId: batch.id,
     //   totalDefects: batch.oeeStats.totalAutoDefects,
@@ -543,7 +539,10 @@ export class OeeBatchService {
     //
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });
-    // await this.oeeCalculationQueue.add('calculate', calculateDto);
+    await this.eventEmitter.emitAsync(
+      'analytic-oee.update',
+      new AnalyticOeeUpdateEvent(updatedBatch.id, updatedBatch.oeeStats),
+    );
   }
 
   createBatchHistory(id: number, type: string, data: any): Promise<OeeBatchEditHistoryEntity> {
@@ -674,6 +673,7 @@ export class OeeBatchService {
       qPercent,
       oeePercent,
       runningSeconds,
+      operatingSeconds,
       plannedDowntimeSeconds,
       machineSetupSeconds,
       totalCount,
@@ -692,6 +692,7 @@ export class OeeBatchService {
       qPercent,
       oeePercent,
       runningSeconds,
+      operatingSeconds,
       plannedDowntimeSeconds,
       machineSetupSeconds,
       totalCount,

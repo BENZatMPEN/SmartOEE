@@ -1,6 +1,7 @@
 export const initialAnalyticData: AnalyticData = {
   standardSpeedSeconds: 0,
   runningSeconds: 0,
+  operatingSeconds: 0,
   plannedDowntimeSeconds: 0,
   machineSetupSeconds: 0,
   totalCount: 0,
@@ -16,6 +17,7 @@ export const initialAnalyticData: AnalyticData = {
 export class AnalyticData {
   readonly standardSpeedSeconds: number;
   readonly runningSeconds: number;
+  readonly operatingSeconds: number;
   readonly plannedDowntimeSeconds: number;
   readonly machineSetupSeconds: number;
   readonly totalStopSeconds: number;

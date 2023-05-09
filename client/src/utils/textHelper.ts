@@ -456,3 +456,28 @@ export function fOeeTabLabel(key: string): string {
       return '';
   }
 }
+
+export function fAnalyticMc(key: string): string {
+  switch (key) {
+    case 'key':
+      return 'Name';
+
+    case 'running':
+      return 'Operating Time';
+
+    case 'standby':
+      return 'Stand By';
+
+    case 'breakdown':
+      return 'Downtime Losses';
+
+    case 'planned':
+      return 'Planned Downtime';
+
+    case 'mc_setup':
+      return 'Machine Setup';
+
+    default:
+      return '';
+  }
+}

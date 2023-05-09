@@ -47,8 +47,10 @@ type CalculationItem = {
 type OeeSumData = {
   name: string;
   runningSeconds: number;
+  operatingSeconds: number;
   totalBreakdownSeconds: number;
   plannedDowntimeSeconds: number;
+  machineSetupSeconds: number;
   totalCount: number;
   totalAutoDefects: number;
   totalManualDefects: number;
@@ -147,12 +149,7 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
-    const rows = await this.analyticStatsRepository
-      .createQueryBuilder()
-      .where(`${fieldName} IN (:...ids)`, { ids })
-      .andWhere('timestamp >= :from and timestamp <= :to', { from, to })
-      .orderBy('timestamp')
-      .getMany();
+    const rows = await this.getStats(fieldName, ids, from, to);
 
     if (rows.length === 0) {
       return {
@@ -163,6 +160,8 @@ export class AnalyticService {
 
     const site = await this.siteRepository.findOneBy({ id: siteId });
     const cutoffHour = dayjs(site.cutoffTime);
+    const startDate = dayjs(rows[0].timestamp);
+    const endDate = dayjs(rows[rows.length - 1].timestamp);
 
     if (duration === 'hourly') {
       // by hour
@@ -191,14 +190,11 @@ export class AnalyticService {
       };
     } else if (duration === 'daily') {
       // by day
-      const startDay = dayjs(rows[0].timestamp);
-      const endDay = dayjs(rows[rows.length - 1].timestamp);
+      const startCutoffDay = startDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+      const endCutoffDay = endDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute()).add(-1, 's');
 
-      const startCutoffDay = startDay.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffDay = endDay.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute()).add(-1, 's');
-
-      const startSlotDay = startDay.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
-      const endSlotDay = endDay.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
+      const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
+      const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
       const days = endSlotDay.diff(startSlotDay, 'd') + 1;
       const groupDay: StatsGroup = {};
 
@@ -227,21 +223,21 @@ export class AnalyticService {
       };
     } else if (duration === 'monthly') {
       // by month
-      const startMonth = dayjs(rows[0].timestamp);
-      const endMonth = dayjs(rows[rows.length - 1].timestamp);
+      // const startMonth = dayjs(rows[0].timestamp);
+      // const endMonth = dayjs(rows[rows.length - 1].timestamp);
 
-      const startCutoffMonth = startMonth.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffMonth = endMonth
+      const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+      const endCutoffMonth = endDate
         .endOf('M')
         .startOf('d')
         .hour(cutoffHour.hour())
         .minute(cutoffHour.minute())
         .add(-1, 's');
 
-      const startSlotMonth = startMonth.isSameOrBefore(startCutoffMonth)
+      const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
         ? startCutoffMonth.add(-1, 'd')
         : startCutoffMonth;
-      const endSlotMonth = endMonth.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
+      const endSlotMonth = endDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
       const months = endSlotMonth.diff(startSlotMonth, 'M') + 1;
       const groupMonth: StatsGroup = {};
 
@@ -275,11 +271,6 @@ export class AnalyticService {
       };
     }
   }
-
-  // OEE - By M/C
-  // sum of days (from - to) for each of selected OEEs, Products or Lots
-  // From - To
-  // Multiple OEEs, Products or Lots
 
   private async getNames(fieldName: string, rows: AnalyticStatsEntity[]): Promise<{ [key: number]: string }> {
     const ids = rows.reduce((acc, item) => (acc.indexOf(item[fieldName]) < 0 ? [...acc, item[fieldName]] : acc), []);
@@ -328,13 +319,43 @@ export class AnalyticService {
     }, {});
   }
 
-  async findOeeByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
-    const fieldName = this.getFieldName(chartType);
-    const rows = await this.analyticStatsRepository
+  private getStats(fieldName: string, ids: number[], from: Date, to: Date): Promise<AnalyticStatsEntity[]> {
+    return this.analyticStatsRepository
       .createQueryBuilder()
       .where(`${fieldName} IN (:...ids)`, { ids })
       .andWhere('timestamp >= :from and timestamp <= :to', { from, to })
       .getMany();
+  }
+
+  private getBatchTimelines(
+    fieldName: string,
+    ids: number[],
+    from: Date,
+    to: Date,
+  ): Promise<OeeBatchStatsTimelineEntity[]> {
+    return this.oeeBatchStatsTimelineRepository
+      .createQueryBuilder()
+      .where(`${fieldName} IN (:...ids)`, { ids })
+      .andWhere('fromDate >= :from and toDate <= :to', { from, to })
+      .getMany();
+  }
+
+  private setMcStatus(key: string, item: any, dataRows: { [p: string]: OeeSumData }[]): any {
+    const dataRow = dataRows.filter((item) => item[key])[0];
+    item.status['running'] = dataRow[key].operatingSeconds;
+    item.status['breakdown'] = dataRow[key].totalBreakdownSeconds;
+    item.status['planned'] = dataRow[key].plannedDowntimeSeconds;
+    item.status['mc_setup'] = dataRow[key].machineSetupSeconds;
+  }
+
+  // OEE - By M/C
+  // sum of days (from - to) for each of selected OEEs, Products or Lots
+  // From - To
+  // Multiple OEEs, Products or Lots
+
+  async findOeeByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
+    const fieldName = this.getFieldName(chartType);
+    const rows = await this.getStats(fieldName, ids, from, to);
 
     if (rows.length === 0) {
       return {
@@ -384,11 +405,7 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
-    const rows = await this.oeeBatchStatsTimelineRepository
-      .createQueryBuilder()
-      .where(`${fieldName} IN (:...ids)`, { ids })
-      .andWhere('fromDate >= :from and toDate <= :to', { from, to })
-      .getMany();
+    const rows = await this.getBatchTimelines(fieldName, ids, from, to);
 
     if (rows.length === 0) {
       return {
@@ -396,6 +413,7 @@ export class AnalyticService {
       };
     }
 
+    const statsRows = await this.getStats(fieldName, ids, from, to);
     const site = await this.siteRepository.findOneBy({ id: siteId });
     const cutoffHour = dayjs(site.cutoffTime);
     const startDate = dayjs(rows[0].fromDate).startOf('h');
@@ -403,15 +421,19 @@ export class AnalyticService {
       .startOf('h')
       .add(1, 'h');
 
+    const names = await this.getNames(fieldName, statsRows);
+    const lotNumbers = await this.getLotNumbers(statsRows);
+
     const result = [];
     if (duration === 'hourly') {
-      const hours = endDate.diff(startDate, 'h') + 1;
+      const hours = endDate.diff(startDate, 'h');
 
       for (let i = 0; i < hours; i++) {
         const currentHour = startDate.startOf('h').add(i, 'h');
+        const key = currentHour.toISOString();
         const tempRows = rows.filter((row) => currentHour.isBetween(row.fromDate, row.toDate, 'h', '[]'));
-        result.push({
-          key: currentHour.toISOString(),
+        const item = {
+          key,
           status: tempRows.reduce((acc, row) => {
             const key = row.status;
             const start = dayjs(row.fromDate);
@@ -427,6 +449,24 @@ export class AnalyticService {
             }
             return acc;
           }, {}),
+        };
+
+        const groupHour = statsRows.reduce((acc, item) => {
+          const key = dayjs(item.timestamp).startOf('h').toISOString();
+          if (key in acc) {
+            acc[key].push(item);
+          } else {
+            acc[key] = [item];
+          }
+          return acc;
+        }, {} as StatsGroup);
+        const dataRows = Object.keys(groupHour).map((key) => ({
+          [key]: this.sumOeeData(groupHour[key], fieldName, names, lotNumbers),
+        }));
+
+        result.push({
+          ...item,
+          ...this.setMcStatus(key, item, dataRows),
         });
       }
     } else if (duration === 'daily') {
@@ -436,9 +476,10 @@ export class AnalyticService {
 
       for (let i = 0; i < days; i++) {
         const currentDay = startCutoffDay.startOf('d').add(i, 'd');
+        const key = currentDay.toISOString();
         const tempRows = rows.filter((row) => currentDay.isBetween(row.fromDate, row.toDate, 'd', '[]'));
-        result.push({
-          key: currentDay.toISOString(),
+        const item = {
+          key,
           status: tempRows.reduce((acc, row) => {
             const key = row.status;
             const start = dayjs(row.fromDate);
@@ -454,7 +495,24 @@ export class AnalyticService {
             }
             return acc;
           }, {}),
+        };
+
+        const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
+        const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
+        const groupDay: StatsGroup = {};
+        groupDay[key] = statsRows.filter((item) => {
+          return item.timestamp >= startSlotDay.toDate() && item.timestamp <= endSlotDay.toDate();
         });
+        const dataRows = Object.keys(groupDay).map((key) => ({
+          [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
+        }));
+
+        console.log(startSlotDay, endSlotDay);
+        result.push({
+          ...item,
+          ...this.setMcStatus(key, item, dataRows),
+        });
+        console.log(result);
       }
     } else if (duration === 'monthly') {
       const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
@@ -463,9 +521,10 @@ export class AnalyticService {
 
       for (let i = 0; i < months; i++) {
         const currentDay = startCutoffMonth.startOf('M').add(i, 'M');
+        const key = currentDay.toISOString();
         const tempRows = rows.filter((row) => currentDay.isBetween(row.fromDate, row.toDate, 'M', '[]'));
-        result.push({
-          key: currentDay.toISOString(),
+        const item = {
+          key,
           status: tempRows.reduce((acc, row) => {
             const key = row.status;
             const start = dayjs(row.fromDate);
@@ -481,8 +540,30 @@ export class AnalyticService {
             }
             return acc;
           }, {}),
+        };
+
+        const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
+          ? startCutoffMonth.add(-1, 'd')
+          : startCutoffMonth;
+        const endSlotMonth = startDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
+
+        console.log(startSlotMonth, endSlotMonth);
+
+        const groupMonth: StatsGroup = {};
+        groupMonth[key] = statsRows.filter((item) => {
+          return item.timestamp >= startSlotMonth.toDate() && item.timestamp <= endSlotMonth.toDate();
+        });
+        const dataRows = Object.keys(groupMonth).map((key) => ({
+          [key]: this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers),
+        }));
+
+        result.push({
+          ...item,
+          ...this.setMcStatus(key, item, dataRows),
         });
       }
+
+      console.log(result);
     }
 
     return {
@@ -497,15 +578,12 @@ export class AnalyticService {
 
   async findMcByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
-    const rows = await this.oeeBatchStatsTimelineRepository
-      .createQueryBuilder()
-      .where(`${fieldName} IN (:...ids)`, { ids })
-      .andWhere('fromDate >= :from and toDate <= :to', { from, to })
-      .getMany();
+    const rows = await this.getBatchTimelines(fieldName, ids, from, to);
 
     if (rows.length === 0) {
       return {
         sumRows: [],
+        sumStatsRows: [],
       };
     }
 
@@ -523,6 +601,7 @@ export class AnalyticService {
     for (const key of Object.keys(group)) {
       const objName = await this.getObjectName(Number(key), chartType);
       result.push({
+        id: Number(key),
         key: objName,
         status: group[key].reduce((acc, row) => {
           const key = row.status;
@@ -537,6 +616,31 @@ export class AnalyticService {
           return acc;
         }, {}),
       });
+    }
+
+    const statsRows = await this.getStats(fieldName, ids, from, to);
+    const statsGroup = statsRows.reduce((acc, item) => {
+      const key = item[fieldName];
+      if (key in acc) {
+        acc[key].push(item);
+      } else {
+        acc[key] = [item];
+      }
+      return acc;
+    }, {});
+
+    const names = await this.getNames(fieldName, statsRows);
+    const lotNumbers = await this.getLotNumbers(statsRows);
+    const dataRows = Object.keys(statsGroup).map((key) => ({
+      [key]: this.sumOeeData(statsGroup[key], fieldName, names, lotNumbers),
+    }));
+
+    for (const row of result) {
+      const dataRow = dataRows.filter((item) => item[row.id])[0];
+      row.status['running'] = dataRow[row.id].operatingSeconds;
+      row.status['breakdown'] = dataRow[row.id].totalBreakdownSeconds;
+      row.status['planned'] = dataRow[row.id].plannedDowntimeSeconds;
+      row.status['mc_setup'] = dataRow[row.id].machineSetupSeconds;
     }
 
     return {
@@ -1227,8 +1331,10 @@ export class AnalyticService {
     const initSum: OeeSumData = {
       name: '',
       runningSeconds: 0,
+      operatingSeconds: 0,
       totalBreakdownSeconds: 0,
       plannedDowntimeSeconds: 0,
+      machineSetupSeconds: 0,
       totalCount: 0,
       totalAutoDefects: 0,
       totalManualDefects: 0,
@@ -1241,8 +1347,10 @@ export class AnalyticService {
       const {
         standardSpeedSeconds,
         runningSeconds,
+        operatingSeconds,
         totalBreakdownSeconds,
         plannedDowntimeSeconds,
+        machineSetupSeconds,
         totalCount,
         totalAutoDefects,
         totalManualDefects,
@@ -1263,8 +1371,10 @@ export class AnalyticService {
       return {
         name: Object.keys(names).indexOf(row[fieldName].toString()) >= 0 ? names[row[fieldName]] : '',
         runningSeconds: acc.runningSeconds + runningSeconds,
+        operatingSeconds: acc.operatingSeconds + operatingSeconds,
         totalBreakdownSeconds: acc.totalBreakdownSeconds + totalBreakdownSeconds,
         plannedDowntimeSeconds: acc.plannedDowntimeSeconds + plannedDowntimeSeconds,
+        machineSetupSeconds: acc.machineSetupSeconds + machineSetupSeconds,
         totalCount: acc.totalCount + totalCount,
         totalAutoDefects: acc.totalAutoDefects + totalAutoDefects,
         totalManualDefects: acc.totalManualDefects + totalManualDefects,

@@ -74,7 +74,7 @@ export class OeeBatchEntity {
   @Column({ type: 'int' })
   oeeId: number;
 
-  @ManyToOne(() => OeeEntity, (oee) => oee.oeeProducts, { onDelete: 'CASCADE' })
+  @ManyToOne(() => OeeEntity, { onDelete: 'CASCADE' })
   oee: OeeEntity;
 
   // @ForeignKey(() => Product)

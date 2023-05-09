@@ -53,7 +53,6 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
-    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
   @OnEvent('analytic-p-params.update', { async: true })
@@ -71,7 +70,6 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
-    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
   @OnEvent('analytic-q-params.update', { async: true })
@@ -89,7 +87,6 @@ export class AnalyticEventsListener {
         productId,
       })),
     );
-    await this.collectOeeStatsFromBatch(event.oeeBatchId);
   }
 
   private async collectOeeStatsFromBatch(batchId: number, currentOeeStats?: OeeStats): Promise<void> {
@@ -139,6 +136,7 @@ export class AnalyticEventsListener {
         const data: AnalyticData = {
           standardSpeedSeconds: standardSpeedSeconds,
           runningSeconds: batchStats.data.runningSeconds,
+          operatingSeconds: batchStats.data.operatingSeconds,
           plannedDowntimeSeconds: batchStats.data.plannedDowntimeSeconds,
           machineSetupSeconds: batchStats.data.machineSetupSeconds,
           totalCount: batchStats.data.totalCount,
@@ -188,6 +186,7 @@ export class AnalyticEventsListener {
         const data: AnalyticData = {
           standardSpeedSeconds: standardSpeedSeconds,
           runningSeconds: batchStats2.data.runningSeconds - batchStats1.data.runningSeconds,
+          operatingSeconds: batchStats2.data.operatingSeconds - batchStats1.data.operatingSeconds,
           plannedDowntimeSeconds: batchStats2.data.plannedDowntimeSeconds - batchStats1.data.plannedDowntimeSeconds,
           machineSetupSeconds: batchStats2.data.machineSetupSeconds - batchStats1.data.machineSetupSeconds,
           totalCount: batchStats2.data.totalCount - batchStats1.data.totalCount,
@@ -221,6 +220,7 @@ export class AnalyticEventsListener {
     const lastCutoffData = previousBatchStats ? previousBatchStats.data : initialOeeBatchStats;
     const {
       runningSeconds,
+      operatingSeconds,
       plannedDowntimeSeconds,
       machineSetupSeconds,
       totalCount,
@@ -236,6 +236,7 @@ export class AnalyticEventsListener {
     const data: AnalyticData = {
       standardSpeedSeconds: standardSpeedSeconds,
       runningSeconds: runningSeconds - lastCutoffData.runningSeconds,
+      operatingSeconds: operatingSeconds - lastCutoffData.operatingSeconds,
       plannedDowntimeSeconds: plannedDowntimeSeconds - lastCutoffData.plannedDowntimeSeconds,
       machineSetupSeconds: machineSetupSeconds - lastCutoffData.machineSetupSeconds,
       totalCount: totalCount - lastCutoffData.totalCount,

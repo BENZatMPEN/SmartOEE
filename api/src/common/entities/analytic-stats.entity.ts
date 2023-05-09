@@ -1,5 +1,7 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { AnalyticData } from '../type/analytic-data';
+import { OeeEntity } from './oee.entity';
+import { OeeBatchEntity } from './oee-batch.entity';
 
 @Entity('analyticStats')
 export class AnalyticStatsEntity {
@@ -24,6 +26,9 @@ export class AnalyticStatsEntity {
   @Column({ type: 'int' })
   @Index()
   oeeBatchId: number;
+
+  @ManyToOne(() => OeeBatchEntity, { onDelete: 'CASCADE' })
+  oeeBatch: OeeBatchEntity;
 
   @Column({ type: 'int' })
   @Index()
