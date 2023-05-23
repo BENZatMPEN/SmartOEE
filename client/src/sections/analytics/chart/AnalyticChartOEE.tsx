@@ -4,8 +4,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle } from '../../../utils/textHelper';
+import { fPercent, fSeconds } from '../../../utils/formatNumber';
+import { fAnalyticChartTitle, fAnalyticOeeHeaderText } from '../../../utils/textHelper';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import {
@@ -30,17 +30,59 @@ interface Props {
   group?: boolean;
 }
 
-const headers: string[] = [
-  'name',
-  'runningSeconds',
-  'totalBreakdownSeconds',
-  'plannedDowntimeSeconds',
-  'totalCount',
-  'totalAutoDefects',
-  'totalManualDefects',
-  'totalOtherDefects',
-  'totalTimeSeconds',
-  'totalCountByBatch',
+const headers: any[] = [
+  {
+    key: 'name',
+    width: 200,
+  },
+  {
+    key: 'runningSeconds',
+    width: 200,
+    formatter: (val: number) => {
+      return fSeconds(val);
+    },
+  },
+  {
+    key: 'totalBreakdownSeconds',
+    width: 200,
+    formatter: (val: number) => {
+      return fSeconds(val);
+    },
+  },
+  {
+    key: 'plannedDowntimeSeconds',
+    width: 200,
+    formatter: (val: number) => {
+      return fSeconds(val);
+    },
+  },
+  {
+    key: 'totalCount',
+    width: 200,
+  },
+  {
+    key: 'totalAutoDefects',
+    width: 200,
+  },
+  {
+    key: 'totalManualDefects',
+    width: 200,
+  },
+  {
+    key: 'totalOtherDefects',
+    width: 200,
+  },
+  {
+    key: 'totalTimeSeconds',
+    width: 200,
+    formatter: (val: number) => {
+      return fSeconds(val);
+    },
+  },
+  {
+    key: 'totalCountByBatch',
+    width: 100,
+  },
 ];
 
 export default function AnalyticChartOEE({ criteria, group }: Props) {
@@ -237,7 +279,7 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
                             <Typography variant="subtitle1" gutterBottom>
                               Lot Number: {lotNumber ? lotNumber : batchKey}
                             </Typography>
-                            <div>Standard Speed: {standardSpeedSeconds}</div>
+                            <div>Standard Speed: {fSeconds(standardSpeedSeconds)}</div>
                             <div>Total Count: {totalCount}</div>
                           </Box>
                         );
@@ -260,22 +302,28 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
 
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <ExportXlsx headers={headers} rows={xlsxCleanUp(dataRows)} filename="oee" />
+          <ExportXlsx
+            headers={headers.map((item) => fAnalyticOeeHeaderText(item.key))}
+            rows={xlsxCleanUp(dataRows)}
+            filename="oee"
+          />
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   {headers.map((item) => (
-                    <TableCell key={item}>{item}</TableCell>
+                    <TableCell key={item.key} width={item.width}>
+                      {fAnalyticOeeHeaderText(item.key)}
+                    </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {tableCleanUp(dataRows).map((row) => (
                   <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    {headers.map((key) => (
-                      <TableCell key={`${row.name}_${key}`} width={key === 'totalCountByBatch' ? '300px' : undefined}>
-                        {row[key]}
+                    {headers.map((item) => (
+                      <TableCell key={`${row.name}_${item.key}`}>
+                        {item.formatter ? item.formatter(row[item.key]) : row[item.key]}
                       </TableCell>
                     ))}
                   </TableRow>

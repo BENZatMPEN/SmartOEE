@@ -10,6 +10,8 @@ services:
       MYSQL_PASSWORD: smartoee
     # ports:
     #   - "33061:3306" # chnage 33061
+    command:
+      - '--skip-log-bin'
     cap_add:
       - SYS_NICE
     volumes:

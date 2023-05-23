@@ -340,14 +340,6 @@ export class AnalyticService {
       .getMany();
   }
 
-  private setMcStatus(key: string, item: any, dataRows: { [p: string]: OeeSumData }[]): any {
-    const dataRow = dataRows.filter((item) => item[key])[0];
-    item.status['running'] = dataRow[key].operatingSeconds;
-    item.status['breakdown'] = dataRow[key].totalBreakdownSeconds;
-    item.status['planned'] = dataRow[key].plannedDowntimeSeconds;
-    item.status['mc_setup'] = dataRow[key].machineSetupSeconds;
-  }
-
   // OEE - By M/C
   // sum of days (from - to) for each of selected OEEs, Products or Lots
   // From - To
@@ -391,6 +383,17 @@ export class AnalyticService {
     };
   }
 
+  private setMcStatus(key: string, item: any, dataRows: { [p: string]: OeeSumData }[]): any {
+    const dataRow = dataRows.filter((item) => item[key])[0];
+    const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[key];
+    const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
+    item.status['running'] = operatingSeconds;
+    item.status['breakdown'] = totalBreakdown;
+    item.status['planned'] = plannedDowntimeSeconds;
+    item.status['mc_setup'] = machineSetupSeconds;
+    return item;
+  }
+
   // MC - By Time
   // day or sum of days in month for a OEE, Product or Lot
   // From - To
@@ -417,16 +420,14 @@ export class AnalyticService {
     const site = await this.siteRepository.findOneBy({ id: siteId });
     const cutoffHour = dayjs(site.cutoffTime);
     const startDate = dayjs(rows[0].fromDate).startOf('h');
-    const endDate = dayjs(rows[rows.length - 1].toDate)
-      .startOf('h')
-      .add(1, 'h');
+    const endDate = dayjs(rows[rows.length - 1].toDate).endOf('h');
 
     const names = await this.getNames(fieldName, statsRows);
     const lotNumbers = await this.getLotNumbers(statsRows);
 
     const result = [];
     if (duration === 'hourly') {
-      const hours = endDate.diff(startDate, 'h');
+      const hours = endDate.diff(startDate, 'h') + 1;
 
       for (let i = 0; i < hours; i++) {
         const currentHour = startDate.startOf('h').add(i, 'h');
@@ -471,7 +472,7 @@ export class AnalyticService {
       }
     } else if (duration === 'daily') {
       const startCutoffDay = startDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffDay = endDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+      const endCutoffDay = endDate.endOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
       const days = endCutoffDay.diff(startCutoffDay, 'd') + 1;
 
       for (let i = 0; i < days; i++) {
@@ -507,16 +508,14 @@ export class AnalyticService {
           [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
         }));
 
-        console.log(startSlotDay, endSlotDay);
         result.push({
           ...item,
           ...this.setMcStatus(key, item, dataRows),
         });
-        console.log(result);
       }
     } else if (duration === 'monthly') {
       const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffMonth = endDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+      const endCutoffMonth = endDate.endOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
       const months = endCutoffMonth.diff(startCutoffMonth, 'M') + 1;
 
       for (let i = 0; i < months; i++) {
@@ -546,9 +545,6 @@ export class AnalyticService {
           ? startCutoffMonth.add(-1, 'd')
           : startCutoffMonth;
         const endSlotMonth = startDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
-
-        console.log(startSlotMonth, endSlotMonth);
-
         const groupMonth: StatsGroup = {};
         groupMonth[key] = statsRows.filter((item) => {
           return item.timestamp >= startSlotMonth.toDate() && item.timestamp <= endSlotMonth.toDate();
@@ -562,8 +558,6 @@ export class AnalyticService {
           ...this.setMcStatus(key, item, dataRows),
         });
       }
-
-      console.log(result);
     }
 
     return {
@@ -637,10 +631,12 @@ export class AnalyticService {
 
     for (const row of result) {
       const dataRow = dataRows.filter((item) => item[row.id])[0];
-      row.status['running'] = dataRow[row.id].operatingSeconds;
-      row.status['breakdown'] = dataRow[row.id].totalBreakdownSeconds;
-      row.status['planned'] = dataRow[row.id].plannedDowntimeSeconds;
-      row.status['mc_setup'] = dataRow[row.id].machineSetupSeconds;
+      const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[row.id];
+      const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
+      row.status['running'] = operatingSeconds;
+      row.status['breakdown'] = totalBreakdown;
+      row.status['planned'] = plannedDowntimeSeconds;
+      row.status['mc_setup'] = machineSetupSeconds;
     }
 
     return {

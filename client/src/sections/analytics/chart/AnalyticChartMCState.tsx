@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { fAnalyticChartTitle, fAnalyticMc } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticMcHeaderText } from '../../../utils/textHelper';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
+import { fSeconds } from '../../../utils/formatNumber';
+import dayjs from 'dayjs';
 
 interface Props {
   criteria: AnalyticCriteria;
@@ -41,6 +43,13 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
       tickPlacement: 'on',
     },
     colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#FFFA00'],
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return fSeconds(val);
+        },
+      },
+    },
   } as ApexOptions);
 
   const [pieSeries, setPieSeries] = useState<any[]>([]);
@@ -59,6 +68,13 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
       },
     },
     colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#FFFA00'],
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return fSeconds(val);
+        },
+      },
+    },
   } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {
@@ -156,18 +172,27 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
-  const tableCleanUp = (rows: any[]): any[] =>
+  const tableCleanUp = (rows: any[], format: boolean = false): any[] =>
     rows.map((row) => {
       const { key, status } = row;
       const { running, standby, breakdown, planned, mc_setup } = status;
 
-      return {
-        key,
+      const temp = {
+        key: dayjs(key).format('YYYY-MM-DD HH:mm'),
         running: running ? running : 0,
         standby: standby ? standby : 0,
         breakdown: breakdown ? breakdown : 0,
         planned: planned ? planned : 0,
         mc_setup: mc_setup ? mc_setup : 0,
+      };
+
+      return {
+        ...temp,
+        running: format ? fSeconds(temp.running) : temp.running,
+        standby: format ? fSeconds(temp.standby) : temp.standby,
+        breakdown: format ? fSeconds(temp.breakdown) : temp.breakdown,
+        planned: format ? fSeconds(temp.planned) : temp.planned,
+        mc_setup: format ? fSeconds(temp.mc_setup) : temp.mc_setup,
       };
     });
 
@@ -187,18 +212,18 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
 
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <ExportXlsx headers={headers.map(fAnalyticMc)} rows={tableCleanUp(dataRows)} filename="mc-state" />
+          <ExportXlsx headers={headers.map(fAnalyticMcHeaderText)} rows={tableCleanUp(dataRows)} filename="mc-state" />
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   {headers.map((item) => (
-                    <TableCell key={item}>{fAnalyticMc(item)}</TableCell>
+                    <TableCell key={item}>{fAnalyticMcHeaderText(item)}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableCleanUp(dataRows).map((row) => (
+                {tableCleanUp(dataRows, true).map((row) => (
                   <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     {headers.map((key) => (
                       <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>

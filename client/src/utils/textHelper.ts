@@ -457,7 +457,7 @@ export function fOeeTabLabel(key: string): string {
   }
 }
 
-export function fAnalyticMc(key: string): string {
+export function fAnalyticMcHeaderText(key: string): string {
   switch (key) {
     case 'key':
       return 'Name';
@@ -476,6 +476,46 @@ export function fAnalyticMc(key: string): string {
 
     case 'mc_setup':
       return 'Machine Setup';
+
+    default:
+      return '';
+  }
+}
+
+export function fAnalyticOeeHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
+      return '';
+
+    case 'name':
+      return 'Lot Number';
+
+    case 'runningSeconds':
+      return 'Operating Time';
+
+    case 'totalBreakdownSeconds':
+      return 'Downtime Losses';
+
+    case 'plannedDowntimeSeconds':
+      return 'Planned Downtime';
+
+    case 'totalCount':
+      return 'Total Product';
+
+    case 'totalAutoDefects':
+      return 'Defect Product';
+
+    case 'totalManualDefects':
+      return 'Defect Product (Man)';
+
+    case 'totalOtherDefects':
+      return 'Defect Product (Other)';
+
+    case 'totalTimeSeconds':
+      return 'Total Available Time';
+
+    case 'totalCountByBatch':
+      return '';
 
     default:
       return '';

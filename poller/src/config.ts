@@ -5,3 +5,4 @@ export const READ_INTERVAL = process.env.READ_INTERVAL || '0/3 * * * * *';
 export const SYNC_INTERVAL = process.env.SYNC_INTERVAL || '0/3 * * * * *';
 export const API_USER = process.env.API_USER || '';
 export const API_PASS = process.env.API_PASS || '';
+export const PLC_IP = (process.env.PLC_IP || '').split(',');

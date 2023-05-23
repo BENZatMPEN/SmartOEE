@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import axios from './utils/axios';
-import { API_PASS, API_USER, BASE_WS_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
+import { API_PASS, API_USER, BASE_WS_URL, PLC_IP, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
 import { Site } from './@types/site';
 import { scheduleJob } from 'node-schedule';
 import ModbusRTU from 'modbus-serial';
@@ -73,7 +73,7 @@ async function handleModbus(device: Device, writeData: WriteItem[]): Promise<Dev
     const client = new ModbusRTU();
     await client.connectTCP(address, { port });
     await client.setID(deviceId);
-
+    client.isOpen;
     console.log(`[ID: ${id} - ${address} ${port}]`, 'connected', dayjs().format('HH:mm:ss:SSS'));
 
     for (const writeItem of writeData) {
@@ -361,11 +361,16 @@ bootstrap()
             return;
           }
 
+          if (PLC_IP.length === 0) {
+            console.log('No PLC_IP provided.');
+            return;
+          }
+
           const site = JSON.parse(siteJson) as Site;
           const { devices } = site;
 
           const deviceHandlers = devices
-            .filter((device) => !device.stopped && device.deviceModel)
+            .filter((device) => !device.stopped && device.deviceModel && PLC_IP.indexOf(device.address) >= 0)
             .map(async (device) => {
               const { id, address, port, deviceModel } = device;
 
