@@ -43,23 +43,17 @@ const headers: any[] = [
   {
     key: 'runningSeconds',
     width: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
+    formatter: (val: number) => fSeconds(val),
   },
   {
     key: 'totalBreakdownSeconds',
     width: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
+    formatter: (val: number) => fSeconds(val),
   },
   {
     key: 'plannedDowntimeSeconds',
     width: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
+    formatter: (val: number) => fSeconds(val),
   },
   {
     key: 'totalCount',
@@ -80,9 +74,7 @@ const headers: any[] = [
   {
     key: 'totalTimeSeconds',
     width: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
+    formatter: (val: number) => fSeconds(val),
   },
   {
     key: 'totalCountByBatch',

@@ -28,6 +28,24 @@ export class OeeStatusItem {
 }
 
 export class OeeBatchMcState {
+  constructor(
+    mcStatus: string,
+    total: number,
+    totalNg: number,
+    batchStatus: string,
+    stopSeconds: number,
+    stopTimestamp: Date | null,
+    timestamp: Date | null,
+  ) {
+    this.mcStatus = mcStatus;
+    this.total = total;
+    this.totalNg = totalNg;
+    this.batchStatus = batchStatus;
+    this.stopSeconds = stopSeconds;
+    this.stopTimestamp = stopTimestamp;
+    this.timestamp = timestamp;
+  }
+
   mcStatus: string;
   total: number;
   totalNg: number;

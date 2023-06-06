@@ -67,7 +67,6 @@ export class BatchStatsJob {
       await this.oeeBatchJobRepository.save({
         id: batchJob.id,
         mcState: batch.mcState,
-        updatedAt: new Date(),
       });
       return;
     }
@@ -78,14 +77,12 @@ export class BatchStatsJob {
     await this.oeeBatchJobRepository.save({
       id: batchJob.id,
       mcState: batch.mcState,
-      updatedAt: new Date(),
     });
 
     if (batch.batchStoppedDate) {
       await this.oeeBatchJobRepository.save({
         id: batchJob.id,
         batchJobEnded: new Date(),
-        updatedAt: new Date(),
       });
     }
   }

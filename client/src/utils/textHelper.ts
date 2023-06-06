@@ -478,7 +478,7 @@ export function fAnalyticMcHeaderText(key: string): string {
       return 'Machine Setup';
 
     default:
-      return '';
+      return key;
   }
 }
 
@@ -518,6 +518,59 @@ export function fAnalyticOeeHeaderText(key: string): string {
       return '';
 
     default:
+      return key;
+  }
+}
+
+export function fAnalyticOeeAHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
       return '';
+
+    case 'name':
+      return 'Lot Number';
+
+    case 'runningSeconds':
+      return 'Operating Time';
+
+    case 'totalBreakdownSeconds':
+      return 'Downtime Losses';
+
+    case 'plannedDowntimeSeconds':
+      return 'Planned Downtime';
+
+    case 'count':
+      return 'Count';
+
+    case 'percent':
+      return 'Percent';
+
+    default:
+      return key;
+  }
+}
+
+export function fAnalyticOeePHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
+      return '';
+
+    case 'name':
+      return 'Lot Number';
+
+    case 'runningSeconds':
+      return 'Operating Time';
+
+    case 'plannedDowntimeSeconds':
+      return 'Planned Downtime';
+
+    case 'totalCount':
+      return 'Total Product';
+
+    case 'percent':
+      return 'Percent';
+
+    default:
+      return key;
   }
 }

@@ -36,7 +36,6 @@ import {
   AnalyticAParamUpdateEvent,
   AnalyticOeeUpdateEvent,
   AnalyticPParamUpdateEvent,
-  AnalyticQParamUpdateEvent,
 } from '../common/events/analytic.event';
 import { AnalyticQParam } from '../common/type/analytic-data';
 import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
@@ -250,8 +249,6 @@ export class OeeBatchService {
 
       await this.oeeBatchJobRepository.save({
         oeeBatchId: oeeBatch.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
 
       const tagOutReset = this.findOeeTag(OEE_TAG_OUT_RESET, oeeBatch.oee.tags);

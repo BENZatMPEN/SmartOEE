@@ -1,5 +1,5 @@
 import { OeeBatchEntity } from './oee-batch.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { OeeBatchMcState } from '../type/oee-status';
 
 @Entity('oeeBatchJobs')
@@ -10,7 +10,7 @@ export class OeeBatchJobEntity {
   @Column({ type: 'int' })
   oeeBatchId: number;
 
-  @ManyToOne(() => OeeBatchEntity, (oeeBatch) => oeeBatch.aParams, { onDelete: 'CASCADE' })
+  @ManyToOne(() => OeeBatchEntity, { onDelete: 'CASCADE' })
   oeeBatch: OeeBatchEntity;
 
   @Column({ type: 'datetime', nullable: true })
@@ -22,9 +22,9 @@ export class OeeBatchJobEntity {
   @Column({ type: 'json', nullable: true })
   mcState: OeeBatchMcState;
 
-  @Column({ type: 'datetime' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'datetime' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

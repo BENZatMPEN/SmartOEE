@@ -43,7 +43,6 @@ export class DataStoreJob {
       await this.oeeBatchJobRepository.save({
         id: batchJob.id,
         dataJobEnded: new Date(),
-        updatedAt: new Date(),
       });
     }
   }

@@ -384,14 +384,17 @@ export class AnalyticService {
   }
 
   private setMcStatus(key: string, item: any, dataRows: { [p: string]: OeeSumData }[]): any {
-    const dataRow = dataRows.filter((item) => item[key])[0];
-    const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[key];
-    const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
-    item.status['running'] = operatingSeconds;
-    item.status['breakdown'] = totalBreakdown;
-    item.status['planned'] = plannedDowntimeSeconds;
-    item.status['mc_setup'] = machineSetupSeconds;
-    return item;
+    const filtered = dataRows.filter((item) => item[key]);
+    if (filtered.length > 0) {
+      const dataRow = filtered[0];
+      const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[key];
+      const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
+      item.status['running'] = operatingSeconds;
+      item.status['breakdown'] = totalBreakdown;
+      item.status['planned'] = plannedDowntimeSeconds;
+      item.status['mc_setup'] = machineSetupSeconds;
+      return item;
+    }
   }
 
   // MC - By Time
@@ -473,6 +476,9 @@ export class AnalyticService {
     } else if (duration === 'daily') {
       const startCutoffDay = startDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
       const endCutoffDay = endDate.endOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+
+      const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
+      const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
       const days = endCutoffDay.diff(startCutoffDay, 'd') + 1;
 
       for (let i = 0; i < days; i++) {
@@ -498,11 +504,11 @@ export class AnalyticService {
           }, {}),
         };
 
-        const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
-        const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
         const groupDay: StatsGroup = {};
         groupDay[key] = statsRows.filter((item) => {
-          return item.timestamp >= startSlotDay.toDate() && item.timestamp <= endSlotDay.toDate();
+          const startRangeDate = startSlotDay.add(i, 'd');
+          const endRangeDate = startSlotDay.add(i + 1, 'd').add(-1, 's');
+          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
         });
         const dataRows = Object.keys(groupDay).map((key) => ({
           [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
@@ -516,6 +522,11 @@ export class AnalyticService {
     } else if (duration === 'monthly') {
       const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
       const endCutoffMonth = endDate.endOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
+
+      const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
+        ? startCutoffMonth.add(-1, 'd')
+        : startCutoffMonth;
+      const endSlotMonth = endDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
       const months = endCutoffMonth.diff(startCutoffMonth, 'M') + 1;
 
       for (let i = 0; i < months; i++) {
@@ -541,13 +552,11 @@ export class AnalyticService {
           }, {}),
         };
 
-        const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
-          ? startCutoffMonth.add(-1, 'd')
-          : startCutoffMonth;
-        const endSlotMonth = startDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
         const groupMonth: StatsGroup = {};
         groupMonth[key] = statsRows.filter((item) => {
-          return item.timestamp >= startSlotMonth.toDate() && item.timestamp <= endSlotMonth.toDate();
+          const startRangeDate = startSlotMonth.add(i, 'M');
+          const endRangeDate = startSlotMonth.add(i + 1, 'M').add(-1, 's');
+          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
         });
         const dataRows = Object.keys(groupMonth).map((key) => ({
           [key]: this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers),

@@ -4,8 +4,8 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
-import { fNumber2, fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle, fTimeUnitText } from '../../../utils/textHelper';
+import { fNumber2, fPercent, fSeconds } from '../../../utils/formatNumber';
+import { fAnalyticChartTitle, fAnalyticOeeAHeaderText, fTimeUnitText } from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
@@ -283,7 +283,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
-  function tableAPercentCleanUp(rows: any[]): any[] {
+  function tableAPercentCleanUp(rows: any[], format: boolean = false): any[] {
     return rows.map((row) => {
       const { name, runningSeconds, totalBreakdownSeconds, plannedDowntimeSeconds } = row;
       const loadingTime = runningSeconds - plannedDowntimeSeconds;
@@ -292,10 +292,10 @@ export default function AnalyticChartA({ criteria, group }: Props) {
 
       return {
         name,
-        runningSeconds,
-        totalBreakdownSeconds,
-        plannedDowntimeSeconds,
-        percent: operatingTime / nonZeroLoadingTime,
+        runningSeconds: format ? fSeconds(runningSeconds) : runningSeconds,
+        totalBreakdownSeconds: format ? fSeconds(totalBreakdownSeconds) : totalBreakdownSeconds,
+        plannedDowntimeSeconds: format ? fSeconds(plannedDowntimeSeconds) : plannedDowntimeSeconds,
+        percent: fPercent((operatingTime / nonZeroLoadingTime) * 100),
       };
     });
   }
@@ -311,7 +311,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
       results.push({
         name: row.labels[i],
         count: row.counts[i],
-        percent: row.percents[i],
+        percent: fPercent(row.percents[i]),
       });
     }
 
@@ -338,18 +338,22 @@ export default function AnalyticChartA({ criteria, group }: Props) {
             criteria.chartSubType === 'bar_min_max' ||
             criteria.chartSubType === 'line') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={tableAPercentCleanUp(dataRows)} filename="a-percent" />
+              <ExportXlsx
+                headers={headers.map(fAnalyticOeeAHeaderText)}
+                rows={tableAPercentCleanUp(dataRows)}
+                filename="a-percent"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeAHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tableAPercentCleanUp(dataRows).map((row) => (
+                    {tableAPercentCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {headers.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
@@ -364,13 +368,17 @@ export default function AnalyticChartA({ criteria, group }: Props) {
 
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={paretoHeaders} rows={tableAParetoCleanUp(dataRows)} filename="a-pareto" />
+              <ExportXlsx
+                headers={paretoHeaders.map(fAnalyticOeeAHeaderText)}
+                rows={tableAParetoCleanUp(dataRows)}
+                filename="a-pareto"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeAHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

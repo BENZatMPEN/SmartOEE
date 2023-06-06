@@ -2,6 +2,7 @@ import { Button, Stack } from '@mui/material';
 import { ThreeDButton } from '../../../components/ThreeDButton';
 import {
   initialOeeStats,
+  OEE_BATCH_STATUS_ENDED,
   OEE_BATCH_STATUS_MC_SETUP,
   OEE_BATCH_STATUS_PLANNED,
   OEE_BATCH_STATUS_RUNNING,
@@ -109,7 +110,7 @@ export default function DashboardDetailsControlPanel() {
     }
   };
 
-  const stoppedBatch = batchStoppedDate || toBeStopped;
+  const stoppedBatch = batchStoppedDate || toBeStopped || status === OEE_BATCH_STATUS_ENDED;
 
   const ability = useContext(AbilityContext);
 

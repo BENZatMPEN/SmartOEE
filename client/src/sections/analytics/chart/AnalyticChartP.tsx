@@ -5,7 +5,7 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
 import { fNumber2, fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle, fTimeUnitText } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticOeePHeaderText, fTimeUnitText } from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
@@ -281,7 +281,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
-  function tablePPercentCleanUp(rows: any[]): any[] {
+  function tablePPercentCleanUp(rows: any[], format: boolean = false): any[] {
     return rows.map((row) => {
       const { name, runningSeconds, plannedDowntimeSeconds, totalCountByBatch } = row;
       const loadingTime = runningSeconds - plannedDowntimeSeconds;
@@ -293,8 +293,8 @@ export default function AnalyticChartP({ criteria, group }: Props) {
 
       return {
         name,
-        runningSeconds,
-        plannedDowntimeSeconds,
+        runningSeconds: runningSeconds,
+        plannedDowntimeSeconds: plannedDowntimeSeconds,
         totalCount: totalP,
         percent: totalP / nonZeroLoadingTime,
       };
@@ -339,13 +339,17 @@ export default function AnalyticChartP({ criteria, group }: Props) {
             criteria.chartSubType === 'bar_min_max' ||
             criteria.chartSubType === 'line') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={tablePPercentCleanUp(dataRows)} filename="p-percent" />
+              <ExportXlsx
+                headers={headers.map(fAnalyticOeePHeaderText)}
+                rows={tablePPercentCleanUp(dataRows)}
+                filename="p-percent"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeePHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -365,13 +369,17 @@ export default function AnalyticChartP({ criteria, group }: Props) {
 
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={paretoHeaders} rows={tablePParetoCleanUp(dataRows)} filename="p-pareto" />
+              <ExportXlsx
+                headers={paretoHeaders.map(fAnalyticOeePHeaderText)}
+                rows={tablePParetoCleanUp(dataRows)}
+                filename="p-pareto"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeePHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

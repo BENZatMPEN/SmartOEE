@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TagReadEntity } from '../entities/tag-read.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import * as dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -36,6 +36,7 @@ import { BatchAEvent } from '../events/batch-a.event';
 import { BatchPEvent } from '../events/batch-p.event';
 import { BatchQEvent } from '../events/batch-q.event';
 import { BatchMcStateUpdateEvent, BatchTimelineUpdateEvent } from '../events/batch.event';
+import { OeeBatchJobEntity } from '../entities/oee-batch-job.entity';
 
 @Injectable()
 export class TagReadJob {
@@ -48,6 +49,8 @@ export class TagReadJob {
     private readonly eventEmitter: EventEmitter2,
     @InjectRepository(TagReadEntity)
     private readonly tagReadRepository: Repository<TagReadEntity>,
+    @InjectRepository(OeeBatchJobEntity)
+    private readonly oeeBatchJobRepository: Repository<OeeBatchJobEntity>,
   ) {}
 
   @Cron('0/1 * * * * *')
@@ -73,39 +76,110 @@ export class TagReadJob {
     });
   }
 
-  private async stopBatch(batch: OeeBatchEntity, oeeCode: string): Promise<void> {
-    if (batch.toBeStopped) {
-      await this.oeeBatchService.update1(batch.id, {
-        toBeStopped: false,
-        batchStoppedDate: dayjs().startOf('s').toDate(),
-      });
-      logBatch(this.logger, batch.id, oeeCode, `batch stopping...`);
+  private async invalidTagsStop(batch: OeeBatchEntity, oeeCode: string, readTimestamp: Date): Promise<void> {
+    await this.eventEmitter.emitAsync(
+      'batch-mc-state.update',
+      new BatchMcStateUpdateEvent(
+        batch,
+        new OeeBatchMcState('0', 0, 0, OEE_BATCH_STATUS_ENDED, 0, null, readTimestamp),
+      ),
+    );
+
+    await this.oeeBatchService.update1(batch.id, {
+      toBeStopped: false,
+      batchStoppedDate: dayjs().startOf('s').toDate(),
+    });
+
+    const batchJob = await this.oeeBatchJobRepository.findOne({ where: { oeeBatchId: batch.id } });
+    await this.oeeBatchJobRepository.save({
+      id: batchJob.id,
+      batchJobEnded: new Date(),
+      dataJobEnded: new Date(),
+    });
+
+    logBatch(this.logger, batch.id, oeeCode, `oee batch is stopped because of invalid tags or reads`);
+  }
+
+  private async validateMandatoryTags(
+    tagMcState: OeeTag,
+    tagTotal: OeeTag,
+    tagTotalNg: OeeTag,
+    batch: OeeBatchEntity,
+    oeeCode: string,
+  ): Promise<boolean> {
+    if (tagMcState && tagTotal && tagTotalNg) {
+      return true;
     }
+
+    if (!tagMcState) {
+      logBatch(this.logger, batch.id, oeeCode, `m/c State tag is not set`);
+    }
+
+    if (!tagTotal) {
+      logBatch(this.logger, batch.id, oeeCode, `total tag is not set`);
+    }
+
+    if (!tagTotalNg) {
+      logBatch(this.logger, batch.id, oeeCode, `total ng tag is not set`);
+    }
+
+    return false;
+  }
+
+  private async validateMandatoryTagReads(
+    currentTagMcState: ReadItem,
+    currentTagTotal: ReadItem,
+    currentTagTotalNg: ReadItem,
+    batch: OeeBatchEntity,
+    oeeCode: string,
+  ): Promise<boolean> {
+    if (currentTagMcState && currentTagTotal && currentTagTotalNg) {
+      return true;
+    }
+
+    if (!currentTagMcState) {
+      logBatch(this.logger, batch.id, oeeCode, `m/c state value is not found in the current tag reads`);
+    }
+
+    if (!currentTagTotal) {
+      logBatch(this.logger, batch.id, oeeCode, `total value is not found in the current tag reads`);
+    }
+
+    if (!currentTagTotalNg) {
+      logBatch(this.logger, batch.id, oeeCode, `total NG value is not found in the current tag reads`);
+    }
+
+    return false;
   }
 
   private async processBatch(batchId: number, tagRead: Read): Promise<void> {
     try {
       const batch = await this.oeeBatchService.findWithOeeById(batchId);
-      const { oeeCode, tags: oeeTags } = batch.oee || { oeeCode: '', tags: [] };
+      const { oeeCode, tags: oeeTags } = batch.oee;
       const readTimestamp = dayjs().startOf('s').toDate();
       const allReads = tagRead.deviceReads.map((item) => item.reads).flat();
 
       const tagMcState = this.findOeeTag(OEE_TAG_MC_STATE, oeeTags);
       const tagTotal = this.findOeeTag(OEE_TAG_TOTAL, oeeTags);
       const tagTotalNg = this.findOeeTag(OEE_TAG_TOTAL_NG, oeeTags);
-      if (!tagMcState || !tagTotal || !tagTotalNg) {
-        logBatch(this.logger, batch.id, oeeCode, `OEE tags are required.`);
-        await this.stopBatch(batch, oeeCode);
+      const isValidTags = await this.validateMandatoryTags(tagMcState, tagTotal, tagTotalNg, batch, oeeCode);
+      if (!isValidTags) {
+        await this.invalidTagsStop(batch, oeeCode, readTimestamp);
         return;
       }
 
       const currentTagMcState = this.findRead(tagMcState.tagId, allReads);
       const currentTagTotal = this.findRead(tagTotal.tagId, allReads);
       const currentTagTotalNg = this.findRead(tagTotalNg.tagId, allReads);
-
-      if (!currentTagMcState || !currentTagTotal || !currentTagTotalNg) {
-        logBatch(this.logger, batch.id, oeeCode, `Tag read doesn't contain the required values.`);
-        await this.stopBatch(batch, oeeCode);
+      const isValidTagReads = await this.validateMandatoryTagReads(
+        currentTagMcState,
+        currentTagTotal,
+        currentTagTotalNg,
+        batch,
+        oeeCode,
+      );
+      if (!isValidTagReads) {
+        await this.invalidTagsStop(batch, oeeCode, readTimestamp);
         return;
       }
 
@@ -114,32 +188,19 @@ export class TagReadJob {
         timestamp: batch.batchStartedDate,
       };
 
-      const currentMcState: OeeBatchMcState = {
-        mcStatus: currentTagMcState.read,
-        total: Number(currentTagTotal.read),
-        totalNg: Number(currentTagTotalNg.read),
-        stopSeconds: 0,
-        stopTimestamp: null,
-        batchStatus: OEE_BATCH_STATUS_UNKNOWN,
-        timestamp: readTimestamp,
-      };
-
-      // if (!previousMcState.timestamp) {
-      //   logBatch(this.logger, batch.id, oeeCode, `batch started`);
-      //   await this.eventEmitter.emitAsync(
-      //     'batch-mc-state.update',
-      //     new BatchMcStateUpdateEvent(batch, {
-      //       ...currentMcState,
-      //       timestamp: batch.batchStartedDate,
-      //     }),
-      //   );
-      //   return;
-      // }
+      const currentMcState = new OeeBatchMcState(
+        currentTagMcState.read,
+        Number(currentTagTotal.read),
+        Number(currentTagTotalNg.read),
+        OEE_BATCH_STATUS_UNKNOWN,
+        0,
+        null,
+        readTimestamp,
+      );
 
       const activePD = await this.oeeBatchService.findActivePlannedDowntimeById(batch.id);
       if (activePD) {
         logBatch(this.logger, batch.id, oeeCode, `planned downtime: ${activePD.type} timing: ${activePD.timing}`);
-
         let expired = false;
 
         if (activePD.toBeExpired) {
@@ -177,8 +238,6 @@ export class TagReadJob {
         currentMcState.stopTimestamp = null;
         currentMcState.stopSeconds = 0;
       }
-
-      await this.stopBatch(batch, oeeCode);
 
       logBatch(
         this.logger,
@@ -292,7 +351,12 @@ export class TagReadJob {
       }
 
       if (batch.toBeStopped) {
-        logBatch(this.logger, batch.id, oeeCode, `batch stopped`);
+        await this.oeeBatchService.update1(batch.id, {
+          toBeStopped: false,
+          batchStoppedDate: dayjs().startOf('s').toDate(),
+        });
+
+        logBatch(this.logger, batch.id, oeeCode, `batch stopped.`);
       }
     } catch (error) {
       this.logger.error('exception', error);
