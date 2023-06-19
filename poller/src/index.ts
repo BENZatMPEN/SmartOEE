@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import axios from './utils/axios';
-import { API_PASS, API_USER, BASE_WS_URL, PLC_IP, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
+import { API_PASS, API_USER, BASE_WS_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
 import { Site } from './@types/site';
 import { scheduleJob } from 'node-schedule';
 import ModbusRTU from 'modbus-serial';
@@ -361,16 +361,11 @@ bootstrap()
             return;
           }
 
-          if (PLC_IP.length === 0) {
-            console.log('No PLC_IP provided.');
-            return;
-          }
-
           const site = JSON.parse(siteJson) as Site;
           const { devices } = site;
 
           const deviceHandlers = devices
-            .filter((device) => !device.stopped && device.deviceModel && PLC_IP.indexOf(device.address) >= 0)
+            .filter((device) => !device.stopped && device.deviceModel)
             .map(async (device) => {
               const { id, address, port, deviceModel } = device;
 
