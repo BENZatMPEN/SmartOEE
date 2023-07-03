@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { CreateAnalyticDto } from './dto/create-analytic.dto';
 import { UpdateAnalyticDto } from './dto/update-analytic.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { AnalyticEntity } from '../common/entities/analytic.entity';
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
-import { AnalyticStatsEntity } from '../common/entities/analytic-stats.entity';
+import { ManipulateType, OpUnitType } from 'dayjs';
 import { SiteEntity } from '../common/entities/site.entity';
 import { OeeEntity } from '../common/entities/oee.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
@@ -64,10 +64,6 @@ type OeeSumData = {
   };
 };
 
-type StatsGroup = {
-  [key: string]: AnalyticStatsEntity[];
-};
-
 type StatsParamGroup = {
   [key: string]: AnalyticStatsParamEntity[];
 };
@@ -93,8 +89,6 @@ export class AnalyticService {
     private readonly productRepository: Repository<ProductEntity>,
     @InjectRepository(AnalyticEntity)
     private readonly analyticRepository: Repository<AnalyticEntity>,
-    @InjectRepository(AnalyticStatsEntity)
-    private readonly analyticStatsRepository: Repository<AnalyticStatsEntity>,
     @InjectRepository(AnalyticStatsParamEntity)
     private readonly analyticStatsParamRepository: Repository<AnalyticStatsParamEntity>,
     @InjectRepository(OeeBatchAEntity)
@@ -103,6 +97,7 @@ export class AnalyticService {
     private readonly oeeBatchPRepository: Repository<OeeBatchPEntity>,
     @InjectRepository(OeeBatchQEntity)
     private readonly oeeBatchQRepository: Repository<OeeBatchQEntity>,
+    private readonly entityManager: EntityManager,
   ) {}
 
   findAll(group: boolean, siteId: number): Promise<AnalyticEntity[]> {
@@ -135,11 +130,136 @@ export class AnalyticService {
     await this.analyticRepository.remove(analytic);
   }
 
+  private async getOeeStatsByTime(
+    ids: number[],
+    duration: string,
+    from: Date,
+    to: Date,
+    fieldName: string,
+    cutoffHour: string,
+  ): Promise<any[]> {
+    let rows = [];
+
+    if (duration === 'hourly') {
+      const query =
+        'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, a.timestamp, b.timeslot\n' +
+        'from oeeBatchStats a\n' +
+        '         inner join (select max(id)                                                            as id,\n' +
+        '                            oeeBatchId,\n' +
+        '                            (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), 3600) second) as timeslot\n' +
+        '                     from oeeBatchStats\n' +
+        `                     where ${fieldName} in (${ids.join(', ')})\n` +
+        `                       and timestamp >= ?\n` +
+        `                       and timestamp <= ?\n` +
+        '                     group by oeeBatchId, timeslot) b\n' +
+        '                    on a.id = b.id\n' +
+        `where a.${fieldName} in (${ids.join(', ')})\n` +
+        'order by a.oeeBatchId, a.timestamp;';
+
+      const minus1HourFrom = dayjs(from).add(-1, 'h').startOf('h').toDate();
+      rows = await this.entityManager.query(query, [minus1HourFrom, to]);
+    } else if (duration === 'daily' || duration === 'monthly') {
+      if (duration === 'daily') {
+        const query =
+          'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, a.timestamp, c.startOfDay as timeslot\n' +
+          'from oeeBatchStats a\n' +
+          '         inner join (select max(b.id) as id,\n' +
+          '                            b.oeeBatchId,\n' +
+          '                            c.startOfDay,\n' +
+          '                            c.endOfDay\n' +
+          '                     from oeeBatchStats b\n' +
+          '                              inner join (select oeeBatchId,\n' +
+          `                                                 CAST(DATE_FORMAT(timestamp, '%Y-%m-%d ${cutoffHour}') as datetime)                           as startOfDay,\n` +
+          `                                                 CAST(DATE_FORMAT(DATE_ADD(timestamp, interval 1 day), '%Y-%m-%d ${cutoffHour}') as datetime) as endOfDay\n` +
+          '                                          from oeeBatchStats\n' +
+          `                                          where ${fieldName} in (${ids.join(', ')})\n` +
+          `                                            and timestamp >= ?\n` +
+          `                                            and timestamp <= ?\n` +
+          '                                          group by oeeBatchId, startOfDay, endOfDay) c\n' +
+          '                                         on b.oeeBatchId = c.oeeBatchId and\n' +
+          '                                            b.timestamp between c.startOfDay and c.endOfDay\n' +
+          `                     where b.${fieldName} in (${ids.join(', ')})\n` +
+          `                       and b.timestamp >= ?\n` +
+          `                       and b.timestamp <= ?\n` +
+          '                     group by b.oeeBatchId, c.startOfDay, c.endOfDay) c on a.id = c.id\n' +
+          `where a.${fieldName} in (${ids.join(', ')})\n` +
+          'order by a.oeeBatchId, a.timestamp;';
+
+        const minus1DayFrom = dayjs(from).add(-1, 'd').startOf('d').toDate();
+        rows = await this.entityManager.query(query, [minus1DayFrom, to, minus1DayFrom, to]);
+      } else if (duration === 'monthly') {
+        const query =
+          'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, a.timestamp, c.startOfDay as timeslot\n' +
+          'from oeeBatchStats a\n' +
+          '         inner join (select max(b.id) as id,\n' +
+          '                            b.oeeBatchId,\n' +
+          '                            c.startOfDay,\n' +
+          '                            c.endOfDay\n' +
+          '                     from oeeBatchStats b\n' +
+          '                              inner join (select oeeBatchId,\n' +
+          `                                                 CAST(DATE_FORMAT(timestamp, '%Y-%m-01 ${cutoffHour}') as datetime)                           as startOfDay,\n` +
+          `                                                 CAST(DATE_FORMAT(last_day(timestamp), '%Y-%m-%d ${cutoffHour}') as datetime) as endOfDay\n` +
+          '                                          from oeeBatchStats\n' +
+          `                                          where ${fieldName} in (${ids.join(', ')})\n` +
+          `                                            and timestamp >= ?\n` +
+          `                                            and timestamp <= ?\n` +
+          '                                          group by oeeBatchId, startOfDay, endOfDay) c\n' +
+          '                                         on b.oeeBatchId = c.oeeBatchId and\n' +
+          '                                            b.timestamp between c.startOfDay and c.endOfDay\n' +
+          `                     where b.${fieldName} in (${ids.join(', ')})\n` +
+          `                       and b.timestamp >= ?\n` +
+          `                       and b.timestamp <= ?\n` +
+          '                     group by b.oeeBatchId, c.startOfDay, c.endOfDay) c on a.id = c.id\n' +
+          `where a.${fieldName} in (${ids.join(', ')})\n` +
+          'order by a.oeeBatchId, a.timestamp;';
+
+        const minus1MonthFrom = dayjs(from).add(-1, 'M').startOf('M').toDate();
+        rows = await this.entityManager.query(query, [minus1MonthFrom, to, minus1MonthFrom, to]);
+      }
+    }
+
+    let previousItem: any = {};
+    const newRows = [];
+
+    for (const row of rows) {
+      if (row.oeeBatchId === previousItem.batchId) {
+        const previous = rows.find((item) => item.id === previousItem.id);
+        const { data: previousData } = previous;
+        const { data: currentData } = row;
+
+        newRows.push({
+          ...row,
+          data: {
+            ...currentData,
+            totalCount: currentData.totalCount - previousData.totalCount,
+            runningSeconds: currentData.runningSeconds - previousData.runningSeconds,
+            operatingSeconds: currentData.operatingSeconds - previousData.operatingSeconds,
+            totalAutoDefects: currentData.totalAutoDefects - previousData.totalAutoDefects,
+            totalStopSeconds: currentData.totalStopSeconds - previousData.totalStopSeconds,
+            totalOtherDefects: currentData.totalOtherDefects - previousData.totalOtherDefects,
+            totalManualDefects: currentData.totalManualDefects - previousData.totalManualDefects,
+            machineSetupSeconds: currentData.machineSetupSeconds - previousData.machineSetupSeconds,
+            totalBreakdownSeconds: currentData.totalBreakdownSeconds - previousData.totalBreakdownSeconds,
+            totalMinorStopSeconds: currentData.totalMinorStopSeconds - previousData.totalMinorStopSeconds,
+            totalSpeedLossSeconds: currentData.totalSpeedLossSeconds - previousData.totalSpeedLossSeconds,
+            plannedDowntimeSeconds: currentData.plannedDowntimeSeconds - previousData.plannedDowntimeSeconds,
+          },
+        });
+      } else {
+        newRows.push(row);
+      }
+
+      previousItem = { id: row.id, batchId: row.oeeBatchId };
+    }
+
+    return newRows.filter((item) => dayjs(item.timeslot).isSameOrAfter(from));
+  }
+
   // OEE - By Time
   // day or sum of days in month for a OEE, Product or Lot
   // From - To
   // Single OEE, Product or Lot
-
+  // oee%, a%, p%, q% by time
   async findOeeByTime(
     siteId: number,
     chartType: string,
@@ -149,7 +269,9 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
-    const rows = await this.getStats(fieldName, ids, from, to);
+    const site = await this.siteRepository.findOneBy({ id: siteId });
+    const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
+    const rows = await this.getOeeStatsByTime(ids, duration, from, to, fieldName, cutoffHour);
 
     if (rows.length === 0) {
       return {
@@ -158,196 +280,60 @@ export class AnalyticService {
       };
     }
 
-    const site = await this.siteRepository.findOneBy({ id: siteId });
-    const cutoffHour = dayjs(site.cutoffTime);
-    const startDate = dayjs(rows[0].timestamp);
-    const endDate = dayjs(rows[rows.length - 1].timestamp);
-
-    if (duration === 'hourly') {
-      // by hour
-      const groupHour = rows.reduce((acc, item) => {
-        const key = dayjs(item.timestamp).startOf('h').toISOString();
-        if (key in acc) {
-          acc[key].push(item);
-        } else {
-          acc[key] = [item];
-        }
-        return acc;
-      }, {} as StatsGroup);
-
-      const names = await this.getNames(fieldName, rows);
-      const lotNumbers = await this.getLotNumbers(rows);
-      const oeeRows = Object.keys(groupHour).map((key) =>
-        this.calculateOee(this.sumOeeData(groupHour[key], fieldName, names, lotNumbers), key),
-      );
-      const dataRows = Object.keys(groupHour).map((key) => ({
-        [key]: this.sumOeeData(groupHour[key], fieldName, names, lotNumbers),
-      }));
-
-      return {
-        rows: dataRows,
-        sumRows: oeeRows,
-      };
-    } else if (duration === 'daily') {
-      // by day
-      const startCutoffDay = startDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffDay = endDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute()).add(-1, 's');
-
-      const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
-      const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
-      const days = endSlotDay.diff(startSlotDay, 'd') + 1;
-      const groupDay: StatsGroup = {};
-
-      for (let i = 0; i < days; i++) {
-        const startRangeDate = startSlotDay.add(i, 'd');
-        const endRangeDate = startSlotDay.add(i + 1, 'd').add(-1, 's');
-        const key = startSlotDay.add(i, 'd').toISOString();
-
-        groupDay[key] = rows.filter((item) => {
-          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
-        });
+    const group = rows.reduce((acc, item) => {
+      const key = dayjs(item.timeslot).toISOString();
+      if (key in acc) {
+        acc[key].push(item);
+      } else {
+        acc[key] = [item];
       }
-
-      const names = await this.getNames(fieldName, rows);
-      const lotNumbers = await this.getLotNumbers(rows);
-      const oeeRows = Object.keys(groupDay).map((key) =>
-        this.calculateOee(this.sumOeeData(groupDay[key], fieldName, names, lotNumbers), key),
-      );
-      const dataRows = Object.keys(groupDay).map((key) => ({
-        [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
-      }));
-
-      return {
-        rows: dataRows,
-        sumRows: oeeRows,
-      };
-    } else if (duration === 'monthly') {
-      // by month
-      // const startMonth = dayjs(rows[0].timestamp);
-      // const endMonth = dayjs(rows[rows.length - 1].timestamp);
-
-      const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffMonth = endDate
-        .endOf('M')
-        .startOf('d')
-        .hour(cutoffHour.hour())
-        .minute(cutoffHour.minute())
-        .add(-1, 's');
-
-      const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
-        ? startCutoffMonth.add(-1, 'd')
-        : startCutoffMonth;
-      const endSlotMonth = endDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
-      const months = endSlotMonth.diff(startSlotMonth, 'M') + 1;
-      const groupMonth: StatsGroup = {};
-
-      for (let i = 0; i < months; i++) {
-        const startRangeDate = startSlotMonth.add(i, 'M');
-        const endRangeDate = startSlotMonth.add(i + 1, 'M').add(-1, 's');
-        const key = startSlotMonth.add(i, 'M').toISOString();
-
-        groupMonth[key] = rows.filter((item) => {
-          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
-        });
-      }
-
-      const names = await this.getNames(fieldName, rows);
-      const lotNumbers = await this.getLotNumbers(rows);
-      const oeeRows = Object.keys(groupMonth).map((key) =>
-        this.calculateOee(this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers), key),
-      );
-      const dataRows = Object.keys(groupMonth).map((key) => ({
-        [key]: this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers),
-      }));
-
-      return {
-        rows: dataRows,
-        sumRows: oeeRows,
-      };
-    } else {
-      return {
-        rows: [],
-        sumRows: [],
-      };
-    }
-  }
-
-  private async getNames(fieldName: string, rows: AnalyticStatsEntity[]): Promise<{ [key: number]: string }> {
-    const ids = rows.reduce((acc, item) => (acc.indexOf(item[fieldName]) < 0 ? [...acc, item[fieldName]] : acc), []);
-
-    if (fieldName === 'oeeId') {
-      const oees = await this.oeeRepository.find({
-        where: { id: In(ids) },
-        select: ['id', 'oeeCode', 'productionName'],
-      });
-
-      return oees.reduce((acc, item) => {
-        acc[item.id] = item.productionName;
-        return acc;
-      }, {});
-    } else if (fieldName === 'oeeBatchId') {
-      const batches = await this.oeeBatchRepository.find({
-        where: { id: In(ids) },
-        select: ['id', 'lotNumber'],
-      });
-      return batches.reduce((acc, item) => {
-        acc[item.id] = item.lotNumber;
-        return acc;
-      }, {});
-    } else if (fieldName === 'productId') {
-      const products = await this.productRepository.find({
-        where: { id: In(ids) },
-        select: ['id', 'sku', 'name'],
-      });
-      return products.reduce((acc, item) => {
-        acc[item.id] = item.name;
-        return acc;
-      }, {});
-    }
-    return {};
-  }
-
-  private async getLotNumbers(rows: AnalyticStatsEntity[]): Promise<{ [key: number]: string }> {
-    const ids = rows.reduce((acc, item) => (acc.indexOf(item.oeeBatchId) < 0 ? [...acc, item.oeeBatchId] : acc), []);
-    const batches = await this.oeeBatchRepository.find({
-      where: { id: In(ids) },
-      select: ['id', 'lotNumber'],
-    });
-    return batches.reduce((acc, item) => {
-      acc[item.id] = item.lotNumber;
       return acc;
     }, {});
+
+    const names = await this.getNames(fieldName, rows);
+    const lotNumbers = await this.getLotNumbers(rows);
+    const dataRows: any[] = [];
+    const oeeRows: any[] = [];
+    for (const key of Object.keys(group)) {
+      const sumOee = await this.sumOeeData(group[key], fieldName, names, lotNumbers);
+      oeeRows.push(this.calculateOee(sumOee, key));
+
+      const obj: any = {};
+      obj[key] = sumOee;
+      dataRows.push(obj);
+    }
+
+    return {
+      rows: dataRows,
+      sumRows: oeeRows,
+    };
   }
 
-  private getStats(fieldName: string, ids: number[], from: Date, to: Date): Promise<AnalyticStatsEntity[]> {
-    return this.analyticStatsRepository
-      .createQueryBuilder()
-      .where(`${fieldName} IN (:...ids)`, { ids })
-      .andWhere('timestamp >= :from and timestamp <= :to', { from, to })
-      .getMany();
-  }
-
-  private getBatchTimelines(
-    fieldName: string,
-    ids: number[],
-    from: Date,
-    to: Date,
-  ): Promise<OeeBatchStatsTimelineEntity[]> {
-    return this.oeeBatchStatsTimelineRepository
-      .createQueryBuilder()
-      .where(`${fieldName} IN (:...ids)`, { ids })
-      .andWhere('fromDate >= :from and toDate <= :to', { from, to })
-      .getMany();
+  private getBatchStats(fieldName: string, ids: number[], from: Date, to: Date): Promise<any[]> {
+    const query =
+      'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, a.timestamp\n' +
+      'from oeeBatchStats a\n' +
+      '         inner join (select max(id) as id, oeeBatchId\n' +
+      '                     from oeeBatchStats\n' +
+      `                     where ${fieldName} IN (${ids.join(', ')})\n` +
+      '                       and timestamp >= ?\n' +
+      '                       and timestamp <= ?\n' +
+      '                     group by oeeBatchId) b\n' +
+      '                    on a.id = b.id and a.oeeBatchId = b.oeeBatchId\n' +
+      `where a.${fieldName} IN (${ids.join(', ')})\n` +
+      '  and a.timestamp >= ?\n' +
+      '  and a.timestamp <= ?;';
+    return this.entityManager.query(query, [from, to, from, to]);
   }
 
   // OEE - By M/C
   // sum of days (from - to) for each of selected OEEs, Products or Lots
   // From - To
   // Multiple OEEs, Products or Lots
-
+  // oee%, a%, p%, q% by m/c
   async findOeeByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
-    const rows = await this.getStats(fieldName, ids, from, to);
+    const rows = await this.getBatchStats(fieldName, ids, from, to);
 
     if (rows.length === 0) {
       return {
@@ -368,14 +354,17 @@ export class AnalyticService {
 
     const names = await this.getNames(fieldName, rows);
     const lotNumbers = await this.getLotNumbers(rows);
-    const oeeRows = [];
+    const oeeRows: any[] = [];
+    const dataRows: any[] = [];
     for (const key of Object.keys(group)) {
       const objName = await this.getObjectName(Number(key), chartType);
-      oeeRows.push(await this.calculateOee(this.sumOeeData(group[key], fieldName, names, lotNumbers), objName));
+      const sumOee = await this.sumOeeData(group[key], fieldName, names, lotNumbers);
+      oeeRows.push(await this.calculateOee(sumOee, objName));
+
+      const obj: any = {};
+      obj[key] = sumOee;
+      dataRows.push(obj);
     }
-    const dataRows = Object.keys(group).map((key) => ({
-      [key]: this.sumOeeData(group[key], fieldName, names, lotNumbers),
-    }));
 
     return {
       rows: dataRows,
@@ -383,25 +372,55 @@ export class AnalyticService {
     };
   }
 
-  private setMcStatus(key: string, item: any, dataRows: { [p: string]: OeeSumData }[]): any {
-    const filtered = dataRows.filter((item) => item[key]);
-    if (filtered.length > 0) {
-      const dataRow = filtered[0];
-      const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[key];
-      const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
-      item.status['running'] = operatingSeconds;
-      item.status['breakdown'] = totalBreakdown;
-      item.status['planned'] = plannedDowntimeSeconds;
-      item.status['mc_setup'] = machineSetupSeconds;
-      return item;
+  private getBatchTimelines(
+    fieldName: string,
+    ids: number[],
+    from: Date,
+    to: Date,
+  ): Promise<OeeBatchStatsTimelineEntity[]> {
+    return this.oeeBatchStatsTimelineRepository
+      .createQueryBuilder()
+      .where(`${fieldName} IN (:...ids)`, { ids })
+      .andWhere('fromDate >= :from and toDate <= :to', { from, to })
+      .getMany();
+  }
+
+  private getMcStatusFromSumStats(key: string, item: any, dataRow: { [p: string]: OeeSumData }): any {
+    const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[key];
+    const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
+    item.status['running'] = operatingSeconds;
+    item.status['breakdown'] = totalBreakdown;
+    item.status['planned'] = plannedDowntimeSeconds;
+    item.status['mc_setup'] = machineSetupSeconds;
+    return item;
+  }
+
+  private getOpUnit(duration): OpUnitType {
+    if (duration === 'hourly') {
+      return 'h';
+    } else if (duration === 'daily') {
+      return 'd';
+    } else if (duration === 'monthly') {
+      return 'M';
     }
+    throw new Error('Unknown duration');
+  }
+
+  private getManipulateType(duration): ManipulateType {
+    if (duration === 'hourly') {
+      return 'h';
+    } else if (duration === 'daily') {
+      return 'd';
+    } else if (duration === 'monthly') {
+      return 'M';
+    }
+    throw new Error('Unknown duration');
   }
 
   // MC - By Time
   // day or sum of days in month for a OEE, Product or Lot
   // From - To
   // Single OEE, Product or Lot
-
   async findMcByTime(
     siteId: number,
     chartType: string,
@@ -419,154 +438,58 @@ export class AnalyticService {
       };
     }
 
-    const statsRows = await this.getStats(fieldName, ids, from, to);
     const site = await this.siteRepository.findOneBy({ id: siteId });
-    const cutoffHour = dayjs(site.cutoffTime);
-    const startDate = dayjs(rows[0].fromDate).startOf('h');
-    const endDate = dayjs(rows[rows.length - 1].toDate).endOf('h');
+    const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
+    const statsRows = await this.getOeeStatsByTime(ids, duration, from, to, fieldName, cutoffHour);
 
+    const group = statsRows.reduce((acc, item) => {
+      const key = dayjs(item.timeslot).toISOString();
+      if (key in acc) {
+        acc[key].push(item);
+      } else {
+        acc[key] = [item];
+      }
+      return acc;
+    }, {});
+
+    const opUnit = this.getOpUnit(duration);
+    const manType = this.getManipulateType(duration);
     const names = await this.getNames(fieldName, statsRows);
     const lotNumbers = await this.getLotNumbers(statsRows);
-
     const result = [];
-    if (duration === 'hourly') {
-      const hours = endDate.diff(startDate, 'h') + 1;
 
-      for (let i = 0; i < hours; i++) {
-        const currentHour = startDate.startOf('h').add(i, 'h');
-        const key = currentHour.toISOString();
-        const tempRows = rows.filter((row) => currentHour.isBetween(row.fromDate, row.toDate, 'h', '[]'));
-        const item = {
-          key,
-          status: tempRows.reduce((acc, row) => {
-            const key = row.status;
-            const start = dayjs(row.fromDate);
-            const end = dayjs(row.toDate);
+    for (const key of Object.keys(group)) {
+      const currentTimeslot = dayjs(key);
+      const tempRows = rows.filter((row) => currentTimeslot.isBetween(row.fromDate, row.toDate, opUnit, '[]'));
+      const sumOee = await this.sumOeeData(group[key], fieldName, names, lotNumbers);
 
-            const actualStart = row.fromDate >= currentHour.toDate() ? start : currentHour;
-            const actualEnd = row.toDate <= currentHour.add(1, 'h').toDate() ? end : currentHour.add(1, 'h');
+      const obj: any = {};
+      obj[key] = sumOee;
 
-            if (key in acc) {
-              acc[key] = acc[key] + actualEnd.diff(actualStart, 's');
-            } else {
-              acc[key] = actualEnd.diff(actualStart, 's');
-            }
-            return acc;
-          }, {}),
-        };
+      const item = {
+        key,
+        status: tempRows.reduce((acc, row) => {
+          const key = row.status;
+          const start = dayjs(row.fromDate);
+          const end = dayjs(row.toDate);
 
-        const groupHour = statsRows.reduce((acc, item) => {
-          const key = dayjs(item.timestamp).startOf('h').toISOString();
+          const actualStart = row.fromDate >= currentTimeslot.toDate() ? start : currentTimeslot;
+          const actualEnd =
+            row.toDate <= currentTimeslot.add(1, manType).toDate() ? end : currentTimeslot.add(1, manType);
+
           if (key in acc) {
-            acc[key].push(item);
+            acc[key] = acc[key] + actualEnd.diff(actualStart, 's');
           } else {
-            acc[key] = [item];
+            acc[key] = actualEnd.diff(actualStart, 's');
           }
           return acc;
-        }, {} as StatsGroup);
-        const dataRows = Object.keys(groupHour).map((key) => ({
-          [key]: this.sumOeeData(groupHour[key], fieldName, names, lotNumbers),
-        }));
+        }, {}),
+      };
 
-        result.push({
-          ...item,
-          ...this.setMcStatus(key, item, dataRows),
-        });
-      }
-    } else if (duration === 'daily') {
-      const startCutoffDay = startDate.startOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffDay = endDate.endOf('d').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-
-      const startSlotDay = startDate.isSameOrBefore(startCutoffDay) ? startCutoffDay.add(-1, 'd') : startCutoffDay;
-      const endSlotDay = endDate.isSameOrAfter(endCutoffDay) ? endCutoffDay.add(1, 'd') : endCutoffDay;
-      const days = endCutoffDay.diff(startCutoffDay, 'd') + 1;
-
-      for (let i = 0; i < days; i++) {
-        const currentDay = startCutoffDay.startOf('d').add(i, 'd');
-        const key = currentDay.toISOString();
-        const tempRows = rows.filter((row) => currentDay.isBetween(row.fromDate, row.toDate, 'd', '[]'));
-        const item = {
-          key,
-          status: tempRows.reduce((acc, row) => {
-            const key = row.status;
-            const start = dayjs(row.fromDate);
-            const end = dayjs(row.toDate);
-
-            const actualStart = row.fromDate >= currentDay.toDate() ? start : currentDay;
-            const actualEnd = row.toDate <= currentDay.add(1, 'd').toDate() ? end : currentDay.add(1, 'd');
-
-            if (key in acc) {
-              acc[key] = acc[key] + actualEnd.diff(actualStart, 's');
-            } else {
-              acc[key] = actualEnd.diff(actualStart, 's');
-            }
-            return acc;
-          }, {}),
-        };
-
-        const groupDay: StatsGroup = {};
-        groupDay[key] = statsRows.filter((item) => {
-          const startRangeDate = startSlotDay.add(i, 'd');
-          const endRangeDate = startSlotDay.add(i + 1, 'd').add(-1, 's');
-          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
-        });
-        const dataRows = Object.keys(groupDay).map((key) => ({
-          [key]: this.sumOeeData(groupDay[key], fieldName, names, lotNumbers),
-        }));
-
-        result.push({
-          ...item,
-          ...this.setMcStatus(key, item, dataRows),
-        });
-      }
-    } else if (duration === 'monthly') {
-      const startCutoffMonth = startDate.startOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-      const endCutoffMonth = endDate.endOf('M').hour(cutoffHour.hour()).minute(cutoffHour.minute());
-
-      const startSlotMonth = startDate.isSameOrBefore(startCutoffMonth)
-        ? startCutoffMonth.add(-1, 'd')
-        : startCutoffMonth;
-      const endSlotMonth = endDate.isSameOrAfter(endCutoffMonth) ? endCutoffMonth.add(1, 'd') : endCutoffMonth;
-      const months = endCutoffMonth.diff(startCutoffMonth, 'M') + 1;
-
-      for (let i = 0; i < months; i++) {
-        const currentDay = startCutoffMonth.startOf('M').add(i, 'M');
-        const key = currentDay.toISOString();
-        const tempRows = rows.filter((row) => currentDay.isBetween(row.fromDate, row.toDate, 'M', '[]'));
-        const item = {
-          key,
-          status: tempRows.reduce((acc, row) => {
-            const key = row.status;
-            const start = dayjs(row.fromDate);
-            const end = dayjs(row.toDate);
-
-            const actualStart = row.fromDate >= currentDay.toDate() ? start : currentDay;
-            const actualEnd = row.toDate <= currentDay.add(1, 'M').toDate() ? end : currentDay.add(1, 'M');
-
-            if (key in acc) {
-              acc[key] = acc[key] + actualEnd.diff(actualStart, 's');
-            } else {
-              acc[key] = actualEnd.diff(actualStart, 's');
-            }
-            return acc;
-          }, {}),
-        };
-
-        const groupMonth: StatsGroup = {};
-        groupMonth[key] = statsRows.filter((item) => {
-          const startRangeDate = startSlotMonth.add(i, 'M');
-          const endRangeDate = startSlotMonth.add(i + 1, 'M').add(-1, 's');
-          return item.timestamp >= startRangeDate.toDate() && item.timestamp <= endRangeDate.toDate();
-        });
-        const dataRows = Object.keys(groupMonth).map((key) => ({
-          [key]: this.sumOeeData(groupMonth[key], fieldName, names, lotNumbers),
-        }));
-
-        result.push({
-          ...item,
-          ...this.setMcStatus(key, item, dataRows),
-        });
-      }
+      result.push({
+        ...item,
+        ...this.getMcStatusFromSumStats(key, item, obj),
+      });
     }
 
     return {
@@ -578,7 +501,6 @@ export class AnalyticService {
   // sum of days (from - to) for each of selected OEEs, Products or Lots
   // From - To
   // Multiple OEEs, Products or Lots
-
   async findMcByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
     const rows = await this.getBatchTimelines(fieldName, ids, from, to);
@@ -586,43 +508,11 @@ export class AnalyticService {
     if (rows.length === 0) {
       return {
         sumRows: [],
-        sumStatsRows: [],
       };
     }
 
-    const group = rows.reduce((acc, item) => {
-      const key = item[fieldName];
-      if (key in acc) {
-        acc[key].push(item);
-      } else {
-        acc[key] = [item];
-      }
-      return acc;
-    }, {});
-
-    const result = [];
-    for (const key of Object.keys(group)) {
-      const objName = await this.getObjectName(Number(key), chartType);
-      result.push({
-        id: Number(key),
-        key: objName,
-        status: group[key].reduce((acc, row) => {
-          const key = row.status;
-          const start = dayjs(row.fromDate);
-          const end = dayjs(row.toDate);
-
-          if (key in acc) {
-            acc[key] = acc[key] + end.diff(start, 's');
-          } else {
-            acc[key] = end.diff(start, 's');
-          }
-          return acc;
-        }, {}),
-      });
-    }
-
-    const statsRows = await this.getStats(fieldName, ids, from, to);
-    const statsGroup = statsRows.reduce((acc, item) => {
+    const statsRows = await this.getBatchStats(fieldName, ids, from, to);
+    const group = statsRows.reduce((acc, item) => {
       const key = item[fieldName];
       if (key in acc) {
         acc[key].push(item);
@@ -634,18 +524,35 @@ export class AnalyticService {
 
     const names = await this.getNames(fieldName, statsRows);
     const lotNumbers = await this.getLotNumbers(statsRows);
-    const dataRows = Object.keys(statsGroup).map((key) => ({
-      [key]: this.sumOeeData(statsGroup[key], fieldName, names, lotNumbers),
-    }));
+    const result = [];
 
-    for (const row of result) {
-      const dataRow = dataRows.filter((item) => item[row.id])[0];
-      const { operatingSeconds, totalBreakdownSeconds, plannedDowntimeSeconds, machineSetupSeconds } = dataRow[row.id];
-      const totalBreakdown = totalBreakdownSeconds - machineSetupSeconds;
-      row.status['running'] = operatingSeconds;
-      row.status['breakdown'] = totalBreakdown;
-      row.status['planned'] = plannedDowntimeSeconds;
-      row.status['mc_setup'] = machineSetupSeconds;
+    for (const key of Object.keys(group)) {
+      const objName = await this.getObjectName(Number(key), chartType);
+      const sumOee = await this.sumOeeData(group[key], fieldName, names, lotNumbers);
+
+      const obj: any = {};
+      obj[key] = sumOee;
+
+      const item = {
+        key: objName,
+        status: rows.reduce((acc, row) => {
+          const key = row.status;
+          const start = dayjs(row.fromDate);
+          const end = dayjs(row.toDate);
+
+          if (key in acc) {
+            acc[key] = acc[key] + end.diff(start, 's');
+          } else {
+            acc[key] = end.diff(start, 's');
+          }
+          return acc;
+        }, {}),
+      };
+
+      result.push({
+        ...item,
+        ...this.getMcStatusFromSumStats(key, item, obj),
+      });
     }
 
     return {
@@ -753,6 +660,8 @@ export class AnalyticService {
           return false;
         }),
       );
+
+      console.log(analyticQParams);
     }
 
     return {
@@ -1327,67 +1236,67 @@ export class AnalyticService {
     return {};
   }
 
-  private sumOeeData(
-    rows: AnalyticStatsEntity[],
-    fieldName: string,
-    names: { [key: number]: string },
-    lotNumbers: { [key: number]: string },
-  ): OeeSumData {
-    const initSum: OeeSumData = {
-      name: '',
-      runningSeconds: 0,
-      operatingSeconds: 0,
-      totalBreakdownSeconds: 0,
-      plannedDowntimeSeconds: 0,
-      machineSetupSeconds: 0,
-      totalCount: 0,
-      totalAutoDefects: 0,
-      totalManualDefects: 0,
-      totalOtherDefects: 0,
-      totalCountByBatch: {},
-    };
-
-    return rows.reduce((acc, row) => {
-      const { data, oeeBatchId } = row;
-      const {
-        standardSpeedSeconds,
-        runningSeconds,
-        operatingSeconds,
-        totalBreakdownSeconds,
-        plannedDowntimeSeconds,
-        machineSetupSeconds,
-        totalCount,
-        totalAutoDefects,
-        totalManualDefects,
-        totalOtherDefects,
-      } = data;
-
-      const totalCountByBatch = { ...acc.totalCountByBatch };
-      if (oeeBatchId in totalCountByBatch) {
-        totalCountByBatch[oeeBatchId].totalCount += totalCount;
-      } else {
-        totalCountByBatch[oeeBatchId] = {
-          lotNumber: Object.keys(lotNumbers).indexOf(oeeBatchId.toString()) >= 0 ? lotNumbers[oeeBatchId] : '',
-          standardSpeedSeconds,
-          totalCount,
-        };
-      }
-
-      return {
-        name: Object.keys(names).indexOf(row[fieldName].toString()) >= 0 ? names[row[fieldName]] : '',
-        runningSeconds: acc.runningSeconds + runningSeconds,
-        operatingSeconds: acc.operatingSeconds + operatingSeconds,
-        totalBreakdownSeconds: acc.totalBreakdownSeconds + totalBreakdownSeconds,
-        plannedDowntimeSeconds: acc.plannedDowntimeSeconds + plannedDowntimeSeconds,
-        machineSetupSeconds: acc.machineSetupSeconds + machineSetupSeconds,
-        totalCount: acc.totalCount + totalCount,
-        totalAutoDefects: acc.totalAutoDefects + totalAutoDefects,
-        totalManualDefects: acc.totalManualDefects + totalManualDefects,
-        totalOtherDefects: acc.totalOtherDefects + totalOtherDefects,
-        totalCountByBatch,
-      };
-    }, initSum);
-  }
+  // private sumOeeData(
+  //   rows: AnalyticStatsEntity[],
+  //   fieldName: string,
+  //   names: { [key: number]: string },
+  //   lotNumbers: { [key: number]: string },
+  // ): OeeSumData {
+  //   const initSum: OeeSumData = {
+  //     name: '',
+  //     runningSeconds: 0,
+  //     operatingSeconds: 0,
+  //     totalBreakdownSeconds: 0,
+  //     plannedDowntimeSeconds: 0,
+  //     machineSetupSeconds: 0,
+  //     totalCount: 0,
+  //     totalAutoDefects: 0,
+  //     totalManualDefects: 0,
+  //     totalOtherDefects: 0,
+  //     totalCountByBatch: {},
+  //   };
+  //
+  //   return rows.reduce((acc, row) => {
+  //     const { data, oeeBatchId } = row;
+  //     const {
+  //       standardSpeedSeconds,
+  //       runningSeconds,
+  //       operatingSeconds,
+  //       totalBreakdownSeconds,
+  //       plannedDowntimeSeconds,
+  //       machineSetupSeconds,
+  //       totalCount,
+  //       totalAutoDefects,
+  //       totalManualDefects,
+  //       totalOtherDefects,
+  //     } = data;
+  //
+  //     const totalCountByBatch = { ...acc.totalCountByBatch };
+  //     if (oeeBatchId in totalCountByBatch) {
+  //       totalCountByBatch[oeeBatchId].totalCount += totalCount;
+  //     } else {
+  //       totalCountByBatch[oeeBatchId] = {
+  //         lotNumber: Object.keys(lotNumbers).indexOf(oeeBatchId.toString()) >= 0 ? lotNumbers[oeeBatchId] : '',
+  //         standardSpeedSeconds,
+  //         totalCount,
+  //       };
+  //     }
+  //
+  //     return {
+  //       name: Object.keys(names).indexOf(row[fieldName].toString()) >= 0 ? names[row[fieldName]] : '',
+  //       runningSeconds: acc.runningSeconds + runningSeconds,
+  //       operatingSeconds: acc.operatingSeconds + operatingSeconds,
+  //       totalBreakdownSeconds: acc.totalBreakdownSeconds + totalBreakdownSeconds,
+  //       plannedDowntimeSeconds: acc.plannedDowntimeSeconds + plannedDowntimeSeconds,
+  //       machineSetupSeconds: acc.machineSetupSeconds + machineSetupSeconds,
+  //       totalCount: acc.totalCount + totalCount,
+  //       totalAutoDefects: acc.totalAutoDefects + totalAutoDefects,
+  //       totalManualDefects: acc.totalManualDefects + totalManualDefects,
+  //       totalOtherDefects: acc.totalOtherDefects + totalOtherDefects,
+  //       totalCountByBatch,
+  //     };
+  //   }, initSum);
+  // }
 
   private calculateOee(sumData: OeeSumData, key: string): any {
     const {
@@ -1757,5 +1666,117 @@ export class AnalyticService {
     }
 
     return '';
+  }
+
+  private async getNames(fieldName: string, rows: any[]): Promise<{ [key: number]: string }> {
+    const ids = rows.reduce((acc, item) => (acc.indexOf(item[fieldName]) < 0 ? [...acc, item[fieldName]] : acc), []);
+
+    if (fieldName === 'oeeId') {
+      const oees = await this.oeeRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'oeeCode', 'productionName'],
+      });
+
+      return oees.reduce((acc, item) => {
+        acc[item.id] = item.productionName;
+        return acc;
+      }, {});
+    } else if (fieldName === 'oeeBatchId') {
+      const batches = await this.oeeBatchRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'lotNumber'],
+      });
+      return batches.reduce((acc, item) => {
+        acc[item.id] = item.lotNumber;
+        return acc;
+      }, {});
+    } else if (fieldName === 'productId') {
+      const products = await this.productRepository.find({
+        where: { id: In(ids) },
+        select: ['id', 'sku', 'name'],
+      });
+      return products.reduce((acc, item) => {
+        acc[item.id] = item.name;
+        return acc;
+      }, {});
+    }
+    return {};
+  }
+
+  private async getLotNumbers(rows: any[]): Promise<{ [key: number]: string }> {
+    const ids = rows.reduce((acc, item) => (acc.indexOf(item.oeeBatchId) < 0 ? [...acc, item.oeeBatchId] : acc), []);
+    const batches = await this.oeeBatchRepository.find({
+      where: { id: In(ids) },
+      select: ['id', 'lotNumber'],
+    });
+    return batches.reduce((acc, item) => {
+      acc[item.id] = item.lotNumber;
+      return acc;
+    }, {});
+  }
+
+  private async sumOeeData(
+    rows: any[],
+    fieldName: string,
+    names: { [key: number]: string },
+    lotNumbers: { [key: number]: string },
+  ): Promise<OeeSumData> {
+    const initSum: OeeSumData = {
+      name: '',
+      runningSeconds: 0,
+      operatingSeconds: 0,
+      totalBreakdownSeconds: 0,
+      plannedDowntimeSeconds: 0,
+      machineSetupSeconds: 0,
+      totalCount: 0,
+      totalAutoDefects: 0,
+      totalManualDefects: 0,
+      totalOtherDefects: 0,
+      totalCountByBatch: {},
+    };
+
+    const ids = new Set(rows.map((row) => row.oeeBatchId));
+    const oeeBatches = await this.oeeBatchRepository.findBy({ id: In(Array.from(ids)) });
+
+    return rows.reduce((acc, row) => {
+      const { data, oeeBatchId } = row;
+      const batch = oeeBatches.find((batch) => batch.id === oeeBatchId);
+      const {
+        runningSeconds,
+        operatingSeconds,
+        totalBreakdownSeconds,
+        plannedDowntimeSeconds,
+        machineSetupSeconds,
+        totalCount,
+        totalAutoDefects,
+        totalManualDefects,
+        totalOtherDefects,
+      } = data;
+
+      const totalCountByBatch = { ...acc.totalCountByBatch };
+      if (oeeBatchId in totalCountByBatch) {
+        totalCountByBatch[oeeBatchId].totalCount += totalCount;
+      } else {
+        totalCountByBatch[oeeBatchId] = {
+          lotNumber: Object.keys(lotNumbers).indexOf(oeeBatchId.toString()) >= 0 ? lotNumbers[oeeBatchId] : '',
+          standardSpeedSeconds: batch.standardSpeedSeconds,
+          totalCount,
+        };
+      }
+
+      return {
+        name: Object.keys(names).indexOf(row[fieldName].toString()) >= 0 ? names[row[fieldName]] : '',
+        runningSeconds: acc.runningSeconds + runningSeconds,
+        operatingSeconds: acc.operatingSeconds + operatingSeconds || 0,
+        totalBreakdownSeconds: acc.totalBreakdownSeconds + totalBreakdownSeconds,
+        plannedDowntimeSeconds: acc.plannedDowntimeSeconds + plannedDowntimeSeconds,
+        machineSetupSeconds: acc.machineSetupSeconds + machineSetupSeconds,
+        totalCount: acc.totalCount + totalCount,
+        totalAutoDefects: acc.totalAutoDefects + totalAutoDefects,
+        totalManualDefects: acc.totalManualDefects + totalManualDefects,
+        totalOtherDefects: acc.totalOtherDefects + totalOtherDefects,
+        totalCountByBatch,
+      };
+    }, initSum);
   }
 }

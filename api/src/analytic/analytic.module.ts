@@ -4,7 +4,6 @@ import { AnalyticController } from './analytic.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SiteEntity } from '../common/entities/site.entity';
 import { AnalyticEntity } from '../common/entities/analytic.entity';
-import { AnalyticStatsEntity } from '../common/entities/analytic-stats.entity';
 import { UserEntity } from '../common/entities/user.entity';
 import { OeeEntity } from '../common/entities/oee.entity';
 import { ProductEntity } from '../common/entities/product.entity';
@@ -27,7 +26,6 @@ import { AnalyticStatsParamEntity } from '../common/entities/analytic-stats-para
       OeeBatchStatsEntity,
       OeeBatchStatsTimelineEntity,
       AnalyticEntity,
-      AnalyticStatsEntity,
       AnalyticStatsParamEntity,
       OeeBatchAEntity,
       OeeBatchPEntity,

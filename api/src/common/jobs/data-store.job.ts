@@ -34,10 +34,6 @@ export class DataStoreJob {
 
     logBatch(this.logger, batch.id, oeeCode, 'Store stats');
     await this.oeeBatchService.createBatchLog(batch.id);
-    await this.eventEmitter.emitAsync('analytic-oee.update', {
-      batchId: batch.id,
-      oeeStats: batch.oeeStats,
-    });
 
     if (batch.batchStoppedDate && batchJob.batchJobEnded) {
       await this.oeeBatchJobRepository.save({

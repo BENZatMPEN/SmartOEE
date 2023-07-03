@@ -37,7 +37,7 @@ import {
   AnalyticOeeUpdateEvent,
   AnalyticPParamUpdateEvent,
 } from '../common/events/analytic.event';
-import { AnalyticQParam } from '../common/type/analytic-data';
+import { AnalyticData, AnalyticQParam } from '../common/type/analytic-data';
 import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
 import { SocketService } from '../common/services/socket.service';
 import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
@@ -527,19 +527,7 @@ export class OeeBatchService {
       totalManualDefects: updateDto.totalManual,
     });
 
-    const updatedBatch = await this.oeeBatchRepository.findOne({ where: { id } });
-    // const calculateDto: OeeBatchCalculationDto = {
-    //   oeeBatchId: batch.id,
-    //   totalDefects: batch.oeeStats.totalAutoDefects,
-    //   totalCount: batch.oeeStats.totalCount,
-    // };
-    //
-
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });
-    await this.eventEmitter.emitAsync(
-      'analytic-oee.update',
-      new AnalyticOeeUpdateEvent(updatedBatch.id, updatedBatch.oeeStats),
-    );
   }
 
   createBatchHistory(id: number, type: string, data: any): Promise<OeeBatchEditHistoryEntity> {

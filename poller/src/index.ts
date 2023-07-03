@@ -57,8 +57,8 @@ type DeviceTagResult = {
   reads: ReadItem[];
 };
 
-function wait(ms: number) {
-  new Promise((r) => setTimeout(r, ms));
+function wait(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 async function handleModbus(device: Device, writeData: WriteItem[]): Promise<DeviceTagResult | null> {

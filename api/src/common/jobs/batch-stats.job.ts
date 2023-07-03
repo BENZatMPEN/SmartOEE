@@ -197,11 +197,6 @@ export class BatchStatsJob {
       await this.oeeBatchService.update1(batch.id, { oeeStats: currentStats });
       await this.oeeBatchService.saveBatchStats(batch.oeeId, batch.product.id, batch.id, oeeStats, readTimestamp);
 
-      // await this.oeeBatchService.createBatchLog(batch.id);
-      // await this.eventEmitter.emitAsync('analytic-oee.update', {
-      //   batchId: batch.id,
-      //   oeeStats: currentStats,
-      // });
 
       // send to socket
       this.socketService.socket.to(`site_${batch.siteId}`).emit(`stats_${batch.id}.updated`, currentStats);

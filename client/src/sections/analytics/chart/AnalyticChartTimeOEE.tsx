@@ -174,6 +174,7 @@ export default function AnalyticChartTimeOEE({ criteria, group }: Props) {
 
       const { data } = response;
       const { rows, sumRows } = data;
+
       setDataRows(
         (rows as any[])
           .map((row) =>

@@ -178,7 +178,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
       const { running, standby, breakdown, planned, mc_setup } = status;
 
       const temp = {
-        key: dayjs(key).format('YYYY-MM-DD HH:mm'),
+        key: key,
         running: running ? running : 0,
         standby: standby ? standby : 0,
         breakdown: breakdown ? breakdown : 0,

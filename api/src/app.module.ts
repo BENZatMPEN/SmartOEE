@@ -74,7 +74,6 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { OeeBatchStatsTimelineEntity } from './common/entities/oee-batch-stats-timeline.entity';
 import { OeeBatchStatsEntity } from './common/entities/oee-batch-stats.entity';
 import { OeeBatchLogEntity } from './common/entities/oee-batch-logs.entity';
-import { AnalyticStatsEntity } from './common/entities/analytic-stats.entity';
 import { TagReadJob } from './common/jobs/tag-read.job';
 import { NotificationModule } from './common/services/notification.module';
 import { BatchEventsListener } from './common/listeners/batch-events.listener';
@@ -158,7 +157,6 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
             PlanningEntity,
             HistoryLogEntity,
             AnalyticEntity,
-            AnalyticStatsEntity,
             AnalyticStatsParamEntity,
             DashboardEntity,
           ],
@@ -204,7 +202,6 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
       AlarmEntity,
       HistoryLogEntity,
       AnalyticEntity,
-      AnalyticStatsEntity,
       AnalyticStatsParamEntity,
       DashboardEntity,
       PlanningEntity,
