@@ -4,7 +4,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
-import { fNumber2, fPercent } from '../../../utils/formatNumber';
+import { fNumber2, fPercent, fSeconds } from '../../../utils/formatNumber';
 import { fAnalyticChartTitle, fAnalyticOeePHeaderText, fTimeUnitText } from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { AxiosError } from 'axios';
@@ -293,15 +293,15 @@ export default function AnalyticChartP({ criteria, group }: Props) {
 
       return {
         name,
-        runningSeconds: runningSeconds,
-        plannedDowntimeSeconds: plannedDowntimeSeconds,
-        totalCount: totalP,
-        percent: totalP / nonZeroLoadingTime,
+        runningSeconds: format ? fSeconds(runningSeconds) : runningSeconds,
+        plannedDowntimeSeconds: format ? fSeconds(plannedDowntimeSeconds) : plannedDowntimeSeconds,
+        totalCount: format ? fSeconds(totalP) : totalP,
+        percent: fPercent((totalP / nonZeroLoadingTime) * 100),
       };
     });
   }
 
-  function tablePParetoCleanUp(rows: any[]): any[] {
+  function tablePParetoCleanUp(rows: any[], format: boolean = false): any[] {
     if (rows.length <= 0) {
       return [];
     }
@@ -311,8 +311,8 @@ export default function AnalyticChartP({ criteria, group }: Props) {
     for (let i = 0; i < row.labels.length; i++) {
       results.push({
         name: row.labels[i],
-        count: row.counts[i],
-        percent: row.percents[i],
+        count: format ? fSeconds(row.counts[i]) : row.counts[i],
+        percent: fPercent(row.percents[i]),
       });
     }
 
@@ -354,7 +354,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tablePPercentCleanUp(dataRows).map((row) => (
+                    {tablePPercentCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {headers.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
@@ -384,7 +384,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tablePParetoCleanUp(dataRows).map((row) => (
+                    {tablePParetoCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {paretoHeaders.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>

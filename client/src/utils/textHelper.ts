@@ -574,3 +574,28 @@ export function fAnalyticOeePHeaderText(key: string): string {
       return key;
   }
 }
+
+export function fAnalyticOeeQHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
+      return '';
+
+    case 'name':
+      return 'Lot Number';
+
+    case 'totalAutoDefects':
+      return 'Total Auto Defect';
+
+    case 'totalManualDefects':
+      return 'Total Manual Defect';
+
+    case 'totalCount':
+      return 'Total Product';
+
+    case 'percent':
+      return 'Percent';
+
+    default:
+      return key;
+  }
+}

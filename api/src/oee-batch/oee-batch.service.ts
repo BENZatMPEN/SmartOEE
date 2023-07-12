@@ -34,10 +34,10 @@ import { OptionItem } from '../common/type/option-item';
 import { fLotNumber } from '../common/utils/formatNumber';
 import {
   AnalyticAParamUpdateEvent,
-  AnalyticOeeUpdateEvent,
   AnalyticPParamUpdateEvent,
+  AnalyticQParamUpdateEvent,
 } from '../common/events/analytic.event';
-import { AnalyticData, AnalyticQParam } from '../common/type/analytic-data';
+import { AnalyticQParam } from '../common/type/analytic-data';
 import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
 import { SocketService } from '../common/services/socket.service';
 import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
@@ -384,12 +384,10 @@ export class OeeBatchService {
 
     const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
     const { siteId, oeeId, product } = batch;
-    const analyticAParamsUpdateEvent: AnalyticAParamUpdateEvent = {
-      siteId,
-      oeeId,
-      productId: product.id,
-      oeeBatchId: batch.id,
-      params: [
+
+    await this.eventEmitter.emitAsync(
+      'analytic-a-params.update',
+      new AnalyticAParamUpdateEvent(siteId, oeeId, product.id, batch.id, current.timestamp, [
         {
           tagId: current.tagId,
           seconds: -current.seconds,
@@ -402,9 +400,8 @@ export class OeeBatchService {
           machineId: updating.machineId,
           machineParameterId: updating.machineParameterId,
         },
-      ],
-    };
-    await this.eventEmitter.emitAsync('analytic-a-params.update', analyticAParamsUpdateEvent);
+      ]),
+    );
 
     const batchA = await this.oeeBatchARepository.save(updating);
     await this.eventEmitter.emitAsync('batch-a-params.updated', { batchId: batchA.oeeBatchId, createLog: true });
@@ -438,12 +435,10 @@ export class OeeBatchService {
 
     const batch = await this.oeeBatchRepository.findOneBy({ id: current.oeeBatchId });
     const { siteId, oeeId, product } = batch;
-    const analyticPParamsUpdateEvent: AnalyticPParamUpdateEvent = {
-      siteId,
-      oeeId,
-      productId: product.id,
-      oeeBatchId: batch.id,
-      params: [
+
+    await this.eventEmitter.emitAsync(
+      'analytic-p-params.update',
+      new AnalyticPParamUpdateEvent(siteId, oeeId, product.id, batch.id, current.timestamp, [
         {
           tagId: current.tagId,
           seconds: -current.seconds,
@@ -456,9 +451,8 @@ export class OeeBatchService {
           machineId: updating.machineId,
           machineParameterId: updating.machineParameterId,
         },
-      ],
-    };
-    await this.eventEmitter.emitAsync('analytic-p-params.update', analyticPParamsUpdateEvent);
+      ]),
+    );
 
     const batchP = await this.oeeBatchPRepository.save(updating);
     await this.eventEmitter.emitAsync('batch-p-params.updated', { batchId: batchP.oeeBatchId, createLog: true });
@@ -498,13 +492,13 @@ export class OeeBatchService {
 
     // calculate q other
     const sumManual = updateDto.qParams.reduce((acc, x) => acc + x.manualAmount, 0);
-    console.log('totalManual', updateDto.totalManual);
-    console.log('sumManual', sumManual);
-
+    // console.log('totalManual', updateDto.totalManual);
+    // console.log('sumManual', sumManual);
     const updatingOther = updateDto.totalManual - sumManual;
-    console.log('updatingOther', updatingOther);
-    const currentOther = oeeStats.totalOtherDefects; //currentParams.reduce((acc, x) => acc + x.manualAmount, 0);
-    console.log('currentOther', currentOther);
+    // console.log('updatingOther', updatingOther);
+    const currentOther = oeeStats.totalOtherDefects;
+    // console.log('currentOther', currentOther);
+
     analyticQParams.push({
       autoAmount: 0,
       manualAmount: currentOther === 0 && updatingOther > 0 ? updatingOther : updatingOther - currentOther,
@@ -512,6 +506,12 @@ export class OeeBatchService {
       machineId: null,
       machineParameterId: null,
     });
+
+    const timestamp = batch.batchStoppedDate ? batch.batchStoppedDate : dayjs().startOf('s').toDate();
+    await this.eventEmitter.emitAsync(
+      'analytic-q-params.update',
+      new AnalyticQParamUpdateEvent(siteId, oeeId, product.id, batch.id, timestamp, analyticQParams),
+    );
 
     // then update the data
     await this.oeeBatchQRepository.save(

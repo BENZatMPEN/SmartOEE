@@ -84,7 +84,7 @@ export class BatchPEventsListener {
       await this.eventEmitter.emitAsync('batch-p-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
       await this.eventEmitter.emitAsync(
         'analytic-p-params.update',
-        new AnalyticPParamUpdateEvent(siteId, oeeId, product.id, batch.id, [
+        new AnalyticPParamUpdateEvent(siteId, oeeId, product.id, batch.id, readTimestamp, [
           {
             tagId: updatingP.tagId,
             seconds: updatingP.seconds,

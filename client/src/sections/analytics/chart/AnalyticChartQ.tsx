@@ -4,7 +4,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fNumber, fNumber2, fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticOeeQHeaderText } from '../../../utils/textHelper';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -283,7 +283,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
-  function tableQPercentCleanUp(rows: any[]): any[] {
+  function tableQPercentCleanUp(rows: any[], format: boolean = false): any[] {
     return rows.map((row) => {
       const { name, totalAutoDefects, totalManualDefects, totalCount } = row;
       const totalAllDefects = totalAutoDefects + totalManualDefects;
@@ -291,15 +291,15 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
 
       return {
         name,
-        totalAutoDefects,
-        totalManualDefects,
-        totalCount,
-        percent: (totalCount - totalAllDefects) / nonZeroTotalCount,
+        totalAutoDefects: format ? fNumber(totalAutoDefects) : totalAutoDefects,
+        totalManualDefects: format ? fNumber(totalManualDefects) : totalManualDefects,
+        totalCount: format ? fNumber(totalCount) : totalCount,
+        percent: fPercent(((totalCount - totalAllDefects) / nonZeroTotalCount) * 100),
       };
     });
   }
 
-  function tableQParetoCleanUp(rows: any[]): any[] {
+  function tableQParetoCleanUp(rows: any[], format: boolean = false): any[] {
     if (rows.length <= 0) {
       return [];
     }
@@ -309,8 +309,8 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
     for (let i = 0; i < row.labels.length; i++) {
       results.push({
         name: row.labels[i],
-        count: row.counts[i],
-        percent: row.percents[i],
+        count: format ? fNumber(row.counts[i]) : row.counts[i],
+        percent: fPercent(row.percents[i]),
       });
     }
 
@@ -337,18 +337,22 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
             criteria.chartSubType === 'bar_min_max' ||
             criteria.chartSubType === 'line') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={tableQPercentCleanUp(dataRows)} filename="q-percent" />
+              <ExportXlsx
+                headers={headers.map(fAnalyticOeeQHeaderText)}
+                rows={tableQPercentCleanUp(dataRows)}
+                filename="q-percent"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeQHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tableQPercentCleanUp(dataRows).map((row) => (
+                    {tableQPercentCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {headers.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
@@ -363,13 +367,17 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
 
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={paretoHeaders} rows={tableQParetoCleanUp(dataRows)} filename="q-pareto" />
+              <ExportXlsx
+                headers={paretoHeaders.map(fAnalyticOeeQHeaderText)}
+                rows={tableQParetoCleanUp(dataRows)}
+                filename="q-pareto"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeQHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

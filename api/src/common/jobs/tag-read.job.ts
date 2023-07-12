@@ -346,8 +346,8 @@ export class TagReadJob {
       }
 
       // check Q
-      if (currentMcState.totalNg > previousMcState.totalNg) {
-        await this.eventEmitter.emitAsync('batch-q-params.process', new BatchQEvent(batch, allReads));
+      if (previousMcState.total > 0 && currentMcState.totalNg > previousMcState.totalNg) {
+        await this.eventEmitter.emitAsync('batch-q-params.process', new BatchQEvent(batch, allReads, readTimestamp));
       }
 
       if (batch.toBeStopped) {

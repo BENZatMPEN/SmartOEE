@@ -138,7 +138,6 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
   const stackOptions: ApexOptions = {
     chart: {
       stacked: true,
-      stackType: '100%',
     },
     grid: {
       padding: {
@@ -266,7 +265,6 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
         // {name: 'Q1', data: [time1[0], time2[0], time3[0]]}
         // {name: 'Q2', data: [time1[1], time2[1], time3[1]]}
         // {name: 'Q3', data: [time1[2], time2[2], time3[2]]}
-
         setSeries(
           names.map((val: string) => {
             return {
@@ -280,7 +278,6 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
         );
       }
 
-      // console.log(data);
       setIsLoading(false);
     } catch (error) {
       if (error) {

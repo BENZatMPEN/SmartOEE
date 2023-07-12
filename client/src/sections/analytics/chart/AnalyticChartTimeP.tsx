@@ -18,7 +18,7 @@ interface Props {
   group?: boolean;
 }
 
-const headers: string[] = ['key', 'runningSeconds', 'plannedDowntimeSeconds', 'totalCount', 'percent'];
+const headers: string[] = ['key', 'operatingSeconds', 'plannedDowntimeSeconds', 'totalCount', 'percent'];
 
 export default function AnalyticChartTimeP({ criteria, group }: Props) {
   const { enqueueSnackbar } = useSnackbar();
@@ -139,7 +139,6 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
   const stackOptions: ApexOptions = {
     chart: {
       stacked: true,
-      stackType: '100%',
     },
     grid: {
       padding: {
@@ -312,8 +311,8 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
 
   function tablePPercentCleanUp(rows: any[]): any[] {
     return rows.map((row) => {
-      const { key, runningSeconds, plannedDowntimeSeconds, totalCountByBatch } = row;
-      const loadingTime = runningSeconds - plannedDowntimeSeconds;
+      const { key, operatingSeconds, plannedDowntimeSeconds, totalCountByBatch } = row;
+      const loadingTime = operatingSeconds - plannedDowntimeSeconds;
       const nonZeroLoadingTime = loadingTime === 0 ? 1 : loadingTime;
       const totalP = Object.keys(totalCountByBatch).reduce((acc, key) => {
         acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
@@ -322,7 +321,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
 
       return {
         key: dayjs(key).format('YYYY-MM-DD HH:mm'),
-        runningSeconds,
+        operatingSeconds,
         plannedDowntimeSeconds,
         totalCount: totalP,
         percent: totalP / nonZeroLoadingTime,

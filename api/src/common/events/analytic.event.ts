@@ -16,13 +16,22 @@ export class AnalyticAParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
+  timestamp: Date;
   params: AnalyticAParam[];
 
-  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticAParam[]) {
+  constructor(
+    siteId: number,
+    oeeId: number,
+    productId: number,
+    oeeBatchId: number,
+    timestamp: Date,
+    params: AnalyticAParam[],
+  ) {
     this.siteId = siteId;
     this.oeeId = oeeId;
     this.productId = productId;
     this.oeeBatchId = oeeBatchId;
+    this.timestamp = timestamp;
     this.params = params;
   }
 }
@@ -32,13 +41,22 @@ export class AnalyticPParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
+  timestamp: Date;
   params: AnalyticPParam[];
 
-  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticPParam[]) {
+  constructor(
+    siteId: number,
+    oeeId: number,
+    productId: number,
+    oeeBatchId: number,
+    timestamp: Date,
+    params: AnalyticPParam[],
+  ) {
     this.siteId = siteId;
     this.oeeId = oeeId;
     this.productId = productId;
     this.oeeBatchId = oeeBatchId;
+    this.timestamp = timestamp;
     this.params = params;
   }
 }
@@ -48,13 +66,22 @@ export class AnalyticQParamUpdateEvent {
   oeeId: number;
   productId: number;
   oeeBatchId: number;
+  timestamp: Date;
   params: AnalyticQParam[];
 
-  constructor(siteId: number, oeeId: number, productId: number, oeeBatchId: number, params: AnalyticQParam[]) {
+  constructor(
+    siteId: number,
+    oeeId: number,
+    productId: number,
+    oeeBatchId: number,
+    timestamp: Date,
+    params: AnalyticQParam[],
+  ) {
     this.siteId = siteId;
     this.oeeId = oeeId;
     this.productId = productId;
     this.oeeBatchId = oeeBatchId;
+    this.timestamp = timestamp;
     this.params = params;
   }
 }

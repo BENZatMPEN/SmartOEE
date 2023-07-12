@@ -8,6 +8,7 @@ import { logBatch } from '../utils/batchHelper';
 import { NotificationService } from '../services/notification.service';
 import { BatchAEvent } from '../events/batch-a.event';
 import { BatchParamsUpdatedEvent } from '../events/batch.event';
+import { timestamp } from 'rxjs';
 
 @Injectable()
 export class BatchAEventsListener {
@@ -81,7 +82,7 @@ export class BatchAEventsListener {
     await this.eventEmitter.emitAsync('batch-a-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
     await this.eventEmitter.emitAsync(
       'analytic-a-params.update',
-      new AnalyticAParamUpdateEvent(siteId, oeeId, product.id, batch.id, [
+      new AnalyticAParamUpdateEvent(siteId, oeeId, product.id, batch.id, readTimestamp, [
         {
           tagId: updatingA.tagId,
           seconds: updatingA.seconds,

@@ -300,7 +300,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
     });
   }
 
-  function tableAParetoCleanUp(rows: any[]): any[] {
+  function tableAParetoCleanUp(rows: any[], format: boolean = false): any[] {
     if (rows.length <= 0) {
       return [];
     }
@@ -310,7 +310,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
     for (let i = 0; i < row.labels.length; i++) {
       results.push({
         name: row.labels[i],
-        count: row.counts[i],
+        count: format ? fSeconds(row.counts[i]) : row.counts[i],
         percent: fPercent(row.percents[i]),
       });
     }
@@ -383,7 +383,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tableAParetoCleanUp(dataRows).map((row) => (
+                    {tableAParetoCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {paretoHeaders.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>

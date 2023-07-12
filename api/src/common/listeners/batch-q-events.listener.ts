@@ -19,7 +19,7 @@ export class BatchQEventsListener {
 
   @OnEvent('batch-q-params.process', { async: true })
   async processQ(event: BatchQEvent): Promise<void> {
-    const { batch, reads } = event;
+    const { batch, reads, readTimestamp } = event;
     const { siteId, oeeId, product } = batch;
     const currentParams = await this.oeeBatchService.findBatchQsById(batch.id);
     const updatingParams = currentParams.reduce((acc, param) => {
@@ -41,7 +41,7 @@ export class BatchQEventsListener {
 
     await this.eventEmitter.emitAsync(
       'analytic-q-params.update',
-      new AnalyticQParamUpdateEvent(siteId, oeeId, product.id, batch.id, [
+      new AnalyticQParamUpdateEvent(siteId, oeeId, product.id, batch.id, readTimestamp, [
         {
           autoAmount: updatingParam.autoAmount - currentParam.autoAmount,
           manualAmount: 0,

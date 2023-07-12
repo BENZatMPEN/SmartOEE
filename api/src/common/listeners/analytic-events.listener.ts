@@ -5,7 +5,6 @@ import {
   AnalyticPParamUpdateEvent,
   AnalyticQParamUpdateEvent,
 } from '../events/analytic.event';
-import * as dayjs from 'dayjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OeeBatchEntity } from '../entities/oee-batch.entity';
 import { Repository } from 'typeorm';
@@ -28,51 +27,48 @@ export class AnalyticEventsListener {
 
   @OnEvent('analytic-a-params.update', { async: true })
   async handleAnalyticAParamsUpdateEvent(event: AnalyticAParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, params } = event;
-    const timestamp = dayjs().startOf('s');
+    const { siteId, oeeId, productId, oeeBatchId, timestamp, params } = event;
     await this.analyticStatsParamRepository.save(
       params.map((param) => ({
         data: param,
         paramType: OEE_PARAM_TYPE_A,
-        timestamp: timestamp.toDate(),
         siteId,
         oeeId,
         oeeBatchId,
         productId,
+        timestamp,
       })),
     );
   }
 
   @OnEvent('analytic-p-params.update', { async: true })
   async handleAnalyticPParamsUpdateEvent(event: AnalyticPParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, params } = event;
-    const timestamp = dayjs().startOf('s');
+    const { siteId, oeeId, productId, oeeBatchId, timestamp, params } = event;
     await this.analyticStatsParamRepository.save(
       params.map((param) => ({
         data: param,
         paramType: OEE_PARAM_TYPE_P,
-        timestamp: timestamp.toDate(),
         siteId,
         oeeId,
         oeeBatchId,
         productId,
+        timestamp,
       })),
     );
   }
 
   @OnEvent('analytic-q-params.update', { async: true })
   async handleAnalyticQParamsUpdateEvent(event: AnalyticQParamUpdateEvent) {
-    const { siteId, oeeId, productId, oeeBatchId, params } = event;
-    const timestamp = dayjs().startOf('s');
+    const { siteId, oeeId, productId, oeeBatchId, timestamp, params } = event;
     await this.analyticStatsParamRepository.save(
       params.map((param) => ({
         data: param,
         paramType: OEE_PARAM_TYPE_Q,
-        timestamp: timestamp.toDate(),
         siteId,
         oeeId,
         oeeBatchId,
         productId,
+        timestamp,
       })),
     );
   }

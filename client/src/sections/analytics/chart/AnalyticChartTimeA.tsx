@@ -145,7 +145,6 @@ export default function AnalyticChartTimeA({ criteria, group }: Props) {
   const stackOptions: ApexOptions = {
     chart: {
       stacked: true,
-      stackType: '100%',
     },
     grid: {
       padding: {
