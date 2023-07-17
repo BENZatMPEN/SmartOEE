@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TagReadEntity } from '../entities/tag-read.entity';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -312,17 +312,8 @@ export class TagReadJob {
 
       // send batch status
       const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
-      if (tagOutBatchStatus !== null) {
-        const tagBatchStatusData: OeeTagOutBatchStatus = tagOutBatchStatus.data;
-        const outVal = this.getTagBatchStatus(currentMcState.batchStatus, activePD, tagBatchStatusData);
-        if (outVal !== '') {
-          this.socketService.socket.to(`site_${batch.siteId}`).emit(`tag_out`, {
-            deviceId: tagOutBatchStatus.deviceId,
-            tagId: tagOutBatchStatus.tagId,
-            value: outVal,
-          });
-        }
-      }
+      const outVal = this.getTagBatchStatus(currentMcState.batchStatus, activePD, tagOutBatchStatus);
+      this.sendBatchStatus(batch, oeeCode, oeeTags, outVal);
 
       // check A or P
       if (
@@ -356,6 +347,9 @@ export class TagReadJob {
           batchStoppedDate: dayjs().startOf('s').toDate(),
         });
 
+        const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
+        this.sendBatchStatus(batch, oeeCode, oeeTags, tagOutBatchStatus?.data?.standby || '');
+
         logBatch(this.logger, batch.id, oeeCode, `batch stopped.`);
       }
     } catch (error) {
@@ -379,11 +373,39 @@ export class TagReadJob {
     return reads[itemIndex];
   }
 
+  private sendBatchStatus(batch: OeeBatchEntity, oeeCode: string, oeeTags: OeeTag[], outVal: string) {
+    const tagOutBatchStatus = this.findOeeTag(OEE_TAG_OUT_BATCH_STATUS, oeeTags);
+    if (tagOutBatchStatus === null) {
+      logBatch(this.logger, batch.id, oeeCode, `send batch status - OEE batch status out isn't set`);
+      return;
+    }
+
+    if (!outVal || outVal === '') {
+      logBatch(this.logger, batch.id, oeeCode, `send batch status - out value isn't provided`);
+      return;
+    }
+
+    const { deviceId, tagId } = tagOutBatchStatus;
+    logBatch(
+      this.logger,
+      batch.id,
+      oeeCode,
+      `send batch status - deviceId: ${deviceId}, tagId: ${tagId}, val: ${outVal}`,
+    );
+
+    this.socketService.socket.to(`site_${batch.siteId}`).emit(`tag_out`, {
+      deviceId: deviceId,
+      tagId: tagId,
+      value: outVal,
+    });
+  }
+
   private getTagBatchStatus(
     batchStatus: string,
     activePD: OeeBatchPlannedDowntimeEntity,
-    data: OeeTagOutBatchStatus,
+    tagOutBatchStatus: OeeTag,
   ): string {
+    const data: OeeTagOutBatchStatus = tagOutBatchStatus.data;
     switch (batchStatus) {
       case OEE_BATCH_STATUS_RUNNING:
         return data.running;

@@ -73,7 +73,7 @@ async function handleModbus(device: Device, writeData: WriteItem[]): Promise<Dev
     const client = new ModbusRTU();
     await client.connectTCP(address, { port });
     await client.setID(deviceId);
-    client.isOpen;
+
     console.log(`[ID: ${id} - ${address} ${port}]`, 'connected', dayjs().format('HH:mm:ss:SSS'));
 
     for (const writeItem of writeData) {
@@ -173,7 +173,9 @@ async function writeModbusRegister(client: ModbusRTU, modelTag: DeviceModelTag, 
   } else if (modelTag.writeFunc === 15) {
     // await client.writeCoils(modelTag.address, value);
   } else if (modelTag.writeFunc === 16) {
-    // await client.writeRegisters(modelTag.address, value);
+    const buf = Buffer.alloc(8, 0);
+    buf.writeFloatBE(Number(value), 0);
+    await client.writeRegisters(modelTag.address, buf);
   }
 }
 
@@ -368,7 +370,6 @@ bootstrap()
             .filter((device) => !device.stopped && device.deviceModel)
             .map(async (device) => {
               const { id, address, port, deviceModel } = device;
-
               let writingItems: { id: number; item: WriteItem }[] = [];
 
               if (writeData[id]) {

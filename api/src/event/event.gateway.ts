@@ -92,6 +92,12 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   @SubscribeMessage('tagReads')
   async onTagReads(@Request() req, @ConnectedSocket() socket: Socket, @MessageBody() data: Read) {
     const { siteId, timestamp } = data;
+    if ((data.deviceReads || []).length === 0) {
+      const tagRead = await this.tagReadRepository.findOneBy({ siteId });
+      this.socket.to(`site_${siteId}`).emit('tag-reads.updated', tagRead.read);
+      return;
+    }
+
     this.socket.to(`site_${siteId}`).emit('tag-reads.updated', data);
     await this.tagReadRepository.save({
       siteId,
