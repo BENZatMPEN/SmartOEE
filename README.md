@@ -1,6 +1,6 @@
 # การติดตั้ง
 
-## Clone project หรือ copy file
+## Clone project หรือ copy files
 
 กรณีที่ไม่สามารถ clone ได้ให้ copy file แล้วแตกไฟล์ใน folder SmartOEE (หรือชื่อตามต้องการ)
 
