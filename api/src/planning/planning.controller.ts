@@ -70,14 +70,13 @@ export class PlanningController {
   }
 
   private async importRows(items: ImportPlanningDto[], siteId: number): Promise<ImportErrorRowPlanningDto[]> {
-    console.log(items);
     const invalidRows: ImportErrorRowPlanningDto[] = [];
 
     for (let i = 0; i < items.length; i++) {
       const dto = items[i] as ImportPlanningDto;
       const existingItem = await this.planningService.findByImport(dto, siteId);
       const oee = await this.oeeService.findByOeeCode(dto.oeeCode, siteId);
-      const product = await this.productService.findBySku(dto.productSku, siteId);
+      const product = oee.oeeProducts.find((item) => item.product.sku === dto.productSku && !item.product.deleted);
       const user = await this.userService.findByEmail(dto.userEmail);
 
       if (existingItem || !oee || !product || !user) {
