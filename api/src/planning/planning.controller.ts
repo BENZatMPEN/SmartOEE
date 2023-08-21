@@ -70,6 +70,7 @@ export class PlanningController {
   }
 
   private async importRows(items: ImportPlanningDto[], siteId: number): Promise<ImportErrorRowPlanningDto[]> {
+    console.log(items);
     const invalidRows: ImportErrorRowPlanningDto[] = [];
 
     for (let i = 0; i < items.length; i++) {
