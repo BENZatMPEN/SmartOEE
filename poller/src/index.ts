@@ -1,7 +1,17 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import axios from './utils/axios';
-import { API_PASS, API_USER, BASE_WS_URL, READ_INTERVAL, SITE_ID, SYNC_INTERVAL } from './config';
+import {
+  API_CONNECT_RETRY_COUNT,
+  API_CONNECT_RETRY_DELAY,
+  API_PASS,
+  API_USER,
+  BASE_WS_URL,
+  PLC_IP,
+  READ_INTERVAL,
+  SITE_ID,
+  SYNC_INTERVAL,
+} from './config';
 import { Site } from './@types/site';
 import { scheduleJob } from 'node-schedule';
 import ModbusRTU from 'modbus-serial';
@@ -173,8 +183,42 @@ async function writeModbusRegister(client: ModbusRTU, modelTag: DeviceModelTag, 
   } else if (modelTag.writeFunc === 15) {
     // await client.writeCoils(modelTag.address, value);
   } else if (modelTag.writeFunc === 16) {
-    const buf = Buffer.alloc(8, 0);
-    buf.writeFloatBE(Number(value), 0);
+    let buf: Buffer;
+
+    switch (modelTag.dataType) {
+      case 'int16':
+      case 'int16s':
+        buf = Buffer.alloc(2, 0);
+        buf.writeInt16BE(Number(value), 0);
+        break;
+
+      case 'int16u':
+        buf = Buffer.alloc(2, 0);
+        buf.writeUInt16BE(Number(value), 0);
+        break;
+
+      case 'int32':
+      case 'int32s':
+        buf = Buffer.alloc(4, 0);
+        buf.writeInt32BE(Number(value), 0);
+        break;
+
+      case 'int32u':
+        buf = Buffer.alloc(4, 0);
+        buf.writeUInt32BE(Number(value), 0);
+        break;
+
+      case 'float':
+        buf = Buffer.alloc(4, 0);
+        buf.writeFloatBE(Number(value), 0);
+        break;
+
+      default:
+        buf = Buffer.alloc(200, 0);
+        buf.write(value, 0);
+        break;
+    }
+
     await client.writeRegisters(modelTag.address, buf);
   }
 }
@@ -293,7 +337,6 @@ bootstrap()
 
     do {
       try {
-        await wait(3000);
         const authResp = await axios.post<Token>('auth/login', {
           email: API_USER,
           password: API_PASS,
@@ -306,14 +349,19 @@ bootstrap()
         retries = -1;
       } catch (err) {
         retries++;
+        await wait(API_CONNECT_RETRY_DELAY);
       }
-    } while (retries < 5 && retries != -1);
+    } while (retries < API_CONNECT_RETRY_COUNT && retries != -1);
+
+    let connected = false;
 
     const handleOpen = () => {
+      connected = true;
       console.log('websocket open');
     };
 
     const handleClose = () => {
+      connected = false;
       console.log('websocket close');
     };
 
@@ -356,18 +404,27 @@ bootstrap()
     });
 
     scheduleJob(READ_INTERVAL, () => {
+      if (!connected) {
+        console.log('PLC Reader stopped working because connection error.');
+        return;
+      }
+
+      if (PLC_IP.length === 0) {
+        console.log('No PLC_IP provided.');
+        return;
+      }
+
       try {
         fs.readFile('./data/site-infos.json', { encoding: 'utf-8' }, (fileErr, siteJson) => {
           if (fileErr) {
-            console.error('site-infos.json is not found.');
+            console.log('site-infos.json is not found.');
             return;
           }
 
           const site = JSON.parse(siteJson) as Site;
           const { devices } = site;
-
           const deviceHandlers = devices
-            .filter((device) => !device.stopped && device.deviceModel)
+            .filter((device) => !device.stopped && device.deviceModel && PLC_IP.indexOf(device.address) >= 0)
             .map(async (device) => {
               const { id, address, port, deviceModel } = device;
               let writingItems: { id: number; item: WriteItem }[] = [];
@@ -422,6 +479,11 @@ bootstrap()
     });
 
     scheduleJob(SYNC_INTERVAL, async () => {
+      if (!connected) {
+        console.log('Site data sync stopped working because connection error.');
+        return;
+      }
+
       try {
         const siteResp = await axios.get<Site>(`sites/${SITE_ID}`);
         const { data: site } = siteResp;

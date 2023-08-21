@@ -460,7 +460,7 @@ export function fOeeTabLabel(key: string): string {
 export function fAnalyticMcHeaderText(key: string): string {
   switch (key) {
     case 'key':
-      return 'Name';
+      return '';
 
     case 'running':
       return 'Operating Time';
@@ -561,6 +561,9 @@ export function fAnalyticOeePHeaderText(key: string): string {
     case 'runningSeconds':
       return 'Operating Time';
 
+    case 'operatingSeconds':
+      return 'Operating Time';
+
     case 'plannedDowntimeSeconds':
       return 'Planned Downtime';
 
@@ -591,6 +594,25 @@ export function fAnalyticOeeQHeaderText(key: string): string {
 
     case 'totalCount':
       return 'Total Product';
+
+    case 'count':
+      return 'Count';
+
+    case 'percent':
+      return 'Percent';
+
+    default:
+      return key;
+  }
+}
+
+export function fAnalyticOeeParetoHeaderText(key: string): string {
+  switch (key) {
+    case 'name':
+      return 'Reason';
+
+    case 'count':
+      return 'Count';
 
     case 'percent':
       return 'Percent';

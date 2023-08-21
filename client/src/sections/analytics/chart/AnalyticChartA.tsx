@@ -5,7 +5,12 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
 import { fNumber2, fPercent, fSeconds } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle, fAnalyticOeeAHeaderText, fTimeUnitText } from '../../../utils/textHelper';
+import {
+  fAnalyticChartTitle,
+  fAnalyticOeeAHeaderText,
+  fAnalyticOeeParetoHeaderText,
+  fTimeUnitText,
+} from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ExportXlsx from './ExportXlsx';
@@ -121,7 +126,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return fNumber2(val);
+            return fSeconds(val);
           },
         },
       },
@@ -241,10 +246,10 @@ export default function AnalyticChartA({ criteria, group }: Props) {
 
         setSeries([
           {
-            name: fTimeUnitText(TIME_UNIT_MINUTE),
+            name: 'Time',
             type: 'column',
             color: '#FF6699',
-            data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),
+            data: counts.map((item: any) => item),
           },
           {
             name: '%',
@@ -369,7 +374,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
               <ExportXlsx
-                headers={paretoHeaders.map(fAnalyticOeeAHeaderText)}
+                headers={paretoHeaders.map(fAnalyticOeeParetoHeaderText)}
                 rows={tableAParetoCleanUp(dataRows)}
                 filename="a-pareto"
               />
@@ -378,7 +383,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{fAnalyticOeeAHeaderText(item)}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeParetoHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

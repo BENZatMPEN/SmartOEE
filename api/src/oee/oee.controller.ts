@@ -135,7 +135,7 @@ export class OeeController {
   }
 
   @Get(':id/latest-batch')
-  async findLatestBatchById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<OeeBatchEntity> {
+  findLatestBatchById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<OeeBatchEntity> {
     return this.oeeService.findLatestBatch(id, siteId);
   }
 }

@@ -21,6 +21,7 @@ import {
   OEE_PARAM_TYPE_A,
   OEE_PARAM_TYPE_P,
   OEE_PARAM_TYPE_Q,
+  OEE_TAG_MC_STATE,
   OEE_TAG_OUT_RESET,
 } from '../common/constant';
 import { OeeBatchEditHistoryEntity } from '../common/entities/oee-batch-edit-history.entity';
@@ -41,6 +42,8 @@ import { AnalyticQParam } from '../common/type/analytic-data';
 import { OeeTag, OeeTagOutReset } from '../common/type/oee-tag';
 import { SocketService } from '../common/services/socket.service';
 import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
+import { TagReadEntity } from '../common/entities/tag-read.entity';
+import { DeviceTagResult } from '../common/type/read';
 
 export type ParetoData = {
   labels: string[];
@@ -82,6 +85,8 @@ export class OeeBatchService {
     private readonly oeeBatchLogRepository: Repository<OeeBatchLogEntity>,
     @InjectRepository(OeeBatchJobEntity)
     private readonly oeeBatchJobRepository: Repository<OeeBatchJobEntity>,
+    @InjectRepository(TagReadEntity)
+    private readonly tagReadRepository: Repository<TagReadEntity>,
     private readonly eventEmitter: EventEmitter2,
     private readonly entityManager: EntityManager,
     private readonly socketService: SocketService,
@@ -249,6 +254,40 @@ export class OeeBatchService {
 
       await this.oeeBatchJobRepository.save({
         oeeBatchId: oeeBatch.id,
+      });
+
+      // reset existing tag reads
+      const tagRead = await this.tagReadRepository.findOneBy({ siteId: oeeBatch.siteId });
+      const oeeTags = (oeeBatch.oee?.tags || [])
+        .filter((item) => item.tagId && item.tagId != -1 && item.key !== OEE_TAG_MC_STATE)
+        .map((item) => item.tagId);
+      const mcTags = (oeeBatch?.machines || [])
+        .map((mc) => mc.parameters.filter((param) => param.tagId).map((param) => param.tagId))
+        .flat();
+      const tagIds = Array.from(new Set<number>([...oeeTags, ...mcTags]));
+      const resetDeviceReads: DeviceTagResult[] = tagRead.read.deviceReads.map((deviceRead) => {
+        const emptyReads = deviceRead.reads
+          .filter((item) => tagIds.indexOf(item.tagId) > -1)
+          .map((item) => ({
+            ...item,
+            read: '0',
+          }));
+
+        return {
+          ...deviceRead,
+          reads: [
+            ...emptyReads,
+            ...deviceRead.reads.filter((read) => !emptyReads.find((item) => item.tagId === read.tagId)),
+          ],
+        };
+      });
+
+      await this.tagReadRepository.save({
+        siteId: tagRead.siteId,
+        read: {
+          ...tagRead.read,
+          deviceReads: resetDeviceReads,
+        },
       });
 
       const tagOutReset = this.findOeeTag(OEE_TAG_OUT_RESET, oeeBatch.oee.tags);

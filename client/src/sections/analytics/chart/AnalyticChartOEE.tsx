@@ -249,7 +249,7 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
               lotNumber ? lotNumber : batchKey
             }, Standard Speed: ${standardSpeedSeconds}, Total Count: ${totalCount}`;
           })
-          .join('\n'),
+          .join(', '),
       };
     });
 
@@ -303,7 +303,9 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <ExportXlsx
-            headers={headers.map((item) => fAnalyticOeeHeaderText(item.key))}
+            headers={
+              (dataRows || []).length > 0 ? Object.keys(xlsxCleanUp(dataRows)[0]).map(fAnalyticOeeHeaderText) : []
+            }
             rows={xlsxCleanUp(dataRows)}
             filename="oee"
           />

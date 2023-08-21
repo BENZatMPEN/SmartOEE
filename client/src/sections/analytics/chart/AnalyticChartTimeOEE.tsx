@@ -320,7 +320,9 @@ export default function AnalyticChartTimeOEE({ criteria, group }: Props) {
       {!group && (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <ExportXlsx
-            headers={headers.map((item) => fAnalyticOeeHeaderText(item.key))}
+            headers={
+              (dataRows || []).length > 0 ? Object.keys(xlsxCleanUp(dataRows)[0]).map(fAnalyticOeeHeaderText) : []
+            }
             rows={xlsxCleanUp(dataRows)}
             filename="oee"
           />

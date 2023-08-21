@@ -38,6 +38,9 @@ export default function AnalyticChartTimeMCState({ criteria, group }: Props) {
         bottom: 30,
       },
     },
+    dataLabels: {
+      enabled: false,
+    },
     xaxis: {
       show: false,
       type: 'datetime',

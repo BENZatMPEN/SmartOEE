@@ -3,21 +3,19 @@ import dayjs from 'dayjs';
 import { saveAs } from 'file-saver';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlarmHistory, FilterHistoryLog, HistoryLog } from '../../../@types/history-log';
+import { FilterHistoryLog, HistoryLog } from '../../../@types/history-log';
 import Scrollbar from '../../../components/Scrollbar';
 import { TableHeadCustom, TableNoData, TableSkeleton } from '../../../components/table';
 import { HISTORY_LOG_TYPE_ALARM, ROWS_PER_PAGE_OPTIONS } from '../../../constants';
 import useTable from '../../../hooks/useTable';
-import { FaqTableRow } from '../../../sections/faqs/list';
 import { HistoryTableToolbar } from '../../../sections/history';
 import axios from '../../../utils/axios';
 import { fDate, fTime } from '../../../utils/formatTime';
 
 const TABLE_HEAD = [
-  { id: 'createdAt', label: 'Date', align: 'center' },
-  { id: 'createdAt', label: 'Time', align: 'center' },
+  { id: 'createdAtDate', label: 'Date', align: 'center' },
+  { id: 'createdAtTime', label: 'Time', align: 'center' },
   { id: 'message', label: 'Message', align: 'left' },
-  // { id: 'details', label: 'Details', align: 'left' },
   { id: '' },
 ];
 
@@ -144,36 +142,12 @@ export default function HistoryAlarm() {
 
                     <TableCell align="center">{fTime(row.createdAt)}</TableCell>
 
-                    {/*<TableCell align="left">{productionName}</TableCell>*/}
-
                     <TableCell align="left">{row.message}</TableCell>
                   </TableRow>
                 ) : (
                   !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />
                 ),
               )}
-
-              {/*{(isLoading ? [...Array(rowsPerPage)] : pagedList.list).map((row, index) => {*/}
-              {/*  return row*/}
-              {/*    ? () => {*/}
-              {/*        const { id, message, createdAt } = row;*/}
-              {/*        // const { productionName }: AlarmHistory = data;*/}
-
-              {/*        return <TableRow key={'row_' + id}></TableRow>;*/}
-              {/*        // return (*/}
-              {/*        //   <TableRow key={id} hover>*/}
-              {/*        //     <TableCell align="center">{fDate(createdAt)}</TableCell>*/}
-              {/*        //*/}
-              {/*        //     <TableCell align="center">{fTime(createdAt)}</TableCell>*/}
-              {/*        //*/}
-              {/*        //     /!*<TableCell align="left">{productionName}</TableCell>*!/*/}
-              {/*        //*/}
-              {/*        //     <TableCell align="left">{message}</TableCell>*/}
-              {/*        //   </TableRow>*/}
-              {/*        // );*/}
-              {/*      }*/}
-              {/*    : !isNotFound && <TableSkeleton key={'skl_' + index} sx={{ height: denseHeight }} />;*/}
-              {/*})}*/}
 
               <TableNoData key={'noData'} isNotFound={isNotFound} />
             </TableBody>

@@ -5,11 +5,11 @@ import {
   Delete,
   Get,
   Param,
-  Res,
   ParseArrayPipe,
   Post,
   Put,
   Query,
+  Res,
   StreamableFile,
   UploadedFile,
   UseGuards,
@@ -30,6 +30,7 @@ import { OeeService } from '../oee/oee.service';
 import { ImportResultPlanningDto } from './dto/import-result-planning.dto';
 import { Response } from 'express';
 import * as dayjs from 'dayjs';
+import { ImportErrorRowPlanningDto } from './dto/import-error-row-planning.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -68,8 +69,8 @@ export class PlanningController {
     return new ImportResultPlanningDto(invalidRows.length === 0, invalidRows.length > 0 ? invalidRows : undefined);
   }
 
-  private async importRows(items: ImportPlanningDto[], siteId: number): Promise<number[]> {
-    const invalidRows: number[] = [];
+  private async importRows(items: ImportPlanningDto[], siteId: number): Promise<ImportErrorRowPlanningDto[]> {
+    const invalidRows: ImportErrorRowPlanningDto[] = [];
 
     for (let i = 0; i < items.length; i++) {
       const dto = items[i] as ImportPlanningDto;
@@ -79,7 +80,8 @@ export class PlanningController {
       const user = await this.userService.findByEmail(dto.userEmail);
 
       if (existingItem || !oee || !product || !user) {
-        invalidRows.push(i + 1);
+        const reason = existingItem ? 'exists' : !oee ? 'oee' : !product ? 'product' : !user ? 'user' : '';
+        invalidRows.push(new ImportErrorRowPlanningDto(i, dto, reason));
         continue;
       }
 
@@ -88,8 +90,8 @@ export class PlanningController {
           title: dto.title,
           lotNumber: dto.lotNumber,
           plannedQuantity: dto.plannedQuantity,
-          startDate: dto.startDate,
-          endDate: dto.endDate,
+          startDate: dayjs(dto.startDate, 'YYYY-MM-DD HH:mm').toDate(),
+          endDate: dayjs(dto.endDate, 'YYYY-MM-DD HH:mm').toDate(),
           oeeId: oee.id,
           productId: product.id,
           userId: user.id,

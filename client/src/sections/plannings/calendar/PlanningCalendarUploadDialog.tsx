@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import axios from '../../../utils/axios';
 import { useSnackbar } from 'notistack';
-import { ImportPlanningResult } from '../../../@types/planning';
+import { ImportPlanningErrorRow, ImportPlanningResult } from '../../../@types/planning';
 
 interface Props {
   keepMounted: boolean;
@@ -21,7 +21,7 @@ const PlanningCalendarUploadDialog = ({ onClose, open }: Props) => {
 
   const methods = useForm<{ files: FileList }>();
 
-  const [invalidRows, setInvalidRows] = useState<number[]>([]);
+  const [invalidRows, setInvalidRows] = useState<ImportPlanningErrorRow[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -56,8 +56,10 @@ const PlanningCalendarUploadDialog = ({ onClose, open }: Props) => {
         } else {
           setInvalidRows(response.data.invalidRows || []);
         }
+
+        enqueueSnackbar('Upload completed');
       } catch (error) {
-        enqueueSnackbar('Error while uploading');
+        enqueueSnackbar('Error while uploading', { variant: 'error' });
       }
     }
   };
@@ -72,6 +74,21 @@ const PlanningCalendarUploadDialog = ({ onClose, open }: Props) => {
 
   const handleCancel = () => {
     onClose();
+  };
+
+  const getReasonText = (reason: string) => {
+    switch (reason) {
+      case 'exists':
+        return 'Exists';
+      case 'oee':
+        return 'No OEE code';
+      case 'product':
+        return 'No product';
+      case 'user':
+        return 'No user';
+      default:
+        return 'Unknown error';
+    }
   };
 
   return (
@@ -98,7 +115,11 @@ const PlanningCalendarUploadDialog = ({ onClose, open }: Props) => {
             {invalidRows.length > 0 ? (
               <Alert severity="error">
                 <AlertTitle>There are rows that cannot import:</AlertTitle>
-                {invalidRows.join(', ')}
+                {invalidRows.map((item) => (
+                  <div key={item.row}>
+                    {item.row} - {getReasonText(item.reason)}
+                  </div>
+                ))}
               </Alert>
             ) : (
               <></>

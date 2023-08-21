@@ -55,19 +55,4 @@ export class HistoryLogController {
 
     return new StreamableFile(buf);
   }
-
-  // @Get('all')
-  // findAll(@ReqDec(SitePipe) site: Site): Promise<Alarm[]> {
-  //   return this.alarmService.findAll(site.id);
-  // }
-
-  // @Get(':id')
-  // async findById(@Param('id') id: number, @ReqDec(SitePipe) site: Site): Promise<Alarm> {
-  //   const alarm = await this.alarmService.findById(id, site.id);
-  //   if (!alarm) {
-  //     throw new NotFoundException();
-  //   }
-  //
-  //   return alarm;
-  // }
 }

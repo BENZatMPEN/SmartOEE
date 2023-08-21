@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
-import { fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle } from '../../../utils/textHelper';
+import { fPercent, fSeconds } from '../../../utils/formatNumber';
+import { fAnalyticChartTitle, fAnalyticOeePHeaderText } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
-import { RootState, useSelector } from '../../../redux/store';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -132,6 +131,13 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
         show: true,
       },
     },
+    tooltip: {
+      y: {
+        formatter(val: number, opts?: any): string {
+          return fSeconds(val);
+        },
+      },
+    },
   } as ApexOptions;
 
   const [pieOptions, setPieOptions] = useState<ApexOptions[]>([]);
@@ -151,6 +157,13 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
     xaxis: {
       show: false,
       labels: { rotateAlways: true },
+    },
+    yaxis: {
+      labels: {
+        formatter(val: number, opts?: any): string | string[] {
+          return fSeconds(val);
+        },
+      },
     },
   } as ApexOptions;
 
@@ -309,7 +322,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
-  function tablePPercentCleanUp(rows: any[]): any[] {
+  function tablePPercentCleanUp(rows: any[], format: boolean = false): any[] {
     return rows.map((row) => {
       const { key, operatingSeconds, plannedDowntimeSeconds, totalCountByBatch } = row;
       const loadingTime = operatingSeconds - plannedDowntimeSeconds;
@@ -321,10 +334,10 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
 
       return {
         key: dayjs(key).format('YYYY-MM-DD HH:mm'),
-        operatingSeconds,
-        plannedDowntimeSeconds,
+        operatingSeconds: format ? fSeconds(operatingSeconds) : operatingSeconds,
+        plannedDowntimeSeconds: format ? fSeconds(plannedDowntimeSeconds) : plannedDowntimeSeconds,
         totalCount: totalP,
-        percent: totalP / nonZeroLoadingTime,
+        percent: fPercent((totalP / nonZeroLoadingTime) * 100),
       };
     });
   }
@@ -337,7 +350,7 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
     return ['key', ...items];
   }
 
-  function tablePParamCleanUp(rows: any[]): any[] {
+  function tablePParamCleanUp(rows: any[], format: boolean = false): any[] {
     const names = getPParamHeaders(rows);
     return rows.map((row) => {
       const { key, data } = row;
@@ -347,7 +360,8 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
         if (name === 'key') {
           item[name] = dayjs(key).format('YYYY-MM-DD HH:mm');
         } else {
-          item[name] = data.labels.indexOf(name) >= 0 ? data.counts[data.labels.indexOf(name)] : 0;
+          const val = data.labels.indexOf(name) >= 0 ? data.counts[data.labels.indexOf(name)] : 0;
+          item[name] = format ? fSeconds(val) : val;
         }
       });
 
@@ -381,18 +395,22 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
         <>
           {(criteria.chartSubType === 'bar' || criteria.chartSubType === 'line') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={tablePPercentCleanUp(dataRows)} filename="p-percent" />
+              <ExportXlsx
+                headers={headers.map(fAnalyticOeePHeaderText)}
+                rows={tablePPercentCleanUp(dataRows)}
+                filename="p-percent"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeePHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tablePPercentCleanUp(dataRows).map((row) => (
+                    {tablePPercentCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {headers.map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>
@@ -407,18 +425,22 @@ export default function AnalyticChartTimeP({ criteria, group }: Props) {
 
           {(criteria.chartSubType === 'stack' || criteria.chartSubType === 'pie') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={getPParamHeaders(dataRows)} rows={tablePParamCleanUp(dataRows)} filename="p-param" />
+              <ExportXlsx
+                headers={getPParamHeaders(dataRows).map(fAnalyticOeePHeaderText)}
+                rows={tablePParamCleanUp(dataRows)}
+                filename="p-param"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {getPParamHeaders(dataRows).map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeePHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tablePParamCleanUp(dataRows).map((row) => (
+                    {tablePParamCleanUp(dataRows, true).map((row) => (
                       <TableRow key={row.key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {getPParamHeaders(dataRows).map((key) => (
                           <TableCell key={`${row.name}_${key}`}>{row[key]}</TableCell>

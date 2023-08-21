@@ -69,5 +69,8 @@ services:
       API_USER: poller@user.com
       API_PASS: P@ssword1
       NODE_TLS_REJECT_UNAUTHORIZED: 0
+      API_CONNECT_RETRY_DELAYL: 5000
+      API_CONNECT_RETRY_COUNT: 10
+      PLC_IP: '192.168.0.200'
     volumes:
       - ./poller-data:/app/data

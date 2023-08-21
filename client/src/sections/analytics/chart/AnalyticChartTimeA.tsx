@@ -158,6 +158,13 @@ export default function AnalyticChartTimeA({ criteria, group }: Props) {
       show: false,
       labels: { rotateAlways: true },
     },
+    yaxis: {
+      labels: {
+        formatter(val: number, opts?: any): string | string[] {
+          return fSeconds(val);
+        },
+      },
+    },
   } as ApexOptions;
 
   const refresh = async (criteria: AnalyticCriteria) => {

@@ -6,6 +6,7 @@ import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { PlanningEntity } from '../common/entities/planning.entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { ImportPlanningDto } from './dto/import-planning.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class PlanningService {
@@ -35,6 +36,9 @@ export class PlanningService {
   }
 
   findByImport(importDto: ImportPlanningDto, siteId: number): Promise<PlanningEntity> {
+    const startDate = dayjs(importDto.startDate, 'YYYY-MM-DD HH:mm').toDate();
+    const endDate = dayjs(importDto.endDate, 'YYYY-MM-DD HH:mm').toDate();
+
     return this.planningRepository
       .createQueryBuilder('p')
       .innerJoin('p.oee', 'po', 'po.oeeCode = :oeeCode', { oeeCode: importDto.oeeCode })
@@ -43,8 +47,8 @@ export class PlanningService {
       .where('p.deleted = false')
       .andWhere('p.title = :title', { title: importDto.title })
       .andWhere('p.lotNumber = :lotNumber', { lotNumber: importDto.lotNumber })
-      .andWhere('p.startDate = :startDate', { startDate: importDto.startDate })
-      .andWhere('p.endDate = :endDate', { endDate: importDto.endDate })
+      .andWhere('p.startDate = :startDate', { startDate })
+      .andWhere('p.endDate = :endDate', { endDate })
       .andWhere('p.plannedQuantity = :plannedQuantity', { plannedQuantity: importDto.plannedQuantity })
       .andWhere('p.siteId = :siteId', { siteId })
       .getOne();

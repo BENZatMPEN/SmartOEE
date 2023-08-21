@@ -124,6 +124,7 @@ export default function PlanningList() {
   }, []);
 
   const refreshData = (range: DateRange | null) => {
+    console.log(range);
     if (!range) {
       return;
     }
@@ -298,11 +299,7 @@ export default function PlanningList() {
   const [openUploadDialog, setOpenUploadDialog] = useState<boolean>(false);
 
   const handleUploadClose = (success?: boolean) => {
-    if (success) {
-      refreshData(viewRange);
-      enqueueSnackbar('Upload completed');
-    }
-
+    refreshData(viewRange);
     setOpenUploadDialog(false);
   };
 

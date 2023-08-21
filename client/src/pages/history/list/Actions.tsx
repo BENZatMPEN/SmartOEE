@@ -13,8 +13,8 @@ import axios from '../../../utils/axios';
 import { fDate, fTime } from '../../../utils/formatTime';
 
 const TABLE_HEAD = [
-  { id: 'createdAt', label: 'Date', align: 'center' },
-  { id: 'createdAt', label: 'Time', align: 'center' },
+  { id: 'createdAtDate', label: 'Date', align: 'center' },
+  { id: 'createdAtTime', label: 'Time', align: 'center' },
   { id: 'message', label: 'Message', align: 'center' },
   { id: '' },
 ];

@@ -36,9 +36,27 @@ export interface EditPlanning {
   userId: number;
 }
 
+export interface ImportPlanningRow {
+  readonly title: string;
+  readonly lotNumber: string;
+  readonly startDate: Date;
+  readonly endDate: Date;
+  readonly plannedQuantity: number;
+  readonly remark: string;
+  readonly productSku: string;
+  readonly oeeCode: string;
+  readonly userEmail: string;
+}
+
 export interface ImportPlanningResult {
   success: boolean;
-  invalidRows?: number[];
+  invalidRows?: ImportPlanningErrorRow[];
+}
+
+export interface ImportPlanningErrorRow {
+  row: number;
+  data: ImportPlanningRow;
+  reason: string;
 }
 
 export type FilterPlanning = {

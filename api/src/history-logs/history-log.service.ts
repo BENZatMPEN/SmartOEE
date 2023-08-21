@@ -30,7 +30,6 @@ export class HistoryLogService {
       .take(filterDto.rowsPerPage)
       .getManyAndCount();
 
-    console.log(rows);
     return { list: rows, count: count };
   }
 
@@ -49,14 +48,4 @@ export class HistoryLogService {
       .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .getMany();
   }
-
-  // findAll(siteId: number): Promise<HistoryLog[]> {
-  //   return this.historyLogRepository.findBy({ siteId, deleted: false });
-  // }
-  //
-  // findById(id: number, siteId: number): Promise<HistoryLog> {
-  //   return this.historyLogRepository.findOne({
-  //     where: { id, siteId, deleted: false },
-  //   });
-  // }
 }

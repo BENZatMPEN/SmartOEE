@@ -5,7 +5,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticOeeQHeaderText } from '../../../utils/textHelper';
 import { fDate } from '../../../utils/formatTime';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
@@ -317,7 +317,7 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
         totalAutoDefects,
         totalManualDefects,
         totalCount,
-        percent: (totalCount - totalAllDefects) / nonZeroTotalCount,
+        percent: fPercent(((totalCount - totalAllDefects) / nonZeroTotalCount) * 100),
       };
     });
   }
@@ -374,13 +374,17 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
         <>
           {(criteria.chartSubType === 'bar' || criteria.chartSubType === 'line') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={headers} rows={tableQPercentCleanUp(dataRows)} filename="q-percent" />
+              <ExportXlsx
+                headers={headers.map(fAnalyticOeeQHeaderText)}
+                rows={tableQPercentCleanUp(dataRows)}
+                filename="q-percent"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {headers.map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeQHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -400,13 +404,17 @@ export default function AnalyticChartTimeQ({ criteria, group }: Props) {
 
           {(criteria.chartSubType === 'stack' || criteria.chartSubType === 'pie') && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <ExportXlsx headers={getQParamHeaders(dataRows)} rows={tableQParamCleanUp(dataRows)} filename="q-param" />
+              <ExportXlsx
+                headers={getQParamHeaders(dataRows).map(fAnalyticOeeQHeaderText)}
+                rows={tableQParamCleanUp(dataRows)}
+                filename="q-param"
+              />
               <TableContainer sx={{ maxHeight: 440 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       {getQParamHeaders(dataRows).map((item) => (
-                        <TableCell key={item}>{item}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeQHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

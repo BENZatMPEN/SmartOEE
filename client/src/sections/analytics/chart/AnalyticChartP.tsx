@@ -5,7 +5,12 @@ import { AnalyticCriteria } from '../../../@types/analytic';
 import { TIME_UNIT_MINUTE } from '../../../constants';
 import axios from '../../../utils/axios';
 import { fNumber2, fPercent, fSeconds } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle, fAnalyticOeePHeaderText, fTimeUnitText } from '../../../utils/textHelper';
+import {
+  fAnalyticChartTitle,
+  fAnalyticOeeParetoHeaderText,
+  fAnalyticOeePHeaderText,
+  fTimeUnitText,
+} from '../../../utils/textHelper';
 import { convertToUnit } from '../../../utils/timeHelper';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
@@ -121,7 +126,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return fNumber2(val);
+            return fSeconds(val);
           },
         },
       },
@@ -167,6 +172,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
 
       const { data } = response;
       const { rows, sumRows } = data;
+
       if (criteria.chartSubType === 'pareto') {
         setDataRows(Object.keys(sumRows).map((key) => sumRows[key]));
       } else {
@@ -228,6 +234,8 @@ export default function AnalyticChartP({ criteria, group }: Props) {
           return;
         }
 
+        console.log(sumRows);
+
         const { labels, counts, percents } = sumRows[ids[0]] || { labels: [], counts: [], percents: [] };
         setOptions({
           ...paretoOptions,
@@ -240,10 +248,10 @@ export default function AnalyticChartP({ criteria, group }: Props) {
 
         setSeries([
           {
-            name: fTimeUnitText(TIME_UNIT_MINUTE),
+            name: 'Time',
             type: 'column',
             color: '#00CCFF',
-            data: counts.map((item: any) => convertToUnit(item, TIME_UNIT_MINUTE)),
+            data: counts.map((item: any) => item),
           },
           {
             name: '%',
@@ -370,7 +378,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
               <ExportXlsx
-                headers={paretoHeaders.map(fAnalyticOeePHeaderText)}
+                headers={paretoHeaders.map(fAnalyticOeeParetoHeaderText)}
                 rows={tablePParetoCleanUp(dataRows)}
                 filename="p-pareto"
               />
@@ -379,7 +387,7 @@ export default function AnalyticChartP({ criteria, group }: Props) {
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{fAnalyticOeePHeaderText(item)}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeParetoHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

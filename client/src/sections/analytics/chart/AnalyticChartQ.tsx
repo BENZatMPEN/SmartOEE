@@ -4,7 +4,7 @@ import ReactApexChart from 'react-apexcharts';
 import { AnalyticCriteria } from '../../../@types/analytic';
 import axios from '../../../utils/axios';
 import { fNumber, fNumber2, fPercent } from '../../../utils/formatNumber';
-import { fAnalyticChartTitle, fAnalyticOeeQHeaderText } from '../../../utils/textHelper';
+import { fAnalyticChartTitle, fAnalyticOeeParetoHeaderText, fAnalyticOeeQHeaderText } from '../../../utils/textHelper';
 import { useSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -368,7 +368,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
           {criteria.chartSubType === 'pareto' && (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
               <ExportXlsx
-                headers={paretoHeaders.map(fAnalyticOeeQHeaderText)}
+                headers={paretoHeaders.map(fAnalyticOeeParetoHeaderText)}
                 rows={tableQParetoCleanUp(dataRows)}
                 filename="q-pareto"
               />
@@ -377,7 +377,7 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
                   <TableHead>
                     <TableRow>
                       {paretoHeaders.map((item) => (
-                        <TableCell key={item}>{fAnalyticOeeQHeaderText(item)}</TableCell>
+                        <TableCell key={item}>{fAnalyticOeeParetoHeaderText(item)}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
