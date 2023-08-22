@@ -197,7 +197,6 @@ export class BatchStatsJob {
       await this.oeeBatchService.update1(batch.id, { oeeStats: currentStats });
       await this.oeeBatchService.saveBatchStats(batch.oeeId, batch.product.id, batch.id, oeeStats, readTimestamp);
 
-
       // send to socket
       this.socketService.socket.to(`site_${batch.siteId}`).emit(`stats_${batch.id}.updated`, currentStats);
 
@@ -213,7 +212,7 @@ export class BatchStatsJob {
         oeeTags,
       );
       this.sendTagOut(OEE_TAG_OUT_BREAKING_TIME, currentStats.totalBreakdownSeconds.toString(), batch.siteId, oeeTags);
-      this.sendTagOut(OEE_TAG_OUT_TOTAL_NG, currentStats.totalCount.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_TOTAL_NG, currentStats.totalAutoDefects.toString(), batch.siteId, oeeTags);
       this.sendTagOut(OEE_TAG_OUT_CYCLE_TIME, standardSpeedSeconds.toString(), batch.siteId, oeeTags);
       this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
 
