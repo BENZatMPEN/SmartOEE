@@ -212,7 +212,7 @@ export class BatchStatsJob {
         oeeTags,
       );
       this.sendTagOut(OEE_TAG_OUT_BREAKING_TIME, currentStats.totalBreakdownSeconds.toString(), batch.siteId, oeeTags);
-      this.sendTagOut(OEE_TAG_OUT_TOTAL_NG, currentStats.totalAutoDefects.toString(), batch.siteId, oeeTags);
+      this.sendTagOut(OEE_TAG_OUT_TOTAL_NG, (totalNg + totalManualDefects).toString(), batch.siteId, oeeTags);
       this.sendTagOut(OEE_TAG_OUT_CYCLE_TIME, standardSpeedSeconds.toString(), batch.siteId, oeeTags);
       this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
 
