@@ -26,7 +26,8 @@ services:
       - "3020:80"
 
   api:
-    image: mpensmartoee/smartoee-api
+    build:
+      dockerfile: Dockerfile
     restart: always
     depends_on:
       - db

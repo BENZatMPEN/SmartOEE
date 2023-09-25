@@ -1,7 +1,9 @@
 version: "3.8"
 services:
   poller:
-    image: mpensmartoee/smartoee-poller
+    build:
+      dockerfile: Dockerfile_standalone
+      context: ./poller
     restart: always
     environment:
       SITE_ID: 1

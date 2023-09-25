@@ -26,8 +26,7 @@ services:
       - "3020:80"
 
   api:
-    build:
-      dockerfile: Dockerfile
+    image: mpensmartoee/smartoee-api
     restart: always
     depends_on:
       - db
@@ -56,9 +55,7 @@ services:
       - ./api-data/uploads:/app/uploads
 
   poller:
-    build:
-      dockerfile: Dockerfile
-      context: ./poller
+    image: mpensmartoee/smartoee-poller
     restart: always
     environment:
       SITE_ID: 1

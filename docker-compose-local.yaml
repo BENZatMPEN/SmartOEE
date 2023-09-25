@@ -26,7 +26,8 @@ services:
       - "3020:80"
 
   api:
-    image: mpensmartoee/smartoee-api
+    build:
+      dockerfile: Dockerfile
     restart: always
     depends_on:
       - db
@@ -53,3 +54,23 @@ services:
       - "3010:3000"
     volumes:
       - ./api-data/uploads:/app/uploads
+
+  poller:
+    build:
+      dockerfile: Dockerfile
+      context: ./poller
+    restart: always
+    environment:
+      SITE_ID: 1
+      BASE_API_URL: http://api:3000/api
+      BASE_WS_URL: http://api:3000
+      READ_INTERVAL: "0/3 * * * * *"
+      SYNC_INTERVAL: "0/3 * * * * *"
+      API_USER: poller@user.com
+      API_PASS: P@ssword1
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      API_CONNECT_RETRY_DELAYL: 5000
+      API_CONNECT_RETRY_COUNT: 10
+      PLC_IP: '192.168.0.200'
+    volumes:
+      - ./poller-data:/app/data
