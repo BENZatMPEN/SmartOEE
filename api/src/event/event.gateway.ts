@@ -71,6 +71,11 @@ export class EventGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     const user = await this.userService.findById(authUser.id);
+    if (!user) {
+      this.logger.log(`Client connected - invalid user:`, user);
+      return;
+    }
+
     const sites = user.isAdmin ? await this.siteService.findAll() : user.sites;
     (sites || []).forEach((site) => {
       client.join(`site_${site.id}`);
