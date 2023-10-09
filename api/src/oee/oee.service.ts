@@ -85,7 +85,8 @@ export class OeeService {
         '       ob.standardSpeedSeconds,\n' +
         '       ob.oeeStats,\n' +
         '       ob.status,\n' +
-        '       ob.id as oeeBatchId\n' +
+        '       ob.id as oeeBatchId,\n' +
+        '       ob.product\n' +
         'from oees o\n' +
         '         left join cte on o.id = cte.oeeId\n' +
         '         left join oeeBatches ob\n' +
@@ -101,6 +102,7 @@ export class OeeService {
         'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
         '       ifnull(sum(if(status = "ended" or status is null, 1, 0)), 0)       as ended,\n' +
         '       ifnull(sum(if(status = "standby" or status = "planned", 1, 0)), 0) as standby,\n' +
+        '       ifnull(sum(if(status = "mc_setup", 1, 0)), 0)                      as mcSetup,\n' +
         '       ifnull(sum(if(status = "breakdown", 1, 0)), 0)                     as breakdown\n' +
         'from oees o\n' +
         '         left join cte on o.id = cte.oeeId\n' +
@@ -110,13 +112,14 @@ export class OeeService {
       [siteId],
     );
 
-    const { running, ended, standby, breakdown } = sumRows[0];
+    const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
 
     return {
       running: running,
       breakdown: breakdown,
       ended: ended,
       standby: standby,
+      mcSetup: mcSetup,
       oees: rows.map((row) => {
         const {
           id,
@@ -132,6 +135,7 @@ export class OeeService {
           useSitePercentSettings,
           percentSettings,
           oeeBatchId,
+          product,
         } = row;
         const { oeePercent, totalCount, target } = oeeStats || initialOeeBatchStats;
 
@@ -151,6 +155,7 @@ export class OeeService {
           useSitePercentSettings: useSitePercentSettings,
           percentSettings: percentSettings,
           standardSpeedSeconds: standardSpeedSeconds,
+          productName: product?.name || '',
         } as OeeStatusItem;
       }),
     } as OeeStatus;

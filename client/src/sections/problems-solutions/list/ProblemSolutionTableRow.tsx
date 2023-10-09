@@ -9,6 +9,7 @@ import { fPsProcessStatusText } from '../../../utils/textHelper';
 import { fShortDate } from '../../../utils/formatTime';
 import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
+import { PS_PROCESS_STATUS_APPROVED } from '../../../constants';
 
 type Props = {
   row: ProblemSolution;
@@ -74,7 +75,9 @@ export default function ProblemSolutionTableRow({
         {fShortDate(startDate)} - {fShortDate(endDate)}
       </TableCell>
 
-      <TableCell align="center">{fPsProcessStatusText(status)}</TableCell>
+      <TableCell align="center">
+        {status === PS_PROCESS_STATUS_APPROVED ? 'Finish' : fPsProcessStatusText(status)}
+      </TableCell>
 
       <TableCell align="right">
         {showMenu && (
@@ -96,17 +99,18 @@ export default function ProblemSolutionTableRow({
                   </MenuItem>
                 )}
 
-                {ability.can(RoleAction.Update, RoleSubject.ProblemsAndSolutions) && (
-                  <MenuItem
-                    onClick={() => {
-                      onEditRow();
-                      handleCloseMenu();
-                    }}
-                  >
-                    <Iconify icon={'eva:edit-fill'} />
-                    Edit
-                  </MenuItem>
-                )}
+                {ability.can(RoleAction.Update, RoleSubject.ProblemsAndSolutions) &&
+                  status !== PS_PROCESS_STATUS_APPROVED && (
+                    <MenuItem
+                      onClick={() => {
+                        onEditRow();
+                        handleCloseMenu();
+                      }}
+                    >
+                      <Iconify icon={'eva:edit-fill'} />
+                      Edit
+                    </MenuItem>
+                  )}
 
                 {ability.can(RoleAction.Create, RoleSubject.ProblemsAndSolutions) && (
                   <MenuItem

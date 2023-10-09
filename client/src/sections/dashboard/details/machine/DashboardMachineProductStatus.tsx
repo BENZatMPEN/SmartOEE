@@ -37,7 +37,7 @@ export default function DashboardMachineProductStatus() {
 
             <Box textAlign="right">
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-                Diff.
+                Difference
               </Typography>
               <Typography variant={'h2'}>{fNumber(diff)}</Typography>
             </Box>
@@ -53,14 +53,14 @@ export default function DashboardMachineProductStatus() {
           </Box>
 
           <Stack spacing={1} direction="row" justifyContent="space-between">
-            <Box textAlign="right">
+            <Box>
               <Typography variant={'h3'}>{fNumber(target)}</Typography>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Target
               </Typography>
             </Box>
 
-            <Box>
+            <Box textAlign="right">
               <Typography variant={'h3'}>{fNumber(plannedQuantity)}</Typography>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Planned

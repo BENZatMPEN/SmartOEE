@@ -190,8 +190,27 @@ export default function DashboardOeeGraphRealtime() {
       return;
     }
 
+    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${
+      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+    } OEE Real Time`;
+
     setBarOptions({
       ...barOptions,
+      chart: {
+        toolbar: {
+          export: {
+            csv: {
+              filename: filename,
+            },
+            svg: {
+              filename: filename,
+            },
+            png: {
+              filename: filename,
+            },
+          },
+        },
+      },
       xaxis: {
         ...barOptions.xaxis,
         categories: [
@@ -212,27 +231,46 @@ export default function DashboardOeeGraphRealtime() {
     setBarSeries([
       {
         name: 'A',
-        data: [0, ...batchStatsTime.map((item) => item.data.aPercent), 0],
+        data: [0, ...batchStatsTime.map((item) => parseFloat(item.data.aPercent.toFixed(2))), 0],
       },
       {
         name: 'P',
-        data: [0, ...batchStatsTime.map((item) => item.data.pPercent), 0],
+        data: [0, ...batchStatsTime.map((item) => parseFloat(item.data.pPercent.toFixed(2))), 0],
       },
       {
         name: 'Q',
-        data: [0, ...batchStatsTime.map((item) => item.data.qPercent), 0],
+        data: [0, ...batchStatsTime.map((item) => parseFloat(item.data.qPercent.toFixed(2))), 0],
       },
       {
         name: 'OEE',
-        data: [0, ...batchStatsTime.map((item) => item.data.oeePercent), 0],
+        data: [0, ...batchStatsTime.map((item) => parseFloat(item.data.oeePercent.toFixed(2))), 0],
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchStatsTime]);
 
   useEffect(() => {
+    const filename = `${selectedOee?.oeeCode || ''} ${currentBatch?.lotNumber || ''} ${
+      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+    } OEE Real Time - Line`;
+
     setLineOptions({
       ...lineOptions,
+      chart: {
+        toolbar: {
+          export: {
+            csv: {
+              filename: filename,
+            },
+            svg: {
+              filename: filename,
+            },
+            png: {
+              filename: filename,
+            },
+          },
+        },
+      },
       xaxis: {
         ...lineOptions.xaxis,
         categories: batchStatsLine.map((item) => item.timestamp.getTime()),
@@ -246,19 +284,19 @@ export default function DashboardOeeGraphRealtime() {
     setLineSeries([
       {
         name: 'A',
-        data: batchStatsLine.map((item) => item.data.aPercent),
+        data: batchStatsLine.map((item) => parseFloat(item.data.aPercent.toFixed(2))),
       },
       {
         name: 'P',
-        data: batchStatsLine.map((item) => item.data.pPercent),
+        data: batchStatsLine.map((item) => parseFloat(item.data.pPercent.toFixed(2))),
       },
       {
         name: 'Q',
-        data: batchStatsLine.map((item) => item.data.qPercent),
+        data: batchStatsLine.map((item) => parseFloat(item.data.qPercent.toFixed(2))),
       },
       {
         name: 'OEE',
-        data: batchStatsLine.map((item) => item.data.oeePercent),
+        data: batchStatsLine.map((item) => parseFloat(item.data.oeePercent.toFixed(2))),
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps

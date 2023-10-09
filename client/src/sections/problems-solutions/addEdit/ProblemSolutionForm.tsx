@@ -124,6 +124,7 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
             files: isEdit ? task?.attachments.map((attachment) => attachment.attachment.name) : [],
             addingFiles: [],
             deletingFiles: [],
+            order: task?.order || 0,
           };
         }),
       });
@@ -565,7 +566,7 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
             <Grid item md={4}>
               <RHFSelect
                 name="approvedByUserId"
-                label="Approved By"
+                label="การผูก Approved By"
                 InputLabelProps={{ shrink: true }}
                 SelectProps={{ native: false, disabled: !canApprove }}
               >
@@ -636,7 +637,7 @@ export default function ProblemSolutionForm({ isEdit }: Props) {
                       textTransform: 'capitalize',
                     }}
                   >
-                    {oee.productionName}
+                    {oee.oeeCode}
                   </MenuItem>
                 ))}
               </RHFSelect>

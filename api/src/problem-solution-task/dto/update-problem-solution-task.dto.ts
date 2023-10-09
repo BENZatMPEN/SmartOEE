@@ -36,4 +36,8 @@ export class UpdateProblemSolutionTaskDto {
   @Type(() => Number)
   @IsOptional()
   readonly deletingFiles: number[];
+
+  @IsNumber()
+  @Type(() => Number)
+  readonly order: number;
 }

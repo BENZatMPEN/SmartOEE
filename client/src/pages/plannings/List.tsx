@@ -322,13 +322,19 @@ export default function PlanningList() {
           ]}
           action={
             <Stack spacing={1} direction="row">
-              <Button variant="outlined" component="label" onClick={() => setOpenExportDialog(true)}>
-                Export Excel
-              </Button>
+              {(ability.can(RoleAction.Create, RoleSubject.Plannings) ||
+                ability.can(RoleAction.Update, RoleSubject.Plannings)) && (
+                <>
+                  <Button variant="outlined" component="label" onClick={() => setOpenExportDialog(true)}>
+                    Export Excel
+                  </Button>
 
-              <Button variant="outlined" component="label" onClick={() => setOpenUploadDialog(true)}>
-                Import Excel
-              </Button>
+                  <Button variant="outlined" component="label" onClick={() => setOpenUploadDialog(true)}>
+                    Import Excel
+                  </Button>
+                </>
+              )}
+
               {ability.can(RoleAction.Create, RoleSubject.Plannings) && (
                 <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={() => handleAdd()}>
                   New

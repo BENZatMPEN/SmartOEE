@@ -82,7 +82,7 @@ export default function DashboardApqGraphA() {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return timeUnit === TIME_UNIT_SECOND ? fNumber(val) : fNumber2(val);
+            return fSeconds(val);
           },
         },
       },
@@ -126,7 +126,7 @@ export default function DashboardApqGraphA() {
 
     setSeries([
       {
-        name: fTimeUnitText(timeUnit),
+        name: 'Time',
         type: 'column',
         data: counts.map((item) => convertToUnit(item, timeUnit)),
         color: '#FF6699',
@@ -160,6 +160,7 @@ export default function DashboardApqGraphA() {
                   low={percents.low}
                   oeeType={OEE_TYPE_A}
                   percent={aPercent}
+                  size={270}
                 />
 
                 <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
@@ -171,7 +172,7 @@ export default function DashboardApqGraphA() {
 
           <Grid item xs={3.5}>
             <Stack spacing={1}>
-              <ItemBox head="Total Run Time" value={fSeconds(operatingSeconds)} />
+              <ItemBox head="Total Operating Time" value={fSeconds(operatingSeconds)} />
 
               <ItemBox head="Planned Downtime" value={fSeconds(plannedDowntimeSeconds)} />
 

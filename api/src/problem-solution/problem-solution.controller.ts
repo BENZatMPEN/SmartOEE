@@ -46,8 +46,10 @@ export class ProblemSolutionController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<ProblemSolutionEntity> {
-    return this.problemSolutionService.findById(id, siteId);
+  async findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<ProblemSolutionEntity> {
+    const problemSolution = await this.problemSolutionService.findById(id, siteId);
+    problemSolution.tasks = problemSolution.tasks.sort((a, b) => (b.order < a.order ? 1 : a.order > b.order ? -1 : 0));
+    return problemSolution;
   }
 
   @Post()

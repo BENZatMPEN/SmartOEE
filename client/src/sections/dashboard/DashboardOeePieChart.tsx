@@ -12,10 +12,9 @@ type Props = {
   low: number;
   percent: number;
   oeeType: string;
-  size?: number;
 };
 
-export default function DashboardPieChart({ high, medium, low, oeeType, percent, size }: Props) {
+export default function DashboardOeePieChart({ high, medium, low, oeeType, percent }: Props) {
   const theme = useTheme();
 
   const [series, setSeries] = useState<any>([0]);
@@ -74,13 +73,16 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent,
       plotOptions: {
         radialBar: {
           dataLabels: {
-            name: { offsetY: -16 },
+            name: { offsetY: -12 },
             value: {
-              offsetY: oeeType === OEE_TYPE_OEE ? 8 : -5,
+              offsetY: 8,
               formatter: (val: any) => fNumber(Number(val)),
             },
             total: {
-              label: oeeType === OEE_TYPE_OEE ? 'OEE' : '',
+              label: 'OEE',
+              fontSize: '22px',
+              color: '#282828',
+              fontWeight: 'bolder',
             },
           },
         },
@@ -110,5 +112,5 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percent]);
 
-  return <ReactApexChart type="radialBar" series={series} options={options} height={size ? size : 230} />;
+  return <ReactApexChart type="radialBar" series={series} options={options} height={230} />;
 }

@@ -81,7 +81,7 @@ export function fBatchStatusText(oeeStatus: string) {
       return 'Standby';
 
     case OEE_BATCH_STATUS_RUNNING:
-      return 'Running';
+      return 'Operating';
 
     case OEE_BATCH_STATUS_BREAKDOWN:
       return 'Breakdown';
@@ -373,15 +373,15 @@ export function fRoleActionText(val: string) {
 
 export function fChartTitle(batch: OeeBatch | null, batchStatsTime: OeeBatchStats[], title: string = '') {
   const startDate = batch?.batchStartedDate ? fShortDateTime(batch?.batchStartedDate) : '';
-  let chartTitle = `${title} ${startDate}`.trim();
+  let chartTitle = `${title} Start ${startDate}`.trim();
 
   if (batch?.batchStoppedDate) {
     const endTime = fShortDateTime(batch.batchStoppedDate);
-    chartTitle = `${chartTitle} - ${endTime}`;
+    chartTitle = `${chartTitle} - End ${endTime}`;
   } else {
     if (batchStatsTime.length > 0) {
       const endTime = fShortDateTime(batchStatsTime[batchStatsTime.length - 1].timestamp);
-      chartTitle = `${chartTitle} - ${endTime}`;
+      chartTitle = `${chartTitle} - End ${endTime}`;
     }
   }
 

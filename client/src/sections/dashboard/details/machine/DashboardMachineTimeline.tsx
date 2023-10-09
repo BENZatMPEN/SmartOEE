@@ -5,6 +5,8 @@ import ReactApexChart from 'react-apexcharts';
 import { RootState, useSelector } from '../../../../redux/store';
 import { getColor } from '../../../../utils/colorHelper';
 import { fBatchStatusText } from '../../../../utils/textHelper';
+import { isInteger } from 'lodash';
+import { fSeconds } from '../../../../utils/formatNumber';
 
 export default function DashboardMachineTimeline() {
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
@@ -14,6 +16,8 @@ export default function DashboardMachineTimeline() {
   const { oeeCode } = selectedOee || { oeeCode: '' };
 
   const [initOpt, setInitOpt] = useState<boolean>(false);
+
+  const [lastUpdated, setLastUpated] = useState<Date>();
 
   const [series, setSeries] = useState<any>([]);
 
@@ -51,20 +55,31 @@ export default function DashboardMachineTimeline() {
     },
     tooltip: {
       x: {
-        formatter(val: number, opts?: any): string {
-          return dayjs(new Date(val)).format('HH:mm:ss');
+        formatter(val: any, opts?: any): string {
+          if (isInteger(val)) {
+            return val;
+          }
+          return '';
         },
       },
       y: {
         title: {
           formatter(seriesName: string): string {
-            return fBatchStatusText(seriesName);
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
           },
         },
         formatter(val: any, opts?: any): string {
-          if (/^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/.test(val)) {
-            return val;
+          if (isInteger(val)) {
+            return dayjs(new Date(val)).format('HH:mm:ss');
           }
+
+          if (opts?.start && opts?.end) {
+            const start = dayjs(new Date(opts.start));
+            const end = dayjs(new Date(opts.end));
+            const diff = end.diff(start, 's');
+            return `<div>Total: ${fSeconds(diff)}</div>`;
+          }
+
           return '';
         },
       },
@@ -86,6 +101,11 @@ export default function DashboardMachineTimeline() {
   }, [batchTimeline]);
 
   useEffect(() => {
+    if (lastUpdated && dayjs().diff(lastUpdated, 's') <= 10) {
+      return;
+    }
+
+    setLastUpated(new Date());
     setSeries(
       batchTimeline.map((item) => {
         return {

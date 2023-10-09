@@ -43,4 +43,7 @@ export class ProblemSolutionTaskEntity {
 
   @Column({ type: 'datetime' })
   updatedAt: Date;
+
+  @Column({ type: 'int', default: 0 })
+  order: number;
 }

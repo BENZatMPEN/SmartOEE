@@ -2,7 +2,7 @@ import { Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { OeeStatusItem } from '../../@types/oee';
-import { OEE_TYPE_OEE } from '../../constants';
+import { OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_STANDBY, OEE_TYPE_OEE } from '../../constants';
 import { RootState, useSelector } from '../../redux/store';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import { getColor } from '../../utils/colorHelper';
@@ -10,6 +10,7 @@ import { fNumber } from '../../utils/formatNumber';
 import { fTimeShort } from '../../utils/formatTime';
 import { getPercentSettingsByType } from '../../utils/percentSettingHelper';
 import DashboardPieChart from './DashboardPieChart';
+import DashboardOeePieChart from './DashboardOeePieChart';
 
 type LegendProps = {
   label: string;
@@ -37,12 +38,20 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
     endDate,
     useSitePercentSettings,
     percentSettings,
+    productName,
   } = oeeStatusItem;
 
   const percents = useMemo(
     () => getPercentSettingsByType(selectedSite, percentSettings, useSitePercentSettings, OEE_TYPE_OEE),
     [selectedSite, percentSettings, useSitePercentSettings],
   );
+
+  const getHeaderColor = (status: string): string => {
+    if (!status || status === OEE_BATCH_STATUS_ENDED) {
+      return '#B0B0B0';
+    }
+    return getColor(status);
+  };
 
   return (
     <Card>
@@ -52,7 +61,7 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
             <Typography
               variant={'h6'}
               textAlign="center"
-              bgcolor={getColor(batchStatus)}
+              bgcolor={getHeaderColor(batchStatus)}
               color="#fff"
               sx={{
                 p: 1,
@@ -62,29 +71,33 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
                 overflow: 'hidden',
               }}
             >
-              {oeeCode ? `${oeeCode} - ` : ''}
-              {productionName}
+              {oeeCode ? `${oeeCode}` : ''}
+              {productName ? `- ${productName}` : ''}
             </Typography>
           </Link>
 
-          <Stack direction="row" justifyContent="space-between" sx={{ p: 1 }}>
-            <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-              Lot: {lotNumber ? lotNumber : '-'}
-            </Typography>
+          <Stack direction="column" sx={{ p: 1 }}>
+            <div>
+              <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
+                Lot: {lotNumber ? lotNumber : '-'}
+              </Typography>
+            </div>
 
-            <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-              Start: {startDate ? fTimeShort(startDate) : '-'}
-            </Typography>
+            <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}>
+              <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
+                Start Plan: {startDate ? fTimeShort(startDate) : '-'}
+              </Typography>
 
-            <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-              End: {endDate ? fTimeShort(endDate) : '-'}
-            </Typography>
+              <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
+                End Plan: {endDate ? fTimeShort(endDate) : '-'}
+              </Typography>
+            </Stack>
           </Stack>
 
           <Box>
             <Grid container sx={{ mt: 2 }} spacing={2} alignItems="center">
               <Grid item xs={6}>
-                <DashboardPieChart
+                <DashboardOeePieChart
                   high={percents.high}
                   medium={percents.medium}
                   low={percents.low}

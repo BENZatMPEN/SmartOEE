@@ -7,6 +7,8 @@ import { RootState, useSelector } from '../../../../redux/store';
 import { getColor } from '../../../../utils/colorHelper';
 import { fBatchStatusText } from '../../../../utils/textHelper';
 import isBetween from 'dayjs/plugin/isBetween';
+import { isInteger } from 'lodash';
+import { fSeconds } from '../../../../utils/formatNumber';
 
 dayjs.extend(isBetween);
 
@@ -19,6 +21,8 @@ export default function DashboardTimelineOee() {
   const { batchTimeline } = useSelector((state: RootState) => state.oeeBatch);
 
   const [series, setSeries] = useState<any[]>([]);
+
+  const [lastUpdated, setLastUpated] = useState<Date>();
 
   const [chartHeight, setChartHeight] = useState<number>(80);
 
@@ -53,15 +57,32 @@ export default function DashboardTimelineOee() {
     },
     tooltip: {
       x: {
-        formatter(val: number, opts?: any): string {
-          return dayjs(new Date(val)).format('mm:ss');
+        formatter(val: any, opts?: any): string {
+          if (isInteger(val)) {
+            return val;
+          }
+          return '';
         },
       },
       y: {
         title: {
           formatter(seriesName: string): string {
-            return fBatchStatusText(seriesName);
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
           },
+        },
+        formatter(val: any, opts?: any): string {
+          if (isInteger(val)) {
+            return dayjs(new Date(val)).format('HH:mm:ss');
+          }
+
+          if (opts?.start && opts?.end) {
+            const start = dayjs(new Date(opts.start));
+            const end = dayjs(new Date(opts.end));
+            const diff = end.diff(start, 's');
+            return `<div>Total: ${fSeconds(diff)}</div>`;
+          }
+
+          return '';
         },
       },
     },
@@ -72,6 +93,12 @@ export default function DashboardTimelineOee() {
       setSeries([]);
       return;
     }
+
+    if (lastUpdated && dayjs().diff(lastUpdated, 's') <= 10) {
+      return;
+    }
+
+    setLastUpated(new Date());
 
     const startItem = batchTimeline[0];
     const endItem = batchTimeline[batchTimeline.length - 1];
@@ -88,7 +115,7 @@ export default function DashboardTimelineOee() {
       const endLot = dayjs(currentDate).endOf('h');
 
       timelineHours.push({
-        hour: currentDate.format('D-HH'),
+        hour: currentDate.format('DD/MM/YYYY HH:mm:ss'),
         items: batchTimeline
           .filter(
             (item) =>

@@ -7,7 +7,7 @@ import { initialOeeStats, OEE_TYPE_P, TIME_UNIT_SECOND } from '../../../../const
 import useWebSocket from '../../../../hooks/useWebSocket';
 import { getOeeBatchParetoP, updateBatchParetoP } from '../../../../redux/actions/oeeBatchAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
-import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
+import { fNumber, fNumber2, fPercent, fSeconds } from '../../../../utils/formatNumber';
 import { fChartTitle, fTimeUnitShortText, fTimeUnitText } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
@@ -87,7 +87,7 @@ export default function DashboardApqGraphP() {
         min: 0,
         labels: {
           formatter(val: number, opts?: any): string | string[] {
-            return timeUnit === TIME_UNIT_SECOND ? fNumber(val) : fNumber2(val);
+            return fSeconds(val);
           },
         },
       },
@@ -131,7 +131,7 @@ export default function DashboardApqGraphP() {
 
     setSeries([
       {
-        name: fTimeUnitText(timeUnit),
+        name: 'Time',
         type: 'column',
         data: counts.map((item) => convertToUnit(item, timeUnit)),
         color: '#00CCFF',
@@ -165,6 +165,7 @@ export default function DashboardApqGraphP() {
                   low={percents.low}
                   oeeType={OEE_TYPE_P}
                   percent={pPercent}
+                  size={270}
                 />
 
                 <Typography variant="subtitle1" sx={{ mt: 1, textAlign: 'center' }}>

@@ -200,7 +200,9 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
                         typography: 'body2',
                       }}
                     >
-                      {planning.title}
+                      {`${planning.lotNumber} - ${dayjs(planning.startDate).format('DD/MM/YYYY HH:mm')} - ${dayjs(
+                        planning.startDate,
+                      ).format('DD/MM/YYYY HH:mm')}`}
                     </MenuItem>
                   ))}
                 </RHFSelect>

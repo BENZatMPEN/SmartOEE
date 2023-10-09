@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
 import { TagRead } from '../@types/tagRead';
-import { HOST_WS } from '../config';
+import { HOST_API } from '../config';
 import Emitter from '../utils/emitter';
 
 export type WebSocketContextProps = {
@@ -33,7 +33,7 @@ function WebSocketProvider({ children }: SocketProviderProps) {
       },
     };
 
-    const socket = io(HOST_WS, socketOptions);
+    const socket = io(HOST_API.length === 0 ? '/' : HOST_API, socketOptions);
     socket.on('disconnect', () => {});
     socket.on('connect', () => {});
 

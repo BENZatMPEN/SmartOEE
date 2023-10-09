@@ -72,6 +72,7 @@ export type OeeStatus = {
   breakdown: number;
   ended: number;
   standby: number;
+  mcSetup: number;
   oees: OeeStatusItem[];
 };
 
@@ -91,6 +92,7 @@ export type OeeStatusItem = {
   useSitePercentSettings: boolean;
   percentSettings: PercentSetting[];
   standardSpeedSeconds: number;
+  productName: string;
 };
 
 export type OeePagedList = {

@@ -8,6 +8,7 @@ import { fCode } from '../../../utils/formatNumber';
 import { fFaqProcessStatusText } from '../../../utils/textHelper';
 import { AbilityContext } from '../../../caslContext';
 import { RoleAction, RoleSubject } from '../../../@types/role';
+import { FAQ_PROCESS_STATUS_APPROVED } from '../../../constants';
 
 type Props = {
   row: Faq;
@@ -66,7 +67,9 @@ export default function FaqTableRow({
         {approvedByUser ? `${approvedByUser.firstName} ${approvedByUser.lastName}` : '-'}
       </TableCell>
 
-      <TableCell align="center">{fFaqProcessStatusText(status)}</TableCell>
+      <TableCell align="center">
+        {status === FAQ_PROCESS_STATUS_APPROVED ? 'Finish' : fFaqProcessStatusText(status)}
+      </TableCell>
 
       <TableCell align="right">
         {showMenu && (
@@ -88,7 +91,7 @@ export default function FaqTableRow({
                   </MenuItem>
                 )}
 
-                {ability.can(RoleAction.Update, RoleSubject.Faqs) && (
+                {ability.can(RoleAction.Update, RoleSubject.Faqs) && status !== FAQ_PROCESS_STATUS_APPROVED && (
                   <MenuItem
                     onClick={() => {
                       onEditRow();

@@ -6,6 +6,7 @@ export class OeeStatus {
   readonly breakdown: number;
   readonly ended: number;
   readonly standby: number;
+  readonly mcSetup: number;
   readonly oees: OeeStatusItem[];
 }
 
@@ -25,6 +26,7 @@ export class OeeStatusItem {
   readonly useSitePercentSettings: boolean;
   readonly percentSettings: PercentSetting[];
   readonly standardSpeedSeconds: number;
+  readonly productName: string;
 }
 
 export class OeeBatchMcState {

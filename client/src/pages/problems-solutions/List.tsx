@@ -37,9 +37,9 @@ const TABLE_HEAD = [
   { id: 'id', label: 'Project Code', align: 'left', sort: true },
   { id: 'name', label: 'Project Name', align: 'left', sort: true },
   { id: 'headProjectUserId', label: 'Project Head', align: 'left', sort: false },
-  { id: 'approvedByUserId', label: 'Approved By', align: 'left', sort: false },
+  { id: 'approvedByUserId', label: 'การผูก Approved By', align: 'left', sort: false },
   { id: 'startDate', label: 'Timeline', align: 'left', sort: true },
-  { id: 'status', label: 'Project Status', align: 'left', sort: true },
+  { id: 'status', label: 'Flow Status', align: 'left', sort: true },
   { id: '' },
 ];
 

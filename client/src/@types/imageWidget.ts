@@ -1,6 +1,7 @@
 export type ImageWidgetValue = {
   value: string | null;
   image: string | null;
+  title: string | null;
 };
 
 export type ImageWidgetProps = {

@@ -120,7 +120,7 @@ export default function DashboardApqGraphQ() {
 
     setSeries([
       {
-        name: 'Count',
+        name: 'Defect (pcs)',
         type: 'column',
         data: counts,
         color: '#FFFA00',
@@ -154,6 +154,7 @@ export default function DashboardApqGraphQ() {
                   low={percents.low}
                   oeeType={OEE_TYPE_Q}
                   percent={qPercent}
+                  size={270}
                 />
 
                 <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>

@@ -84,6 +84,7 @@ export type ProblemSolutionTask = {
   updatedAt: Date;
   problemSolutionId: number;
   attachments: ProblemSolutionTaskAttachment[];
+  order: number;
 };
 
 export type EditProblemSolutionTask = {
@@ -99,6 +100,7 @@ export type EditProblemSolutionTask = {
   files: string[];
   addingFiles: File[];
   deletingFiles: number[];
+  order: number;
 };
 
 export type ProblemSolutionTaskAttachment = {

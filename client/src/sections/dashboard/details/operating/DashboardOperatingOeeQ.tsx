@@ -152,7 +152,7 @@ export default function DashboardOperatingOeeQ() {
               <Grid item xs={12}>
                 <Grid container>
                   <Grid item xs={12} xl={2.5}>
-                    <Typography variant="h6">Quality</Typography>
+                    <Typography variant="h3">Quality</Typography>
                   </Grid>
 
                   <Grid item xs={12} xl={9.5}>
@@ -160,7 +160,7 @@ export default function DashboardOperatingOeeQ() {
                       <TextField
                         type="number"
                         size="small"
-                        label="Total Manual"
+                        label="Key Total Manual Defect"
                         value={qStats.totalManual}
                         InputProps={{ readOnly: !canEditBatch }}
                         InputLabelProps={{ shrink: true }}
@@ -212,14 +212,14 @@ export default function DashboardOperatingOeeQ() {
                     size="small"
                     label="Total Defect"
                     value={totalAutoDefects + qStats.totalManual}
-                    InputProps={{ readOnly: true }}
+                    InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
                     InputLabelProps={{ shrink: true }}
                   />
 
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Auto"
+                    label="Total Auto Defect"
                     value={totalAutoDefects}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
@@ -228,7 +228,7 @@ export default function DashboardOperatingOeeQ() {
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Manual"
+                    label="Total Manual Defect"
                     value={qStats.totalManual}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}

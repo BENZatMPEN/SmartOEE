@@ -19,7 +19,7 @@ export default function ImageWidgetMappingList() {
   const values = watch() as ImageWidgetProps;
 
   const handleAdd = () => {
-    append({ image: null, value: '' });
+    append({ image: null, value: '', title: '' });
   };
 
   const handleRemove = (index: number) => {
@@ -57,8 +57,8 @@ export default function ImageWidgetMappingList() {
               <Stack spacing={theme.spacing(2)}>
                 <Box sx={{ display: 'flex', gap: theme.spacing(1) }}>
                   <RHFTextField
-                    name={`imageValues[${index}].value`}
-                    label="Value"
+                    name={`imageValues[${index}].title`}
+                    label="Title"
                     size="small"
                     InputLabelProps={{ shrink: true }}
                   />
@@ -67,6 +67,13 @@ export default function ImageWidgetMappingList() {
                     <Iconify icon="eva:trash-2-outline" />
                   </IconButton>
                 </Box>
+
+                <RHFTextField
+                  name={`imageValues[${index}].value`}
+                  label="Value"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                />
 
                 <UploadSingleBase64
                   accept="image/*"

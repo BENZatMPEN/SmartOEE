@@ -10,8 +10,10 @@ import useWebSocket from '../../hooks/useWebSocket';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import axios from '../../utils/axios';
 import { getColor } from '../../utils/colorHelper';
-import { fPercent } from '../../utils/formatNumber';
+import { fPercent, fSeconds } from '../../utils/formatNumber';
 import { fBatchStatusText } from '../../utils/textHelper';
+import { fDate2Y, fTimeShort } from '../../utils/formatTime';
+import { isInteger } from 'lodash';
 
 type Props = {
   oeeStatusItem: OeeStatusItem;
@@ -20,7 +22,7 @@ type Props = {
 export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
   const { socket } = useWebSocket();
 
-  const { id, oeeCode, productionName, oeeBatchId, oeePercent } = oeeStatusItem;
+  const { id, oeeCode, productionName, oeeBatchId, oeePercent, startDate, endDate } = oeeStatusItem;
 
   const [timelines, setTimelines] = useState<OeeTimeline[]>([]);
 
@@ -81,20 +83,31 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
     },
     tooltip: {
       x: {
-        formatter(val: number, opts?: any): string {
-          return dayjs(new Date(val)).format('HH:mm:ss');
+        formatter(val: any, opts?: any): string {
+          if (isInteger(val)) {
+            return val;
+          }
+          return '';
         },
       },
       y: {
         title: {
           formatter(seriesName: string): string {
-            return fBatchStatusText(seriesName);
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
           },
         },
         formatter(val: any, opts?: any): string {
-          if (/^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/.test(val)) {
-            return val;
+          if (isInteger(val)) {
+            return dayjs(new Date(val)).format('HH:mm:ss');
           }
+
+          if (opts?.start && opts?.end) {
+            const start = dayjs(new Date(opts.start));
+            const end = dayjs(new Date(opts.end));
+            const diff = end.diff(start, 's');
+            return `<div>Total: ${fSeconds(diff)}</div>`;
+          }
+
           return '';
         },
       },
@@ -144,9 +157,15 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
       <Grid item xs={1.5}>
         <Link to={PATH_DASHBOARD.item.root(id.toString())} style={{ textDecoration: 'none' }}>
           <Typography variant="subtitle1" gutterBottom>
-            {productionName}
+            {oeeCode}
           </Typography>
         </Link>
+        <div>
+          {startDate ? fDate2Y(startDate) : '-'} - {endDate ? fDate2Y(endDate) : '-'}
+        </div>
+        <div>
+          {startDate ? fTimeShort(startDate) : '-'} - {endDate ? fTimeShort(endDate) : '-'}
+        </div>
       </Grid>
       <Grid item xs={9.5}>
         <ReactApexChart options={options} series={series} type="rangeBar" height={100} />

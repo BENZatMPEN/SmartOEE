@@ -27,4 +27,8 @@ export class CreateProblemSolutionTaskDto {
   @IsNumber()
   @Type(() => Number)
   readonly problemSolutionId: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  readonly order: number;
 }

@@ -54,6 +54,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
       files: [],
       addingFiles: [],
       deletingFiles: [],
+      order: 0,
     });
   };
 
@@ -126,6 +127,16 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
         {fields.map((item, index) => (
           <Box key={item.id}>
             <Grid container spacing={2}>
+              <Grid item xs={1}>
+                <RHFTextField
+                  size="small"
+                  type="number"
+                  name={`tasks[${index}].order`}
+                  label="Order"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
               <Grid item xs={4}>
                 <RHFTextField
                   size="small"
@@ -136,7 +147,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
                 />
               </Grid>
 
-              <Grid item xs={4}>
+              <Grid item xs={3}>
                 <RHFSelect
                   name={`tasks[${index}].assigneeUserId`}
                   label="Assignee"
@@ -200,7 +211,7 @@ export default function ProblemSolutionTaskList({ users, onDeleteTask }: Props) 
               <Grid item xs={2}>
                 <RHFSelect
                   name={`tasks[${index}].status`}
-                  label="Status"
+                  label="Flow Status"
                   size="small"
                   InputLabelProps={{ shrink: true }}
                   SelectProps={{ native: false }}

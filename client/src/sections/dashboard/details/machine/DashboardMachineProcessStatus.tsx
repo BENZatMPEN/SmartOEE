@@ -29,12 +29,14 @@ export default function DashboardMachineProcessStatus() {
 
           <StatusItem title="Start Time:" value={batchStartedDate ? fTime(batchStartedDate) : ''} />
 
+          <StatusItem title="End Date:" value={batchStoppedDate ? fDate(batchStoppedDate) : ''} />
+
           <StatusItem title="End Time:" value={batchStoppedDate ? fTime(batchStoppedDate) : ''} />
 
-          <StatusItem title="Total time:" value={fSeconds(runningSeconds)} />
+          <StatusItem title="Total Available Time:" value={fSeconds(runningSeconds)} />
 
           <StatusItem
-            title="Running Time:"
+            title="Operating Time:"
             value={
               <Stack direction="row">
                 <Typography variant="subtitle1" flexGrow={1} flexBasis={0}>
@@ -49,7 +51,7 @@ export default function DashboardMachineProcessStatus() {
           />
 
           <StatusItem
-            title="Planned Downtime Time:"
+            title="Planned Downtime:"
             value={
               <Stack direction="row">
                 <Typography variant="subtitle1" flexGrow={1} flexBasis={0}>

@@ -32,14 +32,14 @@ export default function DashboardDetailsStatus() {
 
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }}>
-            <Typography variant={'subtitle1'}>Start:</Typography>
+            <Typography variant={'subtitle1'}>Start Plan:</Typography>
             <Typography variant={'body1'}>{startDate ? fDateTime(startDate) : ''}</Typography>
           </Box>
         </Grid>
 
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }}>
-            <Typography variant={'subtitle1'}>End:</Typography>
+            <Typography variant={'subtitle1'}>End Plan:</Typography>
             <Typography variant={'body1'}>{endDate ? fDateTime(endDate) : ''}</Typography>
           </Box>
         </Grid>

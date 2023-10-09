@@ -15,6 +15,7 @@ const initialState: OeeDashboardState = {
     breakdown: 0,
     standby: 0,
     ended: 0,
+    mcSetup: 0,
     oees: [],
   },
   isLoading: false,

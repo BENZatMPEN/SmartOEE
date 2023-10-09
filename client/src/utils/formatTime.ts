@@ -8,6 +8,10 @@ export function fDate(date: Date | string | number): string {
   return dayjs(new Date(date)).format('DD/MM/YYYY');
 }
 
+export function fDate2Y(date: Date | string | number): string {
+  return dayjs(new Date(date)).format('DD/MM/YY');
+}
+
 export function fDateTime(date: Date | string | number): string {
   return dayjs(new Date(date)).format('DD MMM YYYY HH:mm');
 }

@@ -74,12 +74,18 @@ export default function DashboardOperatingOeeADialog({ open, onClose, onUpdate, 
       setMachines(machines);
 
       const { machineId, machineParameterId, tagId } = editingOeeBatchA;
-      const filtered = machines.filter((item) => item.id === machineId);
-      if (filtered.length > 0) {
-        filterMachineParams(filtered[0]);
+      if (machineId) {
+        const filtered = machines.filter((item) => item.id === machineId);
+        if (filtered.length > 0) {
+          filterMachineParams(filtered[0]);
+        }
+      } else {
+        if (machines.length > 0) {
+          filterMachineParams(machines[0]);
+        }
       }
 
-      setValue('machineId', machineId ? machineId : -1);
+      setValue('machineId', machineId ? machineId : machines.length > 0 ? machines[0].id : -1);
       setValue('machineParameterId', machineParameterId ? machineParameterId : -1);
       setValue('tagId', tagId ? tagId : -1);
     }

@@ -48,7 +48,7 @@ export default function DashboardOperatingOeeA() {
   const TABLE_HEAD = [
     { id: 'timestamp', label: 'Timestamp', align: 'left' },
     { id: 'machineId', label: 'Machine', align: 'left' },
-    { id: 'machineParameterId', label: 'Cause', align: 'left' },
+    { id: 'machineParameterId', label: 'Breakdown', align: 'left' },
     { id: 'seconds', label: `Duration`, align: 'left' },
     { id: '' },
   ];
@@ -83,11 +83,11 @@ export default function DashboardOperatingOeeA() {
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'top', pb: 3 }}>
-          <Typography variant="h6">Availability</Typography>
+          <Typography variant="h3">Availability</Typography>
           <Stack spacing={1}>
             <Stack direction="row" justifyContent="space-between" spacing={5}>
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Total Downtime:
+                Total Breakdown:
               </Typography>
               <Typography variant="subtitle1">{totalBreakdownCount} times</Typography>
             </Stack>

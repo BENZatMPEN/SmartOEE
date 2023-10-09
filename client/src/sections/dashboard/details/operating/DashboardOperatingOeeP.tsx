@@ -54,7 +54,7 @@ export default function DashboardOperatingOeeP() {
   const TABLE_HEAD = [
     { id: 'timestamp', label: 'Timestamp', align: 'left' },
     { id: 'machineId', label: 'Machine', align: 'left' },
-    { id: 'machineParameterId', label: 'Cause', align: 'left' },
+    { id: 'machineParameterId', label: 'Minor Stop', align: 'left' },
     { id: 'seconds', label: `Duration`, align: 'left' },
     { id: '' },
   ];
@@ -89,20 +89,27 @@ export default function DashboardOperatingOeeP() {
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'top', pb: 3 }}>
-          <Typography variant="h6">Performance</Typography>
+          <Typography variant="h3">Performance</Typography>
           <Stack spacing={1}>
-            <Stack direction="row" justifyContent="space-between" spacing={5}>
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Total Loss:
-              </Typography>
-              <Typography variant="subtitle1">{totalSpeedLossCount} times</Typography>
-            </Stack>
-
             <Stack direction="row" justifyContent="space-between" spacing={5}>
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Total Minor Stop:
               </Typography>
               <Typography variant="subtitle1">{totalMinorStopCount} times</Typography>
+            </Stack>
+
+            <Stack direction="row" justifyContent="space-between" spacing={5}>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                Total Time Minor Stop:
+              </Typography>
+              <Typography variant="subtitle1">{fSeconds(totalMinorStopSeconds)}</Typography>
+            </Stack>
+
+            <Stack direction="row" justifyContent="space-between" spacing={5}>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                Total Time Speed Loss:
+              </Typography>
+              <Typography variant="subtitle1">{fSeconds(totalSpeedLossSeconds)}</Typography>
             </Stack>
 
             <Stack direction="row" justifyContent="space-between" spacing={5}>
