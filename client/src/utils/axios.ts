@@ -2,7 +2,7 @@ import axios from 'axios';
 import { HOST_API } from '../config';
 
 const axiosInstance = axios.create({
-  baseURL: `${HOST_API.length === 0 ? '/' : HOST_API}/api`,
+  baseURL: `${HOST_API}/api`,
   validateStatus: function (status) {
     return status < 400;
   },
