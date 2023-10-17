@@ -47,9 +47,9 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
   );
 
   const getHeaderColor = (status: string): string => {
-    if (!status || status === OEE_BATCH_STATUS_ENDED) {
-      return '#B0B0B0';
-    }
+    // if (!status || status === OEE_BATCH_STATUS_ENDED) {
+    //   return '#B0B0B0';
+    // }
     return getColor(status);
   };
 
@@ -85,11 +85,11 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
 
             <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-                Start Plan: {startDate ? fTimeShort(startDate) : '-'}
+                Start Plan (HH:MM): {startDate ? fTimeShort(startDate) : '-'}
               </Typography>
 
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-                End Plan: {endDate ? fTimeShort(endDate) : '-'}
+                End Plan (HH:MM): {endDate ? fTimeShort(endDate) : '-'}
               </Typography>
             </Stack>
           </Stack>

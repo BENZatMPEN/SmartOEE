@@ -65,7 +65,7 @@ export default function DashboardMachineTimeline() {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)} (HH:MM:SS)</div>`;
           },
         },
         formatter(val: any, opts?: any): string {

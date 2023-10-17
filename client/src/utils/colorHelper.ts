@@ -18,7 +18,7 @@ export function getColor(status: string): string {
       return '#FF0000';
 
     case OEE_BATCH_STATUS_PLANNED:
-      return '#B0B0B0';
+      return '#616161';
 
     case OEE_BATCH_STATUS_MC_SETUP:
       return '#072EEF';

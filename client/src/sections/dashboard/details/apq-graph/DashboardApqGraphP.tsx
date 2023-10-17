@@ -12,6 +12,7 @@ import { fChartTitle, fTimeUnitShortText, fTimeUnitText } from '../../../../util
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
+import dayjs from 'dayjs';
 
 export default function DashboardApqGraphP() {
   const dispatch = useDispatch();
@@ -120,8 +121,27 @@ export default function DashboardApqGraphP() {
 
   useEffect(() => {
     const { labels, counts, percents } = batchParetoP || { labels: [], counts: [], percents: [] };
+    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${
+      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+    } OEE Performance`;
+
     setOptions({
       ...options,
+      chart: {
+        toolbar: {
+          export: {
+            csv: {
+              filename: filename,
+            },
+            svg: {
+              filename: filename,
+            },
+            png: {
+              filename: filename,
+            },
+          },
+        },
+      },
       labels: labels,
       title: {
         text: fChartTitle(currentBatch, batchStatsTime),

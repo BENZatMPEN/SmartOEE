@@ -22,7 +22,7 @@ type Props = {
 export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
   const { socket } = useWebSocket();
 
-  const { id, oeeCode, productionName, oeeBatchId, oeePercent, startDate, endDate } = oeeStatusItem;
+  const { id, oeeCode, productionName, oeeBatchId, oeePercent, batchStartedDate, batchStoppedDate } = oeeStatusItem;
 
   const [timelines, setTimelines] = useState<OeeTimeline[]>([]);
 
@@ -93,7 +93,7 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)} (HH:MM:SS)</div>`;
           },
         },
         formatter(val: any, opts?: any): string {
@@ -161,10 +161,11 @@ export default function DashboardOeeTimelineItem({ oeeStatusItem }: Props) {
           </Typography>
         </Link>
         <div>
-          {startDate ? fDate2Y(startDate) : '-'} - {endDate ? fDate2Y(endDate) : '-'}
+          {batchStartedDate ? fDate2Y(batchStartedDate) : '-'} - {batchStoppedDate ? fDate2Y(batchStoppedDate) : '-'}
         </div>
         <div>
-          {startDate ? fTimeShort(startDate) : '-'} - {endDate ? fTimeShort(endDate) : '-'}
+          {batchStartedDate ? fTimeShort(batchStartedDate) : '-'} -{' '}
+          {batchStoppedDate ? fTimeShort(batchStoppedDate) : '-'}
         </div>
       </Grid>
       <Grid item xs={9.5}>

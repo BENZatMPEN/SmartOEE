@@ -11,6 +11,7 @@ import { fNumber, fNumber2, fPercent } from '../../../../utils/formatNumber';
 import { fChartTitle } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import DashboardPieChart from '../../DashboardPieChart';
+import dayjs from 'dayjs';
 
 export default function DashboardApqGraphQ() {
   const dispatch = useDispatch();
@@ -109,8 +110,27 @@ export default function DashboardApqGraphQ() {
 
   useEffect(() => {
     const { labels, counts, percents } = batchParetoQ || { labels: [], counts: [], percents: [] };
+    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${
+      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+    } OEE Quality`;
+
     setOptions({
       ...options,
+      chart: {
+        toolbar: {
+          export: {
+            csv: {
+              filename: filename,
+            },
+            svg: {
+              filename: filename,
+            },
+            png: {
+              filename: filename,
+            },
+          },
+        },
+      },
       labels: labels,
       title: {
         text: fChartTitle(currentBatch, batchStatsTime),

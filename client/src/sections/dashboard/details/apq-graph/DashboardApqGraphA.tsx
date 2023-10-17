@@ -12,6 +12,7 @@ import { fChartTitle, fTimeUnitText } from '../../../../utils/textHelper';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import { convertToUnit } from '../../../../utils/timeHelper';
 import DashboardPieChart from '../../DashboardPieChart';
+import dayjs from 'dayjs';
 
 export default function DashboardApqGraphA() {
   const dispatch = useDispatch();
@@ -115,8 +116,27 @@ export default function DashboardApqGraphA() {
 
   useEffect(() => {
     const { labels, counts, percents } = batchParetoA || { labels: [], counts: [], percents: [] };
+    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${
+      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+    } OEE Availability`;
+
     setOptions({
       ...options,
+      chart: {
+        toolbar: {
+          export: {
+            csv: {
+              filename: filename,
+            },
+            svg: {
+              filename: filename,
+            },
+            png: {
+              filename: filename,
+            },
+          },
+        },
+      },
       labels: labels,
       title: {
         text: fChartTitle(currentBatch, batchStatsTime),

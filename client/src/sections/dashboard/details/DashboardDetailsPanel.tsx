@@ -7,6 +7,7 @@ import DashboardAPQBar from '../DashboardAPQBar';
 import DashboardPieChart from '../DashboardPieChart';
 import DashboardDetailsControlPanel from './DashboardDetailsControlPanel';
 import DashboardDetailsStatus from './DashboardDetailsStatus';
+import DashboardOeePieChart from '../DashboardOeePieChart';
 
 export default function DashboardDetailsPanel() {
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
@@ -35,7 +36,7 @@ export default function DashboardDetailsPanel() {
       <Grid item xs={12} md={5}>
         <Grid container spacing={3} alignItems={'center'}>
           <Grid item xs={12} md={4}>
-            <DashboardPieChart
+            <DashboardOeePieChart
               high={percents.high}
               medium={percents.medium}
               low={percents.low}

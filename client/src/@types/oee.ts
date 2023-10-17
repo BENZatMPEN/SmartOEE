@@ -93,6 +93,8 @@ export type OeeStatusItem = {
   percentSettings: PercentSetting[];
   standardSpeedSeconds: number;
   productName: string;
+  batchStartedDate: Date;
+  batchStoppedDate: Date;
 };
 
 export type OeePagedList = {

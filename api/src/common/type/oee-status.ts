@@ -27,6 +27,8 @@ export class OeeStatusItem {
   readonly percentSettings: PercentSetting[];
   readonly standardSpeedSeconds: number;
   readonly productName: string;
+  readonly batchStartedDate: Date;
+  readonly batchStoppedDate: Date;
 }
 
 export class OeeBatchMcState {

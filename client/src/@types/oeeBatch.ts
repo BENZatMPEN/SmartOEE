@@ -136,6 +136,7 @@ export type OeeTimeline = {
   status: string;
   fromDate: Date;
   toDate: Date;
+  currentDate: Date;
 };
 
 export type OeeBatchStats = {

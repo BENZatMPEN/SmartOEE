@@ -67,7 +67,7 @@ export default function DashboardTimelineOee() {
       y: {
         title: {
           formatter(seriesName: string): string {
-            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)}</div>`;
+            return `<div style="color: ${getColor(seriesName)}">${fBatchStatusText(seriesName)} (HH:MM:SS)</div>`;
           },
         },
         formatter(val: any, opts?: any): string {
@@ -132,6 +132,7 @@ export default function DashboardTimelineOee() {
               status: item.status,
               fromDate: from.year(2000).month(1).date(1).hour(0).toDate(),
               toDate: to.year(2000).month(1).date(1).hour(0).toDate(),
+              currentDate: currentDate.toDate(),
             };
           }),
       });
