@@ -36,15 +36,22 @@ export class HistoryLogController {
     const logs = await this.historyLogService.findList(filterDto);
     const rows = logs.map((item) => {
       return {
-        date: dayjs(item.createdAt).format('DD/MM/YYYY'),
-        time: dayjs(item.createdAt).format('HH:mm'),
-        message: item.message,
+        ...{
+          date: dayjs(item.createdAt).format('DD/MM/YYYY'),
+          time: dayjs(item.createdAt).format('HH:mm'),
+          message: item.message,
+        },
+        ...(filterDto.type === 'action' ? { user: `${item.user?.firstName} ${item.user?.lastName}` } : undefined),
       };
     });
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.sheet_add_aoa(worksheet, [['Date', 'Time', 'Message']], { origin: 'A1' });
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      filterDto.type === 'action' ? [['Date', 'Time', 'Message', 'User']] : [['Date', 'Time', 'Message']],
+      { origin: 'A1' },
+    );
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Logs');
 
     const buf = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });

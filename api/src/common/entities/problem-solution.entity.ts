@@ -25,13 +25,13 @@ export class ProblemSolutionEntity {
   @Column({ type: 'int', nullable: true })
   headProjectUserId: number;
 
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
   headProjectUser: UserEntity;
 
   @Column({ type: 'int', nullable: true })
   approvedByUserId: number;
 
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
   approvedByUser: UserEntity;
 
   @Column({ type: 'longtext', nullable: true })
@@ -44,7 +44,7 @@ export class ProblemSolutionEntity {
   @Column({ type: 'int', nullable: true })
   oeeId: number;
 
-  @ManyToOne(() => OeeEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => OeeEntity, { onDelete: 'SET NULL' })
   oee: OeeEntity;
 
   @Column({ type: 'int' })

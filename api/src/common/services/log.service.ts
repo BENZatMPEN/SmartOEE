@@ -20,9 +20,10 @@ export class LogService {
     });
   }
 
-  async logAction(siteId: number, message: string): Promise<void> {
+  async logAction(siteId: number, userId: number, message: string): Promise<void> {
     await this.historyLogRepository.save({
       siteId: siteId,
+      userId: userId,
       type: HISTORY_LOG_TYPE_ACTION,
       message: message,
       createdAt: new Date(),

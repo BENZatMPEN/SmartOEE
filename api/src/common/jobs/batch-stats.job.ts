@@ -261,10 +261,7 @@ export class BatchStatsJob {
     } = this.getPercentSettings(oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings);
 
     // low
-    if (
-      (previousStatus.oeePercent > percentSettings.oeeLow || previousStatus.oeePercent > currentStatus.oeePercent) &&
-      currentStatus.oeePercent < percentSettings.oeeLow
-    ) {
+    if (currentStatus.oeePercent < percentSettings.oeeLow && previousStatus.oeePercent >= percentSettings.oeeLow) {
       await this.notificationService.notifyOee(
         'oeeLow',
         site.id,
@@ -275,10 +272,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (
-      (previousStatus.aPercent > percentSettings.aLow || previousStatus.aPercent > currentStatus.aPercent) &&
-      currentStatus.aPercent < percentSettings.aLow
-    ) {
+    if (currentStatus.aPercent < percentSettings.aLow && previousStatus.aPercent >= percentSettings.aLow) {
       await this.notificationService.notifyOee(
         'aLow',
         site.id,
@@ -289,10 +283,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (
-      (previousStatus.pPercent > percentSettings.pLow || previousStatus.pPercent > currentStatus.pPercent) &&
-      currentStatus.pPercent < percentSettings.pLow
-    ) {
+    if (currentStatus.pPercent < percentSettings.pLow && previousStatus.pPercent >= percentSettings.pLow) {
       await this.notificationService.notifyOee(
         'pLow',
         site.id,
@@ -303,10 +294,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (
-      (previousStatus.qPercent > percentSettings.qLow || previousStatus.qPercent > currentStatus.qPercent) &&
-      currentStatus.qPercent < percentSettings.qLow
-    ) {
+    if (currentStatus.qPercent < percentSettings.qLow && previousStatus.qPercent >= percentSettings.qLow) {
       await this.notificationService.notifyOee(
         'qLow',
         site.id,
@@ -318,7 +306,7 @@ export class BatchStatsJob {
     }
 
     // high
-    if (previousStatus.oeePercent < currentStatus.oeePercent && currentStatus.oeePercent > 100.0) {
+    if (currentStatus.oeePercent > 100.0 && previousStatus.oeePercent <= 100.0) {
       await this.notificationService.notifyOee(
         'oeeHigh',
         site.id,
@@ -329,7 +317,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (previousStatus.aPercent < currentStatus.aPercent && currentStatus.aPercent > 100.0) {
+    if (currentStatus.aPercent > 100.0 && previousStatus.aPercent <= 100.0) {
       await this.notificationService.notifyOee(
         'aHigh',
         site.id,
@@ -340,7 +328,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (previousStatus.pPercent < currentStatus.pPercent && currentStatus.pPercent > 100.0) {
+    if (currentStatus.pPercent > 100.0 && previousStatus.pPercent <= 100.0) {
       await this.notificationService.notifyOee(
         'pHigh',
         site.id,
@@ -351,7 +339,7 @@ export class BatchStatsJob {
       );
     }
 
-    if (previousStatus.qPercent < currentStatus.qPercent && currentStatus.qPercent > 100.0) {
+    if (currentStatus.qPercent > 100.0 && previousStatus.qPercent <= 100.0) {
       await this.notificationService.notifyOee(
         'qHigh',
         site.id,

@@ -34,7 +34,7 @@ export class PlanningEntity {
   @Column({ type: 'int' })
   productId: number;
 
-  @ManyToOne(() => ProductEntity)
+  @ManyToOne(() => ProductEntity, { onDelete: 'CASCADE' })
   product: ProductEntity;
 
   @Column({ type: 'int' })

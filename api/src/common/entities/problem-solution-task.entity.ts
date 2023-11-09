@@ -14,7 +14,7 @@ export class ProblemSolutionTaskEntity {
   @Column({ type: 'int', nullable: true })
   assigneeUserId: number;
 
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
   assigneeUser: UserEntity;
 
   @Column({ type: 'datetime' })

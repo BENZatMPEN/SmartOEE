@@ -12,20 +12,26 @@ export class HistoryLogService {
     private historyLogRepository: Repository<HistoryLogEntity>,
   ) {}
 
+  // .createQueryBuilder('u')
+  // .leftJoinAndSelect('u.sites', 'us')
+  // .where('u.id = :id', { id })
+  // .getOne();
+
   async findPagedList(filterDto: FilterHistoryLogDto): Promise<PagedLisDto<HistoryLogEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
     const [rows, count] = await this.historyLogRepository
-      .createQueryBuilder()
-      .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere('type = :type', { type: filterDto.type })
-      .andWhere('createdAt >= :fromDate and createdAt <= :toDate', {
+      .createQueryBuilder('hl')
+      .leftJoinAndSelect('hl.user', 'u')
+      .andWhere('hl.siteId = :siteId', { siteId: filterDto.siteId })
+      .andWhere('hl.type = :type', { type: filterDto.type })
+      .andWhere('hl.createdAt >= :fromDate and hl.createdAt <= :toDate', {
         fromDate: new Date(filterDto.fromDate),
         toDate: new Date(filterDto.toDate),
       })
-      .andWhere(':search is null or message like :search', {
+      .andWhere(':search is null or hl.message like :search', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
-      .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
+      .orderBy(`hl.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .skip(offset)
       .take(filterDto.rowsPerPage)
       .getManyAndCount();
@@ -35,17 +41,18 @@ export class HistoryLogService {
 
   async findList(filterDto: FilterHistoryLogDto): Promise<HistoryLogEntity[]> {
     return this.historyLogRepository
-      .createQueryBuilder()
-      .andWhere('siteId = :siteId', { siteId: filterDto.siteId })
-      .andWhere('type = :type', { type: filterDto.type })
-      .andWhere('createdAt >= :fromDate and createdAt <= :toDate', {
+      .createQueryBuilder('hl')
+      .leftJoinAndSelect('hl.user', 'u')
+      .andWhere('hl.siteId = :siteId', { siteId: filterDto.siteId })
+      .andWhere('hl.type = :type', { type: filterDto.type })
+      .andWhere('hl.createdAt >= :fromDate and hl.createdAt <= :toDate', {
         fromDate: new Date(filterDto.fromDate),
         toDate: new Date(filterDto.toDate),
       })
-      .andWhere(':search is null or message like :search', {
+      .andWhere(':search is null or hl.message like :search', {
         search: filterDto.search ? `%${filterDto.search}%` : null,
       })
-      .orderBy(`${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
+      .orderBy(`hl.${filterDto.orderBy}`, filterDto.order === 'asc' ? 'ASC' : 'DESC')
       .getMany();
   }
 }

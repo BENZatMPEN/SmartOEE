@@ -1,5 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { SiteEntity } from './site.entity';
+import { UserEntity } from './user.entity';
 
 @Entity('historyLogs')
 export class HistoryLogEntity {
@@ -16,8 +17,16 @@ export class HistoryLogEntity {
   message: string;
 
   @Column({ type: 'int' })
-  @ManyToOne(() => SiteEntity)
   siteId: number;
+
+  @ManyToOne(() => SiteEntity)
+  site: SiteEntity;
+
+  @Column({ type: 'int', nullable: true })
+  userId: number;
+
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+  user: UserEntity;
 
   @Column({ type: 'datetime' })
   createdAt: Date;

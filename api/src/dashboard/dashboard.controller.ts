@@ -19,11 +19,14 @@ import { DashboardEntity } from '../common/entities/dashboard.entity';
 import { FilterDashboardDto } from './dto/filter-dashboard.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { LogService } from '../common/services/log.service';
+import { ReqAuthUser } from '../common/decorators/auth-user.decorator';
+import { AuthUserDto } from '../auth/dto/auth-user.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/dashboard')
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(private readonly dashboardService: DashboardService, private readonly logService: LogService) {}
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -43,8 +46,14 @@ export class DashboardController {
   }
 
   @Post()
-  async create(@Body() createDto: CreateDashboardDto, @Query('siteId') siteId: number): Promise<DashboardEntity> {
-    return this.dashboardService.create(createDto, siteId);
+  async create(
+    @Body() createDto: CreateDashboardDto,
+    @Query('siteId') siteId: number,
+    @ReqAuthUser() authUser: AuthUserDto,
+  ): Promise<DashboardEntity> {
+    const result = await this.dashboardService.create(createDto, siteId);
+    await this.logService.logAction(siteId, authUser.id, `Created dashboard`);
+    return result;
   }
 
   @Put(':id')
@@ -52,8 +61,11 @@ export class DashboardController {
     @Param('id') id: number,
     @Body() updateDto: UpdateDashboardDto,
     @Query('siteId') siteId: number,
+    @ReqAuthUser() authUser: AuthUserDto,
   ): Promise<DashboardEntity> {
-    return this.dashboardService.update(id, updateDto, siteId);
+    const result = await this.dashboardService.update(id, updateDto, siteId);
+    await this.logService.logAction(siteId, authUser.id, `Changed dashboard`);
+    return result;
   }
 
   @Delete(':id')

@@ -44,7 +44,7 @@ export default function AnalyticChartTimeMCState({ criteria, group }: Props) {
     xaxis: {
       show: false,
       type: 'datetime',
-      labels: { rotateAlways: true },
+      labels: { rotateAlways: true, datetimeUTC: false },
     },
     colors: ['#00D000', '#B0B0B0', '#FF0000', '#072EEF', '#FFFA00'],
     tooltip: {

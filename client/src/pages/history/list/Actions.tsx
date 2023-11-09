@@ -15,6 +15,7 @@ import { fDate, fTime } from '../../../utils/formatTime';
 const TABLE_HEAD = [
   { id: 'createdAtDate', label: 'Date', align: 'center' },
   { id: 'createdAtTime', label: 'Time', align: 'center' },
+  { id: 'user', label: 'User', align: 'center' },
   { id: 'message', label: 'Message', align: 'center' },
   { id: '' },
 ];
@@ -142,7 +143,7 @@ export default function HistoryAction() {
 
                     <TableCell align="center">{fTime(row.createdAt)}</TableCell>
 
-                    {/*<TableCell align="left">{productionName}</TableCell>*/}
+                    <TableCell align="left">{`${row.user?.firstName} ${row.user?.lastName}`.trim()}</TableCell>
 
                     <TableCell align="left">{row.message}</TableCell>
                   </TableRow>

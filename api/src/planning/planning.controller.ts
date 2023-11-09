@@ -76,11 +76,11 @@ export class PlanningController {
       const dto = items[i] as ImportPlanningDto;
       const existingItem = await this.planningService.findByImport(dto, siteId);
       const oee = await this.oeeService.findByOeeCode(dto.oeeCode, siteId);
-      const product = oee.oeeProducts.find((item) => item.product.sku === dto.productSku && !item.product.deleted);
+      const oeeProduct = oee.oeeProducts.find((item) => item.product.sku === dto.productSku && !item.product.deleted);
       const user = await this.userService.findByEmail(dto.userEmail);
 
-      if (existingItem || !oee || !product || !user) {
-        const reason = existingItem ? 'exists' : !oee ? 'oee' : !product ? 'product' : !user ? 'user' : '';
+      if (existingItem || !oee || !oeeProduct || !user) {
+        const reason = existingItem ? 'exists' : !oee ? 'oee' : !oeeProduct ? 'product' : !user ? 'user' : '';
         invalidRows.push(new ImportErrorRowPlanningDto(i, dto, reason));
         continue;
       }
@@ -93,7 +93,7 @@ export class PlanningController {
           startDate: dayjs(dto.startDate, 'YYYY-MM-DD HH:mm').toDate(),
           endDate: dayjs(dto.endDate, 'YYYY-MM-DD HH:mm').toDate(),
           oeeId: oee.id,
-          productId: product.id,
+          productId: oeeProduct.product.id,
           userId: user.id,
           remark: dto.remark,
         },

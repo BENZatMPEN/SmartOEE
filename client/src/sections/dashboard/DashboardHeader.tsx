@@ -6,6 +6,7 @@ import DashboardHeaderWidget from './DashboardHeaderWidget';
 import { getColor } from '../../utils/colorHelper';
 import {
   OEE_BATCH_STATUS_BREAKDOWN,
+  OEE_BATCH_STATUS_ENDED,
   OEE_BATCH_STATUS_MC_SETUP,
   OEE_BATCH_STATUS_PLANNED,
   OEE_BATCH_STATUS_RUNNING,
@@ -31,7 +32,7 @@ export default function DashboardHeader() {
         </Grid>
 
         <Grid item md={1.75} sm={3}>
-          <DashboardHeaderWidget title={'No Plan'} total={ended} color={getColor(OEE_BATCH_STATUS_PLANNED)} />
+          <DashboardHeaderWidget title={'No Plan'} total={ended} color={getColor(OEE_BATCH_STATUS_ENDED)} />
         </Grid>
 
         <Grid item md={1.75} sm={3}>

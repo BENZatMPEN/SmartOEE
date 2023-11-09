@@ -45,6 +45,13 @@ export class AuthService {
       email: user.email,
     };
 
+    const loggedInUser = await this.userRepository.findOne({ where: { id: user.id }, relations: ['sites'] });
+    await Promise.all(
+      (loggedInUser.sites || []).map(
+        async (site) => await this.logService.logAction(site.id, loggedInUser.id, `Logged in`),
+      ),
+    );
+
     return {
       accessToken: this.jwtService.sign(dto),
       user: dto,
@@ -65,28 +72,42 @@ export class AuthService {
   }
 
   async updateProfile(id: number, updateDto: UpdateProfileDto, imageName: string): Promise<UserEntity> {
-    const updatingUser = await this.userRepository.findOneBy({ id });
+    const updatingUser = await this.userRepository.findOne({ where: { id }, relations: ['sites'] });
     const { imageName: existingImageName } = updatingUser;
     if (imageName && existingImageName) {
       await this.fileService.deleteFile(existingImageName);
     }
 
-    return await this.userRepository.save({
+    const result = await this.userRepository.save({
       id: updatingUser.id,
       ...updateDto,
       imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
+
+    await Promise.all(
+      (updatingUser.sites || []).map(
+        async (site) => await this.logService.logAction(site.id, updatingUser.id, `Updated profile`),
+      ),
+    );
+
+    return result;
   }
 
   async changePassword(id: number, changePasswordDto: ChangePasswordDto): Promise<void> {
     const { password } = changePasswordDto;
-    const updatingUser = await this.userRepository.findOneBy({ id });
+    const updatingUser = await this.userRepository.findOne({ where: { id }, relations: ['sites'] });
     const passwordHash = await bcrypt.hash(password, this.saltOrRounds);
     await this.userRepository.save({
       id: updatingUser.id,
       passwordHash,
       updatedAt: new Date(),
     });
+
+    await Promise.all(
+      (updatingUser.sites || []).map(
+        async (site) => await this.logService.logAction(site.id, updatingUser.id, `Changed password`),
+      ),
+    );
   }
 }
