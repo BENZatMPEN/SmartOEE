@@ -154,7 +154,7 @@ export class AnalyticService {
         '                     group by oeeBatchId, timeslot) b\n' +
         '                    on a.id = b.id\n' +
         `where a.${fieldName} in (${ids.join(', ')})\n` +
-        'order by a.oeeBatchId, a.timestamp;';
+        'order by a.timestamp, a.oeeBatchId;';
 
       const minus1HourFrom = dayjs(from).add(-1, 'h').startOf('h').toDate();
       rows = await this.entityManager.query(query, [minus1HourFrom, to]);
@@ -183,7 +183,7 @@ export class AnalyticService {
           `                       and b.timestamp <= ?\n` +
           '                     group by b.oeeBatchId, c.startOfDay, c.endOfDay) c on a.id = c.id\n' +
           `where a.${fieldName} in (${ids.join(', ')})\n` +
-          'order by a.oeeBatchId, a.timestamp;';
+          'order by a.timestamp, a.oeeBatchId;';
 
         const minus1DayFrom = dayjs(from).add(-1, 'd').startOf('d').toDate();
         rows = await this.entityManager.query(query, [minus1DayFrom, to, minus1DayFrom, to]);
@@ -211,7 +211,7 @@ export class AnalyticService {
           `                       and b.timestamp <= ?\n` +
           '                     group by b.oeeBatchId, c.startOfDay, c.endOfDay) c on a.id = c.id\n' +
           `where a.${fieldName} in (${ids.join(', ')})\n` +
-          'order by a.oeeBatchId, a.timestamp;';
+          'order by a.timestamp, a.oeeBatchId;';
 
         const minus1MonthFrom = dayjs(from).add(-1, 'M').startOf('M').toDate();
         rows = await this.entityManager.query(query, [minus1MonthFrom, to, minus1MonthFrom, to]);
