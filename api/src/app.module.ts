@@ -98,6 +98,8 @@ import { OeeBatchJobEntity } from './common/entities/oee-batch-job.entity';
 import { BatchAEventsListener } from './common/listeners/batch-a-events.listener';
 import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
+import { ReportModule } from './report/report.module';
+import { ReportService } from './report/report.service';
 
 @Module({
   imports: [
@@ -268,6 +270,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
     DashboardModule,
     AdminSiteModule,
     AdminUserModule,
+    ReportModule
   ],
   controllers: [AppController],
   providers: [
@@ -295,6 +298,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
     FileService,
     AdminSiteService,
     AdminUserService,
+    ReportService
   ],
 })
 export class AppModule implements OnModuleInit {

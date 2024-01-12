@@ -22,7 +22,7 @@ import siteReducer from './reducers/siteReducer';
 import userReducer from './reducers/userReducer';
 import userSiteReducer from './reducers/userSiteReducer';
 import calendarReducer from './reducers/calendarReducer';
-
+import reportReducer from './reducers/reportReducer';
 const rootPersistConfig = {
   key: 'root',
   storage,
@@ -84,6 +84,7 @@ const rootReducer = combineReducers({
   oee: oeeReducer,
   oeeBatch: oeeBatchReducer,
   analytic: analyticReducer,
+  report: reportReducer,
   plannedDowntime: plannedDowntimeReducer,
   alarm: alarmReducer,
   product: productReducer,

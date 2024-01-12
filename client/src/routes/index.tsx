@@ -112,6 +112,13 @@ export default function Router() {
           ],
         },
         {
+          path: 'report',
+          children: [
+            { path: 'oee', element: <ReportOee /> },
+            { path: 'cause', element: <ReportCause /> },
+          ]
+        },
+        {
           path: 'problems-solutions',
           children: [
             { element: <ProblemsSolutions />, index: true },
@@ -309,6 +316,10 @@ const AnalyticView = Loadable(lazy(() => import('../pages/analytics/View')));
 const AnalyticGroup = Loadable(lazy(() => import('../pages/analytics/Group')));
 const AnalyticGroupDetails = Loadable(lazy(() => import('../pages/analytics/Group')));
 
+
+// Report
+const ReportOee = Loadable(lazy(() => import('../pages/reports/oee/View')));
+const ReportCause = Loadable(lazy(() => import('../pages/reports/cause/View')));
 // Problems and Solutions
 const ProblemsSolutions = Loadable(lazy(() => import('../pages/problems-solutions/List')));
 const ProblemsSolutionsDetails = Loadable(lazy(() => import('../pages/problems-solutions/Details')));

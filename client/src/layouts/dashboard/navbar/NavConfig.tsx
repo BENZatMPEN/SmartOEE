@@ -7,6 +7,7 @@ import {
   PATH_FAQS,
   PATH_PLANNINGS,
   PATH_PROBLEMS_SOLUTIONS,
+  PATH_REPORT,
   PATH_SETTINGS,
 } from '../../../routes/paths';
 
@@ -40,6 +41,21 @@ const navConfig = [
         path: PATH_ANALYTICS.root,
         icon: <Iconify icon="ic:baseline-area-chart" />,
         children: [{ title: 'Home', path: PATH_ANALYTICS.root }],
+        roleSubject: RoleSubject.Analytics,
+      },
+    ],
+  },
+  {
+    subheader: 'Report',
+    items: [
+      {
+        title: 'Report',
+        path: PATH_REPORT.root,
+        icon: <Iconify icon="bxs:report" />,
+        children: [
+          { title: 'oee', path: PATH_REPORT.oee },
+          { title: 'cause', path: PATH_REPORT.cause }
+        ],
         roleSubject: RoleSubject.Analytics,
       },
     ],

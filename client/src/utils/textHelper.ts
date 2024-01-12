@@ -1,5 +1,6 @@
 import { AnalyticChartType, AnalyticComparisonType, AnalyticDuration, AnalyticViewType } from '../@types/analytic';
 import { OeeBatch, OeeBatchStats } from '../@types/oeeBatch';
+import { ReportType } from '../@types/report';
 import { RoleAction, RoleSubject } from '../@types/role';
 import {
   ALARM_TYPE_EMAIL,
@@ -190,6 +191,19 @@ export function fAnalyticDurationText(type: AnalyticDuration) {
 
     case 'monthly':
       return 'Month';
+  }
+}
+
+export function fReportTypeText(type: ReportType) {
+  switch (type) {
+    case 'daily':
+      return 'Daily';
+
+    case 'monthly':
+      return 'Monthly';
+
+    case 'yearly':
+      return 'Yearly';
   }
 }
 
@@ -616,6 +630,113 @@ export function fAnalyticOeeParetoHeaderText(key: string): string {
 
     case 'percent':
       return 'Percent';
+
+    default:
+      return key;
+  }
+}
+
+export function fReportOeePHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
+      return '';
+
+    case 'oeeCode':
+      return 'OEE Code';
+
+    case 'oeeName':
+      return 'OEE (Production Name)';
+
+    case 'product':
+      return 'Product (SKU)';
+
+    case 'lotNo':
+      return 'Lot No.';
+
+    case 'date':
+      return 'Date';
+
+    case 'ct':
+      return 'CT (mm:SS)';
+
+    case 'totalTime':
+      return 'Total Time (HH:MM:SS)';
+
+    case 'operationTime':
+      return 'Operating Time (HH:MM:SS)';
+
+    case '%oee':
+      return '%OEE';
+
+    case '%a':
+      return '%A';
+
+    case '%p':
+      return '%P';
+
+    case '%q':
+      return '%Q';
+
+    case 'qok':
+      return 'Q (OK)';
+
+    case 'qng':
+      return 'Q (NG)';
+
+    case 'actual':
+      return 'Actual';
+
+    case 'plan':
+      return 'Plan';
+
+    case 'efficiency':
+      return 'Efficiency';
+
+    default:
+      return key;
+  }
+}
+
+export function fReportCausePHeaderText(key: string): string {
+  switch (key) {
+    case 'key':
+      return '';
+
+    case 'date':
+      return 'Date';
+
+    case 'planDowntime':
+      return 'Plan downtime';
+
+    case 'pTime':
+      return 'Time (HH:MM:SS)';
+
+    case 'pDuration':
+      return 'Duration (HH:MM:SS)';
+
+    case 'causeBreakDown':
+      return 'Cause Breakdown';
+
+    case 'cTime':
+      return 'Time (HH:MM:SS)';
+
+    case 'cDuration':
+      return 'Duration (HH:MM:SS)';
+
+    case 'minerStop':
+      return 'Minor Stop';
+
+    case 'mTime':
+      return 'Time (HH:MM:SS)';
+
+    case 'mDuration':
+      return 'Duration (HH:MM:SS)';
+
+    case 'ngName':
+      return 'Name';
+
+    case 'ngValue':
+      return 'Value';
 
     default:
       return key;

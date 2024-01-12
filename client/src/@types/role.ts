@@ -46,6 +46,7 @@ export enum RoleSubject {
   All = 'all',
   Dashboard = 'dashboard',
   Analytics = 'analytics',
+  Reports = 'reports',
   ProblemsAndSolutions = 'problemsAndSolutions',
   Faqs = 'faqs',
   Plannings = 'plannings',

@@ -5,6 +5,7 @@ function path(root: string, sublink: string) {
 const ROOTS_AUTH = '/auth';
 const ROOTS_DASHBOARD = '/dashboard';
 const ROOTS_ANALYTICS = '/analytics';
+const ROOTS_REPORT = '/report';
 const ROOTS_PROBLEMS_SOLUTIONS = '/problems-solutions';
 const ROOTS_FAQS = '/faqs';
 const ROOTS_PLANNINGS = '/plannings';
@@ -43,6 +44,12 @@ export const PATH_ANALYTICS = {
     details: (id: string) => path(ROOTS_ANALYTICS, `/group/${id}`),
   },
 };
+
+export const PATH_REPORT = {
+  root: ROOTS_REPORT,
+  oee: path(ROOTS_REPORT, `/oee`),
+  cause: path(ROOTS_REPORT, `/cause`),
+}
 
 export const PATH_PROBLEMS_SOLUTIONS = {
   root: ROOTS_PROBLEMS_SOLUTIONS,
