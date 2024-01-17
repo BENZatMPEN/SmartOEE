@@ -16,6 +16,7 @@ import { newBatch } from '../../../redux/actions/oeeBatchAction';
 import { useDispatch } from '../../../redux/store';
 import axios from '../../../utils/axios';
 import { Planning } from '../../../@types/planning';
+import { AxiosError } from 'axios';
 
 interface NewOeeBatch {
   startDate: Date;
@@ -125,6 +126,9 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
       dispatch(newBatch(response.data));
       onClose();
     } catch (error) {
+      if (error instanceof AxiosError) {
+        enqueueSnackbar(error.response?.data.message || 'An error occurred.', { variant: 'error' });
+      }
       console.error(error);
     }
   };
