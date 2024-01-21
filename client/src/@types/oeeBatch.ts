@@ -88,6 +88,8 @@ export type OeeBatchQ = {
   // machine?: Machine;
   machineParameterId: number | null;
   // machineParameter?: MachineParameter;
+  grams: string
+  manualAmountGram: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -117,6 +119,7 @@ export type OeeStats = {
   readonly totalManualDefects: number;
   readonly totalAutoDefects: number;
   readonly totalOtherDefects: number;
+  readonly totalManualGrams: number;
 
   readonly target: number;
   readonly efficiency: number;

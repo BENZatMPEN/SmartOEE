@@ -187,7 +187,6 @@ export default function DashboardApqGraphQ() {
           <Grid item xs={3.5}>
             <Stack spacing={1}>
               <ItemBox head="Total Product" value={fNumber(totalCount)} tail="pcs." />
-
               <ItemBox
                 head="Good Product"
                 value={fNumber(totalCount - totalAutoDefects + totalManualDefects)}

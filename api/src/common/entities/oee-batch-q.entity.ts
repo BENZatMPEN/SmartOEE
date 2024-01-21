@@ -14,6 +14,12 @@ export class OeeBatchQEntity {
   @Column({ type: 'int', default: 0 })
   manualAmount: number;
 
+  @Column({ type: 'int', default: 0 })
+  manualAmountGram: number;
+
+  @Column({ type: 'text', nullable: true })
+  grams: string;
+
   @Column({ type: 'int', nullable: true })
   tagId: number;
 

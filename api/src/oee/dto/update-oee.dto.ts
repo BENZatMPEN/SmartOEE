@@ -54,4 +54,14 @@ export class UpdateOeeDto {
 
   @IsString()
   readonly timeUnit: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  readonly activePcs: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  readonly pscGram: number;
 }

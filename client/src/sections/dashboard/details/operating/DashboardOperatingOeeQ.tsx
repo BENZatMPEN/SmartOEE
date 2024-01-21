@@ -3,6 +3,9 @@ import {
   Box,
   Card,
   CardContent,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
@@ -24,15 +27,20 @@ import { initialOeeStats, OEE_TYPE_Q, ROWS_PER_PAGE_OPTIONS } from '../../../../
 import useTable from '../../../../hooks/useTable';
 import { RootState, useSelector } from '../../../../redux/store';
 import axios from '../../../../utils/axios';
+import { DialogActions } from '@mui/material';
+import { Button } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 type QStats = {
   totalManual: number;
   totalOther: number;
+  totalManualGram: number;
 };
 
 const initialQStats = {
   totalManual: 0,
   totalOther: 0,
+  totalManualGram: 0
 };
 
 export default function DashboardOperatingOeeQ() {
@@ -42,9 +50,11 @@ export default function DashboardOperatingOeeQ() {
 
   const { currentBatch, canEditBatch, batchParamQs } = useSelector((state: RootState) => state.oeeBatch);
 
+  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
+
   const { oeeStats, machines } = currentBatch || { machines: [] };
 
-  const { totalAutoDefects, totalManualDefects, totalOtherDefects } = oeeStats || initialOeeStats;
+  const { totalAutoDefects, totalManualDefects, totalManualGrams, totalOtherDefects } = oeeStats || initialOeeStats;
 
   const [qStats, setQStats] = useState<QStats>(initialQStats);
 
@@ -57,16 +67,41 @@ export default function DashboardOperatingOeeQ() {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const [rowModal, setRowModal] = useState<any>({});
+
+  const [pcdGram, setPcdGram] = useState<number>(0);
+
+  const [newValueGram, setNewValueGram] = useState<number>(0);
+
+  const handleOpenModal = (row: OeeBatchQ) => {
+    setRowModal(row)
+    if (selectedOee?.activePcs === true) {
+      setModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setNewValueGram(0);
+    setModalOpen(false);
+  };
+
   useEffect(() => {
     setLocalQs([...batchParamQs]);
   }, [batchParamQs]);
 
   useEffect(() => {
     setQStats({
-      totalManual: totalManualDefects,
-      totalOther: totalOtherDefects,
+      totalManualGram: totalManualGrams | 0,
+      totalManual: totalManualDefects | 0,
+      totalOther: totalOtherDefects | 0,
     });
-  }, [totalManualDefects, totalOtherDefects]);
+  }, [totalManualDefects, totalOtherDefects, totalManualGrams]);
+
+  useEffect(() => {
+    setPcdGram(selectedOee?.pscGram || 0);
+  }, [selectedOee]);
 
   const isNotFound = localQs.length === 0 || !currentBatch;
 
@@ -86,22 +121,35 @@ export default function DashboardOperatingOeeQ() {
       manualAmount: amount,
     };
     setLocalQs([...localQs]);
+    const totalOther = calculateTotalOther(qStats.totalManual);
+    const manualGrams = localQs.reduce((acc, x) => acc + (x.manualAmountGram || 0), 0);
     setQStats({
       ...qStats,
-      totalOther: calculateTotalOther(qStats.totalManual),
+      totalOther: totalOther,
+      totalManualGram: manualGrams,
     });
   };
 
+  const handleManualGramChange = () => {
+    const totalOther = calculateTotalOther(qStats.totalManual);
+    setQStats({
+      ...qStats,
+      totalOther: totalOther,
+    });
+  }
+
   const handleTotalManualChange = (total: number) => {
     setQStats({
+      ...qStats,
       totalManual: total,
       totalOther: calculateTotalOther(total),
     });
   };
 
   const calculateTotalOther = (totalManual: number): number => {
-    const sumManual = localQs.reduce((acc, x) => acc + x.manualAmount, 0);
-    return totalManual - sumManual;
+    const manualGrams = localQs.reduce((acc, x) => acc + (x.manualAmountGram || 0), 0);
+    const sumManual = localQs.reduce((acc, x) => acc + x.manualAmount || 0, 0);
+    return totalManual - sumManual - manualGrams;
   };
 
   const handleSave = async () => {
@@ -110,14 +158,16 @@ export default function DashboardOperatingOeeQ() {
     }
 
     setIsLoading(true);
-
     try {
       await axios.post(`/oee-batches/${currentBatch.id}/q-params`, {
         qParams: localQs.map((item) => ({
           id: item.id,
+          grams: item.grams,
+          manualAmountGram: item.manualAmountGram,
           manualAmount: item.manualAmount,
         })),
         totalManual: qStats.totalManual,
+        totalManualGram: qStats.totalManualGram,
       });
 
       enqueueSnackbar('Quality has been updated!');
@@ -134,6 +184,63 @@ export default function DashboardOperatingOeeQ() {
     const idx = mcParams.findIndex((mp) => mp.id === oeeBatchQ.machineParameterId);
     return idx >= 0 ? mcParams[idx].name : 'Other';
   };
+
+  const handleAddGram = (value: number) => {
+    const newManualGram = (rowModal.grams ?? '').split(',').filter((item: string) => item !== '');
+    newManualGram?.push(value.toString());
+    setRowModal({
+      ...rowModal,
+      grams: newManualGram?.join(',')
+    })
+    const index = localQs.findIndex((item) => item.id === rowModal.id);
+    const grams = newManualGram?.map((item: string) => Number(item));
+    //transfer grams to pcs
+    const newManualAmount = Math.ceil(grams?.reduce((acc: any, x: any) => acc + x, 0) / pcdGram);
+
+    const item = localQs[index];
+    localQs[index] = {
+      ...item,
+      grams: newManualGram?.join(','),
+      manualAmountGram: newManualAmount
+    };
+
+    setLocalQs([...localQs]);
+    setNewValueGram(0);
+    handleManualGramChange();
+
+    const manualGrams = localQs.reduce((acc, x) => acc + (x.manualAmountGram || 0), 0);
+    setQStats({
+      ...qStats,
+      totalOther: calculateTotalOther(qStats.totalManual),
+      totalManualGram: manualGrams,
+    } as QStats);
+  };
+
+  const handleDeleteGram = (index: number) => {
+    const newManualGram = rowModal.grams?.split(',');
+    newManualGram?.splice(index, 1);
+    setRowModal({
+      ...rowModal,
+      grams: newManualGram?.join(',')
+    })
+
+    const indexLocalQs = localQs.findIndex((item) => item.id === rowModal.id);
+    const newManualAmount = Math.ceil(newManualGram?.reduce((acc: any, x: any) => acc + Number(x), 0) / pcdGram);
+    const item = localQs[indexLocalQs];
+    localQs[indexLocalQs] = {
+      ...item,
+      grams: newManualGram?.join(','),
+      manualAmountGram: newManualAmount
+    };
+
+    setLocalQs([...localQs]);
+    const manualGrams = localQs.reduce((acc, x) => acc + (x.manualAmountGram || 0), 0);
+    setQStats({
+      ...qStats,
+      totalOther: calculateTotalOther(qStats.totalManual),
+      totalManualGram: manualGrams,
+    } as QStats);
+  }
 
   return (
     <Card>
@@ -154,9 +261,8 @@ export default function DashboardOperatingOeeQ() {
                   <Grid item xs={12} xl={2.5}>
                     <Typography variant="h3">Quality</Typography>
                   </Grid>
-
                   <Grid item xs={12} xl={9.5}>
-                    <Stack spacing={3} sx={{ mt: 1 }} direction="row" justifyContent="space-between">
+                    <Stack spacing={4} sx={{ mt: 1 }} direction="row" justifyContent="space-between">
                       <TextField
                         type="number"
                         size="small"
@@ -173,6 +279,9 @@ export default function DashboardOperatingOeeQ() {
                           handleTotalManualChange(Number(event.target.value));
                         }}
                       />
+                      {selectedOee?.activePcs && (
+                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${selectedOee?.pscGram} g`}</Typography>
+                      )}
 
                       <Stack spacing={2} direction="row">
                         <TextField
@@ -206,7 +315,7 @@ export default function DashboardOperatingOeeQ() {
               </Grid>
 
               <Grid item xs={12} xl={2.5}>
-                <Stack spacing={3} sx={{ mt: 1 }}>
+                <Stack spacing={4} sx={{ mt: 1 }}>
                   <TextField
                     type="number"
                     size="small"
@@ -215,7 +324,6 @@ export default function DashboardOperatingOeeQ() {
                     InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
                     InputLabelProps={{ shrink: true }}
                   />
-
                   <TextField
                     type="number"
                     size="small"
@@ -229,9 +337,19 @@ export default function DashboardOperatingOeeQ() {
                     type="number"
                     size="small"
                     label="Total Manual Defect"
-                    value={qStats.totalManual}
+                    value={qStats.totalManual - qStats.totalManualGram}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
+                  />
+
+                  <TextField
+                    type="number"
+                    size="small"
+                    label="Total Manual Gram Defect"
+                    value={qStats.totalManualGram}
+                    InputProps={{ readOnly: true }}
+                    InputLabelProps={{ shrink: true }}
+                    disabled={selectedOee?.activePcs !== true}
                   />
                 </Stack>
               </Grid>
@@ -239,13 +357,13 @@ export default function DashboardOperatingOeeQ() {
               <Grid item xs={12} xl={9.5}>
                 <Grid container spacing={3} sx={{ pt: 1, pb: 3 }}>
                   {localQs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                    <Grid item key={row.id} xs={12} md={6}>
+                    <Grid item key={row.id} xs={12} lg={6} >
                       <Grid container spacing={2}>
-                        <Grid item xs={4.5}>
+                        <Grid item xs={3.5}>
                           <Typography variant="body2">{getMachineParamName(row)}</Typography>
                         </Grid>
 
-                        <Grid item xs={1.75}>
+                        <Grid item xs={1.5}>
                           <TextField
                             type="number"
                             size="small"
@@ -255,7 +373,7 @@ export default function DashboardOperatingOeeQ() {
                           />
                         </Grid>
 
-                        <Grid item xs={4}>
+                        <Grid item xs={3.5}>
                           <Stack direction="row" spacing={1} alignItems="center">
                             <IconButton
                               size="small"
@@ -299,8 +417,20 @@ export default function DashboardOperatingOeeQ() {
                           <TextField
                             type="number"
                             size="small"
+                            label="Manual(g)"
+                            value={row?.manualAmountGram}
+                            InputProps={{ readOnly: true }}
+                            onClick={() => handleOpenModal(row)}
+                            disabled={selectedOee?.activePcs !== true}
+                          />
+                        </Grid>
+
+                        <Grid item xs={1.75}>
+                          <TextField
+                            type="number"
+                            size="small"
                             label="Total"
-                            value={row.autoAmount + row.manualAmount}
+                            value={row.autoAmount + row.manualAmount + (row?.manualAmountGram || 0)}
                             InputProps={{ readOnly: true }}
                           />
                         </Grid>
@@ -324,6 +454,55 @@ export default function DashboardOperatingOeeQ() {
           />
         </Box>
       </CardContent>
+
+      {/* Modal */}
+      <Dialog open={isModalOpen} onClose={handleCloseModal}>
+        <DialogTitle>{getMachineParamName(rowModal)}</DialogTitle>
+
+        <DialogContent sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 500px)', minHeight: '200px' }}>
+          {rowModal.grams && rowModal.grams?.split(',').map((amount: any, index: any) => (
+            <Grid container spacing={1} sx={{ mt: 1 }} justifyContent="center" key={index}>
+              <Grid item xs={8}>
+                <TextField
+                  type="number"
+                  size="small"
+                  label="Manual(g)"
+                  value={amount}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <Button onClick={() => handleDeleteGram(index)}>
+                  <CloseIcon />
+                </Button>
+              </Grid>
+            </Grid>
+          ))}
+        </DialogContent>
+
+        <DialogContent>
+          <Grid container spacing={1} sx={{ mt: 1 }} justifyContent="center">
+            <Grid item xs={8}>
+              <TextField
+                type="number"
+                size="small"
+                label="Manual(g)"
+                value={newValueGram}
+                onChange={(e) => setNewValueGram(Number(e.target.value))}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <Button onClick={() => handleAddGram(newValueGram)}>
+                Add
+              </Button>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }

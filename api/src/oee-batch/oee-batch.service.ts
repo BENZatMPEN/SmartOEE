@@ -528,6 +528,8 @@ export class OeeBatchService {
           currentParam.manualAmount === 0 && updatingParam.manualAmount > 0
             ? updatingParam.manualAmount
             : updatingParam.manualAmount - currentParam.manualAmount,
+        manualAmountGram: updatingParam.manualAmountGram,
+        grams: updatingParam.grams,
         tagId: currentParam.tagId,
         machineId: currentParam.machineId,
         machineParameterId: currentParam.machineParameterId,
@@ -569,6 +571,7 @@ export class OeeBatchService {
 
     await this.updateOeeStats(id, {
       totalManualDefects: updateDto.totalManual,
+      totalManualGrams: updateDto.totalManualGram | 0,
     });
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });
