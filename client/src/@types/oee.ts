@@ -19,6 +19,8 @@ export type Oee = {
   percentSettings: PercentSetting[] | null;
   useSitePercentSettings: boolean;
   timeUnit: string;
+  activePcs: boolean;
+  pscGram: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -39,6 +41,8 @@ export interface EditOee {
   percentSettings: PercentSetting[] | null;
   useSitePercentSettings: boolean;
   timeUnit: string;
+  activePcs: boolean;
+  pscGram: number;
 }
 
 export type FilterOee = {

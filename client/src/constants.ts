@@ -216,6 +216,7 @@ export const initialOeeStats: OeeStats = {
   totalOtherDefects: 0,
   target: 0,
   efficiency: 0,
+  totalManualGrams: 0,
 };
 
 export const initialPercentSettings: PercentSetting[] = [

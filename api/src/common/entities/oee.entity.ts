@@ -64,4 +64,10 @@ export class OeeEntity {
 
   @Column({ type: 'varchar', length: 100 })
   timeUnit: string;
+
+  @Column({ type: 'boolean', default: false })
+  activePcs: boolean;
+
+  @Column({ type: 'int', nullable: true })
+  pscGram: number;
 }

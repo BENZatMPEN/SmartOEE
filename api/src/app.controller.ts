@@ -70,7 +70,7 @@ export class AppController {
     private readonly roleService: RoleService,
     private readonly analyticService: AnalyticService,
     private readonly entityManager: EntityManager,
-  ) {}
+  ) { }
 
   // @Get('cal')
   // async testCal(): Promise<string> {
@@ -540,6 +540,8 @@ export class AppController {
             machineId: realMc.id,
           } as OeeMachineEntity,
         ],
+        activePcs: false,
+        pscGram: 0,
       },
       null,
       sites[0].id,
@@ -732,6 +734,8 @@ export class AppController {
                 machineId: machines[i].id,
               } as OeeMachineEntity,
             ],
+            activePcs: false,
+            pscGram: 0,
           },
           null,
           sites[1].id,

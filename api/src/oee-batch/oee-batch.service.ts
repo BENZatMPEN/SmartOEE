@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -138,6 +138,11 @@ export class OeeBatchService {
 
   async create(oeeId: number, createDto: CreateOeeBatchDto, userEmail: string): Promise<OeeBatchEntity> {
     const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId } = createDto;
+    const activeBatch = await this.oeeBatchRepository.findOneBy({ oeeId: oeeId, batchStoppedDate: IsNull() });
+    if (activeBatch) {
+      throw new BadRequestException('There is an active batch. Please refresh the page.');
+    }
+
     const oee = await this.oeeRepository.findOneBy({ id: oeeId });
     const oeeProduct = await this.oeeProductRepository.findOne({
       where: { oeeId: oeeId, productId: productId },
@@ -523,6 +528,8 @@ export class OeeBatchService {
           currentParam.manualAmount === 0 && updatingParam.manualAmount > 0
             ? updatingParam.manualAmount
             : updatingParam.manualAmount - currentParam.manualAmount,
+        manualAmountGram: updatingParam.manualAmountGram,
+        grams: updatingParam.grams,
         tagId: currentParam.tagId,
         machineId: currentParam.machineId,
         machineParameterId: currentParam.machineParameterId,
@@ -564,6 +571,7 @@ export class OeeBatchService {
 
     await this.updateOeeStats(id, {
       totalManualDefects: updateDto.totalManual,
+      totalManualGrams: updateDto.totalManualGram | 0,
     });
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });

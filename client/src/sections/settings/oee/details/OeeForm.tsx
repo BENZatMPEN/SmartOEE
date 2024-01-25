@@ -82,6 +82,8 @@ export default function OeeForm({ isEdit }: Props) {
   const methods = useForm<EditOee>({
     resolver: yupResolver(NewOeeSchema),
     defaultValues: {
+      activePcs: false,
+      pscGram: 0,
       oeeCode: '',
       oeeType: OEE_TYPE_OPTIONS[0],
       location: '',
@@ -98,6 +100,8 @@ export default function OeeForm({ isEdit }: Props) {
       image: null,
     },
     values: {
+      activePcs: currentOee?.activePcs || false,
+      pscGram: currentOee?.pscGram || 0,
       oeeCode: currentOee?.oeeCode || '',
       oeeType: currentOee?.oeeType || OEE_TYPE_OPTIONS[0],
       location: currentOee?.location || '',
@@ -108,20 +112,20 @@ export default function OeeForm({ isEdit }: Props) {
       oeeMachines: currentOee?.oeeMachines || [],
       oeeProducts: currentOee
         ? (currentOee.oeeProducts || []).map((item) => {
-            return {
-              ...item,
-              standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
-            };
-          })
+          return {
+            ...item,
+            standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
+          };
+        })
         : [],
       timeUnit: currentOee?.timeUnit || TIME_UNIT_OPTIONS[0],
       useSitePercentSettings: currentOee ? currentOee.useSitePercentSettings : true,
       percentSettings: currentOee?.percentSettings ? currentOee.percentSettings : initialPercentSettings,
       tags: currentOee?.tags
         ? [
-            ...currentOee.tags,
-            ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
-          ]
+          ...currentOee.tags,
+          ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
+        ]
         : initialOeeTags,
       image: null,
     },
@@ -378,7 +382,10 @@ export default function OeeForm({ isEdit }: Props) {
                         ))}
                       </RHFSelect>
                     </Grid>
-
+                    <Grid item xs={6} sx={{ display: 'flex' }}>
+                        <RHFCheckbox name="activePcs" label="" />
+                        <RHFTextField name="pscGram" label="1 Pcs(g)" />
+                    </Grid>
                     <Grid item xs={6}>
                       <RHFTextField name="productionName" label="Production Name" />
                     </Grid>
