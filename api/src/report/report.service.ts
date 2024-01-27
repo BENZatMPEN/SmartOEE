@@ -20,7 +20,6 @@ import { MachineParameterEntity } from "../common/entities/machine-parameter.ent
 import { OeeMachineEntity } from "../common/entities/oee-machine.entity";
 import * as _ from 'lodash';
 import { AnalyticAParam, AnalyticPParam, AnalyticQParam } from "../common/type/analytic-data";
-import { ParetoData } from "../oee-batch/oee-batch.service";
 import { OEE_PARAM_TYPE_A, OEE_PARAM_TYPE_P, OEE_PARAM_TYPE_Q } from "../common/constant";
 
 type OeeSumData = {
@@ -60,28 +59,6 @@ type CalculationItem = {
 type BatchGroup = {
     [key: number]: OeeBatchEntity[];
 };
-
-type OeeBatches = {
-    id: number;
-    oeeCode: string;
-    productName: string;
-    productSku: string;
-    lotNumber: string;
-    startDate: string;
-    ct: number;
-    totalAvailableTime: number;
-    operatingTime: number;
-    oeePercent: number;
-    aPercent: number;
-    pPercent: number;
-    qPercent: number;
-    qOk: number;
-    qNg: number;
-    actual: number;
-    plan: number;
-    efficiency: number;
-};
-
 @Injectable()
 export class ReportService {
 
@@ -183,7 +160,7 @@ export class ReportService {
         for (const key of Object.keys(groupTable)) {
             const sumOee = await this.sumOeeData(groupTable[key], fieldName, names, lotNumbers, type);
             sumOee.qNg = sumOee.totalAutoDefects + sumOee.totalManualDefects;
-            sumOee.efficiency = sumOee.totalCount / sumOee.target;
+            sumOee.efficiency = (sumOee.totalCount / sumOee.target) * 100;
             oeeRowsTable.push(this.calculateOee(sumOee, key));
             productionRowsChart.push(this.calculateProductOee(sumOee, key));
             const obj: any = {};
@@ -200,13 +177,11 @@ export class ReportService {
 
         return {
             table: {
-                rows: dataRowsTable,
-                // sumRows: oeeRowsChart,
+                rows: _.sortBy(dataRowsTable, ['key']),
             },
             chart: {
-                // rows: dataRowsChart,
-                sumRows: oeeRowsChart,
-                sumRowsProduction: productionRowsChart,
+                sumRows: _.sortBy(oeeRowsChart, ['key']),
+                sumRowsProduction: _.sortBy(productionRowsChart, ['key']),
             }
         };
     }
@@ -236,71 +211,8 @@ export class ReportService {
         }
         listPlannedDowntime = _.sortBy(listPlannedDowntime, ['expiredAt'], ['asc']);
         listA = _.orderBy(listA, ['timestamp'], ['desc']);
-        listP = _.sortBy(listP, ['timestamp'], ['desc']);
-        // listQ = _.sortBy(listQ, ['timestamp'], ['desc']);
-        // const oeeBatchA = await this.oeeBatchARepository.find({
-        //     where: {
-        //         oeeBatchId: In(oeeBatchIds),
-        //         machineParameterId: Not(IsNull())
-        //     }
-        // });
-        // const oeeBatchP = await this.oeeBatchPRepository.find({
-        //     where: {
-        //         oeeBatchId: In(oeeBatchIds),
-        //         machineParameterId: Not(IsNull())
-        //     }
-        // });
-        // const oeeBatchQ = await this.oeeBatchQRepository.find({
-        //     where: {
-        //         oeeBatchId: In(oeeBatchIds),
-        //         machineParameterId: Not(IsNull())
-        //     }
-        // });
-
-        // const oeeProduct = await this.oeeRepository.findOne({
-        //     where: { id: In(oeeIds), siteId, deleted: false },
-        //     relations: ['oeeMachines.machine.parameters']
-        // });
-
-        // const oeeMachines = oeeProduct?.oeeMachines;
-
-        // // const updatedOeeBatchA = await Promise.all(oeeBatchA?.map(async item => {
-        // //     return {
-        // //         id: item.id,
-        // //         seconds: item.seconds,
-        // //         timestamp: item.timestamp,
-        // //         oeeBatchId: item.oeeBatchId,
-        // //         machineParameterId: item.machineParameterId,
-        // //         machineParameterName: await this.getParameterName(item.machineId, item.machineParameterId, oeeMachines)
-        // //     }
-        // // }));
-
-        // // const updatedOeeBatchP = await Promise.all(oeeBatchP?.map(async item => {
-        // //     return {
-        // //         id: item.id,
-        // //         seconds: item.seconds,
-        // //         timestamp: item.timestamp,
-        // //         oeeBatchId: item.oeeBatchId,
-        // //         machineParameterId: item.machineParameterId,
-        // //         machineParameterName: await this.getParameterName(item.machineId, item.machineParameterId, oeeMachines)
-        // //     }
-        // // }));
-
-        // // const updatedOeeBatchQ = await Promise.all(oeeBatchQ?.map(async item => {
-        // //     return {
-        // //         id: item.id,
-        // //         oeeBatchId: item.oeeBatchId,
-        // //         machineParameterId: item.machineParameterId,
-        // //         machineParameterName: await this.getParameterName(item.machineId, item.machineParameterId, oeeMachines),
-        // //         amount: item.autoAmount + item.manualAmount
-        // //     }
-        // // }));
-
-        // const updatedOeeBatchA = await this.getOeeBatchA(oeeBatchIds, oeeMachines);
-        // const updatedOeeBatchP = await this.getOeeBatchP(oeeBatchIds, oeeMachines);
-        // const updatedOeeBatchQ = await this.getOeeBatchQ(oeeBatchIds, oeeMachines);
-        // //sort by amount
-        // const sortedOeeBatchQ = _.sortBy(updatedOeeBatchQ, ['amount']);
+        listP = _.orderBy(listP, ['timestamp'], ['desc']);
+        listQ = _.orderBy(listQ, ['amount'], ['desc']);
 
         // //find max length of array
         const maxLength = Math.max(listPlannedDowntime.length, listA.length, listP.length, listQ.length);
@@ -322,34 +234,13 @@ export class ReportService {
                 "oeeBatchATimestamp": listA[i] && listA[i].timestamp
                     ? new Date(listA[i].timestamp).toISOString().substr(11, 8)
                     : "",
-                // "oeeBatchATimestamp": (listA[i] && listA[i].timestamp) || "",
-                // "oeeBatchA": {
-                //     id: (listA[i] && listA[i].id) || "",
-                //     name: (listA[i] && listA[i].paramName) || "",
-                //     seconds: (listA[i] && listA[i].seconds) || "",
-                //     timestamp: (listA[i] && listA[i].timestamp) || "",
-                // },
                 "oeeBatchPName": (listP[i] && listP[i].paramName) || "",
                 "oeeBatchPSeconds": (listP[i] && listP[i].seconds) || "",
                 "oeeBatchPTimestamp": listP[i] && listP[i].timestamp
                     ? new Date(listP[i].timestamp).toISOString().substr(11, 8)
                     : "",
-                // "oeeBatchPTimestamp": (listP[i] && listP[i].timestamp) || "",
-                // "oeeBatchP": {
-                //     id: (listP[i] && listP[i].id) || "",
-                //     name: (listP[i] && listP[i].paramName) || "",
-                //     seconds: (listP[i] && listP[i].seconds) || "",
-                //     timestamp: (listP[i] && listP[i].timestamp) || "",
-                // },
                 "oeeBatchQName": (listQ[i] && listQ[i].paramName) || "",
-                "oeeBatchQSeconds": (listQ[i] && listQ[i].amount) || "",
-                // "oeeBatchQTimestamp": (listQ[i] && listQ[i].timestamp) || "",
-                // "oeeBatchQ": {
-                //     id: (listQ[i] && listQ[i].id) || "",
-                //     name: (listQ[i] && listQ[i].paramName) || "",
-                //     seconds: (listQ[i] && listQ[i].seconds) || "",
-                //     timestamp: (listQ[i] && listQ[i].timestamp) || "",
-                // },
+                "oeeBatchQAmount": (listQ[i] && listQ[i].amount) || 0,
             };
 
             result.push(newItem);
@@ -765,7 +656,7 @@ export class ReportService {
             qNg: qNg,
             actual: totalCount,
             plan: plan,
-            efficiency: totalCount / target,
+            efficiency: (totalCount / target) * 100,
         };
     }
 
@@ -996,7 +887,7 @@ export class ReportService {
                     return false;
                 }),
             );
-            rows[key] = await this.mapMachineParametersToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
+            rows[key] = await this.mapMachineParametersQToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
                     cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
                     return true;
@@ -1184,14 +1075,30 @@ export class ReportService {
         const list = analyticParams
             .map(item => ({
                 ...item,
-                machineId: item.data.machineId,
-                seconds: item.data.seconds,
-                machineParameterId: item.data.machineParameterId
+                machineId: item.data?.machineId,
+                seconds: item.data?.seconds,
+                machineParameterId: item.data?.machineParameterId
             }));
         const listAddParamName = list.map(item => ({
             ...item,
             paramName: mcParams.filter(param => param.id === item.machineParameterId)[0]?.name || 'other'
         }));
+        return listAddParamName;
+    }
+
+    private async mapMachineParametersQToAnalytics(analyticParams: AnalyticStatsParamEntity[], mcParams: MachineParameterEntity[]): Promise<any> {
+        const list = analyticParams
+            .map(item => ({
+                ...item,
+                machineId: item.data?.machineId,
+                amount: item.data?.autoAmount + item.data?.manualAmount,
+                machineParameterId: item.data?.machineParameterId
+            }));
+        const listAddParamName = list.map(item => ({
+            ...item,
+            paramName: mcParams.filter(param => param.id === item.machineParameterId)[0]?.name || 'other'
+        }));
+
         return listAddParamName;
     }
 

@@ -278,8 +278,8 @@ export default function ReportCauseChart({ criteria }: Props) {
         }
       },
     },
-    { id: 'ngName', label: 'Name', minWidth: 80 },
-    { id: 'ngValue', label: 'Value', minWidth: 80 },
+    { id: 'oeeBatchQName', label: 'Name', minWidth: 320 },
+    { id: 'oeeBatchQAmount', label: 'Value', minWidth: 80 },
   ];
 
   const refresh = async (criteria: ReportCriteria) => {
