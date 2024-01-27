@@ -82,8 +82,6 @@ export default function OeeForm({ isEdit }: Props) {
   const methods = useForm<EditOee>({
     resolver: yupResolver(NewOeeSchema),
     defaultValues: {
-      activePcs: false,
-      pscGram: 0,
       oeeCode: '',
       oeeType: OEE_TYPE_OPTIONS[0],
       location: '',
@@ -100,8 +98,6 @@ export default function OeeForm({ isEdit }: Props) {
       image: null,
     },
     values: {
-      activePcs: currentOee?.activePcs || false,
-      pscGram: currentOee?.pscGram || 0,
       oeeCode: currentOee?.oeeCode || '',
       oeeType: currentOee?.oeeType || OEE_TYPE_OPTIONS[0],
       location: currentOee?.location || '',
@@ -159,7 +155,7 @@ export default function OeeForm({ isEdit }: Props) {
         return item;
       });
     }
-
+    console.log('data', data)
     const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
 
     if (oee) {
@@ -381,10 +377,6 @@ export default function OeeForm({ isEdit }: Props) {
                           </MenuItem>
                         ))}
                       </RHFSelect>
-                    </Grid>
-                    <Grid item xs={6} sx={{ display: 'flex' }}>
-                        <RHFCheckbox name="activePcs" label="" />
-                        <RHFTextField name="pscGram" label="1 Pcs(g)" />
                     </Grid>
                     <Grid item xs={6}>
                       <RHFTextField name="productionName" label="Production Name" />

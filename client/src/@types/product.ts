@@ -3,6 +3,8 @@ export type Product = {
   sku: string;
   name: string;
   remark: string;
+  activePcs: boolean;
+  pscGram: number;
   imageName: string;
   createdAt: Date;
   updatedAt: Date;
@@ -14,6 +16,8 @@ export interface EditProduct {
   name: string;
   remark: string;
   image: File | null;
+  activePcs: boolean;
+  pscGram: number;
 }
 
 export type FilterProduct = {

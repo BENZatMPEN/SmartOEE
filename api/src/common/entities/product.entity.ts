@@ -34,4 +34,10 @@ export class ProductEntity {
 
   @OneToMany(() => OeeProductEntity, (oeeProduct) => oeeProduct.product)
   oeeProducts: OeeProductEntity[];
+
+  @Column({ type: 'boolean', default: false })
+  activePcs: boolean;
+
+  @Column({ type: 'int', nullable: true })
+  pscGram: number;
 }

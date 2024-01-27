@@ -52,7 +52,7 @@ export default function DashboardOperatingOeeQ() {
 
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { oeeStats, machines } = currentBatch || { machines: [] };
+  const { oeeStats, machines, product } = currentBatch || { machines: [] };
 
   const { totalAutoDefects, totalManualDefects, totalManualGrams, totalOtherDefects } = oeeStats || initialOeeStats;
 
@@ -77,7 +77,7 @@ export default function DashboardOperatingOeeQ() {
 
   const handleOpenModal = (row: OeeBatchQ) => {
     setRowModal(row)
-    if (selectedOee?.activePcs === true) {
+    if (product?.activePcs === true) {
       setModalOpen(true);
     }
   };
@@ -100,7 +100,7 @@ export default function DashboardOperatingOeeQ() {
   }, [totalManualDefects, totalOtherDefects, totalManualGrams]);
 
   useEffect(() => {
-    setPcdGram(selectedOee?.pscGram || 0);
+    setPcdGram(product?.pscGram || 0);
   }, [selectedOee]);
 
   const isNotFound = localQs.length === 0 || !currentBatch;
@@ -279,8 +279,8 @@ export default function DashboardOperatingOeeQ() {
                           handleTotalManualChange(Number(event.target.value));
                         }}
                       />
-                      {selectedOee?.activePcs && (
-                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${selectedOee?.pscGram} g`}</Typography>
+                      {product?.activePcs && (
+                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${product?.pscGram} g`}</Typography>
                       )}
 
                       <Stack spacing={2} direction="row">
@@ -349,7 +349,7 @@ export default function DashboardOperatingOeeQ() {
                     value={qStats.totalManualGram}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
-                    disabled={selectedOee?.activePcs !== true}
+                    disabled={product?.activePcs !== true}
                   />
                 </Stack>
               </Grid>
@@ -421,7 +421,7 @@ export default function DashboardOperatingOeeQ() {
                             value={row?.manualAmountGram}
                             InputProps={{ readOnly: true }}
                             onClick={() => handleOpenModal(row)}
-                            disabled={selectedOee?.activePcs !== true}
+                            disabled={product?.activePcs !== true}
                           />
                         </Grid>
 

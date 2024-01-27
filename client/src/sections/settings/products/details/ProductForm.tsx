@@ -10,7 +10,7 @@ import * as Yup from 'yup';
 import { EditProduct } from '../../../../@types/product';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
-import { FormProvider, RHFEditor, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
+import { FormProvider, RHFCheckbox, RHFEditor, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 import { createProduct, updateProduct } from '../../../../redux/actions/productAction';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
@@ -42,12 +42,16 @@ export default function ProductForm({ isEdit }: Props) {
       name: '',
       remark: '',
       image: null,
+      activePcs: false,
+      pscGram: 0,
     },
     values: {
       sku: currentProduct?.sku || '',
       name: currentProduct?.name || '',
       remark: currentProduct?.remark || '',
       image: null,
+      activePcs: currentProduct?.activePcs || false,
+      pscGram: currentProduct?.pscGram || 0,
     },
   });
 
@@ -142,6 +146,12 @@ export default function ProductForm({ isEdit }: Props) {
 
               <Grid item xs={6}>
                 <RHFTextField name="name" label="Product Name" />
+              </Grid>
+
+
+              <Grid item xs={6} sx={{ display: 'flex' }}>
+                <RHFCheckbox name="activePcs" label="" />
+                <RHFTextField name="pscGram" label="1 Pcs(g)" />
               </Grid>
 
               <Grid item xs={12}>
