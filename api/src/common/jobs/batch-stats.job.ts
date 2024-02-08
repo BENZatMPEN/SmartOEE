@@ -148,7 +148,7 @@ export class BatchStatsJob {
       // calculate Q
       const totalAllDefects = totalNg + totalManualDefects;
       const sumManual = qParams.reduce((acc, x) => acc + x.manualAmount, 0);
-      const totalOtherDefects = totalManualDefects - sumManual;
+      const totalOtherDefects = totalManualDefects - (sumManual + totalManualGrams);
       const qPercent = total === 0 ? 1 : (total - totalAllDefects) / total;
 
       // calculate OEE

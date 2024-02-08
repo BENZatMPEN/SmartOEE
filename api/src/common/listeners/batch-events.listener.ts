@@ -96,12 +96,12 @@ export class BatchEventsListener {
     const qParams = await this.oeeBatchService.findBatchQsById(batch.id);
 
     const { siteId, oeeStats } = batch;
-    const { aPercent, pPercent, totalCount, totalAutoDefects, totalManualDefects } = oeeStats;
+    const { aPercent, pPercent, totalCount, totalAutoDefects, totalManualDefects, totalManualGrams } = oeeStats;
 
     // calculate Q
     const totalAllDefects = totalAutoDefects + totalManualDefects;
     const sumManual = qParams.reduce((acc, x) => acc + x.manualAmount, 0);
-    const totalOtherDefects = totalManualDefects - sumManual;
+    const totalOtherDefects = totalManualDefects - (sumManual + totalManualGrams);
     const qPercent = totalCount === 0 ? 1 : (totalCount - totalAllDefects) / totalCount;
 
     // calculate OEE
