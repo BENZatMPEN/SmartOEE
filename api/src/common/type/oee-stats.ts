@@ -24,6 +24,7 @@ export class OeeStats {
   readonly totalManualDefects: number;
   readonly totalAutoDefects: number;
   readonly totalOtherDefects: number;
+  readonly totalManualGrams: number;
 
   readonly target: number;
   readonly efficiency: number;
@@ -50,6 +51,7 @@ export const initialOeeBatchStats: OeeStats = {
   totalMinorStopCount: 0,
   totalMinorStopSeconds: 0,
   totalManualDefects: 0,
+  totalManualGrams: 0,
   totalAutoDefects: 0,
   totalOtherDefects: 0,
   target: 0,

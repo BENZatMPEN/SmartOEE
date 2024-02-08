@@ -98,7 +98,7 @@ export class BatchStatsJob {
       const { total, totalNg, stopSeconds, timestamp } = currentMcState;
       const { total: previousTotal } = previousMcState;
       const readTimestamp = new Date(timestamp);
-      const { totalManualDefects } = oeeStats;
+      const { totalManualDefects, totalManualGrams } = oeeStats;
 
       const childrenResult = await Promise.all([
         this.oeeBatchService.findBatchAsById(batch.id),
@@ -188,6 +188,7 @@ export class BatchStatsJob {
         totalAutoDefects: totalNg,
         totalManualDefects,
         totalOtherDefects,
+        totalManualGrams,
 
         target,
         efficiency: efficiency * 100,
