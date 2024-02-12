@@ -756,6 +756,7 @@ export class AppController {
         plannedQuantity: 5000,
         startDate: new Date(),
         endDate: new Date(),
+        operatorId: 2
       },
       'admin@user.com',
     );

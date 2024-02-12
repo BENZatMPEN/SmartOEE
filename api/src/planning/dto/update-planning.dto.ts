@@ -1,5 +1,6 @@
-import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EndType, StartType } from 'src/common/enums/batchTypes';
 
 export class UpdatePlanningDto {
   @IsString()
@@ -38,4 +39,16 @@ export class UpdatePlanningDto {
   @IsNumber()
   @Type(() => Number)
   readonly userId: number;
+
+  @IsEnum(StartType)
+  @IsOptional()
+  readonly startType?: StartType;
+
+  @IsEnum(EndType)
+  @IsOptional()
+  readonly endType?: EndType;
+
+  @IsNumber()
+  @Type(() => Number)
+  readonly operatorId: number;
 }

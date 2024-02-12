@@ -137,7 +137,7 @@ export class OeeBatchService {
   }
 
   async create(oeeId: number, createDto: CreateOeeBatchDto, userEmail: string): Promise<OeeBatchEntity> {
-    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId } = createDto;
+    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId, startType, endType, operatorId } = createDto;
     const activeBatch = await this.oeeBatchRepository.findOneBy({ oeeId: oeeId, batchStoppedDate: IsNull() });
     if (activeBatch) {
       throw new BadRequestException('There is an active batch. Please refresh the page.');
@@ -181,6 +181,9 @@ export class OeeBatchService {
       mcState: initialOeeBatchMcState,
       startDate: startDate,
       endDate: endDate,
+      startType: startType,
+      endType: endType,
+      operatorId: operatorId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
