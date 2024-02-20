@@ -30,6 +30,7 @@ import axios from '../../../../utils/axios';
 import { DialogActions } from '@mui/material';
 import { Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { use } from 'i18next';
 
 type QStats = {
   totalManual: number;
@@ -75,12 +76,25 @@ export default function DashboardOperatingOeeQ() {
 
   const [newValueGram, setNewValueGram] = useState<number>(0);
 
+  const [totalGram, setTotalGram] = useState<number>(0);
+    
   const handleOpenModal = (row: OeeBatchQ) => {
     setRowModal(row)
     if (product?.activePcs === true) {
       setModalOpen(true);
     }
   };
+
+  useEffect(() => {
+    let sum = 0;
+    localQs.forEach((item) => {
+      if (item.grams) {
+        const grams = item.grams.split(',').map((item: string) => Number(item));
+        sum += grams.reduce((acc, x) => acc + x, 0);
+      }
+    });
+    setTotalGram(sum);
+  }, [localQs]);
 
   const handleCloseModal = () => {
     setNewValueGram(0);
@@ -351,6 +365,16 @@ export default function DashboardOperatingOeeQ() {
                     InputLabelProps={{ shrink: true }}
                     disabled={product?.activePcs !== true}
                   />
+
+                  <TextField
+                    type="number"
+                    size="small"
+                    label="Total Gram"
+                    value={totalGram}
+                    InputProps={{ readOnly: true }}
+                    InputLabelProps={{ shrink: true }}
+                    disabled={product?.activePcs !== true}
+                  />
                 </Stack>
               </Grid>
 
@@ -460,6 +484,19 @@ export default function DashboardOperatingOeeQ() {
         <DialogTitle>{getMachineParamName(rowModal)}</DialogTitle>
 
         <DialogContent sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 500px)', minHeight: '200px' }}>
+          <Grid container spacing={1} sx={{ mt: 1 }} justifyContent="center">
+            <Grid item xs={12}>
+              <TextField
+                InputProps={{
+                  readOnly: true,
+                }}
+                type="number"
+                size="small"
+                label="Total(g)"
+                value={(rowModal.grams ?? '').split(',').reduce((acc: any, x: any) => acc + Number(x), 0)}
+              />
+            </Grid>
+          </Grid>
           {rowModal.grams && rowModal.grams?.split(',').map((amount: any, index: any) => (
             <Grid container spacing={1} sx={{ mt: 1 }} justifyContent="center" key={index}>
               <Grid item xs={8}>
