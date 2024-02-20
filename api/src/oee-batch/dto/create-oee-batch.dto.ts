@@ -40,6 +40,7 @@ export class CreateOeeBatchDto {
   readonly endType?: EndType;
 
   @IsNumber()
+  @IsOptional()
   @Type(() => Number)
-  readonly operatorId: number;
+  readonly operatorId?: number;
 }
