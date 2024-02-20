@@ -116,6 +116,6 @@ export class OeeBatchEntity {
   @Column({ type: 'enum', enum: EndType, nullable: true })
   endType: EndType;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true  })
   operatorId: number;
 }
