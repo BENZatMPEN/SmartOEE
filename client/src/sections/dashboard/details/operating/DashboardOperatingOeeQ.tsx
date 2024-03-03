@@ -16,7 +16,7 @@ import {
   TablePagination,
   TextField,
   Typography,
-} from '@mui/material';
+  } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 import { OeeBatchQ } from '../../../../@types/oeeBatch';
@@ -30,6 +30,7 @@ import axios from '../../../../utils/axios';
 import { DialogActions } from '@mui/material';
 import { Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { Paper } from '@mui/material';
 
 type QStats = {
   totalManual: number;
@@ -75,12 +76,24 @@ export default function DashboardOperatingOeeQ() {
 
   const [newValueGram, setNewValueGram] = useState<number>(0);
 
+  const [totalGram, setTotalGram] = useState<number>(0);
   const handleOpenModal = (row: OeeBatchQ) => {
     setRowModal(row)
     if (product?.activePcs === true) {
       setModalOpen(true);
     }
   };
+
+  useEffect(() => {
+    let sum = 0;
+    localQs.forEach((item) => {
+      if (item.grams) {
+        const grams = item.grams.split(',').map((item: string) => Number(item));
+        sum += grams.reduce((acc, x) => acc + x, 0);
+      }
+    });
+    setTotalGram(sum);
+  }, [localQs]);
 
   const handleCloseModal = () => {
     setNewValueGram(0);
@@ -241,7 +254,13 @@ export default function DashboardOperatingOeeQ() {
       totalManualGram: manualGrams,
     } as QStats);
   }
+  const calculateTotalGrams = (grams: string | undefined) => {
+    if (!grams) {
+      return 0;
+    }
 
+    return grams.split(',').reduce((acc: number, x: string) => acc + Number(x), 0);
+  }
   return (
     <Card>
       <CardContent>
@@ -266,7 +285,7 @@ export default function DashboardOperatingOeeQ() {
                       <TextField
                         type="number"
                         size="small"
-                        label="Key Total Manual Defect"
+                        label="Key Total Manual Defect(pcs)"
                         value={qStats.totalManual}
                         InputProps={{ readOnly: !canEditBatch }}
                         InputLabelProps={{ shrink: true }}
@@ -287,7 +306,7 @@ export default function DashboardOperatingOeeQ() {
                         <TextField
                           type="number"
                           size="small"
-                          label="Other"
+                          label="Other(pcs)"
                           value={qStats.totalOther}
                           InputProps={{ readOnly: true }}
                           InputLabelProps={{ shrink: true }}
@@ -319,7 +338,7 @@ export default function DashboardOperatingOeeQ() {
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Defect"
+                    label="Total Defect(pcs)"
                     value={totalAutoDefects + qStats.totalManual}
                     InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
                     InputLabelProps={{ shrink: true }}
@@ -327,7 +346,7 @@ export default function DashboardOperatingOeeQ() {
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Auto Defect"
+                    label="Total Auto Defect(pcs)"
                     value={totalAutoDefects}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
@@ -336,7 +355,7 @@ export default function DashboardOperatingOeeQ() {
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Manual Defect"
+                    label="Total Manual Defect(pcs)"
                     value={qStats.totalManual - qStats.totalManualGram}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
@@ -345,8 +364,18 @@ export default function DashboardOperatingOeeQ() {
                   <TextField
                     type="number"
                     size="small"
-                    label="Total Manual Gram Defect"
+                    label="Total Manual Gram Defect(pcs)"
                     value={qStats.totalManualGram}
+                    InputProps={{ readOnly: true }}
+                    InputLabelProps={{ shrink: true }}
+                    disabled={product?.activePcs !== true}
+                  />
+
+                  <TextField
+                    type="number"
+                    size="small"
+                    label="Total Gram"
+                    value={totalGram}
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
                     disabled={product?.activePcs !== true}
@@ -367,57 +396,59 @@ export default function DashboardOperatingOeeQ() {
                           <TextField
                             type="number"
                             size="small"
-                            label="Auto"
+                            label="Auto(pcs)"
                             value={row.autoAmount}
                             InputProps={{ readOnly: true }}
                           />
                         </Grid>
 
                         <Grid item xs={3.5}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <IconButton
-                              size="small"
-                              disabled={!canEditBatch}
-                              onClick={() => {
-                                handleAmountChange(row.id, row.manualAmount + 1);
-                              }}
-                            >
-                              <Iconify icon="eva:plus-fill" />
-                            </IconButton>
+                          <Paper elevation={6}>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <IconButton
+                                size="small"
+                                disabled={!canEditBatch}
+                                onClick={() => {
+                                  handleAmountChange(row.id, row.manualAmount + 1);
+                                }}
+                              >
+                                <Iconify icon="eva:plus-fill" />
+                              </IconButton>
 
-                            <TextField
-                              size="small"
-                              type="number"
-                              label="Manual"
-                              value={row.manualAmount}
-                              InputProps={{ readOnly: !canEditBatch }}
-                              onFocus={(event) => {
-                                if (canEditBatch) {
-                                  event.target.select();
-                                }
-                              }}
-                              onChange={(event) => {
-                                handleAmountChange(row.id, Number(event.target.value));
-                              }}
-                            />
+                              <TextField
+                                size="small"
+                                type="number"
+                                label="Manual(pcs)"
+                                value={row.manualAmount}
+                                InputProps={{ readOnly: !canEditBatch }}
+                                onFocus={(event) => {
+                                  if (canEditBatch) {
+                                    event.target.select();
+                                  }
+                                }}
+                                onChange={(event) => {
+                                  handleAmountChange(row.id, Number(event.target.value));
+                                }}
+                              />
 
-                            <IconButton
-                              size="small"
-                              disabled={!canEditBatch}
-                              onClick={() => {
-                                handleAmountChange(row.id, row.manualAmount - 1);
-                              }}
-                            >
-                              <Iconify icon="eva:minus-fill" />
-                            </IconButton>
-                          </Stack>
+                              <IconButton
+                                size="small"
+                                disabled={!canEditBatch}
+                                onClick={() => {
+                                  handleAmountChange(row.id, row.manualAmount - 1);
+                                }}
+                              >
+                                <Iconify icon="eva:minus-fill" />
+                              </IconButton>
+                            </Stack>
+                          </Paper>
                         </Grid>
 
                         <Grid item xs={1.75}>
                           <TextField
                             type="number"
                             size="small"
-                            label="Manual(g)"
+                            label="Manual(g=>pcs)"
                             value={row?.manualAmountGram}
                             InputProps={{ readOnly: true }}
                             onClick={() => handleOpenModal(row)}
@@ -429,7 +460,7 @@ export default function DashboardOperatingOeeQ() {
                           <TextField
                             type="number"
                             size="small"
-                            label="Total"
+                            label="Total(pcs)"
                             value={row.autoAmount + row.manualAmount + (row?.manualAmountGram || 0)}
                             InputProps={{ readOnly: true }}
                           />
@@ -457,9 +488,34 @@ export default function DashboardOperatingOeeQ() {
 
       {/* Modal */}
       <Dialog open={isModalOpen} onClose={handleCloseModal}>
-        <DialogTitle>{getMachineParamName(rowModal)}</DialogTitle>
-
-        <DialogContent sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 500px)', minHeight: '200px' }}>
+        <DialogTitle>
+          {getMachineParamName(rowModal)}
+          <Grid container spacing={1} sx={{ mt: 1, borderBottom: '1px solid', pb: 1.25, maxWidth: '300px' }} justifyContent="center">
+            <Grid item xs={6}>
+              <TextField
+                InputProps={{
+                  readOnly: true,
+                }}
+                type="number"
+                size="small"
+                label="Total(g)"
+                value={calculateTotalGrams(rowModal.grams)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                InputProps={{
+                  readOnly: true,
+                }}
+                type="number"
+                size="small"
+                label="Total(pcs)"
+                value={Math.ceil(calculateTotalGrams(rowModal.grams) / pcdGram)}
+              />
+            </Grid>
+          </Grid>
+        </DialogTitle>
+        <DialogContent sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 500px)', minHeight: 'calc(100vh - 500px)', maxWidth: '400px' }}>
           {rowModal.grams && rowModal.grams?.split(',').map((amount: any, index: any) => (
             <Grid container spacing={1} sx={{ mt: 1 }} justifyContent="center" key={index}>
               <Grid item xs={8}>
@@ -497,7 +553,7 @@ export default function DashboardOperatingOeeQ() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ padding: '0px 24px 12px !important' }}>
           <Button onClick={handleCloseModal} color="primary">
             Close
           </Button>

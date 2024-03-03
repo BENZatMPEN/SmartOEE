@@ -1,7 +1,6 @@
 import { Autocomplete, CardContent, Grid, MenuItem, Stack, TextField } from "@mui/material";
 import HeaderBreadcrumbs from "../../../components/HeaderBreadcrumbs";
 import { Card, Button } from "@mui/material";
-
 import { FormProvider, RHFSelect } from "../../../components/hook-form";
 import { ReportChartType, ReportComparisonType, ReportCriteria, ReportDuration, ReportType, ReportViewType } from "../../../@types/report";
 import { useForm } from 'react-hook-form';
@@ -13,7 +12,6 @@ import { fAnalyticComparisonTypeText, fReportTypeText } from "../../../utils/tex
 import { OptionItem } from "../../../@types/option";
 import { RootState, useSelector } from "../../../redux/store";
 import { fCode } from "../../../utils/formatNumber";
-import { get, set } from "lodash";
 import { RHFDatePicker, RHFDateTimePicker } from "../../../components/hook-form/RHFDateTimePicker";
 import Iconify from "../../../components/Iconify";
 import { useDispatch } from "react-redux";
@@ -38,13 +36,7 @@ export default function ReportCriteriaForm({ name }: Props) {
     date: dayjs(new Date()).endOf('d').toDate(),
     fromDate: dayjs(new Date()).endOf('d').toDate(),
     toDate: dayjs(new Date()).endOf('d').toDate(),
-    // chartType: 'oee',
-    // chartSubType: 'bar',
-    // fromDate: dayjs(new Date()).add(-7, 'd').startOf('d').toDate(),
-    // viewType: 'object',
-    // duration: 'hourly',
   };
-
 
   const dispatch = useDispatch();
 
@@ -101,15 +93,11 @@ export default function ReportCriteriaForm({ name }: Props) {
   } = methods;
 
   useEffect(() => {
-    if (!currentCriteria) {
-      return;
-    }
-
     return () => {
       dispatch(updateCurrentCriteria(null));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentCriteria]);
+  }, []);
 
   const values = watch();
 
@@ -155,7 +143,6 @@ export default function ReportCriteriaForm({ name }: Props) {
   };
 
   const handleRefresh = () => {
-    console.log('handleRefresh..............');
     const criteria = getValues();
     if (criteria.reportType === 'daily') {
       criteria.fromDate = dayjs(criteria.fromDate).startOf('day').toDate();

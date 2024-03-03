@@ -1,5 +1,5 @@
 import { ReportCriteria } from "../../../@types/report";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect, useState } from "react";
 import axios from '../../../utils/axios';
 import { fNumber2, fPercent, fSeconds } from "../../../utils/formatNumber";
@@ -8,6 +8,7 @@ import { ApexOptions } from "apexcharts";
 import dayjs from 'dayjs';
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
 import { set } from "lodash";
+import ExportXlsx from "src/sections/analytics/chart/ExportXlsx";
 
 interface Props {
   criteria: ReportCriteria;
@@ -24,6 +25,7 @@ interface Column {
 }
 
 export default function ReportCauseChart({ criteria }: Props) {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dataRows, setDataRows] = useState<any[]>([]);
   const [series, setSeries] = useState<any[]>([]);
   const [seriesA, setSeriesA] = useState<any[]>([]);
@@ -218,8 +220,9 @@ export default function ReportCauseChart({ criteria }: Props) {
     {
       id: 'date',
       label: criteria.reportType === 'yearly' ? 'Year' : (criteria.reportType === 'monthly' ? 'Month' : 'Date'),
-      minWidth: 100,
+      minWidth: 120,
       formatter: (value: string) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         if (!value) {
           return '';
         }
@@ -227,7 +230,7 @@ export default function ReportCauseChart({ criteria }: Props) {
         if (criteria.reportType === 'yearly') {
           return `${date.getFullYear()}`;
         } else if (criteria.reportType === 'monthly') {
-          return `${date.getMonth() + 1}/${date.getFullYear()}`;
+          return `${months[date.getMonth()]}-${date.getFullYear()}`;
         }
         return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
       }
@@ -284,6 +287,7 @@ export default function ReportCauseChart({ criteria }: Props) {
 
   const refresh = async (criteria: ReportCriteria) => {
     try {
+      setIsLoading(true);
       const response = await axios.get<any, any>(`/reports/cause`, {
         params: {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
@@ -392,6 +396,8 @@ export default function ReportCauseChart({ criteria }: Props) {
       ]);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -402,64 +408,105 @@ export default function ReportCauseChart({ criteria }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
+  const xlsxCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { totalCountByBatch, ...other } = row;
+      const batchKeys = Object.keys(totalCountByBatch);
+      return {
+        ...other,
+        totalTimeSeconds: Object.keys(totalCountByBatch).reduce((acc, key) => {
+          acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+          return acc;
+        }, 0),
+        totalCountByBatch: batchKeys
+          .map((batchKey) => {
+            const { lotNumber, standardSpeedSeconds, totalCount } = totalCountByBatch[batchKey];
+            return `Lot Number: ${lotNumber ? lotNumber : batchKey
+              }, Standard Speed: ${standardSpeedSeconds}, Total Count: ${totalCount}`;
+          })
+          .join(', '),
+      };
+    });
+
   return (
     <>
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <div style={{ width: '100%', height: '100%' }}>
-          <div style={{ width: '100%', height: '100%' }}></div>
-        </div>
-        <TableContainer sx={{ maxHeight: 440 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell align="center" colSpan={1}>
-                </TableCell>
-                <TableCell align="center" colSpan={3}>
-                  Plan downtime
-                </TableCell>
-                <TableCell align="center" colSpan={3}>
-                  Cause Breakdown
-                </TableCell>
-                <TableCell align="center" colSpan={3}>
-                  Minor Stop
-                </TableCell>
-                <TableCell align="center" colSpan={3}>
-                  NG
-                </TableCell>
-
-              </TableRow>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ top: 57, minWidth: column.minWidth }}
-                  >
-                    {column.label}
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        {
+          isLoading && (<>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              position: 'absolute', // changed from 'fixed' to 'absolute'
+              zIndex: 9999, // any value higher than the z-index of other content
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'white', // added this line
+            }}>
+              <CircularProgress size={100} />
+            </Box></>)
+        }
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+          <ExportXlsx
+            headers={columns.map((column) => column.label)}
+            rows={dataRows}
+            filename="oee"
+          />
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell align="center" colSpan={1}>
                   </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dataRows.map((row, index) => (
-                <TableRow key={index}>
-                  {columns.map((column) => {
-                    return (
-                      <TableCell key={`${index}_${column.id}`} align={column.align}>
-                        {column.formatter ? column.formatter(row[column.id]) : row[column.id]}
-                      </TableCell>
-                    );
-                  })}
+                  <TableCell align="center" colSpan={3}>
+                    Plan downtime
+                  </TableCell>
+                  <TableCell align="center" colSpan={3}>
+                    Cause Breakdown
+                  </TableCell>
+                  <TableCell align="center" colSpan={3}>
+                    Minor Stop
+                  </TableCell>
+                  <TableCell align="center" colSpan={3}>
+                    NG
+                  </TableCell>
+
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-      <ReactApexChart options={options} series={series} type="line" height={600} />
-      <ReactApexChart options={optionsA} series={seriesA} type="line" height={600} />
-      <ReactApexChart options={optionsP} series={seriesP} type="line" height={600} />
-      <ReactApexChart options={optionsQ} series={seriesQ} type="line" height={600} />
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      style={{ minWidth: column.minWidth }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {dataRows.map((row, index) => (
+                  <TableRow key={index}>
+                    {columns.map((column) => {
+                      return (
+                        <TableCell key={`${index}_${column.id}`} align={column.align}>
+                          {column.formatter ? column.formatter(row[column.id]) : row[column.id]}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+        <ReactApexChart options={optionsA} series={seriesA} type="line" height={600} />
+        <ReactApexChart options={optionsP} series={seriesP} type="line" height={600} />
+        <ReactApexChart options={optionsQ} series={seriesQ} type="line" height={600} />
+      </div>
     </>
   )
 }

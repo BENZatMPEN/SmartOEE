@@ -1,14 +1,14 @@
 import { ReportCriteria } from "../../../@types/report";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect, useState } from "react";
 import axios from '../../../utils/axios';
 import { fNumber, fNumber2, fPercent, fSeconds } from '../../../utils/formatNumber';
-import { da } from "date-fns/locale";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
 import dayjs from 'dayjs';
 import { max } from "lodash";
+import ExportXlsx from "src/sections/analytics/chart/ExportXlsx";
 
 interface Props {
   criteria: ReportCriteria;
@@ -22,91 +22,11 @@ interface Column {
   format?: (value: number) => string;
 }
 
-const columns: any[] = [
-  { id: 'oeeCode', label: 'OEE Code', minWidth: 130 },
-  { id: 'productName', label: 'OEE (Production Name)', minWidth: 190 },
-  { id: 'productSku', label: 'Product (SKU)', minWidth: 170 },
-  { id: 'lotNumber', label: 'Lot No.', minWidth: 120 },
-  {
-    id: 'startDate',
-    label: 'Date',
-    minWidth: 100,
-    formatter: (value: string) => {
-      if (!value) {
-        return '';
-      }
-      const date = new Date(value);
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-    }
-  },
-  {
-    id: 'ct',
-    label: 'CT (mm:SS)',
-    minWidth: 150,
-    formatter: (value: number) => {
-      if (!value) {
-        return '';
-      }
-      const minutes = Math.floor(value / 60);
-      const seconds = value % 60;
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-  },
-  {
-    id: 'runningSeconds',
-    label: 'Total Available Time (HH:MM:SS)',
-    minWidth: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
-  },
-  {
-    id: 'operatingSeconds',
-    label: 'Operating Time (HH:MM:SS)',
-    minWidth: 200,
-    formatter: (val: number) => {
-      return fSeconds(val);
-    },
-  },
-  {
-    id: 'oeePercent',
-    label: '%OEE',
-    minWidth: 80,
-    formatter: (value: number) => {
-      return fNumber2(value);
-    }
-  },
-  {
-    id: 'aPercent', label: '%A', minWidth: 60, formatter: (value: number) => {
-      return fNumber2(value);
-    }
-  },
-  {
-    id: 'pPercent', label: '%P', minWidth: 60, formatter: (value: number) => {
-      return fNumber2(value);
-    }
-  },
-  {
-    id: 'qPercent', label: '%Q', minWidth: 60, formatter: (value: number) => {
-      return fNumber2(value);
-    }
-  },
-  { id: 'totalAutoDefects', label: 'Q (OK)', minWidth: 80 },
-  { id: 'qNg', label: 'Q (NG)', minWidth: 80 },
-  { id: 'totalCount', label: 'Actual', minWidth: 100 },
-  { id: 'plan', label: 'Plan', minWidth: 100 },
-  {
-    id: 'efficiency', label: 'Efficiency', minWidth: 100,
-    formatter: (val: number) => {
-      return fNumber2(val);
-    },
-  }
-];
-
 export default function ReportOEEChart({ criteria }: Props) {
   const [maxGraph, setMaxGraph] = useState<number>(100);
   const [dataRows, setDataRows] = useState<any[]>([]);
   const [series, setSeries] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [options, setOptions] = useState<ApexOptions>({
     chart: {
       type: 'bar',
@@ -216,8 +136,96 @@ export default function ReportOEEChart({ criteria }: Props) {
     },
   } as ApexOptions);
 
+  const columns: any[] = [
+    { id: 'oeeCode', label: 'OEE Code', minWidth: 130 },
+    { id: 'productName', label: 'OEE (Production Name)', minWidth: 190 },
+    { id: 'productSku', label: 'Product (SKU)', minWidth: 170 },
+    { id: 'lotNumber', label: 'Lot No.', minWidth: 120 },
+    {
+      id: 'startDate',
+      label: 'Date',
+      minWidth: 100,
+      formatter: (value: string) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        if (!value) {
+          return '';
+        }
+        const date = new Date(value);
+        if (criteria.reportType === 'yearly') {
+          return `${months[date.getMonth()]}-${date.getFullYear()}`;
+        } else if (criteria.reportType === 'monthly') {
+          return `${months[date.getMonth()]}-${date.getFullYear()}`;
+        }
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      }
+    },
+    {
+      id: 'ct',
+      label: 'CT (mm:SS)',
+      minWidth: 150,
+      formatter: (value: number) => {
+        if (!value) {
+          return '';
+        }
+        const minutes = Math.floor(value / 60);
+        const seconds = value % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+    },
+    {
+      id: 'runningSeconds',
+      label: 'Total Available Time (HH:MM:SS)',
+      minWidth: 200,
+      formatter: (val: number) => {
+        return fSeconds(val);
+      },
+    },
+    {
+      id: 'operatingSeconds',
+      label: 'Operating Time (HH:MM:SS)',
+      minWidth: 200,
+      formatter: (val: number) => {
+        return fSeconds(val);
+      },
+    },
+    {
+      id: 'oeePercent',
+      label: '%OEE',
+      minWidth: 80,
+      formatter: (value: number) => {
+        return fNumber2(value);
+      }
+    },
+    {
+      id: 'aPercent', label: '%A', minWidth: 60, formatter: (value: number) => {
+        return fNumber2(value);
+      }
+    },
+    {
+      id: 'pPercent', label: '%P', minWidth: 60, formatter: (value: number) => {
+        return fNumber2(value);
+      }
+    },
+    {
+      id: 'qPercent', label: '%Q', minWidth: 60, formatter: (value: number) => {
+        return fNumber2(value);
+      }
+    },
+    { id: 'totalAutoDefects', label: 'Q (OK)', minWidth: 80 },
+    { id: 'qNg', label: 'Q (NG)', minWidth: 80 },
+    { id: 'totalCount', label: 'Actual', minWidth: 100 },
+    { id: 'plan', label: 'Plan', minWidth: 100 },
+    {
+      id: 'efficiency', label: 'Efficiency', minWidth: 100,
+      formatter: (val: number) => {
+        return fNumber2(val);
+      },
+    }
+  ];
+
   const refresh = async (criteria: ReportCriteria) => {
     try {
+      setIsLoading(true);
       const response = await axios.get<any, any>(`/reports/oee`, {
         params: {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
@@ -373,6 +381,8 @@ export default function ReportOEEChart({ criteria }: Props) {
       ]);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -383,45 +393,86 @@ export default function ReportOEEChart({ criteria }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criteria]);
 
+  const xlsxCleanUp = (rows: any[]): any[] =>
+    rows.map((row) => {
+      const { totalCountByBatch, ...other } = row;
+      const batchKeys = Object.keys(totalCountByBatch);
+      return {
+        ...other,
+        totalTimeSeconds: Object.keys(totalCountByBatch).reduce((acc, key) => {
+          acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+          return acc;
+        }, 0),
+        totalCountByBatch: batchKeys
+          .map((batchKey) => {
+            const { lotNumber, standardSpeedSeconds, totalCount } = totalCountByBatch[batchKey];
+            return `Lot Number: ${lotNumber ? lotNumber : batchKey
+              }, Standard Speed: ${standardSpeedSeconds}, Total Count: ${totalCount}`;
+          })
+          .join(', '),
+      };
+    });
+
   return (
     <>
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <div style={{ width: '100%', height: '100%' }}>
-          <div style={{ width: '100%', height: '100%' }}></div>
-        </div>
-        <TableContainer sx={{ maxHeight: 440 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ top: 57, minWidth: column.minWidth }}
-                  >
-                    {column.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dataRows.map((row) => (
-                <TableRow key={row.key}>
-                  {columns.map((column) =>
-                    <TableCell key={`${row.name}_${column.id}`} align={column.align}>
-                      {column.formatter ? column.formatter(row[column.id]) : row[column.id]}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-              }
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-      <ReactApexChart options={options} series={series} type="line" height={600} />
-      <ReactApexChart options={options2} series={series2} type="line" height={600} />
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        {
+          isLoading && (<>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              position: 'absolute', // changed from 'fixed' to 'absolute'
+              zIndex: 9999, // any value higher than the z-index of other content
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'white', // added this line
+            }}>
+              <CircularProgress size={100} />
+            </Box></>)
+        }
 
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+          <ExportXlsx
+          headers={columns.map((column) => column.label)}
+            rows={xlsxCleanUp(dataRows)}
+            filename="oee"
+          />
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      style={{ minWidth: column.minWidth }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {dataRows.map((row) => (
+                  <TableRow key={row.key}>
+                    {columns.map((column) =>
+                      <TableCell key={`${row.name}_${column.id}`} align={column.align}>
+                        {column.formatter ? column.formatter(row[column.id]) : row[column.id]}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+                }
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+        <ReactApexChart options={options} series={series} type="line" height={600} />
+        <ReactApexChart options={options2} series={series2} type="line" height={600} />
+      </div >
     </>
   )
 }
