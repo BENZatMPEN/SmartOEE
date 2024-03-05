@@ -14,16 +14,6 @@ interface Props {
   criteria: ReportCriteria;
 }
 
-const headers: string[] = ['date', 'planDowntime', 'pTime', 'pDuration', 'causeBreakDown', 'cTime', 'cDuration', 'minerStop', 'mTime', 'mDuration', 'ngName', 'ngValue'];
-
-interface Column {
-  id: 'date' | 'planDowntime' | 'pTime' | 'pDuration' | 'causeBreakDown' | 'cTime' | 'cDuration' | 'minerStop' | 'mTime' | 'mDuration' | 'ngName' | 'ngValue';
-  label: string;
-  minWidth?: number;
-  align?: 'right';
-  format?: (value: number) => string;
-}
-
 export default function ReportCauseChart({ criteria }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dataRows, setDataRows] = useState<any[]>([]);
@@ -224,7 +214,7 @@ export default function ReportCauseChart({ criteria }: Props) {
       formatter: (value: string) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         if (!value) {
-          return '';
+          return '-';
         }
         const date = new Date(value);
         if (criteria.reportType === 'yearly') {
@@ -235,26 +225,43 @@ export default function ReportCauseChart({ criteria }: Props) {
         return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
       }
     },
-    { id: 'planDownTimeName', label: 'Plan downtime', minWidth: 130 },
+    { id: 'planDownTimeName', label: 'Plan downtime', minWidth: 130, formatter: (val: string) => val ? val : '-' },
     {
-      id: 'planDownTimeExpiredAt',
+      id: 'planDownTimeCreateAt',
       label: 'Time (HH:MM:SS)',
       minWidth: 160,
+      formatter: (val: string) => { return val ? val : '-' }
     },
     {
-      id: 'planDownTimeSeconds',
+      id: 'planDownTimeDuration',
       label: 'Duration (HH:MM:SS)',
       minWidth: 180,
       formatter: (val: number) => {
         if (val) {
           return fSeconds(val);
         } else {
-          return "";
+          return '-';
         }
       },
     },
-    { id: 'oeeBatchAName', label: 'Cause Breakdown', minWidth: 170 },
-    { id: 'oeeBatchATimestamp', label: 'Time (HH:MM:SS)', minWidth: 180 },
+    {
+      id: 'planDownTimeSeconds',
+      label: 'Standard Time (HH:MM:SS)',
+      minWidth: 220,
+      formatter: (val: number) => {
+        if (val) {
+          return fSeconds(val);
+        } else {
+          return '-';
+        }
+      },
+    },
+    { id: 'oeeBatchAName', label: 'Cause Breakdown', minWidth: 170, formatter: (val: string) => val ? val : '-' },
+    {
+      id: 'oeeBatchATimestamp',
+      label: 'Time (HH:MM:SS)', minWidth: 180,
+      formatter: (val: string) => { return val ? val : '-' }
+    },
     {
       id: 'oeeBatchASeconds',
       label: 'Duration (HH:MM:SS)',
@@ -263,12 +270,12 @@ export default function ReportCauseChart({ criteria }: Props) {
         if (val) {
           return fSeconds(val);
         } else {
-          return "";
+          return '-';
         }
       },
     },
-    { id: 'oeeBatchPName', label: 'Minor Stop', minWidth: 130 },
-    { id: 'oeeBatchPTimestamp', label: 'Time (HH:MM:SS)', minWidth: 180 },
+    { id: 'oeeBatchPName', label: 'Minor Stop', minWidth: 130, formatter: (val: string) => val ? val : '-' },
+    { id: 'oeeBatchPTimestamp', label: 'Time (HH:MM:SS)', minWidth: 180, formatter: (val: string) => { return val ? val : '-' } },
     {
       id: 'oeeBatchPSeconds',
       label: 'Duration (HH:MM:SS)',
@@ -277,12 +284,12 @@ export default function ReportCauseChart({ criteria }: Props) {
         if (val) {
           return fSeconds(val);
         } else {
-          return "";
+          return '-';
         }
       },
     },
-    { id: 'oeeBatchQName', label: 'Name', minWidth: 320 },
-    { id: 'oeeBatchQAmount', label: 'Value', minWidth: 80 },
+    { id: 'oeeBatchQName', label: 'Name', minWidth: 320, formatter: (val: string) => val ? val : '-' },
+    { id: 'oeeBatchQAmount', label: 'Value', minWidth: 80, formatter: (val: number) => val ? val : 0 },
   ];
 
   const refresh = async (criteria: ReportCriteria) => {

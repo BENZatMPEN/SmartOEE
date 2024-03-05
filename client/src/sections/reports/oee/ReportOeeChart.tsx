@@ -14,14 +14,6 @@ interface Props {
   criteria: ReportCriteria;
 }
 
-interface Column {
-  id: 'oeeCode' | 'oeeName' | 'product' | 'lotNo' | 'date' | 'ct' | 'totalTime' | 'operationTime' | 'oee' | 'a' | 'p' | 'q' | 'qok' | 'qng' | 'actual' | 'plan' | 'efficiency';
-  label: string;
-  minWidth?: number;
-  align?: 'right';
-  format?: (value: number) => string;
-}
-
 export default function ReportOEEChart({ criteria }: Props) {
   const [maxGraph, setMaxGraph] = useState<number>(100);
   const [dataRows, setDataRows] = useState<any[]>([]);
@@ -139,8 +131,26 @@ export default function ReportOEEChart({ criteria }: Props) {
   const columns: any[] = [
     { id: 'oeeCode', label: 'OEE Code', minWidth: 130 },
     { id: 'productName', label: 'OEE (Production Name)', minWidth: 190 },
-    { id: 'productSku', label: 'Product (SKU)', minWidth: 170 },
-    { id: 'lotNumber', label: 'Lot No.', minWidth: 120 },
+    {
+      id: 'productSku', label: 'Product (SKU)', minWidth: 170,
+      formatter: (value: string) => {
+        if (value === '') {
+          return '-'
+        } else {
+          return value
+        }
+      }
+    },
+    {
+      id: 'lotNumber', label: 'Lot No.', minWidth: 120,
+      formatter: (value: string) => {
+        if (value === '') {
+          return '-'
+        } else {
+          return value
+        }
+      }
+    },
     {
       id: 'startDate',
       label: 'Date',
@@ -165,7 +175,7 @@ export default function ReportOEEChart({ criteria }: Props) {
       minWidth: 150,
       formatter: (value: number) => {
         if (!value) {
-          return '';
+          return '-';
         }
         const minutes = Math.floor(value / 60);
         const seconds = value % 60;
@@ -436,7 +446,7 @@ export default function ReportOEEChart({ criteria }: Props) {
 
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <ExportXlsx
-          headers={columns.map((column) => column.label)}
+            headers={columns.map((column) => column.label)}
             rows={xlsxCleanUp(dataRows)}
             filename="oee"
           />

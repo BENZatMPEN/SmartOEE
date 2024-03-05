@@ -193,9 +193,9 @@ export class ReportService {
         const site = await this.siteRepository.findOneBy({ id: siteId });
         const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
         const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, cutoffHour);
-        const resultA = await this.findAPareto(type, ids, from, to);
-        const resultP = await this.findPPareto(type, ids, from, to);
-        const resultQ = await this.findQPareto(type, ids, from, to);
+        const resultA = await this.findAPareto(type, ids, from, to, reportType);
+        const resultP = await this.findPPareto(type, ids, from, to, reportType);
+        const resultQ = await this.findQPareto(type, ids, from, to, reportType);
 
 
         let listPlannedDowntime = [];
@@ -224,11 +224,12 @@ export class ReportService {
             const newItem = {
                 "date": from,
                 "planDownTimeName": (listPlannedDowntime[i] && listPlannedDowntime[i].name) || "",
+                "planDownTimeDuration": (listPlannedDowntime[i] && listPlannedDowntime[i].duration) || "",
                 "planDownTimeSeconds": (listPlannedDowntime[i] && listPlannedDowntime[i].seconds) || "",
-                "planDownTimeExpiredAt": listPlannedDowntime[i] && listPlannedDowntime[i].expiredAt
+                "planDownTimeCreateAt": listPlannedDowntime[i] && listPlannedDowntime[i].createdAt
                     ? new Date(listPlannedDowntime[i].expiredAt).toISOString().substr(11, 8)
                     : "",
-                
+
                 "oeeBatchAName": (listA[i] && listA[i].paramName) || "",
                 "oeeBatchASeconds": (listA[i] && listA[i].seconds) || "",
                 "oeeBatchATimestamp": listA[i] && listA[i].timestamp
@@ -721,14 +722,40 @@ export class ReportService {
                     expiredAt: Between(from, to)
                 }
             });
-            rows[key] = oeeBatchPlannedDowntime;
-            const total = oeeBatchPlannedDowntime.reduce((acc, item) => acc + item.seconds, 0);
-            const list = oeeBatchPlannedDowntime.reduce((acc, item) => {
+            //add duration oeeBatchPlannedDowntime
+            const newOeeBatchPlannedDowntime = await Promise.all(oeeBatchPlannedDowntime.map(async item => {
+                const duration = item.expiredAt ? dayjs(item.expiredAt).diff(item.createdAt, 'second') : item.seconds;
+                return {
+                    ...item,
+                    duration: duration
+                }
+            }));
+
+            //group oeeBatchPlannedDowntime by name
+            if (reportType === 'yearly' || reportType === 'monthly') {
+                const result = newOeeBatchPlannedDowntime.reduce((acc, item) => {
+                    const existing = acc.find(x => x.name === item.name);
+                    if (existing) {
+                        existing.duration += item.duration;
+                    } else {
+                        acc.push({
+                            name: item.name,
+                            duration: item.duration
+                        });
+                    }
+                    return acc;
+                }, []);
+                rows[key] = result;
+            } else {
+                rows[key] = newOeeBatchPlannedDowntime;
+            }
+            const total = newOeeBatchPlannedDowntime.reduce((acc, item) => acc + item.duration, 0);
+            const list = newOeeBatchPlannedDowntime.reduce((acc, item) => {
                 const existingItem = acc.find(x => x.name === item.name);
                 if (existingItem) {
-                    existingItem.count += item.seconds;
+                    existingItem.count += item.duration;
                 } else {
-                    acc.push({ name: item.name, count: item.seconds });
+                    acc.push({ name: item.name, count: item.duration });
                 }
                 return acc;
             }, []);
@@ -761,7 +788,7 @@ export class ReportService {
         };
     }
 
-    private async findAPareto(chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
+    private async findAPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -790,13 +817,34 @@ export class ReportService {
                     return false;
                 }),
             );
-            rows[key] = await this.mapMachineParametersToAnalytics(analyticAParams, _.uniqWith(mcParams, (pre, cur) => {
+            // rows[key] = await this.mapMachineParametersToAnalytics(analyticAParams, _.uniqWith(mcParams, (pre, cur) => {
+            const mapParameter = await this.mapMachineParametersToAnalytics(analyticAParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
                     cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
                     return true;
                 }
                 return false;
             }),);
+
+            if (reportType === 'yearly' || reportType === 'monthly') {
+                rows[key] = mapParameter.reduce((acc, item) => {
+                    const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
+                    if (existing) {
+                        existing.seconds += item.seconds;
+                    } else {
+                        acc.push({
+                            paramType: item.paramType,
+                            seconds: item.seconds,
+                            machineParameterId: item.machineParameterId,
+                            paramName: item.paramName
+                        });
+                    }
+
+                    return acc;
+                }, []);
+            } else {
+                rows[key] = mapParameter;
+            }
         }
 
         return {
@@ -805,7 +853,7 @@ export class ReportService {
         };
     }
 
-    private async findPPareto(chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
+    private async findPPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -841,15 +889,32 @@ export class ReportService {
                 }),
             );
 
-            rows[key] = await this.mapMachineParametersToAnalytics(analyticPParams, _.uniqWith(mcParams, (pre, cur) => {
+            const mapParameter = await this.mapMachineParametersToAnalytics(analyticPParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
                     cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
                     return true;
                 }
                 return false;
             }),);
+            if (reportType === 'yearly' || reportType === 'monthly') {
+                rows[key] = mapParameter.reduce((acc, item) => {
+                    const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
+                    if (existing) {
+                        existing.seconds += item.seconds;
+                    } else {
+                        acc.push({
+                            paramType: item.paramType,
+                            seconds: item.seconds,
+                            machineParameterId: item.machineParameterId,
+                            paramName: item.paramName
+                        });
+                    }
 
-            // rows[key] = mapParam.filter(item => item.machineParameterId !== "" && item.machineParameterId !== null);
+                    return acc;
+                }, []);
+            } else {
+                rows[key] = mapParameter;
+            }
         }
 
         return {
@@ -858,7 +923,7 @@ export class ReportService {
         };
     }
 
-    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
+    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -887,15 +952,32 @@ export class ReportService {
                     return false;
                 }),
             );
-            rows[key] = await this.mapMachineParametersQToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
+            const mapParameter = await this.mapMachineParametersQToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
                     cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
                     return true;
                 }
                 return false;
             }),);
+            if (reportType === 'yearly' || reportType === 'monthly') {
+                rows[key] = mapParameter.reduce((acc, item) => {
+                    const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
+                    if (existing) {
+                        existing.amount += item.amount;
+                    } else {
+                        acc.push({
+                            paramType: item.paramType,
+                            amount: item.amount,
+                            machineParameterId: item.machineParameterId,
+                            paramName: item.paramName
+                        });
+                    }
 
-            // rows[key] = mapParam.filter(item => item.machineParameterId !== "" && item.machineParameterId !== null);
+                    return acc;
+                }, []);
+            } else {
+                rows[key] = mapParameter;
+            }
         }
 
         return {
