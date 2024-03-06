@@ -19,8 +19,8 @@ export class QueryReportOeeDto {
     @IsString()
     readonly reportType: string;
 
-    // @IsString()
-    // readonly viewType: string;
+    @IsString()
+    readonly viewType: string;
 
     @IsDate()
     @Type(() => Date)

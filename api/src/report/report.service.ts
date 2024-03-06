@@ -187,15 +187,15 @@ export class ReportService {
     }
 
     async findCauseByTime(query: QueryReportOeeDto): Promise<any> {
-        const { siteId, type, reportType, from, to } = query;
+        const { siteId, type, reportType, viewType, from, to } = query;
         let { ids } = query;
 
         const site = await this.siteRepository.findOneBy({ id: siteId });
         const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
-        const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, cutoffHour);
-        const resultA = await this.findAPareto(type, ids, from, to, reportType);
-        const resultP = await this.findPPareto(type, ids, from, to, reportType);
-        const resultQ = await this.findQPareto(type, ids, from, to, reportType);
+        const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, viewType, cutoffHour);
+        const resultA = await this.findAPareto(type, ids, from, to, reportType, viewType);
+        const resultP = await this.findPPareto(type, ids, from, to, reportType, viewType);
+        const resultQ = await this.findQPareto(type, ids, from, to, reportType, viewType);
 
 
         let listPlannedDowntime = [];
@@ -226,24 +226,16 @@ export class ReportService {
                 "planDownTimeName": (listPlannedDowntime[i] && listPlannedDowntime[i].name) || "",
                 "planDownTimeDuration": (listPlannedDowntime[i] && listPlannedDowntime[i].duration) || "",
                 "planDownTimeSeconds": (listPlannedDowntime[i] && listPlannedDowntime[i].seconds) || "",
-                "planDownTimeCreateAt": listPlannedDowntime[i] && listPlannedDowntime[i].createdAt
-                    ? new Date(listPlannedDowntime[i].expiredAt).toISOString().substr(11, 8)
-                    : "",
-
+                "planDownTimeCreateAt": listPlannedDowntime[i] && listPlannedDowntime[i].createdAt || "",
                 "oeeBatchAName": (listA[i] && listA[i].paramName) || "",
                 "oeeBatchASeconds": (listA[i] && listA[i].seconds) || "",
-                "oeeBatchATimestamp": listA[i] && listA[i].timestamp
-                    ? new Date(listA[i].timestamp).toISOString().substr(11, 8)
-                    : "",
+                "oeeBatchATimestamp": listA[i] && listA[i].timestamp || "",
                 "oeeBatchPName": (listP[i] && listP[i].paramName) || "",
                 "oeeBatchPSeconds": (listP[i] && listP[i].seconds) || "",
-                "oeeBatchPTimestamp": listP[i] && listP[i].timestamp
-                    ? new Date(listP[i].timestamp).toISOString().substr(11, 8)
-                    : "",
+                "oeeBatchPTimestamp": listP[i] && listP[i].timestamp || "",
                 "oeeBatchQName": (listQ[i] && listQ[i].paramName) || "",
                 "oeeBatchQAmount": (listQ[i] && listQ[i].amount) || 0,
             };
-
             result.push(newItem);
         }
         return {
@@ -706,16 +698,12 @@ export class ReportService {
         };
     }
 
-    private async findPlanDowntimePareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, cutoffHour: string): Promise<any> {
+    private async findPlanDowntimePareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string, cutoffHour: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
-        // const fieldName = this.getFieldName(chartType);
         const rows = {};
         const result = {};
         const keys = Object.keys(mapping);
         for (const key of keys) {
-            // const oeeStatsByTime = await this.getOeeStatsByTime(ids, this.getDurationTable(reportType), from, to, fieldName, cutoffHour);
-            // const oeeBatchIds = oeeStatsByTime.map(item => item.oeeBatchId);
-            // const oeeIds = oeeStatsByTime.map(item => item.oeeId);
             const oeeBatchPlannedDowntime = await this.oeeBatchPlannedDowntime.find({
                 where: {
                     oeeBatchId: In(mapping[key].map((item) => item.id)),
@@ -732,7 +720,7 @@ export class ReportService {
             }));
 
             //group oeeBatchPlannedDowntime by name
-            if (reportType === 'yearly' || reportType === 'monthly') {
+            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
                 const result = newOeeBatchPlannedDowntime.reduce((acc, item) => {
                     const existing = acc.find(x => x.name === item.name);
                     if (existing) {
@@ -788,7 +776,7 @@ export class ReportService {
         };
     }
 
-    private async findAPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
+    private async findAPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -826,7 +814,7 @@ export class ReportService {
                 return false;
             }),);
 
-            if (reportType === 'yearly' || reportType === 'monthly') {
+            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
@@ -853,7 +841,7 @@ export class ReportService {
         };
     }
 
-    private async findPPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
+    private async findPPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -896,7 +884,8 @@ export class ReportService {
                 }
                 return false;
             }),);
-            if (reportType === 'yearly' || reportType === 'monthly') {
+
+            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
@@ -906,7 +895,7 @@ export class ReportService {
                             paramType: item.paramType,
                             seconds: item.seconds,
                             machineParameterId: item.machineParameterId,
-                            paramName: item.paramName
+                            paramName: item.paramName,
                         });
                     }
 
@@ -923,7 +912,7 @@ export class ReportService {
         };
     }
 
-    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string): Promise<any> {
+    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -952,6 +941,7 @@ export class ReportService {
                     return false;
                 }),
             );
+
             const mapParameter = await this.mapMachineParametersQToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
                     cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
@@ -959,7 +949,8 @@ export class ReportService {
                 }
                 return false;
             }),);
-            if (reportType === 'yearly' || reportType === 'monthly') {
+
+            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {

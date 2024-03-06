@@ -5,10 +5,9 @@ import axios from '../../../utils/axios';
 import { fNumber2, fPercent, fSeconds } from "../../../utils/formatNumber";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import dayjs from 'dayjs';
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
-import { set } from "lodash";
 import ExportXlsx from "src/sections/analytics/chart/ExportXlsx";
+import dayjs from "dayjs";
 
 interface Props {
   criteria: ReportCriteria;
@@ -230,7 +229,13 @@ export default function ReportCauseChart({ criteria }: Props) {
       id: 'planDownTimeCreateAt',
       label: 'Time (HH:MM:SS)',
       minWidth: 160,
-      formatter: (val: string) => { return val ? val : '-' }
+      formatter: (value: string) => {
+        if (!value) {
+          return '-';
+        }
+        const date = new Date(value);
+        return value ? `${dayjs(date).format('HH:mm:ss')}` : '-';
+      }
     },
     {
       id: 'planDownTimeDuration',
@@ -248,19 +253,25 @@ export default function ReportCauseChart({ criteria }: Props) {
       id: 'planDownTimeSeconds',
       label: 'Standard Time (HH:MM:SS)',
       minWidth: 220,
-      formatter: (val: number) => {
-        if (val) {
-          return fSeconds(val);
-        } else {
+      formatter: (value: string) => {
+        if (!value) {
           return '-';
         }
-      },
+        const date = new Date(value);
+        return value ? `${dayjs(date).format('HH:mm:ss')}` : '-';
+      }
     },
     { id: 'oeeBatchAName', label: 'Cause Breakdown', minWidth: 170, formatter: (val: string) => val ? val : '-' },
     {
       id: 'oeeBatchATimestamp',
       label: 'Time (HH:MM:SS)', minWidth: 180,
-      formatter: (val: string) => { return val ? val : '-' }
+      formatter: (value: string) => {
+        if (!value) {
+          return '-';
+        }
+        const date = new Date(value);
+        return value ? `${dayjs(date).format('HH:mm:ss')}` : '-';
+      }
     },
     {
       id: 'oeeBatchASeconds',
@@ -275,7 +286,16 @@ export default function ReportCauseChart({ criteria }: Props) {
       },
     },
     { id: 'oeeBatchPName', label: 'Minor Stop', minWidth: 130, formatter: (val: string) => val ? val : '-' },
-    { id: 'oeeBatchPTimestamp', label: 'Time (HH:MM:SS)', minWidth: 180, formatter: (val: string) => { return val ? val : '-' } },
+    {
+      id: 'oeeBatchPTimestamp', label: 'Time (HH:MM:SS)', minWidth: 180,
+      formatter: (value: string) => {
+        if (!value) {
+          return '-';
+        }
+        const date = new Date(value);
+        return value ? `${dayjs(date).format('HH:mm:ss')}` : '-';
+      }
+    },
     {
       id: 'oeeBatchPSeconds',
       label: 'Duration (HH:MM:SS)',
@@ -300,6 +320,7 @@ export default function ReportCauseChart({ criteria }: Props) {
           ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
           type: criteria.comparisonType,
           reportType: criteria.reportType,
+          viewType: criteria.viewType,
           from: criteria.fromDate,
           to: criteria.toDate,
         }

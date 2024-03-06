@@ -1,6 +1,6 @@
 import { AnalyticChartType, AnalyticComparisonType, AnalyticDuration, AnalyticViewType } from '../@types/analytic';
 import { OeeBatch, OeeBatchStats } from '../@types/oeeBatch';
-import { ReportType } from '../@types/report';
+import { ReportType, ReportViewType } from '../@types/report';
 import { RoleAction, RoleSubject } from '../@types/role';
 import {
   ALARM_TYPE_EMAIL,
@@ -207,6 +207,16 @@ export function fReportTypeText(type: ReportType) {
   }
 }
 
+export function fReportViewTypeText(type: ReportViewType) {
+  switch (type) {
+    case 'grouped':
+      return 'Grouped';
+
+    case 'show all':
+      return 'Show All';
+  }
+
+}
 export function fPsProcessStatusText(status: string) {
   switch (status) {
     case PS_PROCESS_STATUS_ON_PROCESS:

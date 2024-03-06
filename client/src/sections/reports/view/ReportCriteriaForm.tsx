@@ -2,13 +2,13 @@ import { Autocomplete, CardContent, Grid, MenuItem, Stack, TextField } from "@mu
 import HeaderBreadcrumbs from "../../../components/HeaderBreadcrumbs";
 import { Card, Button } from "@mui/material";
 import { FormProvider, RHFSelect } from "../../../components/hook-form";
-import { ReportChartType, ReportComparisonType, ReportCriteria, ReportDuration, ReportType, ReportViewType } from "../../../@types/report";
+import { ReportChartType, ReportComparisonType, ReportCriteria, ReportType, ReportViewType } from "../../../@types/report";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
 import { useEffect, useState } from "react";
-import { fAnalyticComparisonTypeText, fReportTypeText } from "../../../utils/textHelper";
+import { fAnalyticComparisonTypeText, fReportTypeText, fReportViewTypeText } from "../../../utils/textHelper";
 import { OptionItem } from "../../../@types/option";
 import { RootState, useSelector } from "../../../redux/store";
 import { fCode } from "../../../utils/formatNumber";
@@ -19,6 +19,7 @@ import { getReportBatchOpts, getReportOeeOpts, getReportProductOpts, updateCurre
 
 const COMPARISON_TYPES: ReportComparisonType[] = ['oee', 'product', 'batch'];
 const REPORT_TYPES: ReportType[] = ['daily', 'monthly', 'yearly'];
+const VIEW_TYPES: ReportViewType[] = ['grouped', 'show all'];
 
 interface Props {
   name: string;
@@ -33,6 +34,7 @@ export default function ReportCriteriaForm({ name }: Props) {
     products: [],
     batches: [],
     reportType: 'daily',
+    viewType: 'grouped',
     date: dayjs(new Date()).endOf('d').toDate(),
     fromDate: dayjs(new Date()).endOf('d').toDate(),
     toDate: dayjs(new Date()).endOf('d').toDate(),
@@ -67,6 +69,10 @@ export default function ReportCriteriaForm({ name }: Props) {
 
   const handleReportTypeChanged = (reportType: ReportType): void => {
     setValue('reportType', reportType);
+  }
+
+  const handleReportViewTypeChanged = (viewType: ReportViewType): void => {
+    setValue('viewType', viewType);
   }
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
@@ -111,18 +117,6 @@ export default function ReportCriteriaForm({ name }: Props) {
 
   const handleBatchesSelected = (values: number[]): void => {
     setValue('batches', values);
-  };
-
-  const isMultipleSelect = (
-    viewType: ReportViewType,
-    chartType: ReportChartType,
-    chartSubType: string,
-  ): boolean => {
-    if (viewType === 'object') {
-      return !(['a', 'p', 'q'].indexOf(chartType) >= 0 && chartSubType === 'pareto');
-    }
-
-    return false;
   };
 
   const findSingleOption = (id: number, list: OptionItem[]): OptionItem | null => {
@@ -256,6 +250,32 @@ export default function ReportCriteriaForm({ name }: Props) {
                       )
                 }
               </Grid>
+              {name === 'Cause' && (<>
+                <Grid item sm={3}>
+                  <RHFSelect
+                    name="viewType"
+                    label="View Type"
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{ native: false }}
+                    onChange={(event) => handleReportViewTypeChanged(event.target.value as ReportViewType)}
+                  >
+                    {VIEW_TYPES.map((item) => (
+                      <MenuItem
+                        key={item}
+                        value={item}
+                        sx={{
+                          mx: 1,
+                          my: 0.5,
+                          borderRadius: 0.75,
+                          typography: 'body2',
+                        }}
+                      >
+                        {fReportViewTypeText(item)}
+                      </MenuItem>
+                    ))}
+                  </RHFSelect>
+                </Grid>
+              </>)}
               <Grid item sm={3}>
                 <RHFSelect
                   name="reportType"

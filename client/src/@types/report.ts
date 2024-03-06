@@ -1,4 +1,4 @@
-export type ReportViewType = 'object' | 'time';
+export type ReportViewType = 'grouped' | 'show all';
 
 export type ReportComparisonType = 'oee' | 'product' | 'batch';
 
@@ -13,6 +13,7 @@ export type ReportCriteria = {
   products: number[];
   batches: number[];
   reportType: ReportType;
+  viewType: ReportViewType;
   date: Date;
   fromDate: Date;
   toDate: Date;
