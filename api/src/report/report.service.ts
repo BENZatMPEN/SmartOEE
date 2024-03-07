@@ -720,7 +720,7 @@ export class ReportService {
             }));
 
             //group oeeBatchPlannedDowntime by name
-            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
+            if (viewType === 'grouped') {
                 const result = newOeeBatchPlannedDowntime.reduce((acc, item) => {
                     const existing = acc.find(x => x.name === item.name);
                     if (existing) {
@@ -814,7 +814,7 @@ export class ReportService {
                 return false;
             }),);
 
-            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
+            if (viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
@@ -885,7 +885,7 @@ export class ReportService {
                 return false;
             }),);
 
-            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
+            if (viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
@@ -950,7 +950,7 @@ export class ReportService {
                 return false;
             }),);
 
-            if ((reportType === 'yearly' || reportType === 'monthly') && viewType === 'grouped') {
+            if (viewType === 'grouped') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
