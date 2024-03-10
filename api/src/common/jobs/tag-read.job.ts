@@ -179,7 +179,7 @@ export class TagReadJob {
         oeeCode,
       );
       if (!isValidTagReads) {
-        await this.invalidTagsStop(batch, oeeCode, readTimestamp);
+        //await this.invalidTagsStop(batch, oeeCode, readTimestamp);
         return;
       }
 
