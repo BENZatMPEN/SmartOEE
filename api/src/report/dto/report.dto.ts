@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsDate, IsNumber, IsString } from "class-validator";
+import { IsArray, IsDate, IsNumber, IsOptional, IsString } from "class-validator";
 
 
 
@@ -20,7 +20,8 @@ export class QueryReportOeeDto {
     readonly reportType: string;
 
     @IsString()
-    readonly viewType: string;
+    @IsOptional()
+    readonly viewType?: string;
 
     @IsDate()
     @Type(() => Date)
