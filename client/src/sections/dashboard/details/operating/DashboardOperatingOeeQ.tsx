@@ -79,7 +79,7 @@ export default function DashboardOperatingOeeQ() {
   const [totalGram, setTotalGram] = useState<number>(0);
   const handleOpenModal = (row: OeeBatchQ) => {
     setRowModal(row)
-    if (product?.activePcs === true) {
+    if (product?.activePcs === true && canEditBatch) {
       setModalOpen(true);
     }
   };
