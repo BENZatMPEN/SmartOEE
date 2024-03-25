@@ -162,26 +162,32 @@ export default function DashboardDetailsControlPanel() {
         </>
       ) : (
         <>
-          {query.get('batchId') && (
-            <Button
-              onClick={() => {
-                window.location.href = `/dashboard/${selectedOee.id}`;
-              }}
-            >
-              Go to latest batch
-            </Button>
-          )}
+          {query.get('batchId') ? (
+            <>
+              <Button
+                onClick={() => {
+                  window.location.href = `/dashboard/${selectedOee.id}`;
+                }}
+              >
+                Go to latest batch
+              </Button>
 
-          {ability.can(RoleAction.Create, RoleSubject.Dashboard) && (
-            <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
-          )}
-
-          {ability.can(RoleAction.Update, RoleSubject.Dashboard) && (
-            <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
+              {ability.can(RoleAction.Update, RoleSubject.Dashboard) && (
+                <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
+              )}
+            </>
+          ) : (
+            <>
+              {ability.can(RoleAction.Create, RoleSubject.Dashboard) && (
+                <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
+              )}
+              {ability.can(RoleAction.Update, RoleSubject.Dashboard) && (
+                <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenEnableEditing} label="Edit Batch" />
+              )}
+            </>
           )}
 
           <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
-
           <DashboardDetailsEnableEditingBatchDialog
             oeeBatch={currentBatch}
             open={openEnableEditing}
@@ -195,7 +201,6 @@ export default function DashboardDetailsControlPanel() {
       {ability.can(RoleAction.Create, RoleSubject.Dashboard) && (
         <ThreeDButton color="#103996" shadowColor="#2065D1" onClick={onOpenCreateBatch} label="New Batch" />
       )}
-
       <DashboardDetailsCreateBatchDialog oee={selectedOee} open={openCreateBatch} onClose={onCloseCreateBatch} />
     </Stack>
   );

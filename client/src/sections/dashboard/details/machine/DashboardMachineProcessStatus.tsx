@@ -18,7 +18,6 @@ export default function DashboardMachineProcessStatus() {
   const plannedDowntimeTime = (plannedDowntimeSeconds / runningSeconds) * 100;
   const breakdownTime = (totalBreakdownSeconds / runningSeconds) * 100;
 
-  console.log('operatingSeconds', operatingSeconds);
   return (
     <Card>
       <CardHeader title="Process Status" />
