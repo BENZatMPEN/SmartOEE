@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateOeeBatchDto } from './dto/create-oee-batch.dto';
 import { OeeBatchPlannedDowntimeDto } from './dto/oee-batch-planned-downtime.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, IsNull, Not, Repository } from 'typeorm';
+import { Between, EntityManager, In, IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { OeeEntity } from 'src/common/entities/oee.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { OeeMachineEntity } from '../common/entities/oee-machine.entity';
@@ -17,6 +17,7 @@ import { initialOeeBatchStats, OeeStats } from '../common/type/oee-stats';
 import { UpdateOeeBatchPDto } from './dto/update-oee-batch-p.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import {
+  OEE_BATCH_STATUS_ENDED,
   OEE_BATCH_STATUS_UNKNOWN,
   OEE_PARAM_TYPE_A,
   OEE_PARAM_TYPE_P,
@@ -44,6 +45,7 @@ import { SocketService } from '../common/services/socket.service';
 import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
 import { TagReadEntity } from '../common/entities/tag-read.entity';
 import { DeviceTagResult } from '../common/type/read';
+import { EndType, StartType } from 'src/common/enums/batchTypes';
 
 export type ParetoData = {
   labels: string[];
@@ -90,7 +92,7 @@ export class OeeBatchService {
     private readonly eventEmitter: EventEmitter2,
     private readonly entityManager: EntityManager,
     private readonly socketService: SocketService,
-  ) {}
+  ) { }
 
   async findPagedList(filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatchEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
@@ -112,6 +114,44 @@ export class OeeBatchService {
 
   findById(id: number): Promise<OeeBatchEntity> {
     return this.oeeBatchRepository.findOneBy({ id });
+  }
+
+  findTypeAutoStart(): Promise<OeeBatchEntity[]> {
+    return this.oeeBatchRepository.find({
+      where: {
+        startType: StartType.AUTO,
+        startDate: Between(dayjs().subtract(5, 'minute').toDate(), dayjs().toDate()),
+        status: OEE_BATCH_STATUS_UNKNOWN,
+      },
+    });
+  }
+
+  findTypeAutoStop(endType: EndType): Promise<OeeBatchEntity[]> {
+    return this.oeeBatchRepository.find({
+      where: {
+        endType: endType,
+        endDate: LessThan(dayjs().toDate()),
+        status: Not(In([OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_UNKNOWN])),
+      },
+    });
+  }
+
+  findTypeAutoStopByActualFg(): Promise<OeeBatchEntity[]> {
+    return this.oeeBatchRepository.find({
+      where: {
+        endType: EndType.AUTO_ACTUAL_FG,
+        status: Not(In([OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_UNKNOWN])),
+      },
+    });
+  }
+
+  findByPlanningId(planingId: number): Promise<OeeBatchEntity> {
+    return this.oeeBatchRepository.findOne({
+      where: {
+        planningId: planingId,
+        status: Not(OEE_BATCH_STATUS_UNKNOWN),
+      }
+    });
   }
 
   findWithOeeById(id: number): Promise<OeeBatchEntity> {
@@ -137,7 +177,7 @@ export class OeeBatchService {
   }
 
   async create(oeeId: number, createDto: CreateOeeBatchDto, userEmail: string): Promise<OeeBatchEntity> {
-    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId } = createDto;
+    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId, startType, endType, operatorId } = createDto;
     const activeBatch = await this.oeeBatchRepository.findOneBy({ oeeId: oeeId, batchStoppedDate: IsNull() });
     if (activeBatch) {
       throw new BadRequestException('There is an active batch. Please refresh the page.');
@@ -181,6 +221,9 @@ export class OeeBatchService {
       mcState: initialOeeBatchMcState,
       startDate: startDate,
       endDate: endDate,
+      startType: startType || null,
+      endType: endType || null,
+      operatorId: operatorId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -528,6 +571,8 @@ export class OeeBatchService {
           currentParam.manualAmount === 0 && updatingParam.manualAmount > 0
             ? updatingParam.manualAmount
             : updatingParam.manualAmount - currentParam.manualAmount,
+        manualAmountGram: updatingParam.manualAmountGram,
+        grams: updatingParam.grams,
         tagId: currentParam.tagId,
         machineId: currentParam.machineId,
         machineParameterId: currentParam.machineParameterId,
@@ -569,6 +614,7 @@ export class OeeBatchService {
 
     await this.updateOeeStats(id, {
       totalManualDefects: updateDto.totalManual,
+      totalManualGrams: updateDto.totalManualGram | 0,
     });
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', { batchId: id, createLog: true });
@@ -753,15 +799,15 @@ export class OeeBatchService {
   async findBatchStatsByBatchId(batchId: number, samplingSeconds: number): Promise<OeeBatchStatsEntity[]> {
     const rows = await this.entityManager.query(
       'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, b.timeSlot as timestamp\n' +
-        'from oeeBatchStats a\n' +
-        '         inner join (select oeeBatchId,\n' +
-        '                            max(timestamp) as maxTime,\n' +
-        `                            (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second) as timeSlot\n` +
-        '                     from oeeBatchStats\n' +
-        `                     where oeeBatchId = ${batchId}\n` +
-        `                     group by oeeBatchId, (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second)) b\n` +
-        '                    on a.timestamp = b.maxTime\n' +
-        `where a.oeeBatchId = ${batchId};`,
+      'from oeeBatchStats a\n' +
+      '         inner join (select oeeBatchId,\n' +
+      '                            max(timestamp) as maxTime,\n' +
+      `                            (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second) as timeSlot\n` +
+      '                     from oeeBatchStats\n' +
+      `                     where oeeBatchId = ${batchId}\n` +
+      `                     group by oeeBatchId, (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second)) b\n` +
+      '                    on a.timestamp = b.maxTime\n' +
+      `where a.oeeBatchId = ${batchId};`,
     );
 
     return rows;

@@ -22,6 +22,7 @@ export type OeeBatch = {
   productId: number;
   product: Product;
   lotNumber: string;
+  operator: Operator;
   // plannedDowntimes: OeeBatchPlannedDowntime[];
   // changes: OeeBatchChange[];
   aParams: OeeBatchA[];
@@ -31,6 +32,11 @@ export type OeeBatch = {
   updatedAt: Date;
   mcState: OeeBatchMcState;
   toBeStopped: boolean;
+};
+
+export type Operator = {
+  id: number;
+  firstName: string;
 };
 
 export type FilterOeeBatch = {

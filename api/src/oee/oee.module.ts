@@ -9,6 +9,7 @@ import { SiteEntity } from '../common/entities/site.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { FileService } from '../common/services/file.service';
 import { PlanningEntity } from '../common/entities/planning.entity';
+import { UserEntity } from 'src/common/entities/user.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PlanningEntity } from '../common/entities/planning.entity';
       OeeBatchEntity,
       SiteEntity,
       PlanningEntity,
+      UserEntity,
     ]),
   ],
   controllers: [OeeController],

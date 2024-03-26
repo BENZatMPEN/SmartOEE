@@ -21,6 +21,9 @@ export interface Planning {
   user: User;
   createdAt: Date;
   updatedAt: Date;
+  startType: string;
+  endType: string;
+  operatorId: number;
 }
 
 export interface EditPlanning {
@@ -34,6 +37,9 @@ export interface EditPlanning {
   productId: number;
   oeeId: number;
   userId: number;
+  startType: string;
+  endType: string;
+  operatorId: number;
 }
 
 export interface ImportPlanningRow {

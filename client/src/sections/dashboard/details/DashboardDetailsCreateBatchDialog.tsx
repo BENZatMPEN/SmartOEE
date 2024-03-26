@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup/dist/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Dialog, Grid, MenuItem, Stack, Typography } from '@mui/material';
+import { Box, Dialog, Grid, MenuItem, Stack, Typography, Divider } from '@mui/material';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -17,6 +17,8 @@ import { useDispatch } from '../../../redux/store';
 import axios from '../../../utils/axios';
 import { Planning } from '../../../@types/planning';
 import { AxiosError } from 'axios';
+import { PLANNING_START_TYPE, PLANNING_END_TYPE } from '../../../constants'
+import { User } from '../../../@types/user';
 
 interface NewOeeBatch {
   startDate: Date;
@@ -26,6 +28,9 @@ interface NewOeeBatch {
   planningId: number;
   plannedQuantity: number;
   lotNumber: string;
+  startType: string;
+  endType: string;
+  operatorId: number;
 }
 
 type Props = {
@@ -54,6 +59,9 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
       lotNumber: '',
       startDate: dayjs().startOf('day').toDate(),
       endDate: dayjs().endOf('day').toDate(),
+      startType: 'AUTO',
+      endType: 'MANUAL',
+      operatorId: 0
     },
   });
 
@@ -71,6 +79,8 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
   const [plannings, setPlannings] = useState<Planning[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const [users, setUsers] = useState<User[]>([]);
 
   const getProducts = async () => {
     try {
@@ -90,6 +100,15 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
     }
   };
 
+  const getUsers = async () => {
+    try {
+      const response = await axios.get<User[]>('/users/all');
+      setUsers(response.data);
+    } catch (error) {
+      setUsers([]);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
 
@@ -97,6 +116,7 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
       try {
         await getProducts();
         await getPlannings();
+        await getUsers();
         setIsLoading(false);
       } catch (error) {
         console.log(error);
@@ -147,6 +167,11 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
     setValue('productId', planning.productId);
     setValue('lotNumber', planning.lotNumber);
     setValue('plannedQuantity', planning.plannedQuantity);
+    setValue('startDate', dayjs(planning.startDate).toDate());
+    setValue('endDate', dayjs(planning.endDate).toDate());
+    setValue('startType', planning.startType);
+    setValue('endType', planning.endType);
+    setValue('operatorId', planning.operatorId);
   };
 
   return (
@@ -284,6 +309,107 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
 
               <Grid item xs={12} sm={6}>
                 <RHFDateTimePicker name="endDate" size="small" label="End Date" />
+              </Grid>
+            </Grid>
+          </Box>
+          <Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <RHFSelect
+                  name="startType"
+                  label="Auto Start Batch"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+                >
+
+                  {PLANNING_START_TYPE.map((planStart) => (
+                    <MenuItem
+                      key={`start-${planStart.key}`}
+                      value={planStart.key}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body2',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {planStart.name}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <RHFSelect
+                  name="endType"
+                  label="Auto End Batch(FG)"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+                >
+
+                  {PLANNING_END_TYPE.map((planEnd) => (
+                    <MenuItem
+                      key={`end-${planEnd.key}`}
+                      value={planEnd.key}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body2',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {planEnd.name}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
+              </Grid>
+            </Grid>
+          </Box>
+          <Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <RHFSelect
+                  name="operatorId"
+                  label="Operator Name"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+                >
+                  <MenuItem
+                    value={-1}
+                    sx={{
+                      mx: 1,
+                      borderRadius: 0.75,
+                      typography: 'body2',
+                      fontStyle: 'italic',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    None
+                  </MenuItem>
+
+                  <Divider />
+
+                  {users.map((user) => (
+                    <MenuItem
+                      key={user.id}
+                      value={user.id}
+                      sx={{
+                        mx: 1,
+                        my: 0.5,
+                        borderRadius: 0.75,
+                        typography: 'body2',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {user.firstName} {user.lastName}
+                    </MenuItem>
+                  ))}
+                </RHFSelect>
               </Grid>
             </Grid>
           </Box>

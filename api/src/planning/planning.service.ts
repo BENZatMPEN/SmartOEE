@@ -2,18 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { CreatePlanningDto } from './dto/create-planning.dto';
 import { UpdatePlanningDto } from './dto/update-planning.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { PlanningEntity } from '../common/entities/planning.entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { ImportPlanningDto } from './dto/import-planning.dto';
 import * as dayjs from 'dayjs';
+import { StartType } from 'src/common/enums/batchTypes';
 
 @Injectable()
 export class PlanningService {
   constructor(
     @InjectRepository(PlanningEntity)
     private planningRepository: Repository<PlanningEntity>,
-  ) {}
+  ) { }
 
   findByDateRange(filterDto: FilterPlanningDto): Promise<PlanningEntity[]> {
     return this.planningRepository.find({
@@ -52,6 +53,17 @@ export class PlanningService {
       .andWhere('p.plannedQuantity = :plannedQuantity', { plannedQuantity: importDto.plannedQuantity })
       .andWhere('p.siteId = :siteId', { siteId })
       .getOne();
+  }
+
+  findAutoStart(): Promise<PlanningEntity[]> {
+    return this.planningRepository.find({
+      where: {
+        startType: StartType.AUTO,
+        startDate: Between(dayjs().subtract(10, 'minute').toDate(), dayjs().toDate()),
+        deleted: false,
+      },
+      order: { startDate: 'asc' },
+    });
   }
 
   create(createDto: CreatePlanningDto, siteId: number): Promise<PlanningEntity> {

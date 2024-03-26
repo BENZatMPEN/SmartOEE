@@ -98,6 +98,8 @@ import { OeeBatchJobEntity } from './common/entities/oee-batch-job.entity';
 import { BatchAEventsListener } from './common/listeners/batch-a-events.listener';
 import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
+import { BatchStartAutoJob } from './common/jobs/batch-start-stop-auto.job';
+import { PlanningService } from './planning/planning.service';
 
 @Module({
   imports: [
@@ -287,6 +289,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
     TagReadJob,
     DataStoreJob,
     BatchStatsJob,
+    BatchStartAutoJob,
     BatchEventsListener,
     BatchAEventsListener,
     BatchPEventsListener,
@@ -295,6 +298,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
     FileService,
     AdminSiteService,
     AdminUserService,
+    PlanningService,
   ],
 })
 export class AppModule implements OnModuleInit {

@@ -16,6 +16,8 @@ import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { PlanningEntity } from '../common/entities/planning.entity';
 import * as dayjs from 'dayjs';
+import { FindLatestBatchOeeDto } from './dto/lastBatch-oee.dto';
+import { UserEntity } from 'src/common/entities/user.entity';
 
 @Injectable()
 export class OeeService {
@@ -32,9 +34,12 @@ export class OeeService {
     private siteRepository: Repository<SiteEntity>,
     @InjectRepository(PlanningEntity)
     private planningRepository: Repository<PlanningEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
+
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
-  ) {}
+  ) { }
 
   async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
@@ -71,46 +76,46 @@ export class OeeService {
   async findAllStatus(siteId: number): Promise<OeeStatus> {
     const rows = await this.entityManager.query(
       'WITH cte AS (SELECT distinct b.oeeId,\n' +
-        '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
-        '             FROM oeeBatches AS b)\n' +
-        'select o.id,\n' +
-        '       o.oeeCode,\n' +
-        '       o.productionName,\n' +
-        '       o.useSitePercentSettings,\n' +
-        '       o.percentSettings,\n' +
-        '       ob.startDate,\n' +
-        '       ob.endDate,\n' +
-        '       ob.lotNumber,\n' +
-        '       ob.plannedQuantity,\n' +
-        '       ob.standardSpeedSeconds,\n' +
-        '       ob.oeeStats,\n' +
-        '       ob.status,\n' +
-        '       ob.id as oeeBatchId,\n' +
-        '       ob.product,\n' +
-        '       ob.batchStartedDate,\n' +
-        '       ob.batchStoppedDate\n' +
-        'from oees o\n' +
-        '         left join cte on o.id = cte.oeeId\n' +
-        '         left join oeeBatches ob\n' +
-        '                   on cte.batchId = ob.id\n' +
-        'where o.siteId = ? and o.deleted = false',
+      '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
+      '             FROM oeeBatches AS b)\n' +
+      'select o.id,\n' +
+      '       o.oeeCode,\n' +
+      '       o.productionName,\n' +
+      '       o.useSitePercentSettings,\n' +
+      '       o.percentSettings,\n' +
+      '       ob.startDate,\n' +
+      '       ob.endDate,\n' +
+      '       ob.lotNumber,\n' +
+      '       ob.plannedQuantity,\n' +
+      '       ob.standardSpeedSeconds,\n' +
+      '       ob.oeeStats,\n' +
+      '       ob.status,\n' +
+      '       ob.id as oeeBatchId,\n' +
+      '       ob.product,\n' +
+      '       ob.batchStartedDate,\n' +
+      '       ob.batchStoppedDate\n' +
+      'from oees o\n' +
+      '         left join cte on o.id = cte.oeeId\n' +
+      '         left join oeeBatches ob\n' +
+      '                   on cte.batchId = ob.id\n' +
+      'where o.siteId = ? and o.deleted = false',
       [siteId],
     );
 
     const sumRows = await this.entityManager.query(
       'WITH cte AS (SELECT distinct b.oeeId,\n' +
-        '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
-        '             FROM oeeBatches AS b)\n' +
-        'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
-        '       ifnull(sum(if(status = "ended" or status is null, 1, 0)), 0)       as ended,\n' +
-        '       ifnull(sum(if(status = "standby" or status = "planned", 1, 0)), 0) as standby,\n' +
-        '       ifnull(sum(if(status = "mc_setup", 1, 0)), 0)                      as mcSetup,\n' +
-        '       ifnull(sum(if(status = "breakdown", 1, 0)), 0)                     as breakdown\n' +
-        'from oees o\n' +
-        '         left join cte on o.id = cte.oeeId\n' +
-        '         left join oeeBatches ob\n' +
-        '                   on cte.batchId = ob.id\n' +
-        'where o.siteId = ? and o.deleted = 0;',
+      '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
+      '             FROM oeeBatches AS b)\n' +
+      'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
+      '       ifnull(sum(if(status = "ended" or status is null, 1, 0)), 0)       as ended,\n' +
+      '       ifnull(sum(if(status = "standby" or status = "planned", 1, 0)), 0) as standby,\n' +
+      '       ifnull(sum(if(status = "mc_setup", 1, 0)), 0)                      as mcSetup,\n' +
+      '       ifnull(sum(if(status = "breakdown", 1, 0)), 0)                     as breakdown\n' +
+      'from oees o\n' +
+      '         left join cte on o.id = cte.oeeId\n' +
+      '         left join oeeBatches ob\n' +
+      '                   on cte.batchId = ob.id\n' +
+      'where o.siteId = ? and o.deleted = 0;',
       [siteId],
     );
 
@@ -217,8 +222,24 @@ export class OeeService {
     });
   }
 
-  findLatestBatch(id: number, siteId: number): Promise<OeeBatchEntity> {
-    return this.oeeBatchRepository.findOne({ where: { oeeId: id, siteId: siteId }, order: { createdAt: 'DESC' } });
+  async findLatestBatch(id: number, siteId: number): Promise<FindLatestBatchOeeDto> {
+    const oeeBatch: OeeBatchEntity = await this.oeeBatchRepository.findOne({ where: { oeeId: id, siteId: siteId }, order: { createdAt: 'DESC' } });
+    if (!oeeBatch) {
+      return null;
+    }
+
+    const { ...batchWithoutOperator } = oeeBatch;
+    const findLatestBatchOeeDto: FindLatestBatchOeeDto = {
+      ...batchWithoutOperator,
+      operator: null,
+    };
+
+    if (findLatestBatchOeeDto.operatorId) {
+      const operator = await this.userRepository.findOne({ where: { id: findLatestBatchOeeDto.operatorId } });
+      findLatestBatchOeeDto.operator = operator;
+    }
+
+    return findLatestBatchOeeDto;
   }
 
   findById(id: number): Promise<OeeEntity> {
