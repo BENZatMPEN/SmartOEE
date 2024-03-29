@@ -83,7 +83,7 @@ export default function AnalyticChartMCState({ criteria, group }: Props) {
     try {
       const response = await axios.get<any>(`/oee-analytics/mc`, {
         params: {
-          ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
+          ids: [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators],
           type: criteria.comparisonType,
           duration: criteria.duration,
           viewType: criteria.viewType,

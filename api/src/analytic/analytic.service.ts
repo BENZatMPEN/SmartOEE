@@ -271,6 +271,10 @@ export class AnalyticService {
     const fieldName = this.getFieldName(chartType);
     const site = await this.siteRepository.findOneBy({ id: siteId });
     const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.getOeeStatsByTime(ids, duration, from, to, fieldName, cutoffHour);
 
     if (rows.length === 0) {
@@ -333,6 +337,10 @@ export class AnalyticService {
   // oee%, a%, p%, q% by m/c
   async findOeeByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.getBatchStats(fieldName, ids, from, to);
 
     if (rows.length === 0) {
@@ -370,6 +378,16 @@ export class AnalyticService {
       rows: dataRows,
       sumRows: oeeRows,
     };
+  }
+
+  private async getBatchIdsByOperatorIds(ids: number[]) {
+    const batches = await this.oeeBatchRepository
+      .createQueryBuilder()
+      .select('id')
+      .where(`operatorId IN (:...ids)`, { ids })
+      .getRawMany();
+    ids = batches.map((batch) => batch.id);
+    return ids || [];
   }
 
   private getBatchTimelines(
@@ -430,8 +448,11 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.getBatchTimelines(fieldName, ids, from, to);
-
     if (rows.length === 0) {
       return {
         sumRows: [],
@@ -503,8 +524,11 @@ export class AnalyticService {
   // Multiple OEEs, Products or Lots
   async findMcByObject(siteId: number, chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.getBatchTimelines(fieldName, ids, from, to);
-
     if (rows.length === 0) {
       return {
         sumRows: [],
@@ -679,6 +703,10 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.analyticStatsParamRepository
       .createQueryBuilder()
       .where(`${fieldName} IN (:...ids)`, { ids })
@@ -853,6 +881,10 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.analyticStatsParamRepository
       .createQueryBuilder()
       .where(`${fieldName} IN (:...ids)`, { ids })
@@ -1028,6 +1060,10 @@ export class AnalyticService {
     to: Date,
   ): Promise<any> {
     const fieldName = this.getFieldName(chartType);
+    //find oee batch ids by operator
+    if (chartType === 'operator') {
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     const rows = await this.analyticStatsParamRepository
       .createQueryBuilder()
       .where(`${fieldName} IN (:...ids)`, { ids })
@@ -1195,6 +1231,11 @@ export class AnalyticService {
   }
 
   private async getBatchGroupByType(type: string, ids: number[]): Promise<BatchGroup> {
+    //find oee batch ids by operator
+    if (type === 'operator') {
+      type = 'batch';
+      ids = await this.getBatchIdsByOperatorIds(ids);
+    }
     if (type === 'oee') {
       const batches = await this.oeeBatchRepository.createQueryBuilder().where(`oeeId IN (:...ids)`, { ids }).getMany();
       return batches.reduce((acc, item) => {
@@ -1644,6 +1685,9 @@ export class AnalyticService {
         return 'productId';
 
       case 'batch':
+        return 'oeeBatchId';
+
+      case 'operator':
         return 'oeeBatchId';
     }
 

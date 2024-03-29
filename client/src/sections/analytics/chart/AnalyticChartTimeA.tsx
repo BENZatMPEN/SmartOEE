@@ -171,7 +171,7 @@ export default function AnalyticChartTimeA({ criteria, group }: Props) {
     setIsLoading(true);
 
     try {
-      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
+      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators];
       const url =
         criteria.chartSubType === 'pie' || criteria.chartSubType === 'stack'
           ? '/oee-analytics/aParam'

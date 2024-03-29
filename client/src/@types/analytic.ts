@@ -20,6 +20,7 @@ export type AnalyticCriteria = {
   oees: number[];
   products: number[];
   batches: number[];
+  operators: number[];
 };
 
 export type AnalyticGroupCriteriaItem = {
@@ -38,7 +39,7 @@ export type AnalyticGroupCriteriaDetailItem = AnalyticCriteria & AnalyticGroupCr
 
 export type AnalyticViewType = 'object' | 'time';
 
-export type AnalyticComparisonType = 'oee' | 'product' | 'batch';
+export type AnalyticComparisonType = 'oee' | 'product' | 'batch' | 'operator';
 
 export type AnalyticChartType = 'oee' | 'mc' | 'a' | 'p' | 'q';
 

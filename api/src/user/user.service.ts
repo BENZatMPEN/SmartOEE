@@ -42,6 +42,20 @@ export class UserService {
     return { list: rows, count: count };
   }
 
+  async findOptions(siteId: number): Promise<any> {
+    const list = await this.userRepository
+      .createQueryBuilder('u')
+      .innerJoin('u.sites', 'us', 'us.id = :siteId', { siteId })
+      .getMany();
+
+    return list.map((item) => {
+      return {
+        id: item.id,
+        name: `${item.firstName} ${item.lastName}`,
+      };
+    });
+  }
+
   findAll(siteId: number): Promise<UserEntity[]> {
     return this.userRepository
       .createQueryBuilder('u')
@@ -88,8 +102,8 @@ export class UserService {
     const sites =
       siteIds && siteIds.length > 0
         ? {
-            sites: await this.siteRepository.findBy({ id: In(siteIds) }),
-          }
+          sites: await this.siteRepository.findBy({ id: In(siteIds) }),
+        }
         : { sites: [] };
 
     return await this.userRepository.save({
@@ -117,8 +131,8 @@ export class UserService {
     const sites =
       siteIds && siteIds.length > 0
         ? {
-            sites: await this.siteRepository.findBy({ id: In(siteIds) }),
-          }
+          sites: await this.siteRepository.findBy({ id: In(siteIds) }),
+        }
         : { sites: [] };
 
     return this.userRepository.save({

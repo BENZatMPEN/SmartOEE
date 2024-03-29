@@ -50,6 +50,11 @@ export class UserController {
   //   return this.userService.findAll();
   // }
 
+  @Get('options')
+  findAllUser(@Query('siteId') siteId: number): Promise<UserEntity[]> {
+    return this.userService.findOptions(siteId);
+  }
+
   @Get('all')
   findAll(@Query('siteId') siteId: number): Promise<UserEntity[]> {
     return this.userService.findAll(siteId);
