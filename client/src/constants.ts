@@ -336,10 +336,6 @@ export const PLANNING_START_TYPE = [
     key: 'AUTO'
   },
   {
-    name: 'External Start Batch',
-    key: 'EXTERNAL'
-  },
-  {
     name: 'Manual Start Batch',
     key: 'MANUAL'
   }
@@ -361,9 +357,5 @@ export const PLANNING_END_TYPE = [
   {
     name: 'Manual End Batch',
     key: 'MANUAL'
-  },
-  {
-    name: 'External End Batch',
-    key: 'EXTERNAL'
   }
 ]

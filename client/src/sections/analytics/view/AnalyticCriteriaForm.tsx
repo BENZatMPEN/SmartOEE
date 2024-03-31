@@ -321,6 +321,7 @@ export default function AnalyticCriteriaForm() {
   }
 
   const handleGraphTypeChanged = (type: string): void => {
+    setValue('chartSubType', type);
     if (type === 'pareto') {
       setComparisonType(['oee', 'product', 'batch']);
       setValue('comparisonType', 'oee');
