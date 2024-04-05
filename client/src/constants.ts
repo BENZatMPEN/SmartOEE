@@ -330,3 +330,33 @@ export const initialRoles: RoleSetting[] = [
     actions: [RoleAction.Read, RoleAction.Create, RoleAction.Update, RoleAction.Delete],
   },
 ];
+
+export const PLANNING_START_TYPE = [
+  {
+    name: 'Auto Start Batch',
+    key: 'AUTO'
+  },
+  {
+    name: 'Manual Start Batch',
+    key: 'MANUAL'
+  }
+];
+
+export const PLANNING_END_TYPE = [
+  {
+    name: 'Auto End Batch (Planning Immediately)',
+    key: 'AUTO'
+  },
+  {
+    name: 'Auto End Batch (FG)',
+    key: 'AUTO_FG'
+  },
+  {
+    name: 'Auto End Batch (Actual FG)',
+    key: 'AUTO_ACTUAL_FG'
+  },
+  {
+    name: 'Manual End Batch',
+    key: 'MANUAL'
+  }
+]

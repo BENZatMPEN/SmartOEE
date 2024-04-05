@@ -1,5 +1,6 @@
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EndType, StartType } from 'src/common/enums/batchTypes';
 
 export class CreateOeeBatchDto {
   @IsDate()
@@ -29,4 +30,17 @@ export class CreateOeeBatchDto {
 
   @IsString()
   readonly lotNumber: string;
+
+  @IsEnum(StartType)
+  @IsOptional()
+  readonly startType?: StartType;
+
+  @IsEnum(EndType)
+  @IsOptional()
+  readonly endType?: EndType;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  readonly operatorId?: number;
 }

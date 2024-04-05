@@ -13,6 +13,7 @@ export type AnalyticState = {
   oeeOpts: OptionItem[];
   productOpts: OptionItem[];
   batchOpts: OptionItem[];
+  operatorOpts: OptionItem[];
   currentCriteria: AnalyticCriteria | null;
 };
 
@@ -27,6 +28,7 @@ const initialState: AnalyticState = {
   oeeOpts: [],
   productOpts: [],
   batchOpts: [],
+  operatorOpts: [],
   currentCriteria: null,
 };
 
@@ -104,6 +106,10 @@ const analyticSlice = createSlice({
     getBatchOptsSuccess(state, action) {
       state.batchOpts = action.payload;
     },
+
+    getOperatorOptsSuccess(state, action) {
+      state.operatorOpts = action.payload;
+    }
   },
 });
 

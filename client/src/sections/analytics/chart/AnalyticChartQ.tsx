@@ -151,12 +151,12 @@ export default function AnalyticChartQ({ criteria, group }: Props) {
     setIsLoading(true);
 
     try {
-      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
+      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators];
       const url = criteria.chartSubType === 'pareto' ? '/oee-analytics/qParam' : '/oee-analytics/oee';
 
       const response = await axios.get<any>(url, {
         params: {
-          ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
+          ids: [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators],
           type: criteria.comparisonType,
           duration: criteria.duration,
           viewType: criteria.viewType,

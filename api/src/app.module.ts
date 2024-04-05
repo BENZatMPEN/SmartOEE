@@ -100,6 +100,8 @@ import { BatchPEventsListener } from './common/listeners/batch-p-events.listener
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
 import { ReportModule } from './report/report.module';
 import { ReportService } from './report/report.service';
+import { BatchStartAutoJob } from './common/jobs/batch-start-stop-auto.job';
+import { PlanningService } from './planning/planning.service';
 
 @Module({
   imports: [
@@ -290,6 +292,7 @@ import { ReportService } from './report/report.service';
     TagReadJob,
     DataStoreJob,
     BatchStatsJob,
+    BatchStartAutoJob,
     BatchEventsListener,
     BatchAEventsListener,
     BatchPEventsListener,
@@ -299,6 +302,7 @@ import { ReportService } from './report/report.service';
     AdminSiteService,
     AdminUserService,
     ReportService
+    PlanningService,
   ],
 })
 export class AppModule implements OnModuleInit {

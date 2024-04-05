@@ -156,7 +156,7 @@ export default function AnalyticChartA({ criteria, group }: Props) {
     setIsLoading(true);
 
     try {
-      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
+      const ids = [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators];
       const url = criteria.chartSubType === 'pareto' ? '/oee-analytics/aParam' : '/oee-analytics/oee';
 
       const response = await axios.get<any>(url, {

@@ -8,6 +8,7 @@ import { OeeStats } from '../type/oee-stats';
 import { MachineEntity } from './machine.entity';
 import { OeeBatchMcState } from '../type/oee-status';
 import { PlanningEntity } from './planning.entity';
+import { EndType, StartType } from '../enums/batchTypes';
 
 @Entity('oeeBatches')
 export class OeeBatchEntity {
@@ -108,4 +109,13 @@ export class OeeBatchEntity {
 
   @Column({ type: 'json' })
   mcState: OeeBatchMcState;
+
+  @Column({ type: 'enum', enum: StartType, nullable: true })
+  startType: StartType;
+
+  @Column({ type: 'enum', enum: EndType, nullable: true })
+  endType: EndType;
+
+  @Column({ type: 'int', nullable: true  })
+  operatorId: number;
 }

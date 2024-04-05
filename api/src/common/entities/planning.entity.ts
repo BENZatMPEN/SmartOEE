@@ -4,6 +4,7 @@ import { SiteEntity } from './site.entity';
 import { OeeEntity } from './oee.entity';
 import { UserEntity } from './user.entity';
 import { ProductEntity } from './product.entity';
+import { EndType, StartType } from '../enums/batchTypes';
 
 @Entity('plannings')
 export class PlanningEntity {
@@ -64,4 +65,13 @@ export class PlanningEntity {
 
   @Column({ type: 'datetime' })
   updatedAt: Date;
+
+  @Column({ type: 'enum', enum: StartType, nullable: true })
+  startType: StartType;
+
+  @Column({ type: 'enum', enum: EndType, nullable: true })
+  endType: EndType;
+
+  @Column({ type: 'int' })
+  operatorId: number;
 }

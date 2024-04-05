@@ -10,7 +10,9 @@ export default function DashboardDetailsHeader() {
   const [time, setTime] = useState<Date>(new Date());
 
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
-
+  
+  const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date());
@@ -22,6 +24,8 @@ export default function DashboardDetailsHeader() {
   }, []);
 
   const { oeeCode, productionName } = selectedOee ?? {};
+
+  const { firstName } = currentBatch?.operator ?? {};
 
   return (
     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -37,6 +41,15 @@ export default function DashboardDetailsHeader() {
         </Typography>
 
         <Typography variant="h5">{productionName}</Typography>
+
+        {firstName ?
+          <>
+            <Typography variant="h6" sx={{ color: 'text.disabled' }}>
+              Operator Name:
+            </Typography>
+            <Typography variant="h5">{firstName}</Typography>
+          </>
+          : null}
       </Stack>
 
       <Stack direction="row" spacing={theme.spacing(2)} justifyContent="end">

@@ -163,7 +163,7 @@ export default function AnalyticChartTimeOEE({ criteria, group }: Props) {
     try {
       const response = await axios.get<any>(`/oee-analytics/oee`, {
         params: {
-          ids: [...criteria.oees, ...criteria.products, ...criteria.batches],
+          ids: [...criteria.oees, ...criteria.products, ...criteria.batches, ...criteria.operators],
           type: criteria.comparisonType,
           duration: criteria.duration,
           viewType: criteria.viewType,

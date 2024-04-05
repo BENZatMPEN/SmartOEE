@@ -41,6 +41,7 @@ import {
   getAnalyticOeeOpts,
   getAnalyticProductOpts,
   getAnalytics,
+  getOperatorOpts,
   updateAnalytic,
   updateCurrentAnalytics,
   updateCurrentCriteria,
@@ -61,7 +62,6 @@ import { AbilityContext } from '../../../caslContext';
 
 const VIEW_TYPES: AnalyticViewType[] = ['object', 'time'];
 
-const COMPARISON_TYPES: AnalyticComparisonType[] = ['oee', 'product', 'batch'];
 
 const CHART_TYPES: AnalyticChartType[] = ['oee', 'mc', 'a', 'p', 'q'];
 
@@ -76,6 +76,7 @@ const defaultValues: AnalyticCriteria = {
   oees: [],
   products: [],
   batches: [],
+  operators: [],
   comparisonType: 'oee',
   viewType: 'object',
   duration: 'hourly',
@@ -117,7 +118,7 @@ const getChartSubType = (charType: AnalyticChartType, viewType: AnalyticViewType
   }
 };
 
-interface FormValuesProps extends Partial<AnalyticCriteria> {}
+interface FormValuesProps extends Partial<AnalyticCriteria> { }
 
 export default function AnalyticCriteriaForm() {
   const { enqueueSnackbar } = useSnackbar();
@@ -126,7 +127,7 @@ export default function AnalyticCriteriaForm() {
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { isLoading, analytics, currentAnalytics, oeeOpts, productOpts, batchOpts } = useSelector(
+  const { isLoading, analytics, currentAnalytics, oeeOpts, productOpts, batchOpts, operatorOpts } = useSelector(
     (state: RootState) => state.analytic,
   );
 
@@ -147,6 +148,14 @@ export default function AnalyticCriteriaForm() {
       await dispatch(getAnalyticBatchOpts());
     })();
   }, [dispatch]);
+
+  useEffect(() => {
+    (async () => {
+      await dispatch(getOperatorOpts());
+    })();
+  }, [dispatch]);
+
+  useEffect(() => { }, []);
 
   const [selectingAnalytic, setSelectingAnalytic] = useState<Analytic | null>(null);
 
@@ -287,6 +296,7 @@ export default function AnalyticCriteriaForm() {
     setValue('oees', []);
     setValue('products', []);
     setValue('batches', []);
+    setValue('operators', [])
   };
 
   const handleChartTypeChanged = (type: AnalyticChartType): void => {
@@ -305,6 +315,20 @@ export default function AnalyticCriteriaForm() {
   const handleBatchesSelected = (values: number[]): void => {
     setValue('batches', values);
   };
+
+  const handleOperatorSelected = (values: number[]): void => {
+    setValue('operators', values);
+  }
+
+  const handleGraphTypeChanged = (type: string): void => {
+    setValue('chartSubType', type);
+    if (type === 'pareto') {
+      setComparisonType(['oee', 'product', 'batch']);
+      setValue('comparisonType', 'oee');
+    } else {
+      setComparisonType(['oee', 'product', 'batch', 'operator']);
+    }
+  }
 
   const handleViewTypeChanged = (type: AnalyticViewType): void => {
     setValue('oees', []);
@@ -328,6 +352,8 @@ export default function AnalyticCriteriaForm() {
   };
 
   const [chartSubTypes, setChartSubTypes] = useState<string[]>(getChartSubType('oee', 'object'));
+
+  const [comparisonType, setComparisonType] = useState<AnalyticComparisonType[]>(['oee', 'product', 'batch', 'operator']);
 
   const getToPicker = (duration: AnalyticDuration) => {
     if (duration === 'hourly') {
@@ -468,6 +494,7 @@ export default function AnalyticCriteriaForm() {
                   label="Graph Type"
                   InputLabelProps={{ shrink: true }}
                   SelectProps={{ native: false }}
+                  onChange={(event) => handleGraphTypeChanged(event.target.value as string)}
                 >
                   {chartSubTypes.map((item) => (
                     <MenuItem
@@ -528,7 +555,7 @@ export default function AnalyticCriteriaForm() {
                   SelectProps={{ native: false }}
                   onChange={(event) => handleComparisonTypeChanged(event.target.value as AnalyticComparisonType)}
                 >
-                  {COMPARISON_TYPES.map((item) => (
+                  {comparisonType.map((item) => (
                     <MenuItem
                       key={item}
                       value={item}
@@ -646,6 +673,39 @@ export default function AnalyticCriteriaForm() {
                       }}
                     />
                   ))}
+
+                {values.comparisonType === 'operator' &&
+                  (isMultipleSelect(values.viewType, values.chartType, values.chartSubType) ? (
+                    <Autocomplete
+                      key={`operatorOpts_multi_${values.viewType}`}
+                      multiple
+                      limitTags={3}
+                      value={(values.operators || []).reduce((arr: OptionItem[], id: number) => {
+                        const filtered = (operatorOpts || []).filter((item) => item.id === id);
+                        if (filtered.length > 0) {
+                          arr.push(filtered[0]);
+                        }
+                        return arr;
+                      }, [])}
+                      options={operatorOpts}
+                      getOptionLabel={(option) => `${option.name}`}
+                      renderInput={(params) => <TextField {...params} label="Operators" />}
+                      onChange={(event, value) => {
+                        handleOperatorSelected((value || []).map((item) => item.id));
+                      }}
+                    />
+                  ) : (
+                    <Autocomplete
+                      key={`operatorOpts_single_${values.viewType}`}
+                      options={operatorOpts}
+                      value={(values.operators || []).length > 0 ? findSingleOption(values.operators[0], operatorOpts) : null}
+                      getOptionLabel={(option) => `${option.name}`}
+                      renderInput={(params) => <TextField {...params} label="Operators" />}
+                      onChange={(event, value) => {
+                        handleOperatorSelected(value ? [value.id] : []);
+                      }}
+                    />
+                  ))}
               </Grid>
             </Grid>
           </FormProvider>
@@ -659,7 +719,7 @@ export default function AnalyticCriteriaForm() {
           <Stack spacing={2} direction="row">
             <TextField fullWidth label="Search" size="small" InputLabelProps={{ shrink: true }} />
 
-            <IconButton color="primary" onClick={() => {}}>
+            <IconButton color="primary" onClick={() => { }}>
               <Iconify icon={'eva:search-fill'} />
             </IconButton>
           </Stack>

@@ -134,6 +134,9 @@ export function fAnalyticComparisonTypeText(type: AnalyticComparisonType) {
 
     case 'batch':
       return 'Lot';
+    
+    case 'operator':
+      return 'Operator';
   }
 }
 

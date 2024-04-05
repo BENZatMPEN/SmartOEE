@@ -112,3 +112,15 @@ export function getAnalyticBatchOpts() {
     }
   };
 }
+
+
+export function getOperatorOpts() {
+  return async () => {
+    try {
+      const response = await axios.get<OptionItem[]>(`/users/options`);
+      dispatch(analyticSlice.actions.getOperatorOptsSuccess(response.data));
+    } catch (error) {
+      dispatch(analyticSlice.actions.getOperatorOptsSuccess([]));
+    }
+  };
+}

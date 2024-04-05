@@ -96,6 +96,9 @@ export class PlanningController {
           productId: oeeProduct.product.id,
           userId: user.id,
           remark: dto.remark,
+          startType: dto.startType,
+          endType: dto.endType,
+          operatorId: dto.operatorId,
         },
         siteId,
       );
