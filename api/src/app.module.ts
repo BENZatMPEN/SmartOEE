@@ -301,7 +301,7 @@ import { PlanningService } from './planning/planning.service';
     FileService,
     AdminSiteService,
     AdminUserService,
-    ReportService
+    ReportService,
     PlanningService,
   ],
 })
