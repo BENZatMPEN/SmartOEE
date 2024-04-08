@@ -98,6 +98,7 @@ import { OeeBatchJobEntity } from './common/entities/oee-batch-job.entity';
 import { BatchAEventsListener } from './common/listeners/batch-a-events.listener';
 import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
+import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-planned-downtime.entity';
 
 @Module({
   imports: [
@@ -133,6 +134,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
             MachineParameterEntity,
             OeeEntity,
             OeeMachineEntity,
+            OeeMachinePlannedDowntimeEntity,
             OeeProductEntity,
             OeeBatchEntity,
             OeeBatchAEntity,
@@ -177,6 +179,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
       ProductEntity,
       MachineEntity,
       MachineParameterEntity,
+      OeeMachinePlannedDowntimeEntity,
       OeeEntity,
       OeeMachineEntity,
       OeeProductEntity,

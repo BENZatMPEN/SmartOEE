@@ -9,6 +9,9 @@ import { SiteEntity } from '../common/entities/site.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { FileService } from '../common/services/file.service';
 import { PlanningEntity } from '../common/entities/planning.entity';
+import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
+import { UserEntity } from 'src/common/entities/user.entity';
+import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { PlanningEntity } from '../common/entities/planning.entity';
       OeeBatchEntity,
       SiteEntity,
       PlanningEntity,
+      OeeMachinePlannedDowntimeEntity,
+      UserEntity,
+      OeeBatchPlannedDowntimeEntity,
     ]),
   ],
   controllers: [OeeController],

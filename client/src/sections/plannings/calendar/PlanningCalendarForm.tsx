@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Button, DialogActions, Divider, IconButton, MenuItem, Stack, Tooltip } from '@mui/material';
+import { Box, Button, DialogActions, Divider, IconButton, MenuItem, Stack, Tooltip, Autocomplete, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -9,7 +9,7 @@ import { DateRange } from '../../../@types/calendar';
 import { Oee } from '../../../@types/oee';
 import { EditPlanning, Planning } from '../../../@types/planning';
 import { Product } from '../../../@types/product';
-import { User } from '../../../@types/user';
+import { User, FilterUser } from '../../../@types/user';
 import { ColorSinglePicker } from '../../../components/color-utils';
 import { FormProvider, RHFSelect, RHFSwitch, RHFTextField } from '../../../components/hook-form';
 import { RHFDatePicker, RHFDateTimePicker } from '../../../components/hook-form/RHFDateTimePicker';
@@ -19,6 +19,8 @@ import { createPlanning, updatePlanning } from '../../../redux/actions/calendarA
 import { RootState, useDispatch, useSelector } from '../../../redux/store';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
+import { getUserPagedList } from '../../../redux/actions/adminUserAction';
+import { PLANNING_END_TYPE, PLANNING_START_TYPE } from 'src/constants';
 
 const COLOR_OPTIONS = [
   '#00AB55', // theme.palette.primary.main,
@@ -74,6 +76,9 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
         color: currentPlanning?.color || '#00AB55',
         startDate: currentPlanning?.startDate || (range ? new Date(range.start) : dayjs().startOf('d').toDate()),
         endDate: currentPlanning?.endDate || (range ? new Date(range.end) : dayjs().endOf('d').toDate()),
+        startType: currentPlanning?.startType || '',
+        endType: currentPlanning?.endType || '',
+        operatorId: currentPlanning?.operatorId || 0
       });
     })();
 
@@ -136,6 +141,9 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
       color: '#00AB55',
       startDate: range ? new Date(range.start) : dayjs().startOf('d').toDate(),
       endDate: range ? new Date(range.end) : dayjs().add(1, 'd').startOf('d').toDate(),
+      startType: 'AUTO',
+      endType: 'MANUAL',
+      operatorId: 0
     },
     values: formValues,
   });
@@ -322,6 +330,95 @@ export default function PlanningCalendarForm({ currentPlanning, range, onDelete,
 
         <RHFDateTimePicker key="endDateTimePicker" name="endDate" label="End Date" size="small" />
 
+        <RHFSelect
+          name="startType"
+          label="Auto Start Batch"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+        >
+
+          {PLANNING_START_TYPE.map((planStart) => (
+            <MenuItem
+              key={`start-${planStart.key}`}
+              value={planStart.key}
+              sx={{
+                mx: 1,
+                my: 0.5,
+                borderRadius: 0.75,
+                typography: 'body2',
+                textTransform: 'capitalize',
+              }}
+            >
+              {planStart.name}
+            </MenuItem>
+          ))}
+        </RHFSelect>
+
+        <RHFSelect
+          name="endType"
+          label="Auto End Batch(FG)"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+        >
+
+          {PLANNING_END_TYPE.map((planEnd) => (
+            <MenuItem
+              key={`end-${planEnd.key}`}
+              value={planEnd.key}
+              sx={{
+                mx: 1,
+                my: 0.5,
+                borderRadius: 0.75,
+                typography: 'body2',
+                textTransform: 'capitalize',
+              }}
+            >
+              {planEnd.name}
+            </MenuItem>
+          ))}
+        </RHFSelect>
+
+        <RHFSelect
+          name="operatorId"
+          label="Operator Name"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          SelectProps={{ native: false, sx: { textTransform: 'capitalize' } }}
+        >
+          <MenuItem
+            value={-1}
+            sx={{
+              mx: 1,
+              borderRadius: 0.75,
+              typography: 'body2',
+              fontStyle: 'italic',
+              color: 'text.secondary',
+            }}
+          >
+            None
+          </MenuItem>
+
+          <Divider />
+
+          {users.map((user) => (
+            <MenuItem
+              key={user.id}
+              value={user.id}
+              sx={{
+                mx: 1,
+                my: 0.5,
+                borderRadius: 0.75,
+                typography: 'body2',
+                textTransform: 'capitalize',
+              }}
+            >
+              {user.firstName} {user.lastName}
+            </MenuItem>
+          ))}
+        </RHFSelect>
+        
         <RHFTextField name="remark" label="Remark" multiline rows={4} size="small" InputLabelProps={{ shrink: true }} />
 
         <Controller

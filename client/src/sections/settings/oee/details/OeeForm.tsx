@@ -1,13 +1,14 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Button, Card, CardContent, Grid, MenuItem, Stack } from '@mui/material';
+import { Button, Card, CardContent, Grid, MenuItem, Stack, Autocomplete, TextField } from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditOee, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
+import { EditOee, MachinePlanDownTime, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
+import { User, UserPagedList } from '../../../../@types/user'
 import { PercentSetting } from '../../../../@types/percentSetting';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -41,6 +42,8 @@ import OeeProductDialog from './OeeProductDialog';
 import OeeProductTable from './OeeProductTable';
 import OeeTagDialog from './OeeTagDialog';
 import { OeeTagList } from './OeeTagList';
+import { FilterUser } from '../../../../@types/user';
+import axios from '../../../../utils/axios';
 
 type SelectedItem<T> = {
   index: number;
@@ -72,6 +75,14 @@ export default function OeeForm({ isEdit }: Props) {
 
   const [editingTag, setEditingTag] = useState<OeeTag | null>(null);
 
+  const [operators, setOperators] = useState<User[]>([]);
+
+  const [users, setUsers] = useState<User[]>([]);
+  // const { pagedList, isLoading } = useSelector((state: RootState) => state.user);
+  const [pagedList, setPagedList] = useState<UserPagedList>({} as UserPagedList);
+
+  const [machineId, setMachineId] = useState<number>(0);
+
   const NewOeeSchema = Yup.object().shape({
     oeeCode: Yup.string().required('OEE Code is required'),
     oeeType: Yup.string().required('OEE Type is required'),
@@ -96,6 +107,7 @@ export default function OeeForm({ isEdit }: Props) {
       percentSettings: initialPercentSettings,
       tags: initialOeeTags,
       image: null,
+      operators: [],
     },
     values: {
       oeeCode: currentOee?.oeeCode || '',
@@ -108,22 +120,23 @@ export default function OeeForm({ isEdit }: Props) {
       oeeMachines: currentOee?.oeeMachines || [],
       oeeProducts: currentOee
         ? (currentOee.oeeProducts || []).map((item) => {
-            return {
-              ...item,
-              standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
-            };
-          })
+          return {
+            ...item,
+            standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
+          };
+        })
         : [],
       timeUnit: currentOee?.timeUnit || TIME_UNIT_OPTIONS[0],
       useSitePercentSettings: currentOee ? currentOee.useSitePercentSettings : true,
       percentSettings: currentOee?.percentSettings ? currentOee.percentSettings : initialPercentSettings,
       tags: currentOee?.tags
         ? [
-            ...currentOee.tags,
-            ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
-          ]
+          ...currentOee.tags,
+          ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
+        ]
         : initialOeeTags,
       image: null,
+      operators: currentOee?.operators || [],
     },
   });
 
@@ -138,11 +151,23 @@ export default function OeeForm({ isEdit }: Props) {
   const values = watch();
 
   const onSubmit = async (data: EditOee) => {
-    data.oeeMachines = data.oeeMachines.map((item) => {
+    data.operators = operators;
+    data.oeeMachines = data.oeeMachines.map((item: any) => {
       if (item.machine) {
         item.machine.widgets = [];
         item.machine.remark = '';
       }
+      // if (item.oeeMachinePlannedDowntime) {
+      //   item.oeeMachinePlannedDowntime = item.oeeMachinePlannedDowntime.map((planDownTime: any) => {
+      //     const plan = planDownTime.plan ? JSON.parse(planDownTime.plan) : {}
+      //     return {
+      //       ...planDownTime,
+      //       ...plan,
+      //       startDate: planDownTime.startDate ? planDownTime.startDate : new Date(),
+      //       endDate: planDownTime.endDate ? planDownTime.endDate : new Date(),
+      //     }
+      //   })
+      // }
       return item;
     });
 
@@ -155,9 +180,8 @@ export default function OeeForm({ isEdit }: Props) {
         return item;
       });
     }
-
+    console.log('data', data)
     const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
-
     if (oee) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.oees.root);
@@ -262,7 +286,7 @@ export default function OeeForm({ isEdit }: Props) {
       enqueueSnackbar(`${oeeMachine.machine?.code} has been selected`, { variant: 'warning' });
       return;
     }
-
+    setMachineId(oeeMachine.machineId)
     if (editingMachine) {
       const temp = oeeMachines[editingMachine.index];
       oeeMachines[editingMachine.index] = {
@@ -270,12 +294,48 @@ export default function OeeForm({ isEdit }: Props) {
         ...oeeMachine,
       };
     } else {
+      const initOeeMachinePlannedDowntime: MachinePlanDownTime = {
+        machineId: oeeMachine.machineId,
+        plannedDownTimeId: 1,
+        namePlannedDownTime: '',
+        startDate: new Date(),
+        endDate: new Date(),
+        fixTime: false,
+      }
+      oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime]
       oeeMachines.push(oeeMachine);
     }
-
     setValue('oeeMachines', oeeMachines);
     setEditingMachine(null);
   };
+
+  const handleAddPlanDowntime = (index: number) => {
+    const oeeMachines = getValues('oeeMachines');
+    const initOeeMachinePlannedDowntime: MachinePlanDownTime = {
+      machineId: machineId,
+      plannedDownTimeId: 1,
+      namePlannedDownTime: '',
+      startDate: new Date(),
+      endDate: new Date(),
+      fixTime: false,
+    }
+    oeeMachines[index]?.oeeMachinePlannedDowntime?.push(initOeeMachinePlannedDowntime)
+    setValue('oeeMachines', oeeMachines);
+  }
+
+  const handleDeletePlanDowntime = (index: number, indexPlan: number) => {
+    const oeeMachines = getValues('oeeMachines');
+    oeeMachines[index]?.oeeMachinePlannedDowntime?.splice(indexPlan, 1)
+    setValue('oeeMachines', oeeMachines);
+  }
+
+  const handleFixTimeChange = (indexPlan: number) => {
+    const oeeMachines = getValues('oeeMachines');
+    if (oeeMachines[0] && oeeMachines[0].oeeMachinePlannedDowntime && oeeMachines[0].oeeMachinePlannedDowntime[indexPlan]) {
+      oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime = !oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime
+    }
+    setValue('oeeMachines', oeeMachines);
+  }
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -313,6 +373,30 @@ export default function OeeForm({ isEdit }: Props) {
     setEditingTag(tag);
     onOpenTagForm();
   };
+  const getOperatorData = async (filterTerm: string = '') => {
+    const filter: FilterUser = {
+      search: filterTerm,
+      order: 'desc',
+      orderBy: 'createdAt',
+      page: 0,
+      rowsPerPage: 100,
+    };
+    const response = await axios.get<UserPagedList>(`/users`, { params: filter });
+    setPagedList(response.data);
+    setUsers(response.data.list);
+    return response.data;
+  };
+
+  useEffect(() => {
+    (async () => {
+      await getOperatorData();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    setOperators(currentOee?.operators || []);
+  }, [currentOee]);
 
   return (
     <>
@@ -378,7 +462,6 @@ export default function OeeForm({ isEdit }: Props) {
                         ))}
                       </RHFSelect>
                     </Grid>
-
                     <Grid item xs={6}>
                       <RHFTextField name="productionName" label="Production Name" />
                     </Grid>
@@ -421,7 +504,20 @@ export default function OeeForm({ isEdit }: Props) {
                         label={`Breakdown Condition (${fTimeUnitText(values.timeUnit)})`}
                       />
                     </Grid>
-
+                    <Grid item xs={12}>
+                      <Autocomplete
+                        multiple
+                        id='operator'
+                        key={`oeeOpts_single`}
+                        options={users}
+                        value={operators}
+                        getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
+                        renderInput={(params) => <TextField {...params} label="Operator Name" />}
+                        onChange={(event, value) => {
+                          setOperators(value)
+                        }}
+                      />
+                    </Grid>
                     <Grid item xs={12}>
                       <EditorLabelStyle>Remark</EditorLabelStyle>
                       <RHFEditor simple name="remark" />
@@ -477,6 +573,9 @@ export default function OeeForm({ isEdit }: Props) {
                 onAdd={() => handleMachineAdd()}
                 onEdit={(index) => handleMachineEdit(index)}
                 onDelete={(index) => handleMachineDelete(index)}
+                onAddPlanDowntime={(index) => handleAddPlanDowntime(index)}
+                onDeletePlanDowntime={(index, indexPlan) => handleDeletePlanDowntime(index, indexPlan)}
+                onFixTimeChange={(indexPlan) => handleFixTimeChange(indexPlan)}
               />
             </CardContent>
           </Card>

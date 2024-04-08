@@ -1,6 +1,7 @@
 import { Machine } from './machine';
 import { PercentSetting } from './percentSetting';
 import { Product } from './product';
+import { User } from './user';
 
 export type Oee = {
   id: number;
@@ -21,6 +22,7 @@ export type Oee = {
   timeUnit: string;
   createdAt: Date;
   updatedAt: Date;
+  operators: User[];
 };
 
 export interface EditOee {
@@ -39,6 +41,7 @@ export interface EditOee {
   percentSettings: PercentSetting[] | null;
   useSitePercentSettings: boolean;
   timeUnit: string;
+  operators: User[];
 }
 
 export type FilterOee = {
@@ -58,6 +61,7 @@ export type OeeProduct = {
 export type OeeMachine = {
   machineId: number;
   machine?: Machine;
+  oeeMachinePlannedDowntime?: MachinePlanDownTime[]
 };
 
 export type OeeTag = {
@@ -101,3 +105,12 @@ export type OeePagedList = {
   list: Oee[];
   count: number;
 };
+
+export type MachinePlanDownTime = {
+  machineId: number,
+  plannedDownTimeId: number,
+  namePlannedDownTime: string,
+  startDate: Date,
+  endDate: Date,
+  fixTime: boolean,
+}

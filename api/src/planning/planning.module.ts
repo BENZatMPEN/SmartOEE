@@ -15,6 +15,8 @@ import { OeeProductEntity } from '../common/entities/oee-product.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { FileService } from '../common/services/file.service';
 import { RoleEntity } from '../common/entities/role.entity';
+import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
+import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { RoleEntity } from '../common/entities/role.entity';
       OeeMachineEntity,
       OeeProductEntity,
       OeeBatchEntity,
+      OeeMachinePlannedDowntimeEntity,
+      OeeBatchPlannedDowntimeEntity,
     ]),
   ],
   controllers: [PlanningController],

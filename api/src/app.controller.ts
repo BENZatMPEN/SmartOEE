@@ -51,6 +51,7 @@ import * as dayjs from 'dayjs';
 import { AnalyticService } from './analytic/analytic.service';
 import { AdminUserService } from './admin-user/admin-user.service';
 import { AdminSiteService } from './admin-site/admin-site.service';
+import { OeeMachineDto } from './oee/dto/oee-machine.dto';
 
 @Controller()
 export class AppController {
@@ -70,7 +71,7 @@ export class AppController {
     private readonly roleService: RoleService,
     private readonly analyticService: AnalyticService,
     private readonly entityManager: EntityManager,
-  ) {}
+  ) { }
 
   // @Get('cal')
   // async testCal(): Promise<string> {
@@ -538,8 +539,9 @@ export class AppController {
         oeeMachines: [
           {
             machineId: realMc.id,
-          } as OeeMachineEntity,
+          } as OeeMachineDto,
         ],
+        operators: []
       },
       null,
       sites[0].id,
@@ -705,14 +707,12 @@ export class AppController {
           {
             oeeCode: 'OEE' + faker.datatype.number({ min: 100, max: 999 }),
             oeeType: oeeTypes[faker.datatype.number({ min: 0, max: 1 })],
-            minorStopSeconds:
-              timeUnit == OEE_TIME_UNIT_MINUTE
-                ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
-                : faker.datatype.number({ min: 1, max: 200 }),
-            breakdownSeconds:
-              timeUnit == OEE_TIME_UNIT_MINUTE
-                ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
-                : faker.datatype.number({ min: 1, max: 200 }),
+            minorStopSeconds: timeUnit == OEE_TIME_UNIT_MINUTE
+              ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
+              : faker.datatype.number({ min: 1, max: 200 }),
+            breakdownSeconds: timeUnit == OEE_TIME_UNIT_MINUTE
+              ? faker.datatype.number({ min: 60, max: 720, precision: 60 })
+              : faker.datatype.number({ min: 1, max: 200 }),
             location: faker.address.city(),
             productionName: faker.commerce.productName(),
             remark: faker.commerce.productDescription(),
@@ -730,8 +730,9 @@ export class AppController {
             oeeMachines: [
               {
                 machineId: machines[i].id,
-              } as OeeMachineEntity,
+              } as OeeMachineDto,
             ],
+            operators: []
           },
           null,
           sites[1].id,
