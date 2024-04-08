@@ -17,20 +17,15 @@ import {
   OEE_TAG_OUT_PLANNED_QUANTITY,
   OEE_TAG_OUT_Q,
   OEE_TAG_OUT_TOTAL_NG,
-  OEE_TYPE_A,
-  OEE_TYPE_OEE,
-  OEE_TYPE_P,
-  OEE_TYPE_Q,
   PLANNED_DOWNTIME_TYPE_MC_SETUP,
   PLANNED_DOWNTIME_TYPE_PLANNED,
 } from '../constant';
 import { OeeStats } from '../type/oee-stats';
-import { PercentSetting } from '../type/percent-settings';
-import { NotificationService } from '../services/notification.service';
-import { SiteService } from '../../site/site.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { logBatch } from '../utils/batchHelper';
+import { BatchNotificationEvent } from '../events/batch-notification.event';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class BatchStatsJob {
@@ -38,9 +33,8 @@ export class BatchStatsJob {
 
   constructor(
     private readonly socketService: SocketService,
-    private readonly siteService: SiteService,
     private readonly oeeBatchService: OeeBatchService,
-    private readonly notificationService: NotificationService,
+    private readonly eventEmitter: EventEmitter2,
     @InjectRepository(OeeBatchJobEntity)
     private readonly oeeBatchJobRepository: Repository<OeeBatchJobEntity>,
   ) {}
@@ -217,7 +211,10 @@ export class BatchStatsJob {
       this.sendTagOut(OEE_TAG_OUT_PLANNED_QUANTITY, plannedQuantity.toString(), batch.siteId, oeeTags);
 
       // notify
-      await this.notifyStatsChanged(batch, oeeStats, currentStats);
+      await this.eventEmitter.emitAsync(
+        'batch-notification.process',
+        new BatchNotificationEvent(batch, oeeStats, currentStats),
+      );
     } catch (error) {
       this.logger.log('exception', error);
     }
@@ -240,136 +237,5 @@ export class BatchStatsJob {
       return null;
     }
     return oeeTags[itemIndex];
-  }
-
-  private async notifyStatsChanged(
-    batch: OeeBatchEntity,
-    previousStatus: OeeStats,
-    currentStatus: OeeStats,
-  ): Promise<void> {
-    const { oee } = batch;
-    const site = await this.siteService.findById(batch.siteId);
-    const percentSettings: {
-      oeeLow: number;
-      aLow: number;
-      pLow: number;
-      qLow: number;
-      oeeHigh: number;
-      aHigh: number;
-      pHigh: number;
-      qHigh: number;
-    } = this.getPercentSettings(oee.useSitePercentSettings ? site.defaultPercentSettings : oee.percentSettings);
-
-    // low
-    if (currentStatus.oeePercent < percentSettings.oeeLow && previousStatus.oeePercent >= percentSettings.oeeLow) {
-      await this.notificationService.notifyOee(
-        'oeeLow',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.oeePercent,
-        currentStatus.oeePercent,
-      );
-    }
-
-    if (currentStatus.aPercent < percentSettings.aLow && previousStatus.aPercent >= percentSettings.aLow) {
-      await this.notificationService.notifyOee(
-        'aLow',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.aPercent,
-        currentStatus.aPercent,
-      );
-    }
-
-    if (currentStatus.pPercent < percentSettings.pLow && previousStatus.pPercent >= percentSettings.pLow) {
-      await this.notificationService.notifyOee(
-        'pLow',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.pPercent,
-        currentStatus.pPercent,
-      );
-    }
-
-    if (currentStatus.qPercent < percentSettings.qLow && previousStatus.qPercent >= percentSettings.qLow) {
-      await this.notificationService.notifyOee(
-        'qLow',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.qPercent,
-        currentStatus.qPercent,
-      );
-    }
-
-    // high
-    if (currentStatus.oeePercent > 100.0 && previousStatus.oeePercent <= 100.0) {
-      await this.notificationService.notifyOee(
-        'oeeHigh',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.oeePercent,
-        currentStatus.oeePercent,
-      );
-    }
-
-    if (currentStatus.aPercent > 100.0 && previousStatus.aPercent <= 100.0) {
-      await this.notificationService.notifyOee(
-        'aHigh',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.aPercent,
-        currentStatus.aPercent,
-      );
-    }
-
-    if (currentStatus.pPercent > 100.0 && previousStatus.pPercent <= 100.0) {
-      await this.notificationService.notifyOee(
-        'pHigh',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.pPercent,
-        currentStatus.pPercent,
-      );
-    }
-
-    if (currentStatus.qPercent > 100.0 && previousStatus.qPercent <= 100.0) {
-      await this.notificationService.notifyOee(
-        'qHigh',
-        site.id,
-        batch.oeeId,
-        batch.id,
-        previousStatus.qPercent,
-        currentStatus.qPercent,
-      );
-    }
-  }
-
-  private getPercentSettings(settings: PercentSetting[]): {
-    oeeLow: number;
-    aLow: number;
-    pLow: number;
-    qLow: number;
-    oeeHigh: number;
-    aHigh: number;
-    pHigh: number;
-    qHigh: number;
-  } {
-    return {
-      oeeLow: settings.filter((item) => item.type === OEE_TYPE_OEE)[0].settings.low,
-      aLow: settings.filter((item) => item.type === OEE_TYPE_A)[0].settings.low,
-      pLow: settings.filter((item) => item.type === OEE_TYPE_P)[0].settings.low,
-      qLow: settings.filter((item) => item.type === OEE_TYPE_Q)[0].settings.low,
-      oeeHigh: settings.filter((item) => item.type === OEE_TYPE_OEE)[0].settings.high,
-      aHigh: settings.filter((item) => item.type === OEE_TYPE_A)[0].settings.high,
-      pHigh: settings.filter((item) => item.type === OEE_TYPE_P)[0].settings.high,
-      qHigh: settings.filter((item) => item.type === OEE_TYPE_Q)[0].settings.high,
-    };
   }
 }

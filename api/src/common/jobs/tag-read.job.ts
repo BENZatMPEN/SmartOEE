@@ -179,7 +179,7 @@ export class TagReadJob {
         oeeCode,
       );
       if (!isValidTagReads) {
-        //await this.invalidTagsStop(batch, oeeCode, readTimestamp);
+        // await this.invalidTagsStop(batch, oeeCode, readTimestamp);
         return;
       }
 
@@ -321,14 +321,15 @@ export class TagReadJob {
         previousMcState.stopSeconds > 0 &&
         previousMcState.stopSeconds > batch.standardSpeedSeconds
       ) {
+        // A
         if (previousMcState.stopSeconds >= batch.breakdownSeconds) {
-          // A happens
           await this.eventEmitter.emitAsync(
             'batch-a-params.process',
             new BatchAEvent(batch, previousMcState, allReads, readTimestamp),
           );
-        } else {
-          // P happens
+        }
+        // P
+        else {
           await this.eventEmitter.emitAsync(
             'batch-p-params.process',
             new BatchPEvent(batch, previousMcState, allReads, readTimestamp),

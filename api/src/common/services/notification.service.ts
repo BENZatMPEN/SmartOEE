@@ -12,6 +12,7 @@ import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { SiteEntity } from '../entities/site.entity';
 import Handlebars from 'handlebars';
 import { OeeBatchEntity } from '../entities/oee-batch.entity';
+import { OeeBatchNotificationEntity } from '../entities/oee-batch-notification.entity';
 
 @Injectable()
 export class NotificationService {
@@ -26,6 +27,8 @@ export class NotificationService {
     private siteRepository: Repository<SiteEntity>,
     @InjectRepository(OeeBatchEntity)
     private oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(OeeBatchNotificationEntity)
+    private oeeBatchNotificationRepository: Repository<OeeBatchNotificationEntity>,
   ) {}
 
   private readonly logger = new Logger(NotificationService.name);
@@ -190,19 +193,46 @@ export class NotificationService {
   ): Promise<void> {
     const site = await this.getSite(siteId);
     const oeeBatch = await this.getOeeBatch(batchId);
-    const template = Handlebars.compile((site.alertTemplate || defaultAlertTemplate)[name]);
-    const message = template({
+    const template = Handlebars.compile({ ...defaultAlertTemplate, ...site.alertTemplate }[name]);
+    const templateMessage = template({
       oeeCode: oeeBatch.oee.oeeCode,
       productionName: oeeBatch.oee.productionName,
       sku: oeeBatch.product.sku,
       previousPercent: previousPercent.toFixed(2),
       currentPercent: currentPercent.toFixed(2),
     });
+
+    this.logger.log(templateMessage);
     await this.notify(siteId, oeeId, name, {
-      message,
-      subject: message,
-      text: message,
-      html: message,
+      message: templateMessage,
+      subject: templateMessage,
+      text: templateMessage,
+      html: templateMessage,
+    });
+  }
+
+  async findOeeBatchNotifications(batchId: number): Promise<OeeBatchNotificationEntity[]> {
+    return this.oeeBatchNotificationRepository.find({ where: { batchId: batchId } });
+  }
+
+  async createOeeBatchNotification(name: string, batchId: number) {
+    return this.oeeBatchNotificationRepository.save({
+      name,
+      batchId,
+    });
+  }
+
+  async activateOeeBatchNotification(id: number) {
+    return this.oeeBatchNotificationRepository.save({
+      id,
+      active: true,
+    });
+  }
+
+  async deactivateOeeBatchNotification(id: number) {
+    return this.oeeBatchNotificationRepository.save({
+      id,
+      active: false,
     });
   }
 }

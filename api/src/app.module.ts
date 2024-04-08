@@ -98,6 +98,9 @@ import { OeeBatchJobEntity } from './common/entities/oee-batch-job.entity';
 import { BatchAEventsListener } from './common/listeners/batch-a-events.listener';
 import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
+import { BatchNotificationEvent } from './common/events/batch-notification.event';
+import { BatchNotificationEventsListener } from './common/listeners/batch-notification-events.listener';
+import { OeeBatchNotificationEntity } from './common/entities/oee-batch-notification.entity';
 
 @Module({
   imports: [
@@ -144,6 +147,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
             OeeBatchStatsEntity,
             OeeBatchLogEntity,
             OeeBatchJobEntity,
+            OeeBatchNotificationEntity,
             FaqEntity,
             FaqAttachmentEntity,
             AttachmentEntity,
@@ -190,6 +194,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
       OeeBatchJobEntity,
+      OeeBatchNotificationEntity,
       FaqEntity,
       FaqAttachmentEntity,
       AttachmentEntity,
@@ -271,7 +276,6 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
   ],
   controllers: [AppController],
   providers: [
-    // TODO: remove this in production
     ProductService,
     MachineService,
     OeeService,
@@ -291,6 +295,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
     BatchAEventsListener,
     BatchPEventsListener,
     BatchQEventsListener,
+    BatchNotificationEventsListener,
     AnalyticEventsListener,
     FileService,
     AdminSiteService,

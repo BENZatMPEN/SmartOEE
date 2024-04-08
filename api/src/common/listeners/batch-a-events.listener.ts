@@ -8,7 +8,6 @@ import { logBatch } from '../utils/batchHelper';
 import { NotificationService } from '../services/notification.service';
 import { BatchAEvent } from '../events/batch-a.event';
 import { BatchParamsUpdatedEvent } from '../events/batch.event';
-import { timestamp } from 'rxjs';
 
 @Injectable()
 export class BatchAEventsListener {

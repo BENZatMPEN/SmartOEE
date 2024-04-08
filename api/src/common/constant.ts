@@ -95,9 +95,17 @@ export const defaultAlertTemplate: AlertTemplate = {
     '{{paramName}} has increased from {{previousAmount}} to {{currentAmount}} on {{oeeCode}} - {{productionName}} - {{sku}}.',
   oeeLow:
     'OEE low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  oeeLowNormal:
+    'OEE low has resolved on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
   aLow: 'A low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  aLowNormal:
+    'A low has resolved on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
   pLow: 'P low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  pLowNormal:
+    'P low has resolved on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
   qLow: 'Q low on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
+  qLowNormal:
+    'Q low has resolved on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
   oeeHigh:
     'OEE high on {{oeeCode}} - {{productionName}} - {{sku}} - previous: {{previousPercent}}, current: {{currentPercent}}',
   aHigh:
