@@ -21,9 +21,12 @@ type Props = {
   onAdd: VoidFunction;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  onAddPlanDowntime: (index: number) => void;
+  onDeletePlanDowntime: (index: number, indexPlan: number) => void;
+  onFixTimeChange: (indexPlan: number) => void;
 };
 
-export default function OeeMachineTable({ onAdd, onEdit, onDelete, oeeMachines }: Props) {
+export default function OeeMachineTable({ onAdd, onEdit, onDelete, oeeMachines, onAddPlanDowntime, onDeletePlanDowntime, onFixTimeChange }: Props) {
   const theme = useTheme();
 
   const isNotFound = oeeMachines.length === 0;
@@ -38,6 +41,18 @@ export default function OeeMachineTable({ onAdd, onEdit, onDelete, oeeMachines }
 
   const handleEdit = (index: number) => {
     onEdit(index);
+  };
+
+  const handleAddPlanDowntime = (index: number) => {
+    onAddPlanDowntime(index);
+  }
+
+  const handleDeletePlanDowntime = (index: number, indexPlan: number) => {
+    onDeletePlanDowntime(index, indexPlan);
+  }
+
+  const handleFixTimeChange = (indexPlan: number) => {
+    onFixTimeChange(indexPlan);
   };
 
   return (
@@ -78,6 +93,9 @@ export default function OeeMachineTable({ onAdd, onEdit, onDelete, oeeMachines }
                 row={oeeMachine}
                 onEditRow={() => handleEdit(index)}
                 onDeleteRow={() => handleDelete(index)}
+                onAddPlanDowntime={() => handleAddPlanDowntime(index)}
+                onDeletePlanDowntime={(index, indexPlan) => handleDeletePlanDowntime(index, indexPlan)}
+                onFixTimeChange={(indexPlan) => handleFixTimeChange(indexPlan)}
               />
             ))}
 

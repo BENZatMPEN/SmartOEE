@@ -15,6 +15,15 @@ interface DateTimePickerProps {
   minTime?: Date;
 }
 
+interface DateTimePickerCustomProps {
+  name: string;
+  value: Date;
+  label: string;
+  size?: OverridableStringUnion<'small' | 'medium', TextFieldPropsSizeOverrides>;
+  minDate?: Date;
+  minTime?: Date;
+}
+
 interface RHFDateTimePickerProps extends DateTimePickerProps {
   views?: readonly CalendarOrClockPickerView[];
 }
@@ -91,6 +100,34 @@ export function RHFTimePicker({ name, label, size }: DateTimePickerProps) {
           <TimePicker
             label={label}
             value={field.value}
+            onChange={(newValue: any) => {
+              if (newValue) {
+                field.onChange(newValue.startOf('m').toDate());
+              }
+            }}
+            renderInput={(params: any) => (
+              <TextField {...params} size={size} fullWidth error={!!error} helperText={error?.message} />
+            )}
+          />
+        )}
+      />
+    </LocalizationProvider>
+  );
+}
+
+
+export function RHFTimePickerCustom({ name, label, size, value }: DateTimePickerCustomProps) {
+  const { control } = useFormContext();
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={thLocale}>
+      <Controller
+        name={name}
+        control={control}
+        render={({ field, fieldState: { error } }) => (
+          <TimePicker
+            label={label}
+            value={value}
             onChange={(newValue: any) => {
               if (newValue) {
                 field.onChange(newValue.startOf('m').toDate());

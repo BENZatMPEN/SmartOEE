@@ -2,6 +2,7 @@ import { Exclude } from 'class-transformer';
 import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SiteEntity } from './site.entity';
 import { RoleEntity } from './role.entity';
+import { OeeEntity } from './oee.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -65,6 +66,10 @@ export class UserEntity {
   @ManyToMany(() => RoleEntity, { onDelete: 'CASCADE' })
   @JoinTable({ name: 'userRoles' })
   roles: RoleEntity[];
+
+  @ManyToMany(() => OeeEntity, { onDelete: 'CASCADE' })
+  @JoinTable({ name: 'userOees' })
+  oees: OeeEntity[];
 
   // @OneToMany(() => UserSiteRole, (userSite) => userSite.user)
   // userSites: UserSiteRole[];

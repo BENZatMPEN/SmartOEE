@@ -1,9 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { OeeMachineEntity } from './oee-machine.entity';
 import { OeeProductEntity } from './oee-product.entity';
 import { Exclude } from 'class-transformer';
 import { PercentSetting } from '../type/percent-settings';
 import { OeeTag } from '../type/oee-tag';
+import { OeeMachinePlannedDowntimeEntity } from './oee-machine-planned-downtime.entity';
+import { UserEntity } from './user.entity';
 
 @Entity('oees')
 export class OeeEntity {
@@ -50,8 +52,12 @@ export class OeeEntity {
   @OneToMany(() => OeeMachineEntity, (oeeMachine) => oeeMachine.oee)
   oeeMachines: OeeMachineEntity[];
 
-  @Column({ type: 'datetime' })
-  createdAt: Date;
+  @OneToMany(() => OeeMachinePlannedDowntimeEntity, (oeeMachinePlannedDowntime) => oeeMachinePlannedDowntime.oee)
+  oeeMachinePlannedDowntime: OeeMachinePlannedDowntimeEntity[];
+
+  @ManyToMany(() => UserEntity)
+  @JoinTable({ name: 'userOees' })
+  operators: UserEntity[];
 
   @Column({ type: 'datetime' })
   updatedAt: Date;

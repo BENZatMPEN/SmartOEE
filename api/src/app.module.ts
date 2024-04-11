@@ -102,6 +102,8 @@ import { ReportModule } from './report/report.module';
 import { ReportService } from './report/report.service';
 import { BatchStartAutoJob } from './common/jobs/batch-start-stop-auto.job';
 import { PlanningService } from './planning/planning.service';
+import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-planned-downtime.entity';
+import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job';
 
 @Module({
   imports: [
@@ -137,6 +139,7 @@ import { PlanningService } from './planning/planning.service';
             MachineParameterEntity,
             OeeEntity,
             OeeMachineEntity,
+            OeeMachinePlannedDowntimeEntity,
             OeeProductEntity,
             OeeBatchEntity,
             OeeBatchAEntity,
@@ -181,6 +184,7 @@ import { PlanningService } from './planning/planning.service';
       ProductEntity,
       MachineEntity,
       MachineParameterEntity,
+      OeeMachinePlannedDowntimeEntity,
       OeeEntity,
       OeeMachineEntity,
       OeeProductEntity,
@@ -290,6 +294,7 @@ import { PlanningService } from './planning/planning.service';
     AnalyticService,
     OeeStatsJob,
     TagReadJob,
+    AutoPlannedDowntimeJob,
     DataStoreJob,
     BatchStatsJob,
     BatchStartAutoJob,

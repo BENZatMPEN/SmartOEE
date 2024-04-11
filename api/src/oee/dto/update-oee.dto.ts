@@ -4,6 +4,7 @@ import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-valida
 import { Transform, Type } from 'class-transformer';
 import { OeeProductDto } from './oee-product.dto';
 import { OeeMachineDto } from './oee-machine.dto';
+import { OeeOperatorDto } from './oee-operator.dto';
 
 export class UpdateOeeDto {
   @IsString()
@@ -54,4 +55,8 @@ export class UpdateOeeDto {
 
   @IsString()
   readonly timeUnit: string;
+
+  @IsArray()
+  @IsOptional()
+  readonly operators: OeeOperatorDto[];
 }

@@ -1,8 +1,36 @@
 import { Checkbox, FormControlLabel, FormControlLabelProps, FormGroup } from '@mui/material';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 interface RHFCheckboxProps extends Omit<FormControlLabelProps, 'control'> {
   name: string;
+}
+
+interface RHFCheckboxCustomProps extends Omit<FormControlLabelProps, 'control'> {
+  name: string;
+  value: boolean; // assuming value is boolean
+}
+
+export function RHFCheckboxCustom({ name, value, ...other }: RHFCheckboxCustomProps) {
+  const { control, setValue } = useFormContext();
+
+  // Set value using React Hook Form's setValue
+  useEffect(() => {
+    setValue(name, value);
+  }, [name, value, setValue]);
+
+  return (
+    <FormControlLabel
+      control={
+        <Controller
+          name={name}
+          control={control}
+          render={({ field }) => <Checkbox {...field} checked={field.value} />}
+        />
+      }
+      {...other}
+    />
+  );
 }
 
 export function RHFCheckbox({ name, ...other }: RHFCheckboxProps) {

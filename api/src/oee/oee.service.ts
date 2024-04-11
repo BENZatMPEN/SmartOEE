@@ -18,6 +18,8 @@ import { PlanningEntity } from '../common/entities/planning.entity';
 import * as dayjs from 'dayjs';
 import { FindLatestBatchOeeDto } from './dto/lastBatch-oee.dto';
 import { UserEntity } from 'src/common/entities/user.entity';
+import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
+import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
 
 @Injectable()
 export class OeeService {
@@ -34,9 +36,12 @@ export class OeeService {
     private siteRepository: Repository<SiteEntity>,
     @InjectRepository(PlanningEntity)
     private planningRepository: Repository<PlanningEntity>,
+    @InjectRepository(OeeMachinePlannedDowntimeEntity)
+    private oeeMachinePlannedDowntimeRepository: Repository<OeeMachinePlannedDowntimeEntity>,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
-
+    @InjectRepository(OeeBatchPlannedDowntimeEntity)
+    private readonly oeeBatchPlannedDowntimeRepository: Repository<OeeBatchPlannedDowntimeEntity>,
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
   ) { }
@@ -172,17 +177,26 @@ export class OeeService {
     } as OeeStatus;
   }
 
-  findByIdIncludingDetails(id: number, siteId: number): Promise<OeeEntity> {
-    return this.oeeRepository.findOne({
-      where: { id, siteId, deleted: false },
-      relations: [
-        'oeeProducts',
-        'oeeProducts.product',
-        'oeeMachines',
-        'oeeMachines.machine',
-        'oeeMachines.machine.parameters',
-      ],
+  async findByIdIncludingDetails(id: number, siteId: number): Promise<OeeEntity> {
+    let oee = await this.oeeRepository.createQueryBuilder('oee')
+      .where('oee.id = :id', { id })
+      .andWhere('oee.siteId = :siteId', { siteId })
+      .andWhere('oee.deleted = :deleted', { deleted: false })
+      .leftJoinAndSelect('oee.oeeProducts', 'oeeProducts')
+      .leftJoinAndSelect('oeeProducts.product', 'product')
+      .leftJoinAndSelect('oee.oeeMachines', 'oeeMachines')
+      .leftJoinAndSelect('oee.operators', 'operators')
+      .leftJoinAndSelect('oeeMachines.machine', 'machine')
+      .leftJoinAndSelect('machine.parameters', 'parameters')
+      .leftJoinAndSelect('oee.oeeMachinePlannedDowntime', 'oeeMachinePlannedDowntime', 'oeeMachinePlannedDowntime.deleted = :downtimeDeleted', { downtimeDeleted: false })
+      .getOne();
+
+    oee.oeeMachines = oee.oeeMachines.map(machine => {
+      machine.oeeMachinePlannedDowntime = oee.oeeMachinePlannedDowntime.filter(downtime => downtime.oeeId === machine.oeeId && downtime.oeeMachineId === machine.id);
+      return machine;
     });
+
+    return oee;
     // return this.oeeRepository.findOne({
     //   include: [
     //     {
@@ -259,10 +273,13 @@ export class OeeService {
     if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
+    //find operators by ids
+    const operators = await this.userRepository.findBy({ id: In(createDto.operators?.map((item: any) => item.id) || []) });
 
     const oee = await this.oeeRepository.save({
       ...dto,
       imageName,
+      operators,
       siteId: site.id,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -282,16 +299,31 @@ export class OeeService {
 
     if (oeeMachines) {
       for (const machine of oeeMachines) {
-        const { id, ...machineDto } = machine;
-        await this.oeeMachineRepository.save({
+        const { id, oeeMachinePlannedDowntime, ...machineDto } = machine;
+        const oeeMachineResult = await this.oeeMachineRepository.save({
           ...machineDto,
           oeeId: oee.id,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        for (const item of oeeMachinePlannedDowntime) {
+          //find planned downtime by id
+          const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.id });
+          await this.oeeMachinePlannedDowntimeRepository.save({
+            oeeId: oee.id,
+            oeeMachineId: oeeMachineResult.id,
+            plannedDownTimeId: item.plannedDownTimeId,
+            plannedDownTimeName: plannedDowntime.name || '',
+            fixTime: item.fixTime,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
       }
     }
-
     return oee;
   }
 
@@ -308,9 +340,13 @@ export class OeeService {
       await this.fileService.deleteFile(existingImageName);
     }
 
+    //find operators by ids
+    const operators = await this.userRepository.findBy({ id: In(updateDto.operators?.map((item: any) => item.id) || []) });
+
     const oee = await this.oeeRepository.save({
       ...updatingOee,
       ...dto,
+      operators,
       imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
@@ -394,18 +430,72 @@ export class OeeService {
     if (oeeMachines) {
       for (const oeeMachine of oeeMachines) {
         if (oeeMachine.id) {
+          const { oeeMachinePlannedDowntime, ...oeeMachineDto } = oeeMachine;
           const updatingMachine = await this.oeeProductRepository.findOneBy({ id: oeeMachine.id });
-          await this.oeeMachineRepository.save({ ...updatingMachine, ...oeeMachine, updatedAt: new Date() });
+          await this.oeeMachineRepository.save({ ...updatingMachine, ...oeeMachineDto, updatedAt: new Date() });
+
+          const oeeMachinePlannedDowntimes = await this.oeeMachinePlannedDowntimeRepository.findBy({ oeeId: oee.id, oeeMachineId: oeeMachine.id });
+          //update delete planned downtime
+          const deletingPlanDowntimeIds = oeeMachinePlannedDowntimes
+            .filter((item) => !oeeMachinePlannedDowntime.some((downtime) => downtime.id === item.id))
+            .map((item) => item.id);
+          if (deletingPlanDowntimeIds.length > 0) {
+            await this.oeeMachinePlannedDowntimeRepository
+              .createQueryBuilder()
+              .update()
+              .set({ deleted: true, updatedAt: new Date() })
+              .where('id in (:ids)', { ids: deletingPlanDowntimeIds })
+              .execute();
+          }
+
+          for (const item of oeeMachinePlannedDowntime) {
+            if (item.id) {
+              const updatingPlanDowntime = await this.oeeMachinePlannedDowntimeRepository.findOneBy({ id: item.id });
+              await this.oeeMachinePlannedDowntimeRepository.save({ ...updatingPlanDowntime, ...item, updatedAt: new Date() });
+            } else {
+              //find planned downtime by id
+              const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.id });
+              await this.oeeMachinePlannedDowntimeRepository.save({
+                oeeId: oee.id,
+                oeeMachineId: oeeMachine.id,
+                plannedDownTimeId: item.plannedDownTimeId,
+                plannedDownTimeName: plannedDowntime.name || '',
+                fixTime: item.fixTime,
+                startDate: item.startDate,
+                endDate: item.endDate,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            }
+          }
         } else {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, ...oeeMachineDto } = oeeMachine;
-          await this.oeeMachineRepository.save({
+          const { id, oeeMachinePlannedDowntime, ...oeeMachineDto } = oeeMachine;
+          const oeeMachineResult = await this.oeeMachineRepository.save({
             ...oeeMachineDto,
             oeeId: oee.id,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
+
+          for (const item of oeeMachinePlannedDowntime) {
+            //find planned downtime by id
+            const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.id });
+            await this.oeeMachinePlannedDowntimeRepository.save({
+              oeeId: oee.id,
+              oeeMachineId: oeeMachineResult.id,
+              plannedDownTimeId: item.plannedDownTimeId,
+              plannedDownTimeName: plannedDowntime.name || '',
+              fixTime: item.fixTime,
+              startDate: item.startDate,
+              endDate: item.endDate,
+              deleted: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
         }
+
         //   const count = await this.oeeMachineRepository.count({
         //     where: { [Op.and]: [{ oeeId: oee.id }, { machineId: oeeMachine.machineId }] },
         //   });
@@ -521,6 +611,14 @@ export class OeeService {
     oee.deleted = true;
     oee.updatedAt = new Date();
     await this.oeeRepository.save(oee);
+
+    //delete oeeMachinePlannedDowntime
+    await this.oeeMachinePlannedDowntimeRepository
+    .createQueryBuilder()
+    .update()
+    .set({ deleted: true, updatedAt: new Date() })
+    .where('oeeId = :oeeId', { oeeId: id })
+    .execute();
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {
@@ -532,6 +630,13 @@ export class OeeService {
         return oee;
       }),
     );
+    //delete oeeMachinePlannedDowntime
+    await this.oeeMachinePlannedDowntimeRepository
+      .createQueryBuilder()
+      .update()
+      .set({ deleted: true, updatedAt: new Date() })
+      .where('oeeId in (:ids)', { ids })
+      .execute();
   }
 
   findPlanningsById(id: number, siteId: number): Promise<PlanningEntity[]> {

@@ -32,6 +32,11 @@ export class PlannedDowntimeController {
     return this.plannedDowntimeService.findPagedList(filterDto);
   }
 
+  @Get('oee-machine')
+  async findOeeMachinePlannedDowntime(@Query('oeeBatchId') oeeBatchId: number): Promise<PlannedDowntimeEntity[]> {
+    return this.plannedDowntimeService.findOeeMachinePlannedDowntime(oeeBatchId);
+  }
+
   @Get('all')
   findAll(@Query('siteId') siteId: number): Promise<PlannedDowntimeEntity[]> {
     return this.plannedDowntimeService.findAll(siteId);

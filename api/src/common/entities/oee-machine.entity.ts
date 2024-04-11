@@ -1,6 +1,7 @@
 import { MachineEntity } from './machine.entity';
+import { OeeMachinePlannedDowntimeEntity } from './oee-machine-planned-downtime.entity';
 import { OeeEntity } from './oee.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('oeeMachines')
 export class OeeMachineEntity {
@@ -24,4 +25,7 @@ export class OeeMachineEntity {
 
   @Column({ type: 'datetime' })
   updatedAt: Date;
+
+  @OneToMany(() => OeeMachinePlannedDowntimeEntity, (oeeMachinePlannedDowntime) => oeeMachinePlannedDowntime.oeeMachine, { onDelete: 'CASCADE' })
+  oeeMachinePlannedDowntime: OeeMachinePlannedDowntimeEntity[];
 }

@@ -99,7 +99,13 @@ export default function DashboardDetailsPlannedDowntimeDialog({ oeeBatch, open, 
 
   const getDowntimes = async () => {
     try {
-      const response = await axios.get<PlannedDowntime[]>('/planned-downtimes/all');
+      let response = await axios.get<PlannedDowntime[]>(`/planned-downtimes/oee-machine?oeeBatchId=${oeeBatch.id}`);
+      if (response.data.length > 0) {
+        setPlannedDowntimes(response.data);
+        setSelectedPlannedDowntime(response.data[0]);
+        return;
+      }
+      response = await axios.get<PlannedDowntime[]>('/planned-downtimes/all');
       const items = response.data;
       if (items.length === 0) {
         return;
