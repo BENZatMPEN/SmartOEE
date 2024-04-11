@@ -99,6 +99,7 @@ import { BatchAEventsListener } from './common/listeners/batch-a-events.listener
 import { BatchPEventsListener } from './common/listeners/batch-p-events.listener';
 import { BatchQEventsListener } from './common/listeners/batch-q-events.listener';
 import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-planned-downtime.entity';
+import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job';
 
 @Module({
   imports: [
@@ -288,6 +289,7 @@ import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-p
     AnalyticService,
     OeeStatsJob,
     TagReadJob,
+    AutoPlannedDowntimeJob,
     DataStoreJob,
     BatchStatsJob,
     BatchEventsListener,

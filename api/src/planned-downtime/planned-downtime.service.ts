@@ -6,13 +6,19 @@ import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { PlannedDowntimeEntity } from '../common/entities/planned-downtime.entity';
+import { OeeBatchEntity } from 'src/common/entities/oee-batch.entity';
+import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
 
 @Injectable()
 export class PlannedDowntimeService {
   constructor(
     @InjectRepository(PlannedDowntimeEntity)
     private plannedDowntimeRepository: Repository<PlannedDowntimeEntity>,
-  ) {}
+    @InjectRepository(OeeBatchEntity)
+    private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
+    @InjectRepository(OeeMachinePlannedDowntimeEntity)
+    private oeeMachinePlannedDowntimeRepository: Repository<OeeMachinePlannedDowntimeEntity>,
+  ) { }
 
   async findPagedList(filterDto: FilterPlannedDowntimeDto): Promise<PagedLisDto<PlannedDowntimeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
@@ -35,6 +41,19 @@ export class PlannedDowntimeService {
 
   async findById(id: number, siteId: number): Promise<PlannedDowntimeEntity> {
     return this.plannedDowntimeRepository.findOneBy({ id, siteId, deleted: false });
+  }
+
+  async findOeeMachinePlannedDowntime(oeeBatchId: number): Promise<PlannedDowntimeEntity[]> {
+    if (!oeeBatchId) return [];
+    //find oee by oeeBatchId
+    const oee = await this.oeeBatchRepository.findOneBy({ id: oeeBatchId });
+    //find machine planned downtime by oeeId
+    const machinePlannedDowntime = await this.oeeMachinePlannedDowntimeRepository.find({
+      where: { oeeId: oee.oeeId, deleted: false }
+    });
+    const ids = machinePlannedDowntime.map((plannedDowntime) => plannedDowntime.plannedDownTimeId);
+    
+    return await this.plannedDowntimeRepository.findBy({ id: In(ids), deleted: false });
   }
 
   create(createDto: CreatePlannedDowntimeDto, siteId: number): Promise<PlannedDowntimeEntity> {

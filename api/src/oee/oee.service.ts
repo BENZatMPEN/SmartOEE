@@ -594,6 +594,14 @@ export class OeeService {
     oee.deleted = true;
     oee.updatedAt = new Date();
     await this.oeeRepository.save(oee);
+
+    //delete oeeMachinePlannedDowntime
+    await this.oeeMachinePlannedDowntimeRepository
+    .createQueryBuilder()
+    .update()
+    .set({ deleted: true, updatedAt: new Date() })
+    .where('oeeId = :oeeId', { oeeId: id })
+    .execute();
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {
@@ -605,6 +613,13 @@ export class OeeService {
         return oee;
       }),
     );
+    //delete oeeMachinePlannedDowntime
+    await this.oeeMachinePlannedDowntimeRepository
+      .createQueryBuilder()
+      .update()
+      .set({ deleted: true, updatedAt: new Date() })
+      .where('oeeId in (:ids)', { ids })
+      .execute();
   }
 
   findPlanningsById(id: number, siteId: number): Promise<PlanningEntity[]> {

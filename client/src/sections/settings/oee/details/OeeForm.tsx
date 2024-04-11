@@ -157,17 +157,6 @@ export default function OeeForm({ isEdit }: Props) {
         item.machine.widgets = [];
         item.machine.remark = '';
       }
-      // if (item.oeeMachinePlannedDowntime) {
-      //   item.oeeMachinePlannedDowntime = item.oeeMachinePlannedDowntime.map((planDownTime: any) => {
-      //     const plan = planDownTime.plan ? JSON.parse(planDownTime.plan) : {}
-      //     return {
-      //       ...planDownTime,
-      //       ...plan,
-      //       startDate: planDownTime.startDate ? planDownTime.startDate : new Date(),
-      //       endDate: planDownTime.endDate ? planDownTime.endDate : new Date(),
-      //     }
-      //   })
-      // }
       return item;
     });
 
@@ -180,7 +169,6 @@ export default function OeeForm({ isEdit }: Props) {
         return item;
       });
     }
-    console.log('data', data)
     const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
     if (oee) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
@@ -308,6 +296,23 @@ export default function OeeForm({ isEdit }: Props) {
     setValue('oeeMachines', oeeMachines);
     setEditingMachine(null);
   };
+
+  useEffect(() => {
+    const oeeMachines = getValues('oeeMachines');
+    for (const oeeMachine of oeeMachines) {
+      if (oeeMachine.oeeMachinePlannedDowntime?.length === 0) {
+        const initOeeMachinePlannedDowntime: MachinePlanDownTime = {
+          machineId: oeeMachine.machineId,
+          plannedDownTimeId: 1,
+          namePlannedDownTime: '',
+          startDate: new Date(),
+          endDate: new Date(),
+          fixTime: false,
+        }
+        oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime]
+      }
+    }
+  }, [isEdit]);
 
   const handleAddPlanDowntime = (index: number) => {
     const oeeMachines = getValues('oeeMachines');
