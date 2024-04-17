@@ -102,7 +102,7 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
 
   const getUsers = async () => {
     try {
-      const response = await axios.get<User[]>('/users/all');
+      const response = await axios.get<User[]>(`/users/oee?oeeId=${oee.id}`);
       setUsers(response.data);
     } catch (error) {
       setUsers([]);

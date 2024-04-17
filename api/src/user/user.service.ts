@@ -42,6 +42,13 @@ export class UserService {
     return { list: rows, count: count };
   }
 
+  findByOee(oeeId: number): Promise<UserEntity[]> {
+    return this.userRepository
+      .createQueryBuilder('u')
+      .innerJoin('u.oees', 'o', 'o.id = :oeeId', { oeeId })
+      .getMany();
+  }
+
   async findOptions(siteId: number): Promise<any> {
     const list = await this.userRepository
       .createQueryBuilder('u')
