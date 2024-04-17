@@ -16,6 +16,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 export default function List() {
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
+  const { userProfile } = useSelector((state: RootState) => state.auth);
+
   const { ganttView } = useSelector((state: RootState) => state.userSite);
 
   const { oeeStatus, isLoading } = useSelector((state: RootState) => state.oeeDashboard);
@@ -28,9 +30,11 @@ export default function List() {
 
   useEffect(() => {
     (async () => {
-      await dispatch(getOeeStatus());
+      if (userProfile) {
+        await dispatch(getOeeStatus(userProfile.id));
+      }
     })();
-  }, [dispatch]);
+  }, [dispatch, userProfile]);
 
   useEffect(() => {
     if (!socket || !selectedSite) {
@@ -40,13 +44,21 @@ export default function List() {
     const updateDashboard = (data: OeeStatus) => {
       dispatch(updateOeeStatus(data));
     };
+    if (userProfile?.isAdmin) {
+      socket.on(`dashboard_${selectedSite.id}`, updateDashboard);
 
-    socket.on(`dashboard_${selectedSite.id}`, updateDashboard);
+      return () => {
+        socket.off(`dashboard_${selectedSite.id}`, updateDashboard);
+      };
+    } else {
+      socket.on(`dashboard_${selectedSite.id}_${userProfile?.id}`, updateDashboard);
 
-    return () => {
-      socket.off(`dashboard_${selectedSite.id}`, updateDashboard);
-    };
-  }, [dispatch, socket, selectedSite]);
+      return () => {
+        socket.off(`dashboard_${selectedSite.id}_${userProfile?.id}`, updateDashboard);
+      };
+    }
+
+  }, [dispatch, socket, selectedSite, userProfile]);
 
   const ability = useContext(AbilityContext);
 

@@ -18,12 +18,12 @@ export function getOee(id: number) {
   };
 }
 
-export function getOeeStatus() {
+export function getOeeStatus(userId: number) {
   return async () => {
     dispatch(oeeDashboardSlice.actions.startLoading());
 
     try {
-      const response = await axios.get<OeeStatus>(`/oees/status`);
+      const response = await axios.get<OeeStatus>(`/oees/status?userId=${userId}`);
       dispatch(oeeDashboardSlice.actions.getOeeStatusSuccess(response.data));
     } catch (error) {
       dispatch(oeeDashboardSlice.actions.hasError(error));
