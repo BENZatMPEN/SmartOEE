@@ -78,8 +78,16 @@ export class OeeService {
     return list.map((item) => ({ id: item.id, name: item.productionName }));
   }
 
-  async findAllStatus(siteId: number): Promise<OeeStatus> {
-    const rows = await this.entityManager.query(
+  async findAllStatus(siteId: number, userId?: number): Promise<OeeStatus> {
+    //find user by id
+    const user = await this.userRepository
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.oees', 'o')
+      .where('u.id = :userId', { userId })
+      .andWhere('o.deleted = false')
+      .getOne();
+
+    let rows = await this.entityManager.query(
       'WITH cte AS (SELECT distinct b.oeeId,\n' +
       '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
       '             FROM oeeBatches AS b)\n' +
@@ -107,8 +115,8 @@ export class OeeService {
       [siteId],
     );
 
-    const sumRows = await this.entityManager.query(
-      'WITH cte AS (SELECT distinct b.oeeId,\n' +
+    let sumRows = [];
+    const sumRowsQuery = 'WITH cte AS (SELECT distinct b.oeeId,\n' +
       '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
       '             FROM oeeBatches AS b)\n' +
       'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
@@ -120,9 +128,15 @@ export class OeeService {
       '         left join cte on o.id = cte.oeeId\n' +
       '         left join oeeBatches ob\n' +
       '                   on cte.batchId = ob.id\n' +
-      'where o.siteId = ? and o.deleted = 0;',
-      [siteId],
-    );
+      'where o.siteId = ? and o.deleted = 0';
+
+    if (user?.isAdmin === false) {
+      rows = rows.filter((row) => user.oees.some((oee) => oee.id === row.id));
+      const oeeIds = rows.map((row) => row.id);
+      sumRows = await this.entityManager.query(sumRowsQuery + ' AND o.id IN (?)', [siteId, oeeIds]);
+    } else {
+      sumRows = await this.entityManager.query(sumRowsQuery, [siteId]);
+    }
 
     const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
 
@@ -614,11 +628,11 @@ export class OeeService {
 
     //delete oeeMachinePlannedDowntime
     await this.oeeMachinePlannedDowntimeRepository
-    .createQueryBuilder()
-    .update()
-    .set({ deleted: true, updatedAt: new Date() })
-    .where('oeeId = :oeeId', { oeeId: id })
-    .execute();
+      .createQueryBuilder()
+      .update()
+      .set({ deleted: true, updatedAt: new Date() })
+      .where('oeeId = :oeeId', { oeeId: id })
+      .execute();
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {

@@ -30,12 +30,13 @@ import { OptionItem } from '../common/type/option-item';
 import { FileSavePipe } from '../common/pipe/file-save.pipe';
 import { PlanningEntity } from '../common/entities/planning.entity';
 import { OEE_TYPE_STANDALONE } from '../common/constant';
+import { StatusOeeDto } from './dto/status-oee.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('api/oees')
 export class OeeController {
-  constructor(private readonly oeeService: OeeService) {}
+  constructor(private readonly oeeService: OeeService) { }
 
   readonly oeeCodeExistsMessage = 'Oee Code already exists';
   readonly tooManyMachineMessage = 'OEE Standalone cannot have more than one machine';
@@ -51,8 +52,8 @@ export class OeeController {
   }
 
   @Get('status')
-  findAllStatus(@Query('siteId') siteId: number): Promise<OeeStatus> {
-    return this.oeeService.findAllStatus(siteId);
+  findAllStatus(@Query() statusDto: StatusOeeDto): Promise<OeeStatus> {
+    return this.oeeService.findAllStatus(statusDto.siteId, statusDto.userId);
   }
 
   @Get('all')
