@@ -36,7 +36,7 @@ export class BatchStartAutoJob {
 
     //implement stopBatchAutoByActualFg
     async stopBatchAutoByActualFg() {
-        console.log('stopBatchAutoByActualFg');
+        // console.log('stopBatchAutoByActualFg');
         //find batch stop type auto
         const oeeBatches = await this.oeeBatchService.findTypeAutoStopByActualFg();
         for (const batch of oeeBatches) {
@@ -83,7 +83,7 @@ export class BatchStartAutoJob {
     }
 
     async startBatchAutoByBatch() {
-        console.log('startBatchAutoByBatch');
+        // console.log('startBatchAutoByBatch');
         //find batch start type auto
         const oeeBatches = await this.oeeBatchService.findTypeAutoStart();
         for (const batch of oeeBatches) {
@@ -95,7 +95,6 @@ export class BatchStartAutoJob {
 
     async startBatchAutoByPlanning() {
         const plannings = await this.planingService.findAutoStart();
-        console.log('plannings', plannings);
         for (const planning of plannings) {
             const { oeeId } = planning;
             //init create dto
