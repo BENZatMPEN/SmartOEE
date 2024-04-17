@@ -76,6 +76,34 @@ export class NotificationService {
     });
   }
 
+  async notifyAParamStarted(
+    siteId: number,
+    oeeId: number,
+    batchId: number,
+    timestamp: Date,
+    seconds: number,
+  ): Promise<void> {
+    let message = '';
+    const site = await this.getSite(siteId);
+    const oeeBatch = await this.getOeeBatch(batchId);
+    const template = Handlebars.compile({ ...defaultAlertTemplate, ...site.alertTemplate }.aParamStarted);
+    message = template({
+      oeeCode: oeeBatch.oee.oeeCode,
+      productionName: oeeBatch.oee.productionName,
+      sku: oeeBatch.product.sku,
+      time: dayjs(timestamp).format('DD/MM/YYYY HH:mm'),
+      seconds,
+    });
+
+    this.logger.log(message);
+    await this.notify(siteId, oeeId, 'aParams', {
+      message,
+      subject: message,
+      text: message,
+      html: message,
+    });
+  }
+
   async notifyPParam(
     siteId: number,
     oeeId: number,
@@ -209,6 +237,10 @@ export class NotificationService {
       text: templateMessage,
       html: templateMessage,
     });
+  }
+
+  async findOeeBatchNotification(batchId: number, name: string): Promise<OeeBatchNotificationEntity> {
+    return this.oeeBatchNotificationRepository.findOne({ where: { batchId: batchId, name: name } });
   }
 
   async findOeeBatchNotifications(batchId: number): Promise<OeeBatchNotificationEntity[]> {

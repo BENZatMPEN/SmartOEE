@@ -33,9 +33,13 @@ export class BatchNotificationEventsListener {
   private readonly QLow: string = 'qLow';
   private readonly QLowNormal: string = 'qLowNormal';
   private readonly OeeHigh: string = 'oeeHigh';
+  private readonly OeeHighNormal: string = 'oeeHighNormal';
   private readonly AHigh: string = 'aHigh';
+  private readonly AHighNormal: string = 'aHighNormal';
   private readonly PHigh: string = 'pHigh';
+  private readonly PHighNormal: string = 'pHighNormal';
   private readonly QHigh: string = 'qHigh';
+  private readonly QHighNormal: string = 'qHighNormal';
 
   constructor(private readonly siteService: SiteService, private readonly notificationService: NotificationService) {}
 
@@ -113,10 +117,12 @@ export class BatchNotificationEventsListener {
 
     // OEE High
     await this.checkHigh(
+      batchNotifications,
       batch.id,
       batch.oeeId,
       site.id,
       this.OeeHigh,
+      this.OeeHighNormal,
       highThreshold,
       previousStatus.oeePercent,
       currentStatus.oeePercent,
@@ -124,10 +130,12 @@ export class BatchNotificationEventsListener {
 
     // A High
     await this.checkHigh(
+      batchNotifications,
       batch.id,
       batch.oeeId,
       site.id,
       this.AHigh,
+      this.AHighNormal,
       highThreshold,
       previousStatus.aPercent,
       currentStatus.aPercent,
@@ -135,10 +143,12 @@ export class BatchNotificationEventsListener {
 
     // P High
     await this.checkHigh(
+      batchNotifications,
       batch.id,
       batch.oeeId,
       site.id,
       this.PHigh,
+      this.PHighNormal,
       highThreshold,
       previousStatus.pPercent,
       currentStatus.pPercent,
@@ -146,10 +156,12 @@ export class BatchNotificationEventsListener {
 
     // Q High
     await this.checkHigh(
+      batchNotifications,
       batch.id,
       batch.oeeId,
       site.id,
       this.QHigh,
+      this.QHighNormal,
       highThreshold,
       previousStatus.qPercent,
       currentStatus.qPercent,
@@ -167,36 +179,52 @@ export class BatchNotificationEventsListener {
     previousPercent: number,
     currentPercent: number,
   ) {
-    let lowNotification = batchNotifications.find((item) => item.name == lowName);
+    let notification = batchNotifications.find((item) => item.name == lowName);
 
     if (currentPercent <= lowThreshold && previousPercent >= lowThreshold) {
-      if (!lowNotification) {
-        lowNotification = await this.notificationService.createOeeBatchNotification(lowName, batchId);
+      if (!notification) {
+        notification = await this.notificationService.createOeeBatchNotification(lowName, batchId);
       }
 
-      if (!lowNotification.active) {
-        await this.notificationService.activateOeeBatchNotification(lowNotification.id);
+      if (!notification.active) {
+        await this.notificationService.activateOeeBatchNotification(notification.id);
         await this.notificationService.notifyOee(lowName, siteId, oeeId, batchId, previousPercent, currentPercent);
       }
     }
 
-    if (currentPercent > lowThreshold && lowNotification && lowNotification.active) {
-      await this.notificationService.deactivateOeeBatchNotification(lowNotification.id);
+    if (currentPercent > lowThreshold && notification && notification.active) {
+      await this.notificationService.deactivateOeeBatchNotification(notification.id);
       await this.notificationService.notifyOee(lowNormalName, siteId, oeeId, batchId, previousPercent, currentPercent);
     }
   }
 
   private async checkHigh(
+    batchNotifications: OeeBatchNotificationEntity[],
     batchId: number,
     oeeId: number,
     siteId: number,
     highName: string,
+    highNormalName: string,
     highThreshold: number,
     previousPercent: number,
     currentPercent: number,
   ) {
-    if (currentPercent >= highThreshold && previousPercent < highThreshold) {
-      await this.notificationService.notifyOee(highName, siteId, oeeId, batchId, previousPercent, currentPercent);
+    let notification = batchNotifications.find((item) => item.name == highName);
+
+    if (currentPercent > highThreshold && previousPercent <= highThreshold) {
+      if (!notification) {
+        notification = await this.notificationService.createOeeBatchNotification(highName, batchId);
+      }
+
+      if (!notification.active) {
+        await this.notificationService.activateOeeBatchNotification(notification.id);
+        await this.notificationService.notifyOee(highName, siteId, oeeId, batchId, previousPercent, currentPercent);
+      }
+    }
+
+    if (currentPercent <= highThreshold && notification && notification.active) {
+      await this.notificationService.deactivateOeeBatchNotification(notification.id);
+      await this.notificationService.notifyOee(highNormalName, siteId, oeeId, batchId, previousPercent, currentPercent);
     }
   }
 

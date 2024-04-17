@@ -101,6 +101,7 @@ import { BatchQEventsListener } from './common/listeners/batch-q-events.listener
 import { BatchNotificationEvent } from './common/events/batch-notification.event';
 import { BatchNotificationEventsListener } from './common/listeners/batch-notification-events.listener';
 import { OeeBatchNotificationEntity } from './common/entities/oee-batch-notification.entity';
+import { BatchAStartedEventsListener } from './common/listeners/batch-a-started-events.listener';
 
 @Module({
   imports: [
@@ -293,6 +294,7 @@ import { OeeBatchNotificationEntity } from './common/entities/oee-batch-notifica
     BatchStatsJob,
     BatchEventsListener,
     BatchAEventsListener,
+    BatchAStartedEventsListener,
     BatchPEventsListener,
     BatchQEventsListener,
     BatchNotificationEventsListener,

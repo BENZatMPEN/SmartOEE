@@ -8,6 +8,8 @@ import { logBatch } from '../utils/batchHelper';
 import { NotificationService } from '../services/notification.service';
 import { BatchAEvent } from '../events/batch-a.event';
 import { BatchParamsUpdatedEvent } from '../events/batch.event';
+import { OeeBatchEntity } from '../entities/oee-batch.entity';
+import { OeeBatchMcState } from '../type/oee-status';
 
 @Injectable()
 export class BatchAEventsListener {
@@ -68,14 +70,7 @@ export class BatchAEventsListener {
     const updatingA = updatingAs[0];
     await Promise.all([
       this.oeeBatchService.createBatchA(updatingA),
-      this.notificationService.notifyAParam(
-        batch.siteId,
-        batch.oeeId,
-        batch.id,
-        updatingA.tagId,
-        readTimestamp,
-        previousMcState.stopSeconds,
-      ),
+      this.notify(batch, updatingA, previousMcState, readTimestamp),
     ]);
 
     await this.eventEmitter.emitAsync('batch-a-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
@@ -90,5 +85,27 @@ export class BatchAEventsListener {
         },
       ]),
     );
+  }
+
+  private async notify(
+    batch: OeeBatchEntity,
+    updatingA: any,
+    previousMcState: OeeBatchMcState,
+    readTimestamp: Date,
+  ): Promise<void> {
+    const notiName = 'breakdown';
+    const notification = await this.notificationService.findOeeBatchNotification(batch.id, notiName);
+
+    if (notification && notification.active) {
+      await this.notificationService.deactivateOeeBatchNotification(notification.id);
+      await this.notificationService.notifyAParam(
+        batch.siteId,
+        batch.oeeId,
+        batch.id,
+        updatingA.tagId,
+        readTimestamp,
+        previousMcState.stopSeconds,
+      );
+    }
   }
 }

@@ -1,6 +1,7 @@
 export class AlertTemplate {
   aParamWithoutParam: string;
   aParamWithParam: string;
+  aParamStarted: string;
   pParamWithoutParam: string;
   pParamWithParam: string;
   qParamWithParam: string;
@@ -13,7 +14,11 @@ export class AlertTemplate {
   qLow: string;
   qLowNormal: string;
   oeeHigh: string;
+  oeeHighNormal: string;
   aHigh: string;
+  aHighNormal: string;
   pHigh: string;
+  pHighNormal: string;
   qHigh: string;
+  qHighNormal: string;
 }
