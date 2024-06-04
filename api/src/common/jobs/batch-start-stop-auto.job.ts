@@ -4,6 +4,10 @@ import { CreateOeeBatchDto } from "src/oee-batch/dto/create-oee-batch.dto";
 import { OeeBatchService } from "src/oee-batch/oee-batch.service";
 import { PlanningService } from "src/planning/planning.service";
 import { EndType } from "../enums/batchTypes";
+import { InjectRepository } from "@nestjs/typeorm";
+import { OeeBatchEntity } from "../entities/oee-batch.entity";
+import { Repository } from "typeorm";
+import { SocketService } from "../services/socket.service";
 
 
 @Injectable()
@@ -11,21 +15,27 @@ export class BatchStartAutoJob {
     private readonly logger = new Logger(BatchStartAutoJob.name);
 
     constructor(
+        private readonly socketService: SocketService,
         private readonly planingService: PlanningService,
-        private readonly oeeBatchService: OeeBatchService
+        private readonly oeeBatchService: OeeBatchService,
+        @InjectRepository(OeeBatchEntity)
+        private readonly oeeBatchRepository: Repository<OeeBatchEntity>,
     ) { }
 
+
+    @Cron('0/2 * * * * *')
+    async handleCronBatchStatus() {
+        //websocket status batch
+        await this.batchStatus();
+    }
     //corn every 1 minute
     // @Cron('0/1 * * * * *')
     @Cron('0/1 * * * *')
     async handleCron() {
-        this.logger.log('BatchAutoJob');
         // //start batch auto by planning
         await this.startBatchAutoByPlanning();
         // //start batch auto by batch
         await this.startBatchAutoByBatch();
-
-
         //stop batch auto by auto planning
         await this.stopBatchAutByAutoPlaning();
         //stop batch auto by auto fg
@@ -34,13 +44,26 @@ export class BatchStartAutoJob {
         await this.stopBatchAutoByActualFg();
     }
 
+    //implement batchStatus
+    async batchStatus() {
+        const oeeBatches = await this.oeeBatchRepository
+            .createQueryBuilder('batch')
+            .where('batch.batchStoppedDate IS NULL')
+            .getMany();
+        oeeBatches.forEach(async (batch) => {
+            // send to socket
+            this.socketService.socket.to(`site_${batch.siteId}`).emit(`batch_${batch.oeeId}.updated`, batch);
+        });
+    }
+
+
     //implement stopBatchAutoByActualFg
     async stopBatchAutoByActualFg() {
         // console.log('stopBatchAutoByActualFg');
         //find batch stop type auto
         const oeeBatches = await this.oeeBatchService.findTypeAutoStopByActualFg();
         for (const batch of oeeBatches) {
-            const mcState= batch.mcState;
+            const mcState = batch.mcState;
             if (mcState.total >= batch.plannedQuantity && mcState.stopSeconds > batch.minorStopSeconds) {
                 const toBeStopped = true;
                 //condition is status === minor stop
@@ -57,7 +80,7 @@ export class BatchStartAutoJob {
         //find batch stop type auto
         const oeeBatches = await this.oeeBatchService.findTypeAutoStop(EndType.AUTO_FG);
         for (const batch of oeeBatches) {
-            const mcState= batch.mcState;
+            const mcState = batch.mcState;
             if (mcState.stopSeconds > batch.minorStopSeconds) {
                 const toBeStopped = true;
                 //condition is status === minor stop

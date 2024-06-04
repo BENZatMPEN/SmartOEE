@@ -104,6 +104,9 @@ const oeeBatchSlice = createSlice({
         ...action.payload,
       };
     },
+    updateBatchNow(state, action) {
+      state.currentBatch = { ...action.payload };
+    },
     getBatchPagedListSuccess(state, action) {
       state.batchPagedList = action.payload;
     },

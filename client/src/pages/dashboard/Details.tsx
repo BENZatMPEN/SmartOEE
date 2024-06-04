@@ -15,6 +15,7 @@ import {
   getOeeLatestBatch,
   resetBatch,
   updateBatch,
+  updateBatchNow,
   updateBatchParamAs,
   updateBatchParamPs,
   updateBatchParamQs,
@@ -199,6 +200,10 @@ export default function Details() {
       );
     };
 
+    const updateBatchCurrent = (data: any) => {
+      dispatch(updateBatchNow(data));
+    }
+
     const updateAParams = (data: OeeBatchA[]) => {
       dispatch(updateBatchParamAs(data));
     };
@@ -217,6 +222,7 @@ export default function Details() {
 
     socket.on(`mc-state_${currentBatchId}.changed`, updateMcState);
     socket.on(`stats_${currentBatchId}.updated`, updateStats);
+    socket.on(`batch_${oeeId}.updated`, updateBatchCurrent);
     socket.on(`a-params_${currentBatchId}.updated`, updateAParams);
     socket.on(`p-params_${currentBatchId}.updated`, updatePParams);
     socket.on(`q-params_${currentBatchId}.updated`, updateQParams);
@@ -225,6 +231,7 @@ export default function Details() {
     return () => {
       socket.off(`mc-state_${currentBatchId}.changed`, updateMcState);
       socket.off(`stats_${currentBatchId}.updated`, updateStats);
+      socket.off(`batch_${oeeId}.updated`, updateBatchCurrent);
       socket.off(`a-params_${currentBatchId}.updated`, updateAParams);
       socket.off(`p-params_${currentBatchId}.updated`, updatePParams);
       socket.off(`q-params_${currentBatchId}.updated`, updateQParams);

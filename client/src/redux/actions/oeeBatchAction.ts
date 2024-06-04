@@ -17,6 +17,7 @@ export const {
   resetBatch,
   newBatch,
   updateBatch,
+  updateBatchNow,
   enableEditBatch,
   updateBatchParamAs,
   updateBatchParamA,
