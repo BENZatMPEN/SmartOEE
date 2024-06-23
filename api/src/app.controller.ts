@@ -463,6 +463,7 @@ export class AppController {
         remark: faker.commerce.productDescription(),
         activePcs: false,
         pscGram: 0,
+        secondUnit: '',
       },
       null,
       sites[0].id,
@@ -475,6 +476,7 @@ export class AppController {
         remark: faker.commerce.productDescription(),
         activePcs: false,
         pscGram: 0,
+        secondUnit: '',
       },
       null,
       sites[0].id,
@@ -487,6 +489,7 @@ export class AppController {
         remark: faker.commerce.productDescription(),
         activePcs: false,
         pscGram: 0,
+        secondUnit: '',
       },
       null,
       sites[0].id,
@@ -494,6 +497,7 @@ export class AppController {
 
     await this.oeeService.create(
       {
+        activeSecondUnit: false,
         oeeCode: 'OEE001',
         oeeType: OEE_TYPE_STANDALONE,
         minorStopSeconds: 10,
@@ -656,6 +660,7 @@ export class AppController {
           remark: faker.commerce.productDescription(),
           activePcs: false,
           pscGram: 0,
+          secondUnit: '',
         },
         null,
         sites[1].id,
@@ -713,6 +718,7 @@ export class AppController {
       oees.push(
         await this.oeeService.create(
           {
+            activeSecondUnit: false,
             oeeCode: 'OEE' + faker.datatype.number({ min: 100, max: 999 }),
             oeeType: oeeTypes[faker.datatype.number({ min: 0, max: 1 })],
             minorStopSeconds: timeUnit == OEE_TIME_UNIT_MINUTE

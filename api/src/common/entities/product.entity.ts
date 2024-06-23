@@ -40,4 +40,7 @@ export class ProductEntity {
 
   @Column({ type: 'int', nullable: true })
   pscGram: number;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  secondUnit: string;
 }

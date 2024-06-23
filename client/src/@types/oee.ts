@@ -5,6 +5,7 @@ import { User } from './user';
 
 export type Oee = {
   id: number;
+  activeSecondUnit: boolean;
   oeeCode: string;
   oeeType: string;
   location: string;
@@ -26,6 +27,7 @@ export type Oee = {
 };
 
 export interface EditOee {
+  activeSecondUnit: boolean;
   oeeCode: string;
   oeeType: string;
   location: string;
@@ -99,6 +101,7 @@ export type OeeStatusItem = {
   productName: string;
   batchStartedDate: Date;
   batchStoppedDate: Date;
+  activeSecondUnit: boolean;
 };
 
 export type OeePagedList = {

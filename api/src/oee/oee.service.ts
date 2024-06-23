@@ -106,7 +106,8 @@ export class OeeService {
       '       ob.id as oeeBatchId,\n' +
       '       ob.product,\n' +
       '       ob.batchStartedDate,\n' +
-      '       ob.batchStoppedDate\n' +
+      '       ob.batchStoppedDate,\n' +
+      '       o.activeSecondUnit\n' +
       'from oees o\n' +
       '         left join cte on o.id = cte.oeeId\n' +
       '         left join oeeBatches ob\n' +
@@ -114,7 +115,6 @@ export class OeeService {
       'where o.siteId = ? and o.deleted = false',
       [siteId],
     );
-
     let sumRows = [];
     const sumRowsQuery = 'WITH cte AS (SELECT distinct b.oeeId,\n' +
       '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
@@ -129,7 +129,6 @@ export class OeeService {
       '         left join oeeBatches ob\n' +
       '                   on cte.batchId = ob.id\n' +
       'where o.siteId = ? and o.deleted = 0';
-
     if (user?.isAdmin === false) {
       rows = rows.filter((row) => user.oees.some((oee) => oee.id === row.id));
       const oeeIds = rows.map((row) => row.id);
@@ -164,6 +163,7 @@ export class OeeService {
           product,
           batchStartedDate,
           batchStoppedDate,
+          activeSecondUnit,
         } = row;
         const { oeePercent, totalCount, target } = oeeStats || initialOeeBatchStats;
 
@@ -186,6 +186,7 @@ export class OeeService {
           productName: product?.name || '',
           batchStartedDate: batchStartedDate,
           batchStoppedDate: batchStoppedDate,
+          activeSecondUnit: activeSecondUnit,
         } as OeeStatusItem;
       }),
     } as OeeStatus;

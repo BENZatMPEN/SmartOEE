@@ -4,6 +4,7 @@ export type Product = {
   name: string;
   remark: string;
   activePcs: boolean;
+  secondUnit: string;
   pscGram: number;
   imageName: string;
   createdAt: Date;
@@ -17,6 +18,7 @@ export interface EditProduct {
   remark: string;
   image: File | null;
   activePcs: boolean;
+  secondUnit: string;
   pscGram: number;
 }
 

@@ -20,4 +20,8 @@ export class UpdateProductDto {
   @IsOptional()
   @Type(() => Number)
   readonly pscGram: number;
+
+  @IsString()
+  @IsOptional()
+  readonly secondUnit: string;
 }

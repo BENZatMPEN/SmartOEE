@@ -93,6 +93,7 @@ export default function OeeForm({ isEdit }: Props) {
   const methods = useForm<EditOee>({
     resolver: yupResolver(NewOeeSchema),
     defaultValues: {
+      activeSecondUnit: false,
       oeeCode: '',
       oeeType: OEE_TYPE_OPTIONS[0],
       location: '',
@@ -110,6 +111,7 @@ export default function OeeForm({ isEdit }: Props) {
       operators: [],
     },
     values: {
+      activeSecondUnit: currentOee?.activeSecondUnit || false,
       oeeCode: currentOee?.oeeCode || '',
       oeeType: currentOee?.oeeType || OEE_TYPE_OPTIONS[0],
       location: currentOee?.location || '',
@@ -445,6 +447,11 @@ export default function OeeForm({ isEdit }: Props) {
               <Card>
                 <CardContent>
                   <Grid container spacing={3}>
+
+                    <Grid item xs={12}>
+                      <RHFCheckbox name="activeSecondUnit" label="Second Unit Mode" />
+                    </Grid>
+
                     <Grid item xs={6}>
                       <RHFTextField name="oeeCode" label="OEE Code" />
                     </Grid>
@@ -509,6 +516,7 @@ export default function OeeForm({ isEdit }: Props) {
                         label={`Breakdown Condition (${fTimeUnitText(values.timeUnit)})`}
                       />
                     </Grid>
+
                     <Grid item xs={12}>
                       <Autocomplete
                         multiple

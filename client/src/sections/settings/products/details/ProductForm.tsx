@@ -43,6 +43,7 @@ export default function ProductForm({ isEdit }: Props) {
       remark: '',
       image: null,
       activePcs: false,
+      secondUnit: '',
       pscGram: 0,
     },
     values: {
@@ -51,11 +52,13 @@ export default function ProductForm({ isEdit }: Props) {
       remark: currentProduct?.remark || '',
       image: null,
       activePcs: currentProduct?.activePcs || false,
+      secondUnit: currentProduct?.secondUnit || '',
       pscGram: currentProduct?.pscGram || 0,
     },
   });
 
   const {
+    watch,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
@@ -103,6 +106,8 @@ export default function ProductForm({ isEdit }: Props) {
     [setValue],
   );
 
+  const activePcs = watch('activePcs');
+  
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <FormHeader
@@ -151,7 +156,11 @@ export default function ProductForm({ isEdit }: Props) {
 
               <Grid item xs={6} sx={{ display: 'flex' }}>
                 <RHFCheckbox name="activePcs" label="" />
-                <RHFTextField name="pscGram" label="1 Pcs(g)" />
+                <RHFTextField name="pscGram" label="1 Pcs" disabled={!activePcs} />
+              </Grid>
+
+              <Grid item xs={6} sx={{ display: 'flex' }}>
+                <RHFTextField name="secondUnit" label="Second Unit" disabled={!activePcs} />
               </Grid>
 
               <Grid item xs={12}>

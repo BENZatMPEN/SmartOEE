@@ -29,6 +29,7 @@ export class OeeStatusItem {
   readonly productName: string;
   readonly batchStartedDate: Date;
   readonly batchStoppedDate: Date;
+  readonly activeSecondUnit: boolean;
 }
 
 export class OeeBatchMcState {

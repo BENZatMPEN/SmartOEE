@@ -7,6 +7,11 @@ import { OeeMachineDto } from './oee-machine.dto';
 import { OeeOperatorDto } from './oee-operator.dto';
 
 export class CreateOeeDto {
+
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  readonly activeSecondUnit: boolean;
+
   @IsString()
   readonly oeeCode: string;
 
