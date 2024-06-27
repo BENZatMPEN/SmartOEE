@@ -165,7 +165,7 @@ export class OeeService {
           batchStoppedDate,
           activeSecondUnit,
         } = row;
-        const { oeePercent, totalCount, target } = oeeStats || initialOeeBatchStats;
+        const { oeePercent, totalCount, target, totalAutoDefects, totalManualDefects } = oeeStats || initialOeeBatchStats;
 
         return {
           id: id,
@@ -173,6 +173,7 @@ export class OeeService {
           oeeCode: oeeCode,
           productionName: productionName,
           actual: totalCount,
+          defect: totalAutoDefects + totalManualDefects,
           plan: plannedQuantity,
           target: target,
           oeePercent: oeePercent,

@@ -16,6 +16,7 @@ export class OeeStatusItem {
   readonly oeeCode: string;
   readonly productionName: string;
   readonly actual: number;
+  readonly defect: number;
   readonly plan: number;
   readonly target: number;
   readonly oeePercent: number;

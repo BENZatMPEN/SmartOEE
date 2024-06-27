@@ -16,7 +16,7 @@ import {
   TablePagination,
   TextField,
   Typography,
-  } from '@mui/material';
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 import { OeeBatchQ } from '../../../../@types/oeeBatch';
@@ -53,9 +53,9 @@ export default function DashboardOperatingOeeQ() {
 
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
-  const { oeeStats, machines, product } = currentBatch || { machines: [] };
+  const { oeeStats, machines, product, plannedQuantity } = currentBatch || { machines: [] };
 
-  const { totalAutoDefects, totalManualDefects, totalManualGrams, totalOtherDefects } = oeeStats || initialOeeStats;
+  const { totalAutoDefects, totalManualDefects, totalManualGrams, totalOtherDefects, totalCount } = oeeStats || initialOeeStats;
 
   const [qStats, setQStats] = useState<QStats>(initialQStats);
 
@@ -261,6 +261,12 @@ export default function DashboardOperatingOeeQ() {
 
     return grams.split(',').reduce((acc: number, x: string) => acc + Number(x), 0);
   }
+  const totalDefect = totalAutoDefects + totalManualDefects;
+  const fgValue = totalCount - totalDefect;
+
+  const safePlannedQuantity = plannedQuantity || 1; // default to 1 to avoid division by zero
+  const yieldValue = ((totalCount - totalDefect) / safePlannedQuantity) * 100;
+  const lossValue = (safePlannedQuantity - (totalCount - totalDefect)) / safePlannedQuantity * 100;
   return (
     <Card>
       <CardContent>
@@ -274,7 +280,7 @@ export default function DashboardOperatingOeeQ() {
               </Table>
             </TableContainer>
           ) : (
-            <Grid container spacing={3}>
+            <Grid container spacing={3} sx={{ mb: 5 }}>
               <Grid item xs={12}>
                 <Grid container>
                   <Grid item xs={12} xl={2.5}>
@@ -299,7 +305,11 @@ export default function DashboardOperatingOeeQ() {
                         }}
                       />
                       {product?.activePcs && (
-                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${product?.pscGram} g`}</Typography>
+                        <>
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Yield ${yieldValue}%`}</Typography>
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Loss ${lossValue}%`}</Typography>
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${product?.pscGram} ${product?.secondUnit}`}</Typography>
+                        </>
                       )}
 
                       <Stack spacing={2} direction="row">
@@ -335,14 +345,39 @@ export default function DashboardOperatingOeeQ() {
 
               <Grid item xs={12} xl={2.5}>
                 <Stack spacing={4} sx={{ mt: 1 }}>
-                  <TextField
-                    type="number"
-                    size="small"
-                    label="Total Defect(pcs)"
-                    value={totalAutoDefects + qStats.totalManual}
-                    InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
-                    InputLabelProps={{ shrink: true }}
-                  />
+
+                  {
+                    product?.activePcs ? (
+                      <>
+                        <TextField
+                          type="string"
+                          size="small"
+                          label="Total Finish Good (FG)"
+                          value={`${fgValue} pcs = ${fgValue * (product?.pscGram || 0)} ${product?.secondUnit}`}
+                          InputProps={{ readOnly: true }}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                        <TextField
+                          type="string"
+                          size="small"
+                          label="Total Defect(pcs)"
+                          value={`${totalAutoDefects + qStats.totalManual} pcs = ${(totalAutoDefects + qStats.totalManual) * (product?.pscGram || 0)} ${product?.secondUnit}`}
+                          InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </>
+
+                    ) : (
+                      <TextField
+                        type="number"
+                        size="small"
+                        label="Total Defect(pcs)"
+                        value={totalAutoDefects + qStats.totalManual}
+                        InputProps={{ readOnly: true, sx: { backgroundColor: '#fdf924' } }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    )
+                  }
                   <TextField
                     type="number"
                     size="small"
@@ -360,26 +395,30 @@ export default function DashboardOperatingOeeQ() {
                     InputProps={{ readOnly: true }}
                     InputLabelProps={{ shrink: true }}
                   />
-
-                  <TextField
-                    type="number"
-                    size="small"
-                    label="Total Manual Gram Defect(pcs)"
-                    value={qStats.totalManualGram}
-                    InputProps={{ readOnly: true }}
-                    InputLabelProps={{ shrink: true }}
-                    disabled={product?.activePcs !== true}
-                  />
-
-                  <TextField
-                    type="number"
-                    size="small"
-                    label="Total Gram"
-                    value={totalGram}
-                    InputProps={{ readOnly: true }}
-                    InputLabelProps={{ shrink: true }}
-                    disabled={product?.activePcs !== true}
-                  />
+                  {
+                    product?.activePcs && (
+                      <>
+                        <TextField
+                          type="number"
+                          size="small"
+                          label={`Total Manual ${product?.secondUnit} (1) Defect`}
+                          value={qStats.totalManualGram}
+                          InputProps={{ readOnly: true }}
+                          InputLabelProps={{ shrink: true }}
+                          disabled={product?.activePcs !== true}
+                        />
+                        <TextField
+                          type="number"
+                          size="small"
+                          label={`Total ${product?.secondUnit} Input`}
+                          value={totalGram}
+                          InputProps={{ readOnly: true }}
+                          InputLabelProps={{ shrink: true }}
+                          disabled={product?.activePcs !== true}
+                        />
+                      </>
+                    )
+                  }
                 </Stack>
               </Grid>
 
@@ -443,19 +482,19 @@ export default function DashboardOperatingOeeQ() {
                             </Stack>
                           </Paper>
                         </Grid>
-
-                        <Grid item xs={1.75}>
-                          <TextField
-                            type="number"
-                            size="small"
-                            label="Manual(g=>pcs)"
-                            value={row?.manualAmountGram}
-                            InputProps={{ readOnly: true }}
-                            onClick={() => handleOpenModal(row)}
-                            disabled={product?.activePcs !== true}
-                          />
-                        </Grid>
-
+                        {product?.activePcs && (
+                          <Grid item xs={1.75}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              label={`Manual(${product?.secondUnit})`}
+                              value={row?.manualAmountGram}
+                              InputProps={{ readOnly: true }}
+                              onClick={() => handleOpenModal(row)}
+                              disabled={product?.activePcs !== true}
+                            />
+                          </Grid>
+                        )}
                         <Grid item xs={1.75}>
                           <TextField
                             type="number"

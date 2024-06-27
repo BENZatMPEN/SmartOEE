@@ -28,7 +28,7 @@ export default function DashboardApqGraphQ() {
 
   const { currentBatch, batchStatsTime, batchParetoQ } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { id: batchId, oeeStats } = currentBatch || {};
+  const { id: batchId, oeeStats, product, plannedQuantity } = currentBatch || {};
 
   const { qPercent, totalCount, totalManualDefects, totalAutoDefects } = oeeStats || initialOeeStats;
 
@@ -110,9 +110,8 @@ export default function DashboardApqGraphQ() {
 
   useEffect(() => {
     const { labels, counts, percents } = batchParetoQ || { labels: [], counts: [], percents: [] };
-    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${
-      currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
-    } OEE Quality`;
+    const filename = `${selectedOee?.oeeCode || ''}${currentBatch?.lotNumber || ''}${currentBatch?.startDate ? dayjs(currentBatch.startDate).format('DDMMYYYY') : ''
+      } OEE Quality`;
 
     setOptions({
       ...options,
@@ -159,9 +158,28 @@ export default function DashboardApqGraphQ() {
     [selectedSite, percentSettings, useSitePercentSettings],
   );
 
+  const totalDefect = totalAutoDefects + totalManualDefects;
+  const safePlannedQuantity = plannedQuantity || 1; // default to 1 to avoid division by zero
+  const yieldValue = ((totalCount - totalDefect) / safePlannedQuantity) * 100;
+  const lossValue = (safePlannedQuantity - (totalCount - totalDefect)) / safePlannedQuantity * 100;
+
   return (
     <Card>
       <CardContent>
+        {
+          product?.activePcs && (
+            <>
+              <Stack spacing={2} sx={{ m: 2, width: '100%', gap: '100px' }} direction="row" justifyContent="center">
+                <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
+                  {`Yield ${yieldValue}%`}
+                </Typography>
+                <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
+                  {`Loss ${lossValue}%`}
+                </Typography>
+              </Stack>
+            </>
+          )
+        }
         <Grid container alignItems="center" spacing={3}>
           <Grid item xs={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, gap: 3 }}>
@@ -186,15 +204,38 @@ export default function DashboardApqGraphQ() {
 
           <Grid item xs={3.5}>
             <Stack spacing={1}>
-              <ItemBox head="Total Product" value={fNumber(totalCount)} tail="pcs." />
+              <ItemBox head="Total Product"
+                value={fNumber(totalCount)}
+                tail="pcs." />
+              {
+                product?.activePcs && (
+                  <ItemBox head=""
+                    value={`${product.pscGram != null ? `${fNumber(Number(totalCount) * Number(product.pscGram))}` : '0'}`}
+                    tail={`${product?.secondUnit ?? 'pcs'}.`} />
+                )
+              }
               <ItemBox
                 head="Good Product"
                 value={fNumber(totalCount - totalAutoDefects + totalManualDefects)}
-                tail="pcs."
-              />
-
-              <ItemBox head="Defect Product" value={fNumber(totalAutoDefects + totalManualDefects)} tail="pcs." />
+                tail="pcs." />
+              {
+                product?.activePcs && (
+                  <ItemBox head=""
+                    value={`${product.pscGram != null ? `${fNumber(Number(totalCount - totalAutoDefects + totalManualDefects) * Number(product.pscGram))}` : '0'}`}
+                    tail={`${product?.secondUnit ?? 'pcs'}.`} />
+                )
+              }
+              <ItemBox head="Defect Product"
+                value={fNumber(totalAutoDefects + totalManualDefects)}
+                tail="pcs." />
             </Stack>
+            {
+              product?.activePcs && (
+                <ItemBox head=""
+                  value={`${product.pscGram != null ? `${fNumber(Number(totalAutoDefects + totalManualDefects) * Number(product.pscGram))}` : '0'}`}
+                  tail={`${product?.secondUnit ?? 'pcs'}.`} />
+              )
+            }
           </Grid>
 
           <Grid item xs={5.5}>

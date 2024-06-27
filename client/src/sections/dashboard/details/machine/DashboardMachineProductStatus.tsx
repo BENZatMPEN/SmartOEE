@@ -7,25 +7,49 @@ import { fNumber, fNumber2 } from '../../../../utils/formatNumber';
 export default function DashboardMachineProductStatus() {
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
 
-  const { plannedQuantity, oeeStats } = currentBatch || { status: '', standardSpeedSeconds: 0, plannedQuantity: 0 };
+  const { plannedQuantity, oeeStats, product } = currentBatch || { status: '', standardSpeedSeconds: 0, plannedQuantity: 0 };
 
-  const { totalCount, target, efficiency } = oeeStats || initialOeeStats;
+  const { totalAutoDefects, totalManualDefects, totalCount = 0, target, efficiency } = oeeStats || initialOeeStats;
 
   const diff = useMemo(() => plannedQuantity - totalCount, [plannedQuantity, totalCount]);
 
   const diffPercent = useMemo(() => (totalCount * 100) / plannedQuantity, [plannedQuantity, totalCount]);
 
+  const totalDefect = totalAutoDefects + totalManualDefects;
+  const safePlannedQuantity = plannedQuantity || 1; // default to 1 to avoid division by zero
+  const yieldValue = ((totalCount - totalDefect) / safePlannedQuantity) * 100;
+  const lossValue = (safePlannedQuantity - (totalCount - totalDefect)) / safePlannedQuantity * 100;
+
   return (
     <Card>
       <CardHeader title="Product Status" />
+
       <CardContent>
+
+        {
+          product?.activePcs && (
+            <>
+              <Stack spacing={2} sx={{ m: 2, width: '100%', gap: '100px' }} direction="row" justifyContent="center">
+                <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
+                  {`Yield ${yieldValue}%`}
+                </Typography>
+                <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
+                  {`Loss ${lossValue}%`}
+                </Typography>
+              </Stack>
+            </>
+          )
+        }
+
         <Stack spacing={3}>
           <Stack spacing={1} direction="row" justifyContent="space-between">
             <Box>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Actual
               </Typography>
-              <Typography variant={'h2'}>{fNumber(totalCount)}</Typography>
+              <Typography variant={'h2'}>
+                {`${fNumber(totalCount)} ${product?.activePcs ? `${product?.pscGram != null ? `= ${fNumber(Number(totalCount) * Number(product.pscGram))}` : '0'} ${product?.secondUnit ?? 'pcs'}` : ''}`}
+              </Typography>
             </Box>
 
             <Box textAlign="center">
@@ -39,7 +63,9 @@ export default function DashboardMachineProductStatus() {
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Difference
               </Typography>
-              <Typography variant={'h2'}>{fNumber(diff)}</Typography>
+              <Typography variant={'h2'}>
+                {`${fNumber(diff)} ${product?.activePcs ? `${product?.pscGram != null ? `= ${fNumber(Number(diff) * Number(product.pscGram))}` : '0'} ${product?.secondUnit ?? 'pcs'}` : ''}`}
+              </Typography>
             </Box>
           </Stack>
 
@@ -54,14 +80,18 @@ export default function DashboardMachineProductStatus() {
 
           <Stack spacing={1} direction="row" justifyContent="space-between">
             <Box>
-              <Typography variant={'h3'}>{fNumber(target)}</Typography>
+              <Typography variant={'h3'}>
+                {`${fNumber(target)} ${product?.activePcs ? `${product?.pscGram != null ? `= ${fNumber(Number(target) * Number(product.pscGram))}` : '0'} ${product?.secondUnit ?? 'pcs'}` : ''}`}
+              </Typography>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Target
               </Typography>
             </Box>
 
             <Box textAlign="right">
-              <Typography variant={'h3'}>{fNumber(plannedQuantity)}</Typography>
+              <Typography variant={'h3'}>
+                {`${fNumber(plannedQuantity)} ${product?.activePcs ? `${product?.pscGram != null ? `= ${fNumber(Number(plannedQuantity) * Number(product.pscGram))}` : '0'} ${product?.secondUnit ?? 'pcs'}` : ''}`}
+              </Typography>
               <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
                 Planned
               </Typography>

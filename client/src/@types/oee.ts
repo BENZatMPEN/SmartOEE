@@ -88,6 +88,7 @@ export type OeeStatusItem = {
   oeeCode: string;
   productionName: string;
   actual: number;
+  defect: number;
   plan: number;
   target: number;
   oeePercent: number;

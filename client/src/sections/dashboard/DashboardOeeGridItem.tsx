@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { OeeStatusItem } from '../../@types/oee';
@@ -17,6 +17,12 @@ type LegendProps = {
   number: string;
 };
 
+type LegendUnitProps = {
+  label: string;
+  number: string;
+  unit: string;
+};
+
 type Props = {
   oeeStatusItem: OeeStatusItem;
 };
@@ -29,6 +35,7 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
     oeeCode,
     productionName,
     actual,
+    defect,
     plan,
     target,
     oeePercent,
@@ -39,6 +46,7 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
     useSitePercentSettings,
     percentSettings,
     productName,
+    activeSecondUnit,
   } = oeeStatusItem;
 
   const percents = useMemo(
@@ -52,6 +60,9 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
     // }
     return getColor(status);
   };
+
+  const yieldValue = ((actual - defect) / plan) * 100;
+  const lossValue = (plan - (actual - defect)) / plan * 100;
 
   return (
     <Card>
@@ -92,10 +103,22 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
                 End Plan (HH:MM): {endDate ? fTimeShort(endDate) : '-'}
               </Typography>
             </Stack>
+            {
+              activeSecondUnit ? (
+                <Stack direction="row" justifyContent="space-between" spacing={6} sx={{ mt: 1 }}>
+                  <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
+                    Yield {fNumber(yieldValue)} %
+                  </Typography>
+                  <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
+                    Loss {fNumber(lossValue)} %
+                  </Typography>
+                </Stack>
+              ) : null
+            }
           </Stack>
 
           <Box>
-            <Grid container sx={{ mt: 2 }} spacing={2} alignItems="center">
+            <Grid container spacing={2} alignItems="center" sx={activeSecondUnit ? {} : { mt: 4, mb: 3 }}>
               <Grid item xs={6}>
                 <DashboardOeePieChart
                   high={percents.high}
@@ -108,9 +131,23 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
 
               <Grid item xs={6}>
                 <Stack spacing={2}>
-                  <Legend label="Actual" number={fNumber(actual)} />
-                  <Legend label="Plan" number={fNumber(plan)} />
-                  <Legend label="Target" number={fNumber(target)} />
+                  {
+                    activeSecondUnit ?
+                      <>
+                        <LegendUnit label="Actual" number={fNumber(actual)} unit="pcs" />
+                        <LegendUnit label="FG" number={fNumber(actual - defect)} unit="pcs" />
+                        <LegendUnit label="NG" number={fNumber(defect)} unit="pcs" />
+                        <LegendUnit label="Target" number={fNumber(target)} unit="pcs" />
+                        <LegendUnit label="Plan" number={fNumber(plan)} unit="pcs" />
+                      </>
+                      :
+                      <>
+                        <Legend label="Actual" number={fNumber(actual)} />
+                        <Legend label="Plan" number={fNumber(plan)} />
+                        <Legend label="Target" number={fNumber(target)} />
+                      </>
+                  }
+
                 </Stack>
               </Grid>
             </Grid>
@@ -130,6 +167,19 @@ function Legend({ label, number }: LegendProps) {
         </Typography>
       </Stack>
       <Typography variant="subtitle1">{number}</Typography>
+    </Stack>
+  );
+}
+
+function LegendUnit({ label, number, unit }: LegendUnitProps) {
+  return (
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+          {label}
+        </Typography>
+      </Stack>
+      <Typography variant="subtitle1">{number} {unit}</Typography>
     </Stack>
   );
 }
