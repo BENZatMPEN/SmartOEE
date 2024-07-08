@@ -41,7 +41,24 @@ type OeeSumData = {
     totalAutoDefects: number;
     totalManualDefects: number;
     totalOtherDefects: number;
+    qOk: number;
     qNg: number;
+    yield: number;
+    loss: number;
+    totalRunningSeconds: number;
+    totalOperatingSeconds: number;
+    totalOeePercent: number;
+    totalAPercent: number;
+    totalPPercent: number;
+    totalQPercent: number;
+    totalQOk: number;
+    totalQNg: number;
+    totalActual: number;
+    totalPlan: number;
+    totalEfficiency: number;
+    totalYield: number;
+    totalLoss: number;
+    totalTarget: number;
     totalCountByBatch: {
         [key: string]: {
             lotNumber: string;
@@ -50,6 +67,27 @@ type OeeSumData = {
         };
     };
 };
+
+type sumOeeDataType = {
+    runningSeconds: number;
+    operatingSeconds: number;
+    totalBreakdownSeconds: number;
+    plannedDowntimeSeconds: number;
+    totalAutoDefects: number;
+    totalManualDefects: number;
+    totalCountByBatch: number;
+    totalTarget: number;
+    oeeSum: number;
+    aSum: number;
+    pSum: number;
+    qSum: number;
+    qNg: number;
+    totalCount: number;
+    plan: number;
+    efficiency: number;
+    yield: number;
+    loss: number;
+}
 
 type CalculationItem = {
     key: number;
@@ -160,7 +198,10 @@ export class ReportService {
         for (const key of Object.keys(groupTable)) {
             const sumOee = await this.sumOeeData(groupTable[key], fieldName, names, lotNumbers, type);
             sumOee.qNg = sumOee.totalAutoDefects + sumOee.totalManualDefects;
+            sumOee.qOk = sumOee.totalCount - sumOee.qNg;
             sumOee.efficiency = (sumOee.totalCount / sumOee.target) * 100;
+            sumOee.yield = ((sumOee.totalCount - sumOee.qNg) / sumOee.plan) * 100;
+            sumOee.loss = ((sumOee.plan - (sumOee.totalCount - sumOee.qNg)) / sumOee.plan) * 100;
             oeeRowsTable.push(this.calculateOee(sumOee, key));
             productionRowsChart.push(this.calculateProductOee(sumOee, key));
             const obj: any = {};
@@ -175,9 +216,29 @@ export class ReportService {
             oeeRowsChart.push(this.calculateOee(sumOee, key));
         }
 
+        const total = dataRowsTable.reduce((acc, item) => {
+            const [key] = Object.keys(item);
+            acc.runningSeconds += item[key].runningSeconds;
+            acc.operatingSeconds += item[key].operatingSeconds;
+            acc.totalBreakdownSeconds += item[key].totalBreakdownSeconds;
+            acc.plannedDowntimeSeconds += item[key].plannedDowntimeSeconds;
+            acc.totalAutoDefects += item[key].totalAutoDefects;
+            acc.totalManualDefects += item[key].totalManualDefects;
+            acc.totalCountByBatch = { ...acc.totalCountByBatch, ...item[key].totalCountByBatch };
+            acc.qOk += item[key].qOk;
+            acc.qNg += item[key].qNg;
+            acc.totalCount += item[key].totalCount;
+            acc.plan += item[key].plan;
+            acc.totalTarget += item[key].target;
+            return acc;
+        }, { runningSeconds: 0, operatingSeconds: 0, totalBreakdownSeconds: 0, plannedDowntimeSeconds: 0, totalAutoDefects: 0, totalManualDefects: 0, totalCountByBatch: {}, qOk: 0, qNg: 0, totalCount: 0, plan: 0, totalTarget: 0 });
+        //Total oee
+        this.calculateSumOee(total);
+
         return {
             table: {
                 rows: _.sortBy(dataRowsTable, ['key']),
+                total: total,
             },
             chart: {
                 sumRows: _.sortBy(oeeRowsChart, ['key']),
@@ -187,9 +248,16 @@ export class ReportService {
     }
 
     async findCauseByTime(query: QueryReportOeeDto): Promise<any> {
+        const initialTotals = {
+            planDownTimeDuration: 0,
+            planDownTimeSeconds: 0,
+            oeeBatchASeconds: 0,
+            oeeBatchPSeconds: 0,
+            oeeBatchQAmount: 0,
+        };
+
         const { siteId, type, reportType, viewType, from, to } = query;
         let { ids } = query;
-
         const site = await this.siteRepository.findOneBy({ id: siteId });
         const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
         const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, viewType, cutoffHour);
@@ -197,6 +265,7 @@ export class ReportService {
         const resultP = await this.findPPareto(type, ids, from, to, reportType, viewType);
         const resultQ = await this.findQPareto(type, ids, from, to, reportType, viewType);
 
+        const { sumYield, sumLoss } = await this.findYieldLoss(type, ids, from, to);
 
         let listPlannedDowntime = [];
         let listA = [];
@@ -221,23 +290,81 @@ export class ReportService {
 
         // Loop through each index
         for (let i = 0; i < maxLength; i++) {
-            const newItem = {
-                "date": from,
-                "planDownTimeName": (listPlannedDowntime[i] && listPlannedDowntime[i].name) || "",
-                "planDownTimeDuration": (listPlannedDowntime[i] && listPlannedDowntime[i].duration) || "",
-                "planDownTimeSeconds": (listPlannedDowntime[i] && listPlannedDowntime[i].seconds) || "",
-                "planDownTimeCreateAt": listPlannedDowntime[i] && listPlannedDowntime[i].createdAt || "",
-                "oeeBatchAName": (listA[i] && listA[i].paramName) || "",
-                "oeeBatchASeconds": (listA[i] && listA[i].seconds) || "",
-                "oeeBatchATimestamp": listA[i] && listA[i].timestamp || "",
-                "oeeBatchPName": (listP[i] && listP[i].paramName) || "",
-                "oeeBatchPSeconds": (listP[i] && listP[i].seconds) || "",
-                "oeeBatchPTimestamp": listP[i] && listP[i].timestamp || "",
-                "oeeBatchQName": (listQ[i] && listQ[i].paramName) || "",
-                "oeeBatchQAmount": (listQ[i] && listQ[i].amount) || 0,
+            const {
+                name: planDownTimeName = "",
+                duration: planDownTimeDuration = "",
+                seconds: planDownTimeSeconds = "",
+                createdAt: planDownTimeCreateAt = ""
+            } = listPlannedDowntime[i] || {};
+
+            const {
+                paramName: oeeBatchAName = "",
+                seconds: oeeBatchASeconds = "",
+                timestamp: oeeBatchATimestamp = ""
+            } = listA[i] || {};
+
+            const {
+                paramName: oeeBatchPName = "",
+                seconds: oeeBatchPSeconds = "",
+                timestamp: oeeBatchPTimestamp = ""
+            } = listP[i] || {};
+
+            const {
+                paramName: oeeBatchQName = "",
+                amount: oeeBatchQAmount = 0,
+                actual: actual = 0
+            } = listQ[i] || {};
+
+            const newItem: any = {
+                date: from,
+                planDownTimeName,
+                planDownTimeDuration,
+                planDownTimeSeconds,
+                planDownTimeCreateAt,
+                oeeBatchAName,
+                oeeBatchASeconds,
+                oeeBatchATimestamp,
+                oeeBatchPName,
+                oeeBatchPSeconds,
+                oeeBatchPTimestamp,
+                oeeBatchQName,
+                oeeBatchQAmount,
+                actual
             };
+
+            if (i === 0) {
+                newItem.yield = sumYield;
+                newItem.loss = sumLoss;
+            }
+
             result.push(newItem);
         }
+
+
+        const total = result.reduce((acc, {
+            planDownTimeDuration = 0,
+            planDownTimeSeconds = 0,
+            oeeBatchASeconds = 0,
+            oeeBatchPSeconds = 0,
+            oeeBatchQAmount = 0
+        }) => {
+            acc.planDownTimeDuration += Number.isFinite(planDownTimeDuration) ? planDownTimeDuration : 0;
+            acc.planDownTimeSeconds += Number.isFinite(planDownTimeSeconds) ? planDownTimeSeconds : 0;
+            acc.oeeBatchASeconds += Number.isFinite(oeeBatchASeconds) ? oeeBatchASeconds : 0;
+            acc.oeeBatchPSeconds += Number.isFinite(oeeBatchPSeconds) ? oeeBatchPSeconds : 0;
+            acc.oeeBatchQAmount += Number.isFinite(oeeBatchQAmount) ? oeeBatchQAmount : 0;
+            return acc;
+        }, initialTotals);
+
+        total.sumYield = sumYield;
+        total.sumLoss = sumLoss;
+
+        if (resultQ?.sumOther?.totalTargetQuantity) {
+            total.actual = (total.oeeBatchQAmount / resultQ.sumOther.totalTargetQuantity) * 100;
+        } else {
+            total.actual = 0;
+        }
+
         return {
             sumRows: {
                 planDownTime: resultPlannedDowntime.sumRows,
@@ -246,6 +373,7 @@ export class ReportService {
                 oeeBatchQ: resultQ.sumRows,
             },
             rows: result,
+            total: total,
         };
     }
 
@@ -561,8 +689,25 @@ export class ReportService {
             totalAutoDefects: 0,
             totalManualDefects: 0,
             totalOtherDefects: 0,
+            qOk: 0,
             qNg: 0,
             totalCountByBatch: {},
+            yield: 0,
+            loss: 0,
+            totalRunningSeconds: 0,
+            totalOperatingSeconds: 0,
+            totalOeePercent: 0,
+            totalAPercent: 0,
+            totalPPercent: 0,
+            totalQPercent: 0,
+            totalQOk: 0,
+            totalQNg: 0,
+            totalActual: 0,
+            totalPlan: 0,
+            totalEfficiency: 0,
+            totalYield: 0,
+            totalLoss: 0,
+            totalTarget: 0,
         };
 
         // ดึงรายการ id ที่ไม่ซ้ำกันจาก rows
@@ -651,6 +796,47 @@ export class ReportService {
             plan: plan,
             efficiency: (totalCount / target) * 100,
         };
+    }
+
+    private calculateSumOee(sumData: sumOeeDataType): any {
+        const {
+            runningSeconds,
+            totalBreakdownSeconds,
+            plannedDowntimeSeconds,
+            totalCount,
+            totalAutoDefects,
+            totalManualDefects,
+            totalCountByBatch,
+        } = sumData;
+
+        const loadingSeconds = runningSeconds - plannedDowntimeSeconds;
+        const nonZeroLoadingSeconds = loadingSeconds === 0 ? 1 : loadingSeconds;
+        const operatingSeconds = loadingSeconds - totalBreakdownSeconds;
+
+        // calculate A
+        const aPercent = operatingSeconds / nonZeroLoadingSeconds;
+
+        // calculate P
+        const totalP = Object.keys(totalCountByBatch).reduce((acc, key) => {
+            acc += totalCountByBatch[key].totalCount * totalCountByBatch[key].standardSpeedSeconds;
+            return acc;
+        }, 0);
+        const pPercent = totalP / operatingSeconds;
+
+        // calculate Q
+        const totalAllDefects = totalAutoDefects + totalManualDefects;
+        const nonZeroTotalCount = totalCount === 0 ? 1 : totalCount;
+        const qPercent = (totalCount - totalAllDefects) / nonZeroTotalCount;
+
+        // calculate OEE
+        const oeePercent = aPercent * pPercent * qPercent;
+        sumData.efficiency = (sumData.totalCount / sumData.totalTarget) * 100;
+        sumData.aSum = aPercent * 100;
+        sumData.pSum = pPercent * 100;
+        sumData.qSum = qPercent * 100;
+        sumData.oeeSum = oeePercent * 100;
+        sumData.yield = ((sumData.totalCount - sumData.qNg) / sumData.plan) * 100;
+        sumData.loss = ((sumData.plan - (sumData.totalCount - sumData.qNg)) / sumData.plan) * 100;
     }
 
     private calculateOee(sumData: OeeSumData, key: string): any {
@@ -912,18 +1098,63 @@ export class ReportService {
         };
     }
 
+    private async findYieldLoss(chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
+        const mapping = await this.getBatchGroupByType(chartType, ids)
+        const keys = Object.keys(mapping);
+        const result = {};
+        let fg = 0;
+        let plan = 0;
+
+        //TODO Calculate Yield loss
+        //Yield = (FG / Plan) * 100
+        //Loss = ((Plan - FG) / Plan) * 100
+
+        for (const key of keys) {
+            const oeeBatches = await this.oeeBatchRepository
+                .createQueryBuilder('oeeBatch')
+                .where('oeeBatch.id IN (:...ids)', { ids: mapping[key].map((item) => item.id) })
+                .andWhere('oeeBatch.batchStartedDate >= :from and oeeBatch.batchStartedDate <= :to', { from, to })
+                .getMany();
+
+            const totalCount = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalCount, 0);
+            const totalAutoDefects = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalAutoDefects, 0);
+            const totalManualDefects = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalManualDefects, 0);
+            fg = totalCount - totalAutoDefects - totalManualDefects;
+            plan = oeeBatches.reduce((acc, item) => acc + item.plannedQuantity, 0);
+        }
+
+        const sumYield = (fg / plan) * 100;
+        const sumLoss = ((plan - fg) / plan) * 100;
+
+        return {
+            sumYield: sumYield,
+            sumLoss: sumLoss,
+        };
+    }
+
     private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
         const keys = Object.keys(mapping);
+        let actualList = [];
         for (const key of keys) {
             const analyticQParams = await this.analyticStatsParamRepository
-                .createQueryBuilder()
-                .where(`oeeBatchId IN (:...batchIds)`, { batchIds: mapping[key].map((item) => item.id) })
-                .andWhere(`paramType = :paramType`, { paramType: OEE_PARAM_TYPE_Q })
-                .andWhere('timestamp >= :from and timestamp <= :to', { from, to })
+                .createQueryBuilder('analyticStatsParam') // Ensure this alias matches your entity or relation name
+                .leftJoinAndSelect('analyticStatsParam.oeeBatch', 'oeeBatch')
+                .where(`oeeBatch.id IN (:...batchIds)`, { batchIds: mapping[key].map((item) => item.id) }) // Ensure the relation path is correct
+                .andWhere(`analyticStatsParam.paramType = :paramType`, { paramType: OEE_PARAM_TYPE_Q })
+                .andWhere('analyticStatsParam.timestamp >= :from and analyticStatsParam.timestamp <= :to', { from, to })
                 .getMany();
+
+            // Add actual to list
+            analyticQParams.forEach((item) => {
+                // Check if the id already exists in actualList
+                if (!actualList.some(actualItem => actualItem.id === item.oeeBatch.id)) {
+                    // If it doesn't exist, add the item to actualList
+                    actualList.push({ id: item.oeeBatch.id, targetQuantity: item.oeeBatch.targetQuantity });
+                }
+            });
 
             const mcParams = mapping[key]
                 .map((item) => item.machines)
@@ -957,6 +1188,7 @@ export class ReportService {
                         existing.amount += item.amount;
                     } else {
                         acc.push({
+                            actual: (item.amount / item.oeeBatch.targetQuantity) * 100,
                             paramType: item.paramType,
                             amount: item.amount,
                             machineParameterId: item.machineParameterId,
@@ -974,6 +1206,9 @@ export class ReportService {
         return {
             rows: rows,
             sumRows: result,
+            sumOther: {
+                totalTargetQuantity: actualList.reduce((acc, item) => acc + item.targetQuantity, 0),
+            }
         };
     }
 

@@ -17,6 +17,7 @@ interface Props {
 export default function ReportOEEChart({ criteria }: Props) {
   const [maxGraph, setMaxGraph] = useState<number>(100);
   const [dataRows, setDataRows] = useState<any[]>([]);
+  const [sumDataRows, setSumDataRows] = useState<any>({});
   const [series, setSeries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [options, setOptions] = useState<ApexOptions>({
@@ -221,18 +222,19 @@ export default function ReportOEEChart({ criteria }: Props) {
         return fNumber2(value);
       }
     },
-    { id: 'totalAutoDefects', label: 'Q (OK)', minWidth: 80 },
+    { id: 'qOk', label: 'Q (OK)', minWidth: 80 },
     { id: 'qNg', label: 'Q (NG)', minWidth: 80 },
     { id: 'totalCount', label: 'Actual', minWidth: 100 },
     { id: 'plan', label: 'Plan', minWidth: 100 },
     {
       id: 'efficiency', label: 'Efficiency', minWidth: 100,
       formatter: (val: number) => {
-        return fNumber2(val);
+        return fPercent(val);
       },
-    }
+    },
+    { id: 'yield', label: 'Yield', minWidth: 100, formatter: (val: number) => fPercent(val) },
+    { id: 'loss', label: 'Loss', minWidth: 100, formatter: (val: number) => fPercent(val) },
   ];
-
   const refresh = async (criteria: ReportCriteria) => {
     try {
       setIsLoading(true);
@@ -308,6 +310,9 @@ export default function ReportOEEChart({ criteria }: Props) {
           ],
         } as ApexOptions);
       }
+
+      setSumDataRows(data?.table?.total);
+
       setDataRows(
         (rows as any[])
           .map((row) =>
@@ -443,7 +448,6 @@ export default function ReportOEEChart({ criteria }: Props) {
               <CircularProgress size={100} />
             </Box></>)
         }
-
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <ExportXlsx
             headers={columns.map((column) => column.label)}
@@ -477,6 +481,26 @@ export default function ReportOEEChart({ criteria }: Props) {
                 ))
                 }
               </TableBody>
+              {criteria.reportType !== 'daily' && (
+                <TableBody>
+                  <TableRow key="summary">
+                    <TableCell colSpan={6} align="center" key="total">Total</TableCell>
+                    <TableCell key={sumDataRows?.runningSeconds}>{fSeconds(sumDataRows?.runningSeconds)}</TableCell>
+                    <TableCell key={sumDataRows?.operatingSeconds}>{fSeconds(sumDataRows?.operatingSeconds)}</TableCell>
+                    <TableCell key={sumDataRows?.oeeSum}>{fNumber2(sumDataRows?.oeeSum)}</TableCell>
+                    <TableCell key={sumDataRows?.aSum}>{fNumber2(sumDataRows?.aSum)}</TableCell>
+                    <TableCell key={sumDataRows?.pSum}>{fNumber2(sumDataRows?.pSum)}</TableCell>
+                    <TableCell key={sumDataRows?.qSum}>{fNumber2(sumDataRows?.qSum)}</TableCell>
+                    <TableCell key={sumDataRows?.qOk}>{fNumber(sumDataRows?.qOk)}</TableCell>
+                    <TableCell key={sumDataRows?.qNg}>{fNumber(sumDataRows?.qNg)}</TableCell>
+                    <TableCell key={sumDataRows?.totalCount}>{fNumber(sumDataRows?.totalCount)}</TableCell>
+                    <TableCell key={sumDataRows?.plan}>{fNumber(sumDataRows?.plan)}</TableCell>
+                    <TableCell key={sumDataRows?.efficiency}>{fPercent(sumDataRows?.efficiency)}</TableCell>
+                    <TableCell key={sumDataRows?.yield}>{fPercent(sumDataRows?.yield)}</TableCell>
+                    <TableCell key={sumDataRows?.loss}>{fPercent(sumDataRows?.loss)}</TableCell>
+                  </TableRow>
+                </TableBody>
+              )}
             </Table>
           </TableContainer>
         </Paper>

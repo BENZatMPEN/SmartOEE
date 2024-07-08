@@ -8,6 +8,10 @@ export function fPercent(number: number) {
   return numeral(number / 100).format('0.0%');
 }
 
+export function fPercent2(number: number) {
+  return numeral(number / 100).format('0.00%');
+}
+
 export function fNumber(number: string | number) {
   return numeral(number).format();
 }

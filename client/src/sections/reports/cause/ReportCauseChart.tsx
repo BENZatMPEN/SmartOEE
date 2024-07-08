@@ -2,7 +2,7 @@ import { ReportCriteria } from "../../../@types/report";
 import { Box, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect, useState } from "react";
 import axios from '../../../utils/axios';
-import { fNumber2, fPercent, fSeconds } from "../../../utils/formatNumber";
+import { fNumber, fNumber2, fPercent, fPercent2, fSeconds } from "../../../utils/formatNumber";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
@@ -16,6 +16,7 @@ interface Props {
 export default function ReportCauseChart({ criteria }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dataRows, setDataRows] = useState<any[]>([]);
+  const [totalDataRows, setTotalDataRows] = useState<any>([]);
   const [series, setSeries] = useState<any[]>([]);
   const [seriesA, setSeriesA] = useState<any[]>([]);
   const [seriesP, setSeriesP] = useState<any[]>([]);
@@ -310,6 +311,9 @@ export default function ReportCauseChart({ criteria }: Props) {
     },
     { id: 'oeeBatchQName', label: 'Name', minWidth: 320, formatter: (val: string) => val ? val : '-' },
     { id: 'oeeBatchQAmount', label: 'Value', minWidth: 80, formatter: (val: number) => val ? val : 0 },
+    { id: 'actual', label: 'Actual', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : fPercent2(0) },
+    { id: 'yield', label: 'Yield', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : '' },
+    { id: 'loss', label: 'Loss', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : '' },
   ];
 
   const refresh = async (criteria: ReportCriteria) => {
@@ -326,8 +330,10 @@ export default function ReportCauseChart({ criteria }: Props) {
         }
       })
       const { data } = response;
-      const { rows, sumRows } = data;
+      const { rows, sumRows, total } = data;
       setDataRows(rows);
+      setTotalDataRows(total);
+
 
       const ids = [...criteria.oees, ...criteria.products, ...criteria.batches];
       const { planDownTime, oeeBatchA, oeeBatchP, oeeBatchQ } = sumRows;
@@ -497,7 +503,7 @@ export default function ReportCauseChart({ criteria }: Props) {
                   <TableCell align="center" colSpan={3}>
                     Minor Stop
                   </TableCell>
-                  <TableCell align="center" colSpan={3}>
+                  <TableCell align="center" colSpan={6}>
                     NG
                   </TableCell>
 
@@ -527,6 +533,28 @@ export default function ReportCauseChart({ criteria }: Props) {
                   </TableRow>
                 ))}
               </TableBody>
+              {dataRows.length > 0 && (
+                <TableBody>
+                <TableRow key="summary">
+                  <TableCell align="center" key="total">Total</TableCell>
+                  <TableCell key="planDowntime">-</TableCell>
+                  <TableCell key="time">-</TableCell>
+                  <TableCell key="planDownTimeDuration">{fSeconds(totalDataRows?.planDownTimeDuration)}</TableCell>
+                  <TableCell key="planDownTimeSeconds">{totalDataRows?.planDownTimeSeconds === 0 ? "-" : fSeconds(totalDataRows?.planDownTimeSeconds)}</TableCell>
+                  <TableCell key="oeeBatchAName">-</TableCell>
+                  <TableCell key="oeeBatchATimestamp">-</TableCell>
+                  <TableCell key="oeeBatchASeconds">{fSeconds(totalDataRows?.oeeBatchASeconds)}</TableCell>
+                  <TableCell key="oeeBatchPName">-</TableCell>
+                  <TableCell key="oeeBatchPTimestamp">-</TableCell>
+                  <TableCell key="oeeBatchPSeconds">{fSeconds(totalDataRows?.oeeBatchPSeconds)}</TableCell>
+                  <TableCell key="oeeBatchQName">-</TableCell>
+                  <TableCell key="oeeBatchQAmount">{fNumber(totalDataRows?.oeeBatchQAmount)}</TableCell>
+                  <TableCell key="actual">{fPercent2(totalDataRows?.actual)}</TableCell>
+                  <TableCell key="actual">{fPercent2(totalDataRows?.sumYield)}</TableCell>
+                  <TableCell key="actual">{fPercent2(totalDataRows?.sumLoss)}</TableCell>
+                </TableRow>
+              </TableBody>
+              )}
             </Table>
           </TableContainer>
         </Paper>
