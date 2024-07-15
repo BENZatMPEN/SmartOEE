@@ -4,6 +4,7 @@ import ReportCriteriaForm from "../../../sections/reports/view/ReportCriteriaFor
 import { RootState } from "../../../redux/store";
 import { useSelector } from "react-redux";
 import ReportCauseChart from "../../../sections/reports/cause/ReportCauseChart";
+import ReportCauseSummary from "src/sections/reports/cause/ReportCauseSummary";
 
 export default function CauseReport() {
   const { currentCriteria: criteria } = useSelector((state: RootState) => state.report);
@@ -32,7 +33,13 @@ export default function CauseReport() {
             name={`Cause`}
           />
           {criteria ? (
-            <ReportCauseChart criteria={criteria} />
+            criteria.viewType != 'summary' ?
+              <ReportCauseChart criteria={criteria} />
+              : <>
+                <div>
+                  <ReportCauseSummary criteria={criteria} />
+                </div>
+              </>
           ) : (
             <></>
           )}

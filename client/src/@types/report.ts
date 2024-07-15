@@ -1,4 +1,4 @@
-export type ReportViewType = 'grouped' | 'show all';
+export type ReportViewType = 'grouped' | 'show all' | 'summary';
 
 export type ReportComparisonType = 'oee' | 'product' | 'batch';
 

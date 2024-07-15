@@ -134,7 +134,7 @@ export function fAnalyticComparisonTypeText(type: AnalyticComparisonType) {
 
     case 'batch':
       return 'Lot';
-    
+
     case 'operator':
       return 'Operator';
   }
@@ -217,6 +217,9 @@ export function fReportViewTypeText(type: ReportViewType) {
 
     case 'show all':
       return 'Show All';
+
+    case 'summary':
+      return 'Summary';
   }
 
 }

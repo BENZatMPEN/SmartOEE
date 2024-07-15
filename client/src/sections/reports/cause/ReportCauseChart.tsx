@@ -550,8 +550,8 @@ export default function ReportCauseChart({ criteria }: Props) {
                   <TableCell key="oeeBatchQName">-</TableCell>
                   <TableCell key="oeeBatchQAmount">{fNumber(totalDataRows?.oeeBatchQAmount)}</TableCell>
                   <TableCell key="actual">{fPercent2(totalDataRows?.actual)}</TableCell>
-                  <TableCell key="actual">{fPercent2(totalDataRows?.sumYield)}</TableCell>
-                  <TableCell key="actual">{fPercent2(totalDataRows?.sumLoss)}</TableCell>
+                  <TableCell key="yield">{fPercent2(totalDataRows?.sumYield)}</TableCell>
+                  <TableCell key="loss">{fPercent2(totalDataRows?.sumLoss)}</TableCell>
                 </TableRow>
               </TableBody>
               )}

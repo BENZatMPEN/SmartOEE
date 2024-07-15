@@ -19,7 +19,7 @@ import { getReportBatchOpts, getReportOeeOpts, getReportProductOpts, updateCurre
 
 const COMPARISON_TYPES: ReportComparisonType[] = ['oee', 'product', 'batch'];
 const REPORT_TYPES: ReportType[] = ['daily', 'monthly', 'yearly'];
-const VIEW_TYPES: ReportViewType[] = ['grouped', 'show all'];
+const VIEW_TYPES: ReportViewType[] = ['grouped', 'show all', 'summary'];
 
 interface Props {
   name: string;

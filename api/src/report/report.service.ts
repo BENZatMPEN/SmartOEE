@@ -254,6 +254,10 @@ export class ReportService {
             oeeBatchASeconds: 0,
             oeeBatchPSeconds: 0,
             oeeBatchQAmount: 0,
+            planDownTimeCount: 0,
+            oeeBatchACount: 0,
+            oeeBatchPCount: 0,
+            oeeBatchQCount: 0,
         };
 
         const { siteId, type, reportType, viewType, from, to } = query;
@@ -264,24 +268,30 @@ export class ReportService {
         const resultA = await this.findAPareto(type, ids, from, to, reportType, viewType);
         const resultP = await this.findPPareto(type, ids, from, to, reportType, viewType);
         const resultQ = await this.findQPareto(type, ids, from, to, reportType, viewType);
-
+        const mapping = await this.getBatchGroupByType(type, ids);
         const { sumYield, sumLoss } = await this.findYieldLoss(type, ids, from, to);
 
         let listPlannedDowntime = [];
         let listA = [];
         let listP = [];
         let listQ = [];
-        const mapping = await this.getBatchGroupByType(type, ids);
         for (const key of Object.keys(mapping)) {
             listPlannedDowntime = listPlannedDowntime.concat(resultPlannedDowntime.rows[key]);
             listA = listA.concat(resultA.rows[key]);
             listP = listP.concat(resultP.rows[key]);
             listQ = listQ.concat(resultQ.rows[key]);
         }
-        listPlannedDowntime = _.sortBy(listPlannedDowntime, ['expiredAt'], ['asc']);
-        listA = _.orderBy(listA, ['timestamp'], ['desc']);
-        listP = _.orderBy(listP, ['timestamp'], ['desc']);
-        listQ = _.orderBy(listQ, ['amount'], ['desc']);
+        if (viewType === 'summary') {
+            listPlannedDowntime = _.orderBy(listPlannedDowntime, ['count'], ['desc']);
+            listA = _.orderBy(listA, ['count'], ['desc']);
+            listP = _.orderBy(listP, ['count'], ['desc']);
+            listQ = _.orderBy(listQ, ['count'], ['desc']);
+        } else {
+            listPlannedDowntime = _.orderBy(listPlannedDowntime, ['expiredAt'], ['asc']);
+            listA = _.orderBy(listA, ['timestamp'], ['desc']);
+            listP = _.orderBy(listP, ['timestamp'], ['desc']);
+            listQ = _.orderBy(listQ, ['amount'], ['desc']);
+        }
 
         // //find max length of array
         const maxLength = Math.max(listPlannedDowntime.length, listA.length, listP.length, listQ.length);
@@ -292,6 +302,7 @@ export class ReportService {
         for (let i = 0; i < maxLength; i++) {
             const {
                 name: planDownTimeName = "",
+                count: planDownTimeCount = 0,
                 duration: planDownTimeDuration = "",
                 seconds: planDownTimeSeconds = "",
                 createdAt: planDownTimeCreateAt = ""
@@ -299,18 +310,21 @@ export class ReportService {
 
             const {
                 paramName: oeeBatchAName = "",
+                count: oeeBatchACount = 0,
                 seconds: oeeBatchASeconds = "",
                 timestamp: oeeBatchATimestamp = ""
             } = listA[i] || {};
 
             const {
                 paramName: oeeBatchPName = "",
+                count: oeeBatchPCount = 0,
                 seconds: oeeBatchPSeconds = "",
                 timestamp: oeeBatchPTimestamp = ""
             } = listP[i] || {};
 
             const {
                 paramName: oeeBatchQName = "",
+                count: oeeBatchQCount = 0,
                 amount: oeeBatchQAmount = 0,
                 actual: actual = 0
             } = listQ[i] || {};
@@ -318,16 +332,20 @@ export class ReportService {
             const newItem: any = {
                 date: from,
                 planDownTimeName,
+                planDownTimeCount,
                 planDownTimeDuration,
                 planDownTimeSeconds,
                 planDownTimeCreateAt,
                 oeeBatchAName,
+                oeeBatchACount,
                 oeeBatchASeconds,
                 oeeBatchATimestamp,
                 oeeBatchPName,
+                oeeBatchPCount,
                 oeeBatchPSeconds,
                 oeeBatchPTimestamp,
                 oeeBatchQName,
+                oeeBatchQCount,
                 oeeBatchQAmount,
                 actual
             };
@@ -346,16 +364,26 @@ export class ReportService {
             planDownTimeSeconds = 0,
             oeeBatchASeconds = 0,
             oeeBatchPSeconds = 0,
-            oeeBatchQAmount = 0
+            oeeBatchQAmount = 0,
+            planDownTimeCount = 0,
+            oeeBatchACount = 0,
+            oeeBatchPCount = 0,
+            oeeBatchQCount = 0,
         }) => {
             acc.planDownTimeDuration += Number.isFinite(planDownTimeDuration) ? planDownTimeDuration : 0;
             acc.planDownTimeSeconds += Number.isFinite(planDownTimeSeconds) ? planDownTimeSeconds : 0;
             acc.oeeBatchASeconds += Number.isFinite(oeeBatchASeconds) ? oeeBatchASeconds : 0;
             acc.oeeBatchPSeconds += Number.isFinite(oeeBatchPSeconds) ? oeeBatchPSeconds : 0;
             acc.oeeBatchQAmount += Number.isFinite(oeeBatchQAmount) ? oeeBatchQAmount : 0;
+            
+            acc.planDownTimeCount += Number.isFinite(planDownTimeCount) ? planDownTimeCount : 0;    
+            acc.oeeBatchACount += Number.isFinite(oeeBatchACount) ? oeeBatchACount : 0;
+            acc.oeeBatchPCount += Number.isFinite(oeeBatchPCount) ? oeeBatchPCount : 0;
+            acc.oeeBatchQCount += Number.isFinite(oeeBatchQCount) ? oeeBatchQCount : 0;
+            
             return acc;
         }, initialTotals);
-
+        
         total.sumYield = sumYield;
         total.sumLoss = sumLoss;
 
@@ -906,15 +934,17 @@ export class ReportService {
             }));
 
             //group oeeBatchPlannedDowntime by name
-            if (viewType === 'grouped') {
+            if (viewType !== 'show all') {
                 const result = newOeeBatchPlannedDowntime.reduce((acc, item) => {
                     const existing = acc.find(x => x.name === item.name);
                     if (existing) {
                         existing.duration += item.duration;
+                        existing.count += 1; // Increment the count for existing items
                     } else {
                         acc.push({
                             name: item.name,
-                            duration: item.duration
+                            duration: item.duration,
+                            count: 1 // Initialize count for new items
                         });
                     }
                     return acc;
@@ -1000,20 +1030,21 @@ export class ReportService {
                 return false;
             }),);
 
-            if (viewType === 'grouped') {
+            if (viewType !== 'show all') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
                         existing.seconds += item.seconds;
+                        existing.count += 1; // Increment the count for existing items
                     } else {
                         acc.push({
                             paramType: item.paramType,
                             seconds: item.seconds,
                             machineParameterId: item.machineParameterId,
-                            paramName: item.paramName
+                            paramName: item.paramName,
+                            count: 1 // Initialize count for new items
                         });
                     }
-
                     return acc;
                 }, []);
             } else {
@@ -1071,20 +1102,21 @@ export class ReportService {
                 return false;
             }),);
 
-            if (viewType === 'grouped') {
+            if (viewType !== 'show all') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
                         existing.seconds += item.seconds;
+                        existing.count += 1; // Increment count for existing items
                     } else {
                         acc.push({
                             paramType: item.paramType,
                             seconds: item.seconds,
                             machineParameterId: item.machineParameterId,
                             paramName: item.paramName,
+                            count: 1, // Initialize count for new items
                         });
                     }
-
                     return acc;
                 }, []);
             } else {
@@ -1181,18 +1213,20 @@ export class ReportService {
                 return false;
             }),);
 
-            if (viewType === 'grouped') {
+            if (viewType !== 'show all') {
                 rows[key] = mapParameter.reduce((acc, item) => {
                     const existing = acc.find(x => x.paramName === item.paramName && x.paramType === item.paramType && x.machineParameterId === item.machineParameterId);
                     if (existing) {
                         existing.amount += item.amount;
+                        existing.count += 1; // Increment count for existing items
                     } else {
                         acc.push({
                             actual: (item.amount / item.oeeBatch.targetQuantity) * 100,
                             paramType: item.paramType,
                             amount: item.amount,
                             machineParameterId: item.machineParameterId,
-                            paramName: item.paramName
+                            paramName: item.paramName,
+                            count: 1, // Initialize count for new items
                         });
                     }
 
