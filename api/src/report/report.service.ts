@@ -285,6 +285,8 @@ export class ReportService {
                     where: { oeeId: In(oeeIds) },
                 });
                 productIds = oeeBatch.map((item) => item.product.id);
+            } else if (type === 'product') {
+                productIds = ids;
             }
             //find Product
             products = await this.productRepository.findBy({ id: In(productIds), siteId });
@@ -294,7 +296,12 @@ export class ReportService {
             if (!sameSecondUnit) {
                 throw new BadRequestException(['Second unit is not the same']);
             }
-            pcsValue = products[0].pscGram;
+            if (products.length > 0 && products[0]) {
+                pcsValue = products[0].pscGram;
+            } else {
+                // Handle the case where products[0] is undefined
+                pcsValue = 0; // or any default value you prefer
+            }
         }
 
         const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, viewType, cutoffHour);
