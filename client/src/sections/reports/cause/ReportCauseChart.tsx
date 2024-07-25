@@ -8,6 +8,8 @@ import { ApexOptions } from "apexcharts";
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
 import ExportXlsx from "src/sections/analytics/chart/ExportXlsx";
 import dayjs from "dayjs";
+import { AxiosError } from "axios";
+import { useSnackbar } from "notistack";
 
 interface Props {
   criteria: ReportCriteria;
@@ -316,6 +318,8 @@ export default function ReportCauseChart({ criteria }: Props) {
     { id: 'loss', label: 'Loss', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : '' },
   ];
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const refresh = async (criteria: ReportCriteria) => {
     try {
       setIsLoading(true);
@@ -429,7 +433,24 @@ export default function ReportCauseChart({ criteria }: Props) {
         },
       ]);
     } catch (error) {
-      console.log(error);
+      if (error) {
+        if (error instanceof AxiosError) {
+          console.log('1')
+          if ('message' in error.response?.data) {
+            console.log('2')
+            if (Array.isArray(error.response?.data.message)) {
+              console.log(error.response)
+              for (const item of error.response?.data.message) {
+                enqueueSnackbar(item, { variant: 'error' });
+              }
+            } else {
+              enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            }
+          }
+        } else {
+          enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+        }
+      }
     } finally {
       setIsLoading(false);
     }

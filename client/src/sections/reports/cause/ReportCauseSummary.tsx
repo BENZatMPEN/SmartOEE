@@ -8,6 +8,8 @@ import { ApexOptions } from "apexcharts";
 import { fAnalyticChartTitle } from "../../../utils/textHelper";
 import ExportXlsx from "src/sections/analytics/chart/ExportXlsx";
 import dayjs from "dayjs";
+import { useSnackbar } from "notistack";
+import { AxiosError } from "axios";
 
 interface Props {
   criteria: ReportCriteria;
@@ -43,14 +45,16 @@ export default function ReportCauseSummary({ criteria }: Props) {
     { id: 'oeeBatchPName', label: 'Minor Stop', minWidth: 130, formatter: (val: string) => val ? val : '-' },
     { id: 'oeeBatchPCount', label: 'Count', minWidth: 80, formatter: (val: number) => val ? val : 0 },
     { id: 'oeeBatchQName', label: 'NG', minWidth: 130, formatter: (val: string) => val ? val : '-' },
-    { id: 'oeeBatchQCount', label: 'Count', minWidth: 80, formatter: (val: number) => val ? val : 0 },
-    { id: 'oeeBatchQPercent', label: '%NG', minWidth: 80, formatter: (val: number) => val ? val : 0 },
-    { id: 'NGL', label: 'NG(L)', minWidth: 80, formatter: (val: number) => val ? val : 0 },
-    { id: 'FG', label: 'FG', minWidth: 80, formatter: (val: number) => val ? val : 0 },
-    { id: 'FGL', label: 'FG(L)', minWidth: 80, formatter: (val: number) => val ? val : 0 },
+    { id: 'oeeBatchQAmount', label: 'Count', minWidth: 80, formatter: (val: number) => val ? val : 0 },
+    { id: 'oeeBatchQPercent', label: '%NG', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : 0 },
+    { id: 'oeeBatchQAmountPcs', label: 'NG(L)', minWidth: 80, formatter: (val: number) => val ? val : 0 },
+    { id: 'FG', label: 'FG', minWidth: 80, formatter: (val: number) => val ? val : '' },
+    { id: 'FGL', label: 'FG(L)', minWidth: 80, formatter: (val: number) => val ? val : '' },
     { id: 'yield', label: 'Yield', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : '' },
     { id: 'loss', label: 'Loss', minWidth: 80, formatter: (val: number) => val ? fPercent2(val) : '' },
   ];
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const refresh = async (criteria: ReportCriteria) => {
     try {
@@ -70,7 +74,24 @@ export default function ReportCauseSummary({ criteria }: Props) {
       setDataRows(rows);
       setTotalDataRows(total);
     } catch (error) {
-      console.log(error);
+      if (error) {
+        if (error instanceof AxiosError) {
+          console.log('1')
+          if ('message' in error.response?.data) {
+            console.log('2')
+            if (Array.isArray(error.response?.data.message)) {
+              console.log(error.response)
+              for (const item of error.response?.data.message) {
+                enqueueSnackbar(item, { variant: 'error' });
+              }
+            } else {
+              enqueueSnackbar(error.response?.data.message, { variant: 'error' });
+            }
+          }
+        } else {
+          enqueueSnackbar(error.response?.data.error, { variant: 'error' });
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -194,9 +215,9 @@ export default function ReportCauseSummary({ criteria }: Props) {
                     <TableCell key="oeeBatchQName">NG</TableCell>
                     <TableCell key="oeeBatchQCount">{Number(totalDataRows?.oeeBatchQCount)}</TableCell>
                     <TableCell key="oeeBatchQPercent">{fPercent(totalDataRows?.oeeBatchQPercent)}</TableCell>
-                    <TableCell key="NGL">{Number(totalDataRows?.NGL)}</TableCell>
-                    <TableCell key="FG">{Number(totalDataRows?.FG)}</TableCell>
-                    <TableCell key="FGL">{Number(totalDataRows?.FGL)}</TableCell>
+                    <TableCell key="NGL">{Number(totalDataRows?.oeeBatchQPcs)}</TableCell>
+                    <TableCell key="FG">{Number(totalDataRows?.totalFg)}</TableCell>
+                    <TableCell key="FGL">{Number(totalDataRows?.totalFgPcs)}</TableCell>
                     <TableCell key="yield">{fPercent2(totalDataRows?.sumYield)}</TableCell>
                     <TableCell key="loss">{fPercent2(totalDataRows?.sumLoss)}</TableCell>
                   </TableRow>

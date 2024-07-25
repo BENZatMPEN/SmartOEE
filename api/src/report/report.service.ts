@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SiteEntity } from "../common/entities/site.entity";
 import { Between, EntityManager, In, IsNull, LessThanOrEqual, MoreThan, MoreThanOrEqual, Not, Repository } from "typeorm";
@@ -264,12 +264,45 @@ export class ReportService {
         let { ids } = query;
         const site = await this.siteRepository.findOneBy({ id: siteId });
         const cutoffHour = dayjs(site.cutoffTime).format('HH:mm:00');
+        let productIds = [];
+        let pcsValue = 0;
+        let products = [];
+        //validate second unit
+
+        if (viewType === 'summary') {
+            //find product by batch
+            if (type === 'batch') {
+                const oeeBatch = await this.oeeBatchRepository.find({
+                    where: { id: In(ids), siteId },
+                });
+                productIds = oeeBatch.map((item) => item.product.id);
+            } else if (type === 'oee') {
+                const oee = await this.oeeRepository.find({
+                    where: { id: In(ids), siteId },
+                });
+                const oeeIds = oee.map((item) => item.id);
+                const oeeBatch = await this.oeeBatchRepository.find({
+                    where: { oeeId: In(oeeIds) },
+                });
+                productIds = oeeBatch.map((item) => item.product.id);
+            }
+            //find Product
+            products = await this.productRepository.findBy({ id: In(productIds), siteId });
+            //ตรวขสอบว่าทุกๆ products มี secondUnit ที่เหมือนกัน
+            const secondUnit = products.map((item) => item.secondUnit);
+            const sameSecondUnit = secondUnit.every((val, i, arr) => val === arr[0]);
+            if (!sameSecondUnit) {
+                throw new BadRequestException(['Second unit is not the same']);
+            }
+            pcsValue = products[0].pscGram;
+        }
+
         const resultPlannedDowntime = await this.findPlanDowntimePareto(type, ids, from, to, reportType, viewType, cutoffHour);
+        const { sumYield, sumLoss, totalCount, totalFg } = await this.findYieldLoss(type, ids, from, to);
         const resultA = await this.findAPareto(type, ids, from, to, reportType, viewType);
         const resultP = await this.findPPareto(type, ids, from, to, reportType, viewType);
-        const resultQ = await this.findQPareto(type, ids, from, to, reportType, viewType);
+        const resultQ = await this.findQPareto(type, ids, from, to, reportType, viewType, totalCount, pcsValue);
         const mapping = await this.getBatchGroupByType(type, ids);
-        const { sumYield, sumLoss } = await this.findYieldLoss(type, ids, from, to);
 
         let listPlannedDowntime = [];
         let listA = [];
@@ -285,7 +318,7 @@ export class ReportService {
             listPlannedDowntime = _.orderBy(listPlannedDowntime, ['count'], ['desc']);
             listA = _.orderBy(listA, ['count'], ['desc']);
             listP = _.orderBy(listP, ['count'], ['desc']);
-            listQ = _.orderBy(listQ, ['count'], ['desc']);
+            listQ = _.orderBy(listQ, ['amount'], ['desc']);
         } else {
             listPlannedDowntime = _.orderBy(listPlannedDowntime, ['expiredAt'], ['asc']);
             listA = _.orderBy(listA, ['timestamp'], ['desc']);
@@ -326,7 +359,10 @@ export class ReportService {
                 paramName: oeeBatchQName = "",
                 count: oeeBatchQCount = 0,
                 amount: oeeBatchQAmount = 0,
-                actual: actual = 0
+                actual: actual = 0,
+                percent: oeeBatchQPercent = 0,
+                amountPcs: oeeBatchQAmountPcs = 0,
+
             } = listQ[i] || {};
 
             const newItem: any = {
@@ -347,7 +383,10 @@ export class ReportService {
                 oeeBatchQName,
                 oeeBatchQCount,
                 oeeBatchQAmount,
-                actual
+                oeeBatchQPercent,
+                oeeBatchQAmountPcs,
+                actual,
+
             };
 
             if (i === 0) {
@@ -357,7 +396,6 @@ export class ReportService {
 
             result.push(newItem);
         }
-
 
         const total = result.reduce((acc, {
             planDownTimeDuration = 0,
@@ -375,15 +413,15 @@ export class ReportService {
             acc.oeeBatchASeconds += Number.isFinite(oeeBatchASeconds) ? oeeBatchASeconds : 0;
             acc.oeeBatchPSeconds += Number.isFinite(oeeBatchPSeconds) ? oeeBatchPSeconds : 0;
             acc.oeeBatchQAmount += Number.isFinite(oeeBatchQAmount) ? oeeBatchQAmount : 0;
-            
-            acc.planDownTimeCount += Number.isFinite(planDownTimeCount) ? planDownTimeCount : 0;    
+
+            acc.planDownTimeCount += Number.isFinite(planDownTimeCount) ? planDownTimeCount : 0;
             acc.oeeBatchACount += Number.isFinite(oeeBatchACount) ? oeeBatchACount : 0;
             acc.oeeBatchPCount += Number.isFinite(oeeBatchPCount) ? oeeBatchPCount : 0;
             acc.oeeBatchQCount += Number.isFinite(oeeBatchQCount) ? oeeBatchQCount : 0;
-            
+
             return acc;
         }, initialTotals);
-        
+
         total.sumYield = sumYield;
         total.sumLoss = sumLoss;
 
@@ -392,6 +430,10 @@ export class ReportService {
         } else {
             total.actual = 0;
         }
+        total.oeeBatchQPcs = total.oeeBatchQAmount * pcsValue;
+        total.oeeBatchQPercent = (total.oeeBatchQAmount / totalCount) * 100;
+        total.totalFg = totalFg;
+        total.totalFgPcs = totalFg * pcsValue;
 
         return {
             sumRows: {
@@ -402,6 +444,7 @@ export class ReportService {
             },
             rows: result,
             total: total,
+            secondUnit: products[0]?.secondUnit,
         };
     }
 
@@ -1133,10 +1176,9 @@ export class ReportService {
     private async findYieldLoss(chartType: string, ids: number[], from: Date, to: Date): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids)
         const keys = Object.keys(mapping);
-        const result = {};
-        let fg = 0;
+        let totalFg = 0;
         let plan = 0;
-
+        let totalCount = 0;
         //TODO Calculate Yield loss
         //Yield = (FG / Plan) * 100
         //Loss = ((Plan - FG) / Plan) * 100
@@ -1148,23 +1190,27 @@ export class ReportService {
                 .andWhere('oeeBatch.batchStartedDate >= :from and oeeBatch.batchStartedDate <= :to', { from, to })
                 .getMany();
 
-            const totalCount = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalCount, 0);
+            const count = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalCount, 0);
             const totalAutoDefects = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalAutoDefects, 0);
             const totalManualDefects = oeeBatches.reduce((acc, item) => acc + item?.oeeStats?.totalManualDefects, 0);
-            fg = totalCount - totalAutoDefects - totalManualDefects;
+            totalFg = count - totalAutoDefects - totalManualDefects;
             plan = oeeBatches.reduce((acc, item) => acc + item.plannedQuantity, 0);
+            totalCount += Number(count);
         }
 
-        const sumYield = (fg / plan) * 100;
-        const sumLoss = ((plan - fg) / plan) * 100;
+        const sumYield = (totalFg / plan) * 100;
+        const sumLoss = ((plan - totalFg) / plan) * 100;
 
         return {
             sumYield: sumYield,
             sumLoss: sumLoss,
+            totalCount: totalCount,
+            totalFg: totalFg,
         };
     }
 
-    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string, viewType: string): Promise<any> {
+    private async findQPareto(chartType: string, ids: number[], from: Date, to: Date, reportType: string,
+        viewType: string, totalCount: number, pcsValue: number): Promise<any> {
         const mapping = await this.getBatchGroupByType(chartType, ids);
         const result = {};
         const rows = {};
@@ -1232,6 +1278,12 @@ export class ReportService {
 
                     return acc;
                 }, []);
+
+                rows[key] = rows[key].map((item) => {
+                    item.percent = (item.amount / totalCount) * 100;
+                    item.amountPcs = item.amount * pcsValue;
+                    return item;
+                });
             } else {
                 rows[key] = mapParameter;
             }

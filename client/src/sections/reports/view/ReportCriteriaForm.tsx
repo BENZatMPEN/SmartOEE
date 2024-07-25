@@ -203,36 +203,39 @@ export default function ReportCriteriaForm({ name }: Props) {
                     <Autocomplete
                       key={`oeeOpts_single`}
                       options={oeeOpts}
-                      value={(values.oees || []).length > 0 ? findSingleOption(values.oees[0], oeeOpts) : null}
+                      multiple
+                      value={oeeOpts.filter((item) => values.oees.includes(item.id))}
                       getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
-                      renderInput={(params) => <TextField {...params} label="Machines" />}
+                      renderInput={(params) => <TextField {...params} label="Machines" />}                
                       onChange={(event, value) => {
-                        handleOEEsSelected(value ? [value.id] : []);
+                        handleOEEsSelected((value || []).map((item) => item.id));
                       }}
+
+
                     />)
                   : values.comparisonType === 'product' ?
                     (
                       <Autocomplete
                         key={`productOpts_single`}
                         options={productOpts}
-                        value={
-                          (values.products || []).length > 0 ? findSingleOption(values.products[0], productOpts) : null
-                        }
+                        multiple
+                        value={productOpts.filter((item) => values.products.includes(item.id))}
                         getOptionLabel={(option) => `${option.name} (${fCode(option.id, '#')})`}
                         renderInput={(params) => <TextField {...params} label="Products" />}
                         onChange={(event, value) => {
-                          handleProductsSelected(value ? [value.id] : []);
+                          handleProductsSelected((value || []).map((item) => item.id));
                         }}
                       />)
                     : values.comparisonType === 'batch' ? (
                       <Autocomplete
                         key={`batchOpts_single`}
                         options={batchOpts}
-                        value={(values.batches || []).length > 0 ? findSingleOption(values.batches[0], batchOpts) : null}
+                        multiple
+                        value={batchOpts.filter((item) => values.batches.includes(item.id))}
                         getOptionLabel={(option) => `${option.name}`}
                         renderInput={(params) => <TextField {...params} label="Lots" />}
                         onChange={(event, value) => {
-                          handleBatchesSelected(value ? [value.id] : []);
+                          handleBatchesSelected((value || []).map((item) => item.id));
                         }}
                       />
                     ) :
