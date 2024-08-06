@@ -31,10 +31,10 @@ export default function DashboardMachineProductStatus() {
             <>
               <Stack spacing={2} sx={{ m: 2, width: '100%', gap: '100px' }} direction="row" justifyContent="center">
                 <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
-                  {`Yield ${yieldValue}%`}
+                  {`Yield ${fNumber2(yieldValue)}%`}
                 </Typography>
                 <Typography variant={'subtitle1'} sx={{ color: 'text.secondary', fontSize: '20px' }}>
-                  {`Loss ${lossValue}%`}
+                  {`Loss ${fNumber2(lossValue)}%`}
                 </Typography>
               </Stack>
             </>

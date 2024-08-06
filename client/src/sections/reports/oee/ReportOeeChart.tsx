@@ -165,7 +165,8 @@ export default function ReportOEEChart({ criteria }: Props) {
         if (criteria.reportType === 'yearly') {
           return `${months[date.getMonth()]}-${date.getFullYear()}`;
         } else if (criteria.reportType === 'monthly') {
-          return `${months[date.getMonth()]}-${date.getFullYear()}`;
+          return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+          // return `${months[date.getMonth()]}-${date.getFullYear()}`;
         }
         return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
       }

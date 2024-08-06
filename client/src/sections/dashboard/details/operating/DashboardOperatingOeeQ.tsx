@@ -31,6 +31,7 @@ import { DialogActions } from '@mui/material';
 import { Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Paper } from '@mui/material';
+import { fNumber, fNumber2 } from 'src/utils/formatNumber';
 
 type QStats = {
   totalManual: number;
@@ -306,8 +307,8 @@ export default function DashboardOperatingOeeQ() {
                       />
                       {product?.activePcs && (
                         <>
-                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Yield ${yieldValue}%`}</Typography>
-                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Loss ${lossValue}%`}</Typography>
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Yield ${fNumber2(yieldValue)}%`}</Typography>
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`Loss ${fNumber2(lossValue)}%`}</Typography>
                           <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>{`1 Pcs = ${product?.pscGram} ${product?.secondUnit}`}</Typography>
                         </>
                       )}

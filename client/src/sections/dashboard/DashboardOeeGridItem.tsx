@@ -6,7 +6,7 @@ import { OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_STANDBY, OEE_TYPE_OEE } from '
 import { RootState, useSelector } from '../../redux/store';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import { getColor } from '../../utils/colorHelper';
-import { fNumber } from '../../utils/formatNumber';
+import { fNumber, fNumber2 } from '../../utils/formatNumber';
 import { fTimeShort } from '../../utils/formatTime';
 import { getPercentSettingsByType } from '../../utils/percentSettingHelper';
 import DashboardPieChart from './DashboardPieChart';
@@ -107,10 +107,10 @@ export default function DashboardOeeGridItem({ oeeStatusItem }: Props) {
               activeSecondUnit ? (
                 <Stack direction="row" justifyContent="space-between" spacing={6} sx={{ mt: 1 }}>
                   <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-                    Yield {fNumber(yieldValue)} %
+                    Yield {fNumber2(yieldValue)} %
                   </Typography>
                   <Typography variant={'subtitle1'} sx={{ color: 'text.secondary' }}>
-                    Loss {fNumber(lossValue)} %
+                    Loss {fNumber2(lossValue)} %
                   </Typography>
                 </Stack>
               ) : null

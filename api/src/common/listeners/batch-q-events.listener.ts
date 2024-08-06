@@ -37,6 +37,9 @@ export class BatchQEventsListener {
     }, []);
 
     const updatingParam = updatingParams[0];
+    if (updatingParam === null || updatingParam === undefined) {
+      return;
+    }
     const currentParam = currentParams.filter((item) => item.id === updatingParam.id)[0];
 
     await this.eventEmitter.emitAsync(
