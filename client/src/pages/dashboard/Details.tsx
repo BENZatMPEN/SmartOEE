@@ -37,8 +37,9 @@ export default function Details() {
   const query = useQuery();
 
   const batchId = query.get('batchId') ? Number(query.get('batchId')) : null;
-
+  console.log(`batchId:${batchId}`)
   const params = batchId ? `?batchId=${batchId}` : '';
+
 
   const navConfig = [
     {
@@ -201,7 +202,9 @@ export default function Details() {
     };
 
     const updateBatchCurrent = (data: any) => {
-      dispatch(updateBatchNow(data));
+      if (batchId === null) {
+        dispatch(updateBatchNow(data));
+      }
     }
 
     const updateAParams = (data: OeeBatchA[]) => {
