@@ -875,6 +875,10 @@ export class OeeBatchService {
 
     const qParams = mcParamQs.reduce((acc, mcParam) => {
       const key = `q_${mcParam.id}`;
+      if (batchParamQs.length === 0) {
+        acc[key] = 0;
+        return acc;
+      }
       const batchParam = batchParamQs.filter(
         (batchParam) => batchParam.machineId === mcParam.machineId && batchParam.machineParameterId === mcParam.id,
       )[0];
