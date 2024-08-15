@@ -52,6 +52,7 @@ export class AutoPlannedDowntimeJob {
         const oeeMachinePlannedDowntimes = await this.oeeMachinePlannedDowntimeRepository
             .createQueryBuilder("plannedDowntime")
             .where("plannedDowntime.oeeId = :oeeId", { oeeId: oeeBatch.oeeId })
+            .andWhere("plannedDowntime.fixTime = :fixTime", { fixTime: true })
             .andWhere("TIME(plannedDowntime.startDate) > TIME(:threeMinutesAgo)", { threeMinutesAgo })
             .andWhere("TIME(plannedDowntime.startDate) < TIME(:threeMinutesLater)", { threeMinutesLater })
             .getMany();
