@@ -606,7 +606,8 @@ export class AnalyticService {
         analyticAParams.map((item) => item.data as AnalyticAParam),
         _.uniqWith(mcParams, (pre, cur) => {
           if (pre.id == cur.id) {
-            cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            // cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            cur.name = pre.name;
             return true;
           }
           return false;
@@ -642,7 +643,8 @@ export class AnalyticService {
         analyticPParams.map((item) => item.data as AnalyticPParam),
         _.uniqWith(mcParams, (pre, cur) => {
           if (pre.id == cur.id) {
-            cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            // cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            cur.name = pre.name;
             return true;
           }
           return false;
@@ -678,14 +680,13 @@ export class AnalyticService {
         analyticQParams.map((item) => item.data as AnalyticQParam),
         _.uniqWith(mcParams, (pre, cur) => {
           if (pre.id == cur.id) {
-            cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            // cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+            cur.name = pre.name;
             return true;
           }
           return false;
         }),
       );
-
-      console.log(analyticQParams);
     }
 
     return {
