@@ -204,34 +204,17 @@ export class OeeService {
       .leftJoinAndSelect('oee.operators', 'operators')
       .leftJoinAndSelect('oeeMachines.machine', 'machine')
       .leftJoinAndSelect('machine.parameters', 'parameters')
-      .leftJoinAndSelect('oee.oeeMachinePlannedDowntime', 'oeeMachinePlannedDowntime', 'oeeMachinePlannedDowntime.deleted = :downtimeDeleted', { downtimeDeleted: false })
       .getOne();
 
-    oee.oeeMachines = oee.oeeMachines.map(machine => {
-      machine.oeeMachinePlannedDowntime = oee.oeeMachinePlannedDowntime.filter(downtime => downtime.oeeId === machine.oeeId && downtime.oeeMachineId === machine.id);
+    //find oeeMachinePlannedDowntime by oeeId and oeeMachineId
+    const oeeMachinePlannedDowntime = await this.oeeMachinePlannedDowntimeRepository.findBy({ oeeId: id, oeeMachineId: In(oee.oeeMachines.map((item) => item.id)) });
+
+    oee.oeeMachines = oee.oeeMachines.map((machine) => {
+      machine.oeeMachinePlannedDowntime = oeeMachinePlannedDowntime.filter((downtime) => downtime.oeeMachineId === machine.id);
       return machine;
     });
-
+    oee.oeeMachinePlannedDowntime = oeeMachinePlannedDowntime;
     return oee;
-    // return this.oeeRepository.findOne({
-    //   include: [
-    //     {
-    //       model: OeeProduct,
-    //       include: [Product],
-    //     },
-    //     {
-    //       model: OeeMachine,
-    //       include: [
-    //         {
-    //           model: Machine,
-    //           include: [MachineParameter],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    //   where: { id, deleted: false },
-    // });
-    // return null;
   }
 
   findByOeeCode(oeeCode: string, siteId: number): Promise<OeeEntity> {
