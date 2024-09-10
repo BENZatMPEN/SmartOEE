@@ -29,6 +29,7 @@ import { SiteService } from '../../site/site.service';
 import { UserEntity } from '../entities/user.entity';
 import { FileService } from './file.service';
 import { OeeBatchJobEntity } from '../entities/oee-batch-job.entity';
+import { OeeBatchNotificationEntity } from '../entities/oee-batch-notification.entity';
 
 @Global()
 @Module({
@@ -45,6 +46,7 @@ import { OeeBatchJobEntity } from '../entities/oee-batch-job.entity';
       OeeBatchPlannedDowntimeEntity,
       OeeBatchEditHistoryEntity,
       OeeBatchStatsTimelineEntity,
+      OeeBatchNotificationEntity,
       OeeBatchStatsEntity,
       OeeBatchLogEntity,
       OeeBatchJobEntity,

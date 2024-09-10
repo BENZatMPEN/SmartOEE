@@ -179,7 +179,7 @@ export class TagReadJob {
         oeeCode,
       );
       if (!isValidTagReads) {
-        //await this.invalidTagsStop(batch, oeeCode, readTimestamp);
+        // await this.invalidTagsStop(batch, oeeCode, readTimestamp);
         return;
       }
 
@@ -290,6 +290,10 @@ export class TagReadJob {
         }
       } else if (currentMcState.stopSeconds >= batch.breakdownSeconds) {
         currentMcState.batchStatus = OEE_BATCH_STATUS_BREAKDOWN;
+        await this.eventEmitter.emitAsync(
+          'batch-a-started-params.process',
+          new BatchAEvent(batch, currentMcState, allReads, readTimestamp),
+        );
       } else if (currentTagMcState.read === tagMcStateData.standby) {
         currentMcState.batchStatus = OEE_BATCH_STATUS_STANDBY;
       } else if (currentTagMcState.read === tagMcStateData.running) {
@@ -315,20 +319,21 @@ export class TagReadJob {
       const outVal = this.getTagBatchStatus(currentMcState.batchStatus, activePD, tagOutBatchStatus);
       this.sendBatchStatus(batch, oeeCode, oeeTags, outVal);
 
-      // check A or P
+      // when back to normal. check if there is any A or P
       if (
         currentMcState.stopSeconds === 0 &&
         previousMcState.stopSeconds > 0 &&
         previousMcState.stopSeconds > batch.standardSpeedSeconds
       ) {
+        // A
         if (previousMcState.stopSeconds >= batch.breakdownSeconds) {
-          // A happens
           await this.eventEmitter.emitAsync(
             'batch-a-params.process',
             new BatchAEvent(batch, previousMcState, allReads, readTimestamp),
           );
-        } else {
-          // P happens
+        }
+        // P
+        else {
           await this.eventEmitter.emitAsync(
             'batch-p-params.process',
             new BatchPEvent(batch, previousMcState, allReads, readTimestamp),
