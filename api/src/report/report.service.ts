@@ -1065,7 +1065,7 @@ export class ReportService {
                 analyticAParams.map((item) => item.data as AnalyticAParam),
                 _.uniqWith(mcParams, (pre, cur) => {
                     if (pre.id == cur.id) {
-                        cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                        cur.name = pre.name;
                         return true;
                     }
                     return false;
@@ -1074,7 +1074,7 @@ export class ReportService {
             // rows[key] = await this.mapMachineParametersToAnalytics(analyticAParams, _.uniqWith(mcParams, (pre, cur) => {
             const mapParameter = await this.mapMachineParametersToAnalytics(analyticAParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
-                    cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                    cur.name = pre.name;
                     return true;
                 }
                 return false;
@@ -1137,7 +1137,7 @@ export class ReportService {
                 analyticPParams.map((item) => item.data as AnalyticPParam),
                 _.uniqWith(mcParams, (pre, cur) => {
                     if (pre.id == cur.id) {
-                        cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                        cur.name = pre.name;
                         return true;
                     }
                     return false;
@@ -1146,7 +1146,7 @@ export class ReportService {
 
             const mapParameter = await this.mapMachineParametersToAnalytics(analyticPParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
-                    cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                    cur.name = pre.name;
                     return true;
                 }
                 return false;
@@ -1251,7 +1251,7 @@ export class ReportService {
                 analyticQParams.map((item) => item.data as AnalyticQParam),
                 _.uniqWith(mcParams, (pre, cur) => {
                     if (pre.id == cur.id) {
-                        cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                        cur.name = pre.name;
                         return true;
                     }
                     return false;
@@ -1260,7 +1260,7 @@ export class ReportService {
 
             const mapParameter = await this.mapMachineParametersQToAnalytics(analyticQParams, _.uniqWith(mcParams, (pre, cur) => {
                 if (pre.id == cur.id) {
-                    cur.name = cur.name === pre.name ? pre.name : cur.name + ' / ' + pre.name;
+                    cur.name = pre.name;
                     return true;
                 }
                 return false;
