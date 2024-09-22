@@ -860,7 +860,7 @@ export class ReportService {
 
     private calculateProductOee(sumData: OeeSumData, key: string): any {
         const {
-            totalAutoDefects,
+            qOk,
             qNg,
             totalCount,
             plan,
@@ -868,7 +868,7 @@ export class ReportService {
         } = sumData;
         return {
             key,
-            qOk: totalAutoDefects,
+            qOk: qOk,
             qNg: qNg,
             actual: totalCount,
             plan: plan,
