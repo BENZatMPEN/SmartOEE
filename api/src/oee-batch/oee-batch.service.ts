@@ -832,7 +832,7 @@ export class OeeBatchService {
       const batchParam = batchParamQs.filter(
         (batchParam) => batchParam.machineId === mcParam.machineId && batchParam.machineParameterId === mcParam.id,
       )[0];
-      acc[key] = batchParam.autoAmount + batchParam.manualAmount;
+      acc[key] = (batchParam?.autoAmount || 0) + (batchParam?.manualAmount || 0);
       return acc;
     }, {});
 
