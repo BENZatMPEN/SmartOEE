@@ -68,10 +68,8 @@ export class BatchAEventsListener {
     }
 
     const updatingA = updatingAs[0];
-    await Promise.all([
-      this.oeeBatchService.createBatchA(updatingA),
-      this.notify(batch, updatingA, previousMcState, readTimestamp),
-    ]);
+    await this.oeeBatchService.createBatchA(updatingA);
+    await this.notify(batch, updatingA, previousMcState, readTimestamp);
 
     await this.eventEmitter.emitAsync('batch-a-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
     await this.eventEmitter.emitAsync(

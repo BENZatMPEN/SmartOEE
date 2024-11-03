@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import {
   OeeBatch,
   OeeBatchA,
+  OeeBatchAParamParetoData,
   OeeBatchP,
   OeeBatchPagedList,
   OeeBatchParamParetoData,
@@ -11,10 +12,17 @@ import {
   OeeTimeline,
 } from '../../@types/oeeBatch';
 
-const initialParetoData = {
+const initialParetoData: OeeBatchParamParetoData = {
   labels: [],
   counts: [],
   percents: [],
+};
+
+const initialAParetoData: OeeBatchAParamParetoData = {
+  labels: [],
+  counts: [],
+  percents: [],
+  machines: [],
 };
 
 export type OeeState = {
@@ -26,7 +34,7 @@ export type OeeState = {
   canEditBatch: boolean;
   batchParamAs: OeeBatchA[];
   errorParamAs: Error | string | null;
-  batchParetoA: OeeBatchParamParetoData;
+  batchParetoA: OeeBatchAParamParetoData;
   errorParetoA: Error | string | null;
   batchParamPs: OeeBatchP[];
   errorParamPs: Error | string | null;
@@ -56,7 +64,7 @@ const initialState: OeeState = {
   errorBatches: null,
   batchParamAs: [],
   errorParamAs: null,
-  batchParetoA: initialParetoData,
+  batchParetoA: initialAParetoData,
   errorParetoA: null,
   batchParamPs: [],
   errorParamPs: null,
@@ -136,7 +144,7 @@ const oeeBatchSlice = createSlice({
     },
     getBatchParetoAError(state, action) {
       state.errorParetoA = action.payload;
-      state.batchParetoA = initialParetoData;
+      state.batchParetoA = initialAParetoData;
     },
     updateBatchParetoA(state, action) {
       state.batchParetoA = action.payload;

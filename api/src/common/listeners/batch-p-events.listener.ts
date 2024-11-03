@@ -69,17 +69,15 @@ export class BatchPEventsListener {
       }
 
       const updatingP = updatingPs[0];
-      await Promise.all([
-        this.oeeBatchService.createBatchP(updatingP),
-        this.notificationService.notifyPParam(
-          batch.siteId,
-          batch.oeeId,
-          batch.id,
-          updatingP.tagId,
-          readTimestamp,
-          previousMcState.stopSeconds,
-        ),
-      ]);
+      await this.oeeBatchService.createBatchP(updatingP);
+      await this.notificationService.notifyPParam(
+        batch.siteId,
+        batch.oeeId,
+        batch.id,
+        updatingP.tagId,
+        readTimestamp,
+        previousMcState.stopSeconds,
+      );
 
       await this.eventEmitter.emitAsync('batch-p-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
       await this.eventEmitter.emitAsync(

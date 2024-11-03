@@ -59,17 +59,15 @@ export class BatchQEventsListener {
       `Q - Id: ${currentParam.id} (${currentParam.tagId}) - previous: ${currentParam.autoAmount}, current: ${updatingParam.autoAmount}`,
     );
 
-    await Promise.all([
-      this.oeeBatchService.updateBatchQ(updatingParam),
-      this.notificationService.notifyQParam(
-        batch.siteId,
-        batch.oeeId,
-        batch.id,
-        currentParam.tagId,
-        currentParam.autoAmount,
-        updatingParam.autoAmount,
-      ),
-    ]);
+    await this.oeeBatchService.updateBatchQ(updatingParam);
+    await this.notificationService.notifyQParam(
+      batch.siteId,
+      batch.oeeId,
+      batch.id,
+      currentParam.tagId,
+      currentParam.autoAmount,
+      updatingParam.autoAmount,
+    );
 
     await this.eventEmitter.emitAsync('batch-q-params.updated', new BatchParamsUpdatedEvent(batch.id, 0, false));
   }

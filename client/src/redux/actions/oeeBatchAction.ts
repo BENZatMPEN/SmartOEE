@@ -2,6 +2,7 @@ import {
   FilterOeeBatch,
   OeeBatch,
   OeeBatchA,
+  OeeBatchAParamParetoData,
   OeeBatchP,
   OeeBatchPagedList,
   OeeBatchParamParetoData,
@@ -82,7 +83,7 @@ export function getOeeBatchAs(batchId: number) {
 export function getOeeBatchParetoA(batchId: number) {
   return async () => {
     try {
-      const response = await axios.get<OeeBatchParamParetoData>(`/oee-batches/${batchId}/a-pareto`);
+      const response = await axios.get<OeeBatchAParamParetoData>(`/oee-batches/${batchId}/a-pareto`);
       dispatch(oeeBatchSlice.actions.getBatchParetoASuccess(response.data));
     } catch (error) {
       dispatch(oeeBatchSlice.actions.getBatchParetoAError(error));

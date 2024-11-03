@@ -4,12 +4,10 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Device } from '../../@types/device';
 import { ImageWidgetProps } from '../../@types/imageWidget';
-import { Widget } from '../../@types/widget';
 import axios from '../../utils/axios';
 import { FormProvider, RHFSelect } from '../hook-form';
 import Iconify from '../Iconify';
 import ImageWidgetMappingList from './ImageWidgetMappingList';
-import * as fs from 'fs';
 
 type Props = {
   widgetProps: ImageWidgetProps;

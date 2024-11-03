@@ -163,6 +163,20 @@ export type OeeBatchPagedList = {
   count: number;
 };
 
+export type OeeBatchAParamParetoData = {
+  labels: string[];
+  counts: number[];
+  percents: number[];
+  machines: OeeBatchMachineAParamParetoData[];
+};
+
+export type OeeBatchMachineAParamParetoData = {
+  labels: string[];
+  counts: number[];
+  percents: number[];
+  machineCode: string;
+};
+
 export type OeeBatchParamParetoData = {
   labels: string[];
   counts: number[];

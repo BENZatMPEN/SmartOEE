@@ -6,9 +6,12 @@ import useWidgetDialog from '../../hooks/useWidgetDialog';
 import Emitter from '../../utils/emitter';
 import Image from '../Image';
 import ImageWidgetDialog from './ImageWidgetDialog';
+import { SxProps } from '@mui/material';
+import { Theme } from '@mui/material/styles';
 
 interface Props {
   widget: Widget;
+  sx?: SxProps<Theme>;
   canEdit?: boolean;
   open?: boolean;
   onClose?: VoidFunction;
@@ -24,7 +27,7 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
 
   const { setWidgetDialog } = useWidgetDialog();
 
-  const [tagValue, setTagValue] = useState<string>('0');
+  const [tagValue, setTagValue] = useState<string>(!widget || widget.id === 0 ? '0' : '-1');
 
   const canOpenDialog = canEdit && open && onClose && onSave;
 
@@ -42,11 +45,12 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
   };
 
   useEffect(() => {
+    console.log('widget', widget);
     const mapRead = (tag: ReadItem) => {
       if (!tag) {
         return;
       }
-
+      console.log('widget tag', tag);
       setTagValue(tag.read);
     };
 
@@ -61,12 +65,7 @@ export default function ImageWidget({ widget, canEdit, open, onClose, onSave, ..
   useEffect(() => {
     if (open && canOpenDialog) {
       setWidgetDialog(
-        <ImageWidgetDialog
-          widgetProps={widgetProps}
-          open={open}
-          onClose={onClose}
-          onSave={handleDialogSave}
-        ></ImageWidgetDialog>,
+        <ImageWidgetDialog widgetProps={widgetProps} open={open} onClose={onClose} onSave={handleDialogSave} />,
       );
     } else {
       setWidgetDialog(null);

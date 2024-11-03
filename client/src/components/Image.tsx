@@ -2,6 +2,7 @@ import { Box, BoxProps, SxProps } from '@mui/material';
 // @mui
 import { Theme } from '@mui/material/styles';
 import { LazyLoadImage, LazyLoadImageProps } from 'react-lazy-load-image-component';
+import imagePlaceholder from '../assets/img_placeholder.svg';
 
 // ----------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ export default function Image({ ratio, disabledEffect = false, effect = 'blur', 
           component={LazyLoadImage}
           wrapperClassName="wrapper"
           effect={disabledEffect ? undefined : effect}
-          placeholderSrc="https://zone-assets-api.vercel.app/assets/img_placeholder.svg"
+          placeholderSrc={imagePlaceholder}
           sx={{ width: 1, height: 1, objectFit: 'contain' }}
           {...other}
         />
@@ -66,7 +67,7 @@ export default function Image({ ratio, disabledEffect = false, effect = 'blur', 
         component={LazyLoadImage}
         wrapperClassName="wrapper"
         effect={disabledEffect ? undefined : effect}
-        placeholderSrc="https://zone-assets-api.vercel.app/assets/img_placeholder.svg"
+        placeholderSrc={imagePlaceholder}
         sx={{ width: 1, height: 1, objectFit: 'cover' }}
         {...other}
       />

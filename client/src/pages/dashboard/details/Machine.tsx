@@ -1,60 +1,100 @@
-import { Box, Card, CardContent, Grid, Stack } from '@mui/material';
+import { Box, Card, CardContent, Grid, MenuItem, Stack, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Machine as MachineType } from '../../../@types/machine';
 import { Widget } from '../../../@types/widget';
-import { LoadableWidget } from '../../../components/widget/LoadableWidget';
 import { RootState, useSelector } from '../../../redux/store';
 import DashboardMachineProcessStatus from '../../../sections/dashboard/details/machine/DashboardMachineProcessStatus';
 import DashboardMachineProductStatus from '../../../sections/dashboard/details/machine/DashboardMachineProductStatus';
 import DashboardMachineTimeline from '../../../sections/dashboard/details/machine/DashboardMachineTimeline';
 import axios from '../../../utils/axios';
+import ImageWidget from '../../../components/widget/ImageWidget';
 
 export default function Machine() {
   const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
 
   const [imgWidget, setImgWidget] = useState<Widget | null>(null);
+  const [machines, setMachines] = useState<MachineType[]>([]);
+  const [selectedMc, setSelectedMc] = useState<MachineType | null>(null);
 
   useEffect(() => {
     if (!selectedOee) {
-      setImgWidget(null);
       return;
     }
 
     (async () => {
-      const oeeMachines = selectedOee.oeeMachines || [];
-      if (oeeMachines.length > 0) {
-        const oeeMachine = oeeMachines[0];
-        const response = await axios.get<MachineType>(`/machines/${oeeMachine.machineId}`);
-        const { data } = response;
+      const results = await Promise.all(
+        (selectedOee.oeeMachines || []).map((machine) => axios.get<MachineType>(`/machines/${machine.machineId}`)),
+      );
 
-        if (data.widgets.length > 0) {
-          setImgWidget(data.widgets[0]);
-        }
-      }
+      const machines = results.map((result) => result.data);
+      setMachines(machines);
+      setSelectedMc(machines.length > 0 ? machines[0] : null);
     })();
-    // TODO: there will be multiple machine
   }, [selectedOee]);
+
+  useEffect(() => {
+    if (!selectedMc || selectedMc.widgets.length === 0) {
+      setImgWidget(null);
+      return;
+    }
+
+    setImgWidget(selectedMc.widgets[0]);
+  }, [selectedMc]);
 
   return (
     <Box>
       <Stack spacing={3} direction={'column'}>
         <Card>
           <CardContent>
-            <Grid container spacing={3} alignItems="center">
+            <Grid container spacing={3} alignItems="start">
               <Grid item xs={12} md={7}>
                 <DashboardMachineProcessStatus />
               </Grid>
 
               <Grid item xs={12} md={5}>
-                {imgWidget && (
-                  <LoadableWidget
-                    widget={imgWidget}
-                    sx={{
-                      borderRadius: 1,
-                      height: '250px',
-                      objectFit: 'contain',
-                    }}
-                  />
+                {selectedMc && (
+                  <Stack spacing={3}>
+                    <Stack direction="row" justifyContent="end" spacing={2}>
+                      <TextField
+                        size="small"
+                        select
+                        value={selectedMc.id}
+                        InputLabelProps={{ shrink: true }}
+                        SelectProps={{ native: false }}
+                        sx={{ width: '200px' }}
+                        onChange={(event) => {
+                          setSelectedMc(machines.find((item) => item.id === Number(event.target.value)) || machines[0]);
+                          setImgWidget(null);
+                        }}
+                      >
+                        {machines.map((item) => (
+                          <MenuItem
+                            key={item.id}
+                            value={item.id}
+                            sx={{
+                              mx: 1,
+                              my: 0.5,
+                              borderRadius: 0.75,
+                              typography: 'body2',
+                            }}
+                          >
+                            {item.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Stack>
+
+                    {imgWidget && (
+                      <ImageWidget
+                        widget={imgWidget}
+                        sx={{
+                          borderRadius: 1,
+                          height: '300px',
+                          objectFit: 'contain',
+                        }}
+                      />
+                    )}
+                  </Stack>
                 )}
               </Grid>
             </Grid>

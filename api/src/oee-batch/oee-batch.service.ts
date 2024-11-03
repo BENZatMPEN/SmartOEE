@@ -44,6 +44,21 @@ import { SocketService } from '../common/services/socket.service';
 import { OeeBatchJobEntity } from '../common/entities/oee-batch-job.entity';
 import { TagReadEntity } from '../common/entities/tag-read.entity';
 import { DeviceTagResult } from '../common/type/read';
+import { MachineEntity } from '../common/entities/machine.entity';
+
+export type AParetoData = {
+  labels: string[];
+  counts: number[];
+  percents: number[];
+  machines: MachineAParetoData[];
+};
+
+export type MachineAParetoData = {
+  labels: string[];
+  counts: number[];
+  percents: number[];
+  machineCode: string;
+};
 
 export type ParetoData = {
   labels: string[];
@@ -900,13 +915,22 @@ export class OeeBatchService {
     return this.oeeBatchLogRepository.find({ where: { oeeBatchId: id } });
   }
 
-  async calculateBatchParetoA(batchId: number): Promise<ParetoData> {
+  async calculateBatchParetoA(batchId: number): Promise<AParetoData> {
     const batch = await this.oeeBatchRepository.findOneBy({ id: batchId });
     const { machines } = batch;
     const batchParamAs = await this.oeeBatchARepository.findBy({
       oeeBatchId: batch.id,
     });
 
+    return machines.length > 1
+      ? this.calculateBatchParetoAForMachine(machines, batchParamAs)
+      : this.calculateBatchParetoAForParams(machines, batchParamAs);
+  }
+
+  private async calculateBatchParetoAForParams(
+    machines: MachineEntity[],
+    batchParamAs: OeeBatchAEntity[],
+  ): Promise<AParetoData> {
     const total = batchParamAs.reduce((acc, item) => acc + item.seconds, 0);
     const list = batchParamAs.reduce((acc, item) => {
       const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
@@ -930,14 +954,12 @@ export class OeeBatchService {
     const sortedList = listWithoutOther.sort((a, b) => (b.count > a.count ? 1 : a.count > b.count ? -1 : 0));
     const listFirstNine = sortedList.slice(0, 9);
     const restOfTheList = sortedList.slice(9, sortedList.length);
-
     const params = machines.map((mc) => mc.parameters.filter((mcParam) => mcParam.oeeType === OEE_PARAM_TYPE_A)).flat();
     const labels = listFirstNine.map((item) => params.filter((param) => param.id === item.key)[0].name);
-    labels.push('Other');
-
     const finalList = [...listFirstNine];
     const otherList = list.filter((item) => item.key === 0);
     if (otherList.length > 0) {
+      labels.push('Other');
       const itemOther = list.filter((item) => item.key === 0)[0];
       itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
       finalList.push(itemOther);
@@ -953,6 +975,100 @@ export class OeeBatchService {
       labels,
       counts,
       percents,
+      machines: [],
+    };
+  }
+
+  private async calculateBatchParetoAForMachine(
+    machines: MachineEntity[],
+    batchParamAs: OeeBatchAEntity[],
+  ): Promise<AParetoData> {
+    // calculate for each machine
+    const machineResults: MachineAParetoData[] = machines.map((machine) => {
+      const machineBatchParams = batchParamAs.filter((param) => param.machineId === machine.id);
+      const total = machineBatchParams.reduce((acc, item) => acc + item.seconds, 0);
+      const list = machineBatchParams.reduce((acc, item) => {
+        const idx = acc.findIndex((i) => i.key === (item.machineParameterId || 0));
+        if (idx < 0) {
+          acc.push({
+            key: item.machineParameterId || 0,
+            count: item.seconds,
+          });
+          return acc;
+        }
+
+        acc[idx].count = acc[idx].count + item.seconds;
+        return acc;
+      }, [] as CalculationItem[]);
+
+      const listWithoutOther = list.filter((item) => item.key !== 0);
+      const sortedList = listWithoutOther.sort((a, b) => (b.count > a.count ? 1 : a.count > b.count ? -1 : 0));
+      const listFirstNine = sortedList.slice(0, 9);
+      const restOfTheList = sortedList.slice(9, sortedList.length);
+      const params = machines
+        .map((mc) => mc.parameters.filter((mcParam) => mcParam.oeeType === OEE_PARAM_TYPE_A))
+        .flat();
+      const labels = listFirstNine.map((item) => params.filter((param) => param.id === item.key)[0].name);
+      const finalList = [...listFirstNine];
+      const otherList = list.filter((item) => item.key === 0);
+      if (otherList.length > 0) {
+        labels.push('Other');
+        const itemOther = list.filter((item) => item.key === 0)[0];
+        itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
+        finalList.push(itemOther);
+      }
+
+      const counts: number[] = finalList.map((item) => item.count);
+      const percents: number[] = finalList.map((item, idx, arr) => {
+        const sum = arr.slice(0, idx + 1).reduce((sum, item) => sum + item.count, 0);
+        return (sum / total) * 100;
+      });
+
+      return { machineCode: machine.code, labels, counts, percents };
+    });
+
+    // calculate for all machines
+    const total = batchParamAs.reduce((acc, item) => acc + item.seconds, 0);
+    const list = batchParamAs.reduce((acc, item) => {
+      const idx = acc.findIndex((i) => i.key === (item.machineId || 0));
+      if (idx < 0) {
+        acc.push({
+          key: item.machineId || 0,
+          count: item.seconds,
+        });
+        return acc;
+      }
+
+      acc[idx].count = acc[idx].count + item.seconds;
+      return acc;
+    }, [] as CalculationItem[]);
+
+    const listWithoutOther = list.filter((item) => item.key !== 0);
+    const sortedList = listWithoutOther.sort((a, b) => (b.count > a.count ? 1 : a.count > b.count ? -1 : 0));
+    const listFirstNine = sortedList.slice(0, 9);
+    const restOfTheList = sortedList.slice(9, sortedList.length);
+    const labels = listFirstNine.map((item) => machines.filter((param) => param.id === item.key)[0].code);
+    const finalList = [...listFirstNine];
+    const otherList = list.filter((item) => item.key === 0);
+
+    if (otherList.length > 0) {
+      labels.push('Other');
+      const itemOther = list.filter((item) => item.key === 0)[0];
+      itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
+      finalList.push(itemOther);
+    }
+
+    const counts: number[] = finalList.map((item) => item.count);
+    const percents: number[] = finalList.map((item, idx, arr) => {
+      const sum = arr.slice(0, idx + 1).reduce((sum, item) => sum + item.count, 0);
+      return (sum / total) * 100;
+    });
+
+    return {
+      labels,
+      counts,
+      percents,
+      machines: machineResults,
     };
   }
 
@@ -990,11 +1106,10 @@ export class OeeBatchService {
 
     const params = machines.map((mc) => mc.parameters.filter((mcParam) => mcParam.oeeType === OEE_PARAM_TYPE_P)).flat();
     const labels = listFirstNine.map((item) => params.filter((param) => param.id === item.key)[0].name);
-    labels.push('Other');
-
     const finalList = [...listFirstNine];
     const otherList = list.filter((item) => item.key === 0);
     if (otherList.length > 0) {
+      labels.push('Other');
       const itemOther = list.filter((item) => item.key === 0)[0];
       itemOther.count = itemOther.count + restOfTheList.reduce((sum, item) => sum + item.count, 0);
       finalList.push(itemOther);

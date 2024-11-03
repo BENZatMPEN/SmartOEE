@@ -13,7 +13,6 @@ import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
 import { FormProvider, RHFEditor, RHFTextField, RHFUploadSingleFile } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
-import { LoadableWidget } from '../../../../components/widget/LoadableWidget';
 import { OEE_TYPE_A, OEE_TYPE_P, OEE_TYPE_Q } from '../../../../constants';
 import useToggle from '../../../../hooks/useToggle';
 import { createMachine, updateMachine } from '../../../../redux/actions/machineAction';
@@ -25,6 +24,7 @@ import MachineParamAList from './MachineParamAList';
 import MachineParameterDialog from './MachineParameterDialog';
 import MachineParamPList from './MachineParamPList';
 import MachineParamQList from './MachineParamQList';
+import ImageWidget from '../../../../components/widget/ImageWidget';
 
 interface FormValuesProps extends EditMachine {
   aParams: MachineParameter[];
@@ -284,7 +284,7 @@ export default function MachineForm({ isEdit }: Props) {
                         </Button>
 
                         {values.widgets && !!values.widgets.length && (
-                          <LoadableWidget
+                          <ImageWidget
                             widget={values.widgets[0]}
                             canEdit={true}
                             open={openWidget}
