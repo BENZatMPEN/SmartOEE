@@ -108,6 +108,8 @@ import { BatchStartAutoJob } from './common/jobs/batch-start-stop-auto.job';
 import { PlanningService } from './planning/planning.service';
 import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-planned-downtime.entity';
 import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job';
+import { AdvanceService } from './advance/advance.service';
+import { AdvanceModule } from './advance/advance.modeulr';
 
 @Module({
   imports: [
@@ -282,7 +284,8 @@ import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job'
     DashboardModule,
     AdminSiteModule,
     AdminUserModule,
-    ReportModule
+    ReportModule,
+    AdvanceModule
   ],
   controllers: [AppController],
   providers: [
@@ -315,6 +318,7 @@ import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job'
     AdminUserService,
     ReportService,
     PlanningService,
+    AdvanceService
   ],
 })
 export class AppModule implements OnModuleInit {
