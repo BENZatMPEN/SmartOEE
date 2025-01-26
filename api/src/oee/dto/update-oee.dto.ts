@@ -1,10 +1,11 @@
 import { PercentSetting } from '../../common/type/percent-settings';
 import { OeeTag } from '../../common/type/oee-tag';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { OeeProductDto } from './oee-product.dto';
 import { OeeMachineDto } from './oee-machine.dto';
 import { OeeOperatorDto } from './oee-operator.dto';
+import { CreateWorkShiftDto } from './create-work-shift.dto';
 
 export class UpdateOeeDto {
 
@@ -64,4 +65,8 @@ export class UpdateOeeDto {
   @IsArray()
   @IsOptional()
   readonly operators: OeeOperatorDto[];
+
+  @IsArray()
+  @IsOptional()
+  readonly workShifts: CreateWorkShiftDto[];
 }

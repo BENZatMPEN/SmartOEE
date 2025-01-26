@@ -5,6 +5,7 @@ import { Transform, Type } from 'class-transformer';
 import { OeeProductDto } from './oee-product.dto';
 import { OeeMachineDto } from './oee-machine.dto';
 import { OeeOperatorDto } from './oee-operator.dto';
+import { CreateWorkShiftDto } from './create-work-shift.dto';
 
 export class CreateOeeDto {
 
@@ -65,4 +66,7 @@ export class CreateOeeDto {
   @IsOptional()
   readonly operators: OeeOperatorDto[];
 
+  @IsArray()
+  @IsOptional()
+  readonly workShifts: CreateWorkShiftDto[];
 }

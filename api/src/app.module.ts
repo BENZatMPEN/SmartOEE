@@ -110,6 +110,7 @@ import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-p
 import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job';
 import { AdvanceService } from './advance/advance.service';
 import { AdvanceModule } from './advance/advance.modeulr';
+import { WorkShiftEntity } from './common/entities/work-shift.entity';
 
 @Module({
   imports: [
@@ -173,6 +174,7 @@ import { AdvanceModule } from './advance/advance.modeulr';
             AnalyticEntity,
             AnalyticStatsParamEntity,
             DashboardEntity,
+            WorkShiftEntity,
           ],
           synchronize: true,
           // logging: 'all',
@@ -221,6 +223,7 @@ import { AdvanceModule } from './advance/advance.modeulr';
       AnalyticStatsParamEntity,
       DashboardEntity,
       PlanningEntity,
+      WorkShiftEntity,
     ]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

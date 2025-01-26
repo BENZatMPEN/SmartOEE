@@ -4,7 +4,7 @@ import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, Repository, DataSource } from 'typeorm';
 import { OeeEntity } from 'src/common/entities/oee.entity';
 import { OeeProductEntity } from 'src/common/entities/oee-product.entity';
 import { OeeMachineEntity } from 'src/common/entities/oee-machine.entity';
@@ -20,6 +20,8 @@ import { FindLatestBatchOeeDto } from './dto/lastBatch-oee.dto';
 import { UserEntity } from 'src/common/entities/user.entity';
 import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
 import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
+import { WorkShiftEntity } from 'src/common/entities/work-shift.entity';
+import { CloneWorkShiftDto } from './dto/clone-work-shift.dto';
 
 @Injectable()
 export class OeeService {
@@ -42,8 +44,11 @@ export class OeeService {
     private userRepository: Repository<UserEntity>,
     @InjectRepository(OeeBatchPlannedDowntimeEntity)
     private readonly oeeBatchPlannedDowntimeRepository: Repository<OeeBatchPlannedDowntimeEntity>,
+    @InjectRepository(WorkShiftEntity)
+    private workShiftRepository: Repository<WorkShiftEntity>,
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
+    private readonly dataSource: DataSource,
   ) { }
 
   async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
@@ -268,7 +273,7 @@ export class OeeService {
       throw new BadRequestException(`Number of OEE has reached the limit (${site.oeeLimit})`);
     }
 
-    const { oeeProducts, oeeMachines, ...dto } = createDto;
+    const { oeeProducts, oeeMachines, workShifts, ...dto } = createDto;
     if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
@@ -283,6 +288,18 @@ export class OeeService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    if (Array.isArray(workShifts)) {
+      for (const workShift of workShifts) {
+        const newWorkShift = this.workShiftRepository.create({
+          ...workShift,
+          oeeId: oee.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await this.workShiftRepository.save(newWorkShift);
+      }
+    }
 
     if (oeeProducts) {
       for (const product of oeeProducts) {
@@ -328,7 +345,7 @@ export class OeeService {
 
   async update(id: number, updateDto: UpdateOeeDto, imageName: string, siteId: number): Promise<OeeEntity> {
     const site = await this.siteRepository.findOneBy({ id: siteId });
-    const { oeeProducts, oeeMachines, ...dto } = updateDto;
+    const { oeeProducts, oeeMachines, workShifts, ...dto } = updateDto;
     if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
@@ -349,6 +366,24 @@ export class OeeService {
       imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
+
+    if (Array.isArray(workShifts)) {
+      for (const workShift of workShifts) {
+        if (workShift.id) {
+          const updatingWorkShift = await this.workShiftRepository.findOneBy({ id: workShift.id });
+          await this.workShiftRepository.save({ ...updatingWorkShift, ...workShift, updatedAt: new Date() });
+        } else {
+          const newWorkShift = this.workShiftRepository.create({
+            ...workShift,
+            oeeId: oee.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          await this.workShiftRepository.save(newWorkShift);
+        }
+      }
+    }
+
 
     const deletingProductIds = (oeeProducts || [])
       .filter((oeeProduct) => oeeProduct.id)
@@ -636,6 +671,37 @@ export class OeeService {
       .set({ deleted: true, updatedAt: new Date() })
       .where('oeeId in (:ids)', { ids })
       .execute();
+  }
+
+  async cloneWorkShift(cloneWorkShift: CloneWorkShiftDto): Promise<OeeEntity[]> {
+    const { workShifts, oeeIds } = cloneWorkShift;
+  
+    const oees: OeeEntity[] = [];
+  
+    await this.dataSource.transaction(async (manager) => {
+      for (const oeeId of oeeIds) {
+        const oee = await manager.findOne(this.oeeRepository.target, { where: { id: oeeId } });
+        if (!oee) {
+          throw new Error(`OEE with ID ${oeeId} not found`);
+        }
+  
+        await manager.delete(this.workShiftRepository.target, { oeeId });
+  
+        const newWorkShifts = workShifts.map((workShift) =>
+          manager.create(this.workShiftRepository.target, {
+            ...workShift,
+            oeeId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+        );
+        await manager.save(this.workShiftRepository.target, newWorkShifts);
+        
+        oees.push(oee);
+      }
+    });
+  
+    return oees;
   }
 
   findPlanningsById(id: number, siteId: number): Promise<PlanningEntity[]> {

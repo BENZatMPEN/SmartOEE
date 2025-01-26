@@ -12,6 +12,7 @@ import { PlanningEntity } from '../common/entities/planning.entity';
 import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
 import { UserEntity } from 'src/common/entities/user.entity';
 import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
+import { WorkShiftEntity } from 'src/common/entities/work-shift.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-pla
       OeeMachinePlannedDowntimeEntity,
       UserEntity,
       OeeBatchPlannedDowntimeEntity,
+      WorkShiftEntity
     ]),
   ],
   controllers: [OeeController],

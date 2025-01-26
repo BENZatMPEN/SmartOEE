@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { SiteEntity } from "src/common/entities/site.entity";
-import { Advance } from "src/common/type/advance";
 import { EntityManager, In, Repository } from "typeorm";
 import { InjectRepository } from '@nestjs/typeorm';
 import { OeeEntity } from "src/common/entities/oee.entity";
