@@ -6,6 +6,7 @@ import { PercentSetting } from '../type/percent-settings';
 import { OeeTag } from '../type/oee-tag';
 import { OeeMachinePlannedDowntimeEntity } from './oee-machine-planned-downtime.entity';
 import { UserEntity } from './user.entity';
+import { WorkShiftEntity } from './work-shift.entity';
 
 @Entity('oees')
 export class OeeEntity {
@@ -54,6 +55,9 @@ export class OeeEntity {
 
   @OneToMany(() => OeeMachinePlannedDowntimeEntity, (oeeMachinePlannedDowntime) => oeeMachinePlannedDowntime.oee)
   oeeMachinePlannedDowntime: OeeMachinePlannedDowntimeEntity[];
+
+  @OneToMany(() => WorkShiftEntity, (workShift) => workShift.oee)
+  workShifts: WorkShiftEntity[];
 
   @ManyToMany(() => UserEntity)
   @JoinTable({ name: 'userOees' })

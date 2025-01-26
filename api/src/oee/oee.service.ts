@@ -20,6 +20,7 @@ import { FindLatestBatchOeeDto } from './dto/lastBatch-oee.dto';
 import { UserEntity } from 'src/common/entities/user.entity';
 import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';
 import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
+import { WorkShiftEntity } from 'src/common/entities/work-shift.entity';
 
 @Injectable()
 export class OeeService {
@@ -42,6 +43,8 @@ export class OeeService {
     private userRepository: Repository<UserEntity>,
     @InjectRepository(OeeBatchPlannedDowntimeEntity)
     private readonly oeeBatchPlannedDowntimeRepository: Repository<OeeBatchPlannedDowntimeEntity>,
+    @InjectRepository(WorkShiftEntity)
+    private workShiftRepository: Repository<WorkShiftEntity>,
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
   ) { }
@@ -268,7 +271,7 @@ export class OeeService {
       throw new BadRequestException(`Number of OEE has reached the limit (${site.oeeLimit})`);
     }
 
-    const { oeeProducts, oeeMachines, ...dto } = createDto;
+    const { oeeProducts, oeeMachines, workShifts, ...dto } = createDto;
     if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
@@ -283,6 +286,18 @@ export class OeeService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    if (Array.isArray(workShifts)) {
+      for (const workShift of workShifts) {
+        const newWorkShift = this.workShiftRepository.create({
+          ...workShift,
+          oeeId: oee.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await this.workShiftRepository.save(newWorkShift);
+      }
+    }
 
     if (oeeProducts) {
       for (const product of oeeProducts) {
@@ -328,7 +343,7 @@ export class OeeService {
 
   async update(id: number, updateDto: UpdateOeeDto, imageName: string, siteId: number): Promise<OeeEntity> {
     const site = await this.siteRepository.findOneBy({ id: siteId });
-    const { oeeProducts, oeeMachines, ...dto } = updateDto;
+    const { oeeProducts, oeeMachines, workShifts, ...dto } = updateDto;
     if (site.mcLimit > -1 && oeeMachines.length > site.mcLimit) {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
@@ -349,6 +364,24 @@ export class OeeService {
       imageName: !imageName ? existingImageName : imageName,
       updatedAt: new Date(),
     });
+
+    if (Array.isArray(workShifts)) {
+      for (const workShift of workShifts) {
+        if (workShift.id) {
+          const updatingWorkShift = await this.workShiftRepository.findOneBy({ id: workShift.id });
+          await this.workShiftRepository.save({ ...updatingWorkShift, ...workShift, updatedAt: new Date() });
+        } else {
+          const newWorkShift = this.workShiftRepository.create({
+            ...workShift,
+            oeeId: oee.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          await this.workShiftRepository.save(newWorkShift);
+        }
+      }
+    }
+
 
     const deletingProductIds = (oeeProducts || [])
       .filter((oeeProduct) => oeeProduct.id)

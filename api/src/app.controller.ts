@@ -52,6 +52,7 @@ import { AnalyticService } from './analytic/analytic.service';
 import { AdminUserService } from './admin-user/admin-user.service';
 import { AdminSiteService } from './admin-site/admin-site.service';
 import { OeeMachineDto } from './oee/dto/oee-machine.dto';
+import { DayOfWeek } from './common/entities/work-shift.entity';
 
 @Controller()
 export class AppController {
@@ -551,7 +552,19 @@ export class AppController {
             machineId: realMc.id,
           } as OeeMachineDto,
         ],
-        operators: []
+        operators: [],
+        workShifts: [
+          {
+            dayOfWeek: DayOfWeek.Monday,
+            shiftNumber: 1,
+            shiftName: "Morning Shift",
+            startTime: "08:00",
+            endTime: "16:00",
+            isDayActive: true,
+            isShiftActive: true,
+            oeeId: 1
+          }
+        ]
       },
       null,
       sites[0].id,
@@ -746,7 +759,19 @@ export class AppController {
                 machineId: machines[i].id,
               } as OeeMachineDto,
             ],
-            operators: []
+            operators: [],
+            workShifts: [
+              {
+                dayOfWeek: DayOfWeek.Monday,
+                shiftNumber: 1,
+                shiftName: "Morning Shift",
+                startTime: "08:00",
+                endTime: "16:00",
+                isDayActive: true,
+                isShiftActive: true,
+                oeeId: 1
+              }
+            ]
           },
           null,
           sites[1].id,
