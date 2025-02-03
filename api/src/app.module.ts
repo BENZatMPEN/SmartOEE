@@ -111,6 +111,9 @@ import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job'
 import { AdvanceService } from './advance/advance.service';
 import { AdvanceModule } from './advance/advance.modeulr';
 import { WorkShiftEntity } from './common/entities/work-shift.entity';
+import { OeeWorkTimeEntity } from './common/entities/oee-work-time.entity';
+import { OeeWorkTimeSchedulerService } from './oee-work-time-scheduler/oee-work-time-scheduler.service';
+import { OeeWorkTimeSchedulerModule } from './oee-work-time-scheduler/oee-work-time-scheduler.module';
 
 @Module({
   imports: [
@@ -175,6 +178,7 @@ import { WorkShiftEntity } from './common/entities/work-shift.entity';
             AnalyticStatsParamEntity,
             DashboardEntity,
             WorkShiftEntity,
+            OeeWorkTimeEntity
           ],
           synchronize: true,
           // logging: 'all',
@@ -236,11 +240,11 @@ import { WorkShiftEntity } from './common/entities/work-shift.entity';
         const config = configService.get<Config>('config');
         const emailAuth = config.email.hasAuth
           ? {
-              auth: {
-                user: config.email.username,
-                pass: config.email.password,
-              },
-            }
+            auth: {
+              user: config.email.username,
+              pass: config.email.password,
+            },
+          }
           : undefined;
         return {
           transport: {
@@ -288,7 +292,8 @@ import { WorkShiftEntity } from './common/entities/work-shift.entity';
     AdminSiteModule,
     AdminUserModule,
     ReportModule,
-    AdvanceModule
+    AdvanceModule,
+    OeeWorkTimeSchedulerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -321,7 +326,8 @@ import { WorkShiftEntity } from './common/entities/work-shift.entity';
     AdminUserService,
     ReportService,
     PlanningService,
-    AdvanceService
+    AdvanceService,
+    OeeWorkTimeSchedulerService,
   ],
 })
 export class AppModule implements OnModuleInit {
@@ -330,7 +336,7 @@ export class AppModule implements OnModuleInit {
     private readonly tagReadJob: TagReadJob,
     private readonly batchStatsJob: BatchStatsJob,
     private readonly dataStoreJob: DataStoreJob,
-  ) {}
+  ) { }
 
   onModuleInit() {
     const batchStatsJob = new CronJob(process.env.BATCH_STATS_JOB_INTERVAL, () => {
