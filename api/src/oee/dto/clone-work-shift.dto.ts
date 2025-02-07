@@ -1,38 +1,52 @@
 import { Type } from "class-transformer";
-import { IsNumber, IsEnum, IsString, IsBoolean, IsArray, ValidateNested } from "class-validator";
+import {
+  IsNumber,
+  IsEnum,
+  IsString,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+} from "class-validator";
 import { DayOfWeek } from "src/common/entities/work-shift.entity";
 
 export class CloneWorkShiftDto {
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => WorkShift)
-    workShifts: WorkShift[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DayWorkShift)
+  workShifts: DayWorkShift[];
 
-    @IsArray()
-    @IsNumber({}, { each: true })
-    @Type(() => Number)
-    oeeIds: number[];
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Type(() => Number)
+  oeeIds: number[];
 }
 
-class WorkShift {
-    @IsEnum(DayOfWeek)
-    dayOfWeek: DayOfWeek;
+export class DayWorkShift {
+  @IsEnum(DayOfWeek)
+  dayOfWeek: DayOfWeek;
 
-    @IsNumber()
-    shiftNumber: number;
+  @IsBoolean()
+  isDayActive: boolean;
 
-    @IsString()
-    shiftName: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkShift)
+  shifts: WorkShift[];
+}
 
-    @IsString()
-    startTime: string;
+export class WorkShift {
+  @IsNumber()
+  shiftNumber: number;
 
-    @IsString()
-    endTime: string;
+  @IsString()
+  shiftName: string;
 
-    @IsBoolean()
-    isDayActive?: boolean;
+  @IsString()
+  startTime: string;
 
-    @IsBoolean()
-    isShiftActive?: boolean;
+  @IsString()
+  endTime: string;
+
+  @IsBoolean()
+  isShiftActive: boolean;
 }

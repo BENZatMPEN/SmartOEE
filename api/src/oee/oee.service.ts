@@ -209,6 +209,7 @@ export class OeeService {
       .leftJoinAndSelect('oee.operators', 'operators')
       .leftJoinAndSelect('oeeMachines.machine', 'machine')
       .leftJoinAndSelect('machine.parameters', 'parameters')
+      .leftJoinAndSelect('oee.workShifts', 'workShifts')
       .getOne();
 
     //find oeeMachinePlannedDowntime by oeeId and oeeMachineId
@@ -290,14 +291,23 @@ export class OeeService {
     });
 
     if (Array.isArray(workShifts)) {
-      for (const workShift of workShifts) {
-        const newWorkShift = this.workShiftRepository.create({
-          ...workShift,
-          oeeId: oee.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-        await this.workShiftRepository.save(newWorkShift);
+      // workShifts ตอนนี้เป็นอาเรย์ของ DayWorkShift objects
+      for (const dayWorkShift of workShifts) {
+        const { dayOfWeek, isDayActive, oeeId, shifts } = dayWorkShift;
+        if (Array.isArray(shifts)) {
+          for (const shift of shifts) {
+            // สร้าง work shift ใหม่โดยรวมข้อมูลจากระดับวันและระดับกะ
+            const newWorkShift = this.workShiftRepository.create({
+              ...shift,            // shiftNumber, shiftName, startTime, endTime, isShiftActive
+              dayOfWeek,           // ข้อมูลจาก dayWorkShift
+              isDayActive,         // ข้อมูลจาก dayWorkShift
+              oeeId: oee.id,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            await this.workShiftRepository.save(newWorkShift);
+          }
+        }
       }
     }
 
@@ -368,22 +378,55 @@ export class OeeService {
     });
 
     if (Array.isArray(workShifts)) {
-      for (const workShift of workShifts) {
-        if (workShift.id) {
-          const updatingWorkShift = await this.workShiftRepository.findOneBy({ id: workShift.id });
-          await this.workShiftRepository.save({ ...updatingWorkShift, ...workShift, updatedAt: new Date() });
-        } else {
-          const newWorkShift = this.workShiftRepository.create({
-            ...workShift,
-            oeeId: oee.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-          await this.workShiftRepository.save(newWorkShift);
+      // workShifts ตอนนี้เป็นอาเรย์ของ dayWorkShift objects
+      for (const dayWorkShift of workShifts) {
+        // destructuring ไม่ต้องเอา oeeId จาก DTO เพราะเราจะใช้ oee.id จาก entity ที่สร้างแล้ว
+        const { dayOfWeek, isDayActive, shifts } = dayWorkShift;
+        if (Array.isArray(shifts)) {
+          for (const shift of shifts) {
+            if (shift.id) {
+              // ถ้ามี id แสดงว่าเป็นการ update work shift ที่มีอยู่แล้ว
+              const updatingWorkShift = await this.workShiftRepository.findOneBy({ id: shift.id });
+              await this.workShiftRepository.save({
+                ...updatingWorkShift,
+                ...shift,
+                dayOfWeek,   // ใช้ข้อมูลวันจาก dayWorkShift
+                isDayActive, // ใช้ข้อมูล isDayActive จาก dayWorkShift
+                updatedAt: new Date(),
+              });
+            } else {
+              // ตรวจสอบว่ามี record อยู่แล้วด้วย composite key ที่ประกอบด้วย dayOfWeek, shiftNumber และ oeeId หรือไม่
+              const existingWorkShift = await this.workShiftRepository.findOneBy({
+                dayOfWeek,
+                shiftNumber: shift.shiftNumber,
+                oeeId: oee.id, // ใช้ค่า oee.id จาก entity ที่สร้างไว้แล้ว
+              });
+              if (existingWorkShift) {
+                // ถ้าพบ record ที่มีอยู่แล้ว ให้ update แทนการสร้างใหม่
+                await this.workShiftRepository.save({
+                  ...existingWorkShift,
+                  ...shift,
+                  dayOfWeek,
+                  isDayActive,
+                  updatedAt: new Date(),
+                });
+              } else {
+                // ถ้าไม่พบ record ที่มีอยู่ ให้สร้าง work shift ใหม่
+                const newWorkShift = this.workShiftRepository.create({
+                  ...shift,
+                  dayOfWeek,   // ใช้ข้อมูลวันจาก dayWorkShift
+                  isDayActive, // ใช้ข้อมูล isDayActive จาก dayWorkShift
+                  oeeId: oee.id, // กำหนดค่า oeeId ให้เป็น oee.id จาก entity ที่สร้างขึ้นแล้ว
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+                await this.workShiftRepository.save(newWorkShift);
+              }
+            }
+          }
         }
       }
     }
-
 
     const deletingProductIds = (oeeProducts || [])
       .filter((oeeProduct) => oeeProduct.id)
@@ -675,32 +718,47 @@ export class OeeService {
 
   async cloneWorkShift(cloneWorkShift: CloneWorkShiftDto): Promise<OeeEntity[]> {
     const { workShifts, oeeIds } = cloneWorkShift;
-  
+
     const oees: OeeEntity[] = [];
-  
+
     await this.dataSource.transaction(async (manager) => {
       for (const oeeId of oeeIds) {
         const oee = await manager.findOne(this.oeeRepository.target, { where: { id: oeeId } });
         if (!oee) {
           throw new Error(`OEE with ID ${oeeId} not found`);
         }
-  
+
+        // ลบ work shift เดิมที่มี oeeId นี้
         await manager.delete(this.workShiftRepository.target, { oeeId });
-  
-        const newWorkShifts = workShifts.map((workShift) =>
-          manager.create(this.workShiftRepository.target, {
-            ...workShift,
-            oeeId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        );
+
+        // สร้าง work shift ใหม่โดย flatten โครงสร้างจาก day-level ไปยัง shift-level
+        const newWorkShifts = [];
+        for (const dayWorkShift of workShifts) {
+          // dayWorkShift มีข้อมูล dayOfWeek และ isDayActive อยู่แล้ว
+          // และมีอาเรย์ shifts ที่เป็นข้อมูลของกะในวันนั้น
+          for (const shift of dayWorkShift.shifts) {
+            newWorkShifts.push(
+              manager.create(this.workShiftRepository.target, {
+                dayOfWeek: dayWorkShift.dayOfWeek,
+                isDayActive: dayWorkShift.isDayActive,
+                shiftNumber: shift.shiftNumber,
+                shiftName: shift.shiftName,
+                startTime: shift.startTime,
+                endTime: shift.endTime,
+                isShiftActive: shift.isShiftActive,
+                oeeId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+            );
+          }
+        }
+
         await manager.save(this.workShiftRepository.target, newWorkShifts);
-        
         oees.push(oee);
       }
     });
-  
+
     return oees;
   }
 
