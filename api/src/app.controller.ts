@@ -555,14 +555,18 @@ export class AppController {
         operators: [],
         workShifts: [
           {
+            oeeId: 1,
             dayOfWeek: DayOfWeek.Monday,
-            shiftNumber: 1,
-            shiftName: "Morning Shift",
-            startTime: "08:00",
-            endTime: "16:00",
             isDayActive: true,
-            isShiftActive: true,
-            oeeId: 1
+            shifts: [
+              {
+                shiftNumber: 1,
+                shiftName: "Morning Shift",
+                startTime: "08:00",
+                endTime: "16:00",
+                isShiftActive: true
+              }
+            ]
           }
         ]
       },
@@ -762,14 +766,18 @@ export class AppController {
             operators: [],
             workShifts: [
               {
+                oeeId: 1,
                 dayOfWeek: DayOfWeek.Monday,
-                shiftNumber: 1,
-                shiftName: "Morning Shift",
-                startTime: "08:00",
-                endTime: "16:00",
                 isDayActive: true,
-                isShiftActive: true,
-                oeeId: 1
+                shifts: [
+                  {
+                    shiftNumber: 1,
+                    shiftName: "Morning Shift",
+                    startTime: "08:00",
+                    endTime: "16:00",
+                    isShiftActive: true
+                  }
+                ]
               }
             ]
           },

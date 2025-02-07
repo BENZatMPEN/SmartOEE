@@ -46,7 +46,8 @@ export default function DashboardOperatingOeeA() {
   const { totalBreakdownCount, totalBreakdownSeconds } = oeeStats || initialOeeStats;
 
   const TABLE_HEAD = [
-    { id: 'timestamp', label: 'Timestamp', align: 'left' },
+    { id: 'timestamp', label: 'TimestampStart', align: 'left' },
+    { id: 'timestamp', label: 'TimestampEnd', align: 'left' },
     { id: 'machineId', label: 'Machine', align: 'left' },
     { id: 'machineParameterId', label: 'Breakdown', align: 'left' },
     { id: 'seconds', label: `Duration`, align: 'left' },
@@ -114,30 +115,38 @@ export default function DashboardOperatingOeeA() {
 
               <TableBody>
                 {batchParamAs.length > 0 &&
-                  batchParamAs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
-                    <TableRow key={'row_' + row.id} hover>
-                      <TableCell align="left">{fDateTime(row.timestamp)}</TableCell>
+                  batchParamAs
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, index) => {
+                      const timestampStart = new Date(new Date(row.timestamp).getTime() - row.seconds * 1000);
 
-                      <TableCell align="left">{getMachineName(row)}</TableCell>
+                      return (
+                        <TableRow key={'row_' + row.id} hover>
+                          <TableCell align="left">{fDateTime(timestampStart)}</TableCell>
 
-                      <TableCell align="left">{getMachineParamName(row)}</TableCell>
+                          <TableCell align="left">{fDateTime(row.timestamp)}</TableCell>
 
-                      <TableCell align="left">{fSeconds(row.seconds)}</TableCell>
+                          <TableCell align="left">{getMachineName(row)}</TableCell>
 
-                      <TableCell align="left">
-                        <Button
-                          size={'small'}
-                          disabled={!canEditBatch}
-                          startIcon={<Iconify icon="eva:edit-outline" />}
-                          onClick={() => handleEditItem(row, index)}
-                        >
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          <TableCell align="left">{getMachineParamName(row)}</TableCell>
 
-                <TableNoData key={'noData'} isNotFound={batchParamAs.length === 0} />
+                          <TableCell align="left">{fSeconds(row.seconds)}</TableCell>
+
+                          <TableCell align="left">
+                            <Button
+                              size="small"
+                              disabled={!canEditBatch}
+                              startIcon={<Iconify icon="eva:edit-outline" />}
+                              onClick={() => handleEditItem(row, index)}
+                            >
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+
+                <TableNoData key="noData" isNotFound={batchParamAs.length === 0} />
               </TableBody>
             </Table>
           </TableContainer>
