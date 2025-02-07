@@ -32,6 +32,7 @@ import { PlanningEntity } from '../common/entities/planning.entity';
 import { OEE_TYPE_STANDALONE } from '../common/constant';
 import { StatusOeeDto } from './dto/status-oee.dto';
 import { CloneWorkShiftDto } from './dto/clone-work-shift.dto';
+import { OeeDetailsDto } from './dto/get-oee.dto';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -63,7 +64,7 @@ export class OeeController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<OeeEntity> {
+  findById(@Param('id') id: number, @Query('siteId') siteId: number): Promise<OeeDetailsDto> {
     return this.oeeService.findByIdIncludingDetails(id, siteId);
   }
 

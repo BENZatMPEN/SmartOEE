@@ -24,13 +24,13 @@ export class OeeStatusItem {
   readonly batchStatus: string;
   readonly startDate: Date;
   readonly endDate: Date;
-  readonly useSitePercentSettings: boolean;
+  readonly useSitePercentSettings: number;
   readonly percentSettings: PercentSetting[];
   readonly standardSpeedSeconds: number;
   readonly productName: string;
   readonly batchStartedDate: Date;
   readonly batchStoppedDate: Date;
-  readonly activeSecondUnit: boolean;
+  readonly activeSecondUnit: number;
 }
 
 export class OeeBatchMcState {

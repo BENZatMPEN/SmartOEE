@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOeeDto } from './dto/create-oee.dto';
 import { FilterOeeDto } from './dto/filter-oee.dto';
 import { UpdateOeeDto } from './dto/update-oee.dto';
@@ -22,6 +22,21 @@ import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine
 import { OeeBatchPlannedDowntimeEntity } from 'src/common/entities/oee-batch-planned-downtime.entity';
 import { WorkShiftEntity } from 'src/common/entities/work-shift.entity';
 import { CloneWorkShiftDto } from './dto/clone-work-shift.dto';
+import { OeeDetailsDto } from './dto/get-oee.dto';
+
+interface TransformedWorkShift {
+  oeeId: number;
+  dayOfWeek: string;
+  isDayActive: boolean;
+  shifts: {
+    id: number;
+    shiftNumber: number;
+    shiftName: string;
+    startTime: string;
+    endTime: string;
+    isShiftActive: boolean;
+  }[];
+}
 
 @Injectable()
 export class OeeService {
@@ -198,8 +213,9 @@ export class OeeService {
     } as OeeStatus;
   }
 
-  async findByIdIncludingDetails(id: number, siteId: number): Promise<OeeEntity> {
-    let oee = await this.oeeRepository.createQueryBuilder('oee')
+  async findByIdIncludingDetails(id: number, siteId: number): Promise<OeeDetailsDto> {
+    const oee = await this.oeeRepository
+      .createQueryBuilder('oee')
       .where('oee.id = :id', { id })
       .andWhere('oee.siteId = :siteId', { siteId })
       .andWhere('oee.deleted = :deleted', { deleted: false })
@@ -212,15 +228,69 @@ export class OeeService {
       .leftJoinAndSelect('oee.workShifts', 'workShifts')
       .getOne();
 
-    //find oeeMachinePlannedDowntime by oeeId and oeeMachineId
-    const oeeMachinePlannedDowntime = await this.oeeMachinePlannedDowntimeRepository.findBy({ oeeId: id, oeeMachineId: In(oee.oeeMachines.map((item) => item.id)) });
+    if (!oee) {
+      throw new NotFoundException(`OEE with id ${id} and siteId ${siteId} not found`);
+    }
 
+    // ดึง oeeMachinePlannedDowntime โดยใช้ oeeId และ oeeMachineId จาก oeeMachines
+    const machineIds = oee.oeeMachines.map((machine) => machine.id);
+    const oeeMachinePlannedDowntime = await this.oeeMachinePlannedDowntimeRepository.findBy({
+      oeeId: id,
+      oeeMachineId: In(machineIds),
+    });
+
+    // แนบข้อมูล PlannedDowntime ให้กับแต่ละ machine
     oee.oeeMachines = oee.oeeMachines.map((machine) => {
-      machine.oeeMachinePlannedDowntime = oeeMachinePlannedDowntime.filter((downtime) => downtime.oeeMachineId === machine.id);
+      machine.oeeMachinePlannedDowntime = oeeMachinePlannedDowntime.filter(
+        (downtime) => downtime.oeeMachineId === machine.id,
+      );
       return machine;
     });
     oee.oeeMachinePlannedDowntime = oeeMachinePlannedDowntime;
-    return oee;
+
+    // แปลงโครงสร้าง workShifts
+    const transformedWorkShifts = this.transformWorkShifts(oee.workShifts);
+
+    // สร้าง DTO สำหรับ OEE details (ไม่เปลี่ยน type ใน entity เดิม)
+    const oeeDetails: OeeDetailsDto = {
+      id: oee.id,
+      oeeProducts: oee.oeeProducts,
+      oeeMachines: oee.oeeMachines,
+      oeeMachinePlannedDowntime: oee.oeeMachinePlannedDowntime,
+      operators: oee.operators,
+      // เพิ่ม property อื่น ๆ ตามที่ต้องการ
+      workShifts: transformedWorkShifts,
+    };
+
+    return oeeDetails;
+  }
+
+  private transformWorkShifts(workShifts: any[]): TransformedWorkShift[] {
+    const groupedShifts: Record<string, TransformedWorkShift> = {};
+
+    workShifts.forEach((shift) => {
+      // ใช้ oeeId และ dayOfWeek เป็น key สำหรับการจัดกลุ่ม
+      const key = `${shift.oeeId}-${shift.dayOfWeek}`;
+      if (!groupedShifts[key]) {
+        groupedShifts[key] = {
+          oeeId: shift.oeeId,
+          dayOfWeek: shift.dayOfWeek,
+          isDayActive: shift.isDayActive,
+          shifts: [],
+        };
+      }
+
+      groupedShifts[key].shifts.push({
+        id: shift.id,
+        shiftNumber: shift.shiftNumber,
+        shiftName: shift.shiftName,
+        startTime: shift.startTime.slice(0, 5), // ตัดวินาทีออก เอาเฉพาะ HH:mm
+        endTime: shift.endTime.slice(0, 5),
+        isShiftActive: shift.isShiftActive,
+      });
+    });
+
+    return Object.values(groupedShifts);
   }
 
   findByOeeCode(oeeCode: string, siteId: number): Promise<OeeEntity> {

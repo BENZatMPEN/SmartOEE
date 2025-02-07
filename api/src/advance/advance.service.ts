@@ -7,6 +7,9 @@ import { OeeBatchEntity } from "src/common/entities/oee-batch.entity";
 import { ProductEntity } from "src/common/entities/product.entity";
 import { UserEntity } from "src/common/entities/user.entity";
 import { OeeStatus, OeeStatusItem } from '../common/type/oee-status';
+import { AdvanceDto } from "./dto/advance.dto";
+import * as dayjs from 'dayjs';
+import { OeeRecord } from "src/common/type/advance";
 
 type OeeSumData = {
     name: string;
@@ -36,6 +39,22 @@ type OeeStats = {
     data: any;
 };
 
+interface OeeLossResult {
+    oeeId: number;
+    id: string;
+    oeePercent: number;
+    ALoss: number;
+    PLoss: number;
+    QLoss: number;
+    timeslot: string;
+    timestamp: Date;
+}
+
+interface OeeLossGrouped {
+    oeeId: number;
+    lossResult: OeeLossResult[];
+}
+
 @Injectable()
 export class AdvanceService {
     constructor(
@@ -52,108 +71,418 @@ export class AdvanceService {
         private readonly entityManager: EntityManager,
     ) { }
 
-    async findAll(
-        siteId: number,
-        startDate: string,
-        endDate: string,
-        userId: number,
-        isStream: boolean
-    ): Promise<OeeStatus> {
-
+    async findAllOeeMode1(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+        // Retrieve the user along with the associated OEE relations
         const user = await this.userRepository.findOne({
-            where: { id: userId }, // Provide the selection condition
-            relations: ['oees'], // Include the related "oees" entity
+            where: { id: advanceDto.userId },
+            relations: ['oees'],
         });
 
-        const oees = await this.oeeRepository.findBy({ siteId, deleted: false });
+        // Get OEEs for the specified site that have not been deleted
+        const oees = await this.oeeRepository.find({
+            select: ['id'], // เลือกเฉพาะฟิลด์ id
+            where: { siteId, deleted: false },
+        });
+
         const oeeIds = oees.map(oee => oee.id);
 
         if (oeeIds.length === 0) {
             return {} as OeeStatus;
         }
-        let rows: OeeStats[] = await this.getOeeStats(oeeIds, startDate, endDate);
-        const names = await this.getOeeNames(rows);
-        const lotNumbers = await this.getLotNumbers(rows);
-        const groupByOeeId = rows.reduce((acc, row) => {
+
+        // Retrieve OEE statistics within the date range
+        let statsRows: OeeStats[] = await this.getOeeStats(oeeIds, advanceDto.from, advanceDto.to);
+        const oeeNames = await this.getOeeNames(statsRows);
+        const lotNumbers = await this.getLotNumbers(statsRows);
+
+        // Group the stats rows by oeeId
+        const groupedStats = statsRows.reduce((acc: { [key: number]: OeeStats[] }, row) => {
             if (!acc[row.oeeId]) {
                 acc[row.oeeId] = [];
             }
             acc[row.oeeId].push(row);
             return acc;
-        }, {} as { [key: number]: OeeStats[] });
+        }, {});
 
+        // Base SQL query for aggregated status counts
+        let sumRowsQuery = `
+            WITH cte AS (
+                SELECT DISTINCT b.oeeId,
+                       FIRST_VALUE(b.id) OVER (PARTITION BY b.oeeId ORDER BY b.id DESC) AS batchId
+                FROM oeeBatches AS b
+            )
+            SELECT IFNULL(SUM(IF(status = "running", 1, 0)), 0)   AS running,
+                   IFNULL(SUM(IF(status = "ended" OR status IS NULL, 1, 0)), 0) AS ended,
+                   IFNULL(SUM(IF(status = "standby" OR status = "planned", 1, 0)), 0) AS standby,
+                   IFNULL(SUM(IF(status = "mc_setup", 1, 0)), 0)  AS mcSetup,
+                   IFNULL(SUM(IF(status = "breakdown", 1, 0)), 0) AS breakdown
+            FROM oees o
+                 LEFT JOIN cte ON o.id = cte.oeeId
+                 LEFT JOIN oeeBatches ob ON cte.batchId = ob.id
+            WHERE o.siteId = ? AND o.deleted = 0
+        `;
 
-        let sumRows = [];
-        const sumRowsQuery = 'WITH cte AS (SELECT distinct b.oeeId,\n' +
-            '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
-            '             FROM oeeBatches AS b)\n' +
-            'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
-            '       ifnull(sum(if(status = "ended" or status is null, 1, 0)), 0)       as ended,\n' +
-            '       ifnull(sum(if(status = "standby" or status = "planned", 1, 0)), 0) as standby,\n' +
-            '       ifnull(sum(if(status = "mc_setup", 1, 0)), 0)                      as mcSetup,\n' +
-            '       ifnull(sum(if(status = "breakdown", 1, 0)), 0)                     as breakdown\n' +
-            'from oees o\n' +
-            '         left join cte on o.id = cte.oeeId\n' +
-            '         left join oeeBatches ob\n' +
-            '                   on cte.batchId = ob.id\n' +
-            'where o.siteId = ? and o.deleted = 0';
-        if (user?.isAdmin === false) {
-            rows = rows.filter((row) => user.oees.some((oee) => oee.id === row.oeeId));
-            const oeeIds = rows.map((row) => row.oeeId);
-            sumRows = await this.entityManager.query(sumRowsQuery + ' AND o.id IN (?)', [siteId, oeeIds]);
-        } else {
-            sumRows = await this.entityManager.query(sumRowsQuery, [siteId]);
+        const queryParams: any[] = [siteId];
+
+        // For non-admin users, filter the stats rows based on user-associated OEEs
+        if (user && user.isAdmin === false) {
+            statsRows = statsRows.filter(row =>
+                user.oees.some(userOee => userOee.id === row.oeeId)
+            );
+            const filteredOeeIds = statsRows.map(row => row.oeeId);
+
+            if (filteredOeeIds.length === 0) {
+                return {
+                    running: 0,
+                    breakdown: 0,
+                    ended: 0,
+                    standby: 0,
+                    mcSetup: 0,
+                    oees: [],
+                };
+            }
+
+            queryParams.push(filteredOeeIds);
+            sumRowsQuery += ' AND o.id IN (?)';
         }
 
+        // Execute the aggregated SQL query
+        const sumRows: any[] = await this.entityManager.query(sumRowsQuery, queryParams);
         const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
 
-        for (const oeeId in groupByOeeId) {
-            const sumOee = await this.sumOeeData(groupByOeeId[oeeId], names, lotNumbers);
-            const { totalCountByBatch, ...filteredSumOee } = sumOee;
-            const calculateOee = this.calculateOee(sumOee);
-            groupByOeeId[oeeId] = {
-                ...calculateOee,
-                ...filteredSumOee,
-            };
-        }
+        // Process each group of OEE stats concurrently
+        const aggregatedData = await Promise.all(
+            Object.keys(groupedStats).map(async (key) => {
+                const oeeId = parseInt(key, 10);
+                const oeeStats = groupedStats[oeeId];
+                // Sum and calculate OEE data based on grouped stats
+                const summedData = await this.sumOeeData(oeeStats, oeeNames, lotNumbers);
+                // Optionally remove fields you do not need in the final response
+                const { totalCountByBatch, ...filteredData } = summedData;
+                const calculatedOee = this.calculateOee(summedData);
+                return {
+                    id: oeeId,
+                    ...calculatedOee,
+                    ...filteredData,
+                };
+            })
+        );
 
-        const oeeStatusItems: OeeStatusItem[] = Object.keys(groupByOeeId).map((key) => {
-            const row = groupByOeeId[key];
-            return {
-                id: parseInt(key),
-                oeeBatchId: 0,
-                oeeCode: '',
-                productionName: row.name,
-                actual: row.totalCount,
-                defect: row.totalAutoDefects + row.totalManualDefects,
-                plan: 0,
-                target: 0,
-                oeePercent: row.oeePercent,
-                lotNumber: '',
-                batchStatus: '',
-                startDate: new Date(),
-                endDate: new Date(),
-                useSitePercentSettings: false,
-                percentSettings: [],
-                standardSpeedSeconds: 0,
-                productName: '',
-                batchStartedDate: new Date(),
-                batchStoppedDate: new Date(),
-                activeSecondUnit: false,
-            };
-         });
+        // Map the aggregated data into the expected response format
+        const oeeStatusItems: OeeStatusItem[] = aggregatedData.map(item => ({
+            id: item.id,
+            oeeBatchId: 0,
+            oeeCode: '',
+            productionName: item.name,
+            actual: item.totalCount,
+            defect: item.totalAutoDefects + item.totalManualDefects,
+            plan: 0,
+            target: 0,
+            oeePercent: item.oeePercent,
+            lotNumber: '',
+            batchStatus: '',
+            startDate: new Date(),
+            endDate: new Date(),
+            useSitePercentSettings: 0, 
+            percentSettings: [],
+            standardSpeedSeconds: 0,
+            productName: '',
+            batchStartedDate: new Date(),
+            batchStoppedDate: new Date(),
+            activeSecondUnit: 0, 
+          }));
 
         return {
-            running: running,
-            breakdown: breakdown,
-            ended: ended,
-            standby: standby,
-            mcSetup: mcSetup,
+            running,
+            breakdown,
+            ended,
+            standby,
+            mcSetup,
             oees: oeeStatusItems,
         } as OeeStatus;
     }
 
-    async getOeeStats(oeeIds: number[], startDate: string, endDate: string): Promise<OeeStats[]> {
+    async findAllOeeMode2(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+        // Retrieve the user along with the associated OEE relations
+        const user = await this.userRepository.findOne({
+            where: { id: advanceDto.userId },
+            relations: ['oees'],
+        });
+
+        // Get OEEs for the specified site that have not been deleted
+        const oees = await this.oeeRepository.find({
+            select: ['id'], // เลือกเฉพาะฟิลด์ id
+            where: { siteId, deleted: false },
+        });
+
+        const oeeIds = oees.map(oee => oee.id);
+
+        if (oeeIds.length === 0) {
+            return {} as OeeStatus;
+        }
+
+        // Retrieve OEE statistics within the date range
+        let statsRows: OeeStats[] = await this.getOeeStats(oeeIds, advanceDto.from, advanceDto.to);
+        const oeeNames = await this.getOeeNames(statsRows);
+        const lotNumbers = await this.getLotNumbers(statsRows);
+
+        // Group the stats rows by oeeId
+        const groupedStats = statsRows.reduce((acc: { [key: number]: OeeStats[] }, row) => {
+            if (!acc[row.oeeId]) {
+                acc[row.oeeId] = [];
+            }
+            acc[row.oeeId].push(row);
+            return acc;
+        }, {});
+
+        // Base SQL query for aggregated status counts
+        let sumRowsQuery = `
+            WITH cte AS (
+                SELECT DISTINCT b.oeeId,
+                       FIRST_VALUE(b.id) OVER (PARTITION BY b.oeeId ORDER BY b.id DESC) AS batchId
+                FROM oeeBatches AS b
+            )
+            SELECT IFNULL(SUM(IF(status = "running", 1, 0)), 0)   AS running,
+                   IFNULL(SUM(IF(status = "ended" OR status IS NULL, 1, 0)), 0) AS ended,
+                   IFNULL(SUM(IF(status = "standby" OR status = "planned", 1, 0)), 0) AS standby,
+                   IFNULL(SUM(IF(status = "mc_setup", 1, 0)), 0)  AS mcSetup,
+                   IFNULL(SUM(IF(status = "breakdown", 1, 0)), 0) AS breakdown
+            FROM oees o
+                 LEFT JOIN cte ON o.id = cte.oeeId
+                 LEFT JOIN oeeBatches ob ON cte.batchId = ob.id
+            WHERE o.siteId = ? AND o.deleted = 0
+        `;
+
+        const queryParams: any[] = [siteId];
+
+        // For non-admin users, filter the stats rows based on user-associated OEEs
+        if (user && user.isAdmin === false) {
+            statsRows = statsRows.filter(row =>
+                user.oees.some(userOee => userOee.id === row.oeeId)
+            );
+            const filteredOeeIds = statsRows.map(row => row.oeeId);
+
+            if (filteredOeeIds.length === 0) {
+                return {
+                    running: 0,
+                    breakdown: 0,
+                    ended: 0,
+                    standby: 0,
+                    mcSetup: 0,
+                    oees: [],
+                };
+            }
+
+            queryParams.push(filteredOeeIds);
+            sumRowsQuery += ' AND o.id IN (?)';
+        }
+
+        // Execute the aggregated SQL query
+        const sumRows: any[] = await this.entityManager.query(sumRowsQuery, queryParams);
+        const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
+
+        // Process each group of OEE stats concurrently
+        const aggregatedData = await Promise.all(
+            Object.keys(groupedStats).map(async (key) => {
+                const oeeId = parseInt(key, 10);
+                const oeeStats = groupedStats[oeeId];
+                // Sum and calculate OEE data based on grouped stats
+                const summedData = await this.sumOeeData(oeeStats, oeeNames, lotNumbers);
+                // Optionally remove fields you do not need in the final response
+                const { totalCountByBatch, ...filteredData } = summedData;
+                const calculatedOee = this.calculateOee(summedData);
+                return {
+                    id: oeeId,
+                    ...calculatedOee,
+                    ...filteredData,
+                };
+            })
+        );
+
+        // Map the aggregated data into the expected response format
+        const oeeStatusItems: OeeStatusItem[] = aggregatedData.map(item => ({
+            id: item.id,
+            oeeBatchId: 0,
+            oeeCode: '',
+            productionName: item.name,
+            actual: item.totalCount,
+            defect: item.totalAutoDefects + item.totalManualDefects,
+            plan: 0,
+            target: 0,
+            oeePercent: item.oeePercent,
+            lotNumber: '',
+            batchStatus: '',
+            startDate: new Date(),
+            endDate: new Date(),
+            useSitePercentSettings: 0, // ใช้ 0 แทน false
+            percentSettings: [],
+            standardSpeedSeconds: 0,
+            productName: '',
+            batchStartedDate: new Date(),
+            batchStoppedDate: new Date(),
+            activeSecondUnit: 0, // ใช้ 0 แทน false
+          }));
+
+        const rowsHourly: OeeRecord[] = await this.getOeeStatsByHour(oeeIds, advanceDto.from, advanceDto.to);
+
+        const lossOees = await this.getLossOee(rowsHourly);
+
+
+        return {
+            lossOees,
+            running,
+            breakdown,
+            ended,
+            standby,
+            mcSetup,
+            oees: oeeStatusItems,
+        } as OeeStatus;
+    }
+
+    async getLossOee(oeeRecords: OeeRecord[]): Promise<OeeLossGrouped[]> {
+        // คำนวณ ALoss, PLoss, QLoss และจัดกลุ่มตาม oeeId
+        const groupedData: Record<number, OeeLossResult[]> = oeeRecords.reduce((acc, record) => {
+            const { aPercent, pPercent, qPercent, oeePercent } = record.data;
+            const { oeeId, timeslot, timestamp } = record;
+
+            const ALoss = (1 - (aPercent / 100)) * 100;
+            const PLoss = ((aPercent / 100) - ((aPercent / 100) * (pPercent / 100))) * 100;
+            const QLoss = (((aPercent / 100) * (pPercent / 100)) - ((aPercent / 100) * (pPercent / 100) * (qPercent / 100))) * 100;
+
+            // จัดกลุ่มตาม oeeId
+            if (!acc[oeeId]) {
+                acc[oeeId] = [];
+            }
+
+            acc[oeeId].push({
+                oeeId,
+                id: record.id,
+                oeePercent,
+                ALoss,
+                PLoss,
+                QLoss,
+                timeslot,
+                timestamp
+            });
+
+            return acc;
+        }, {} as Record<number, OeeLossResult[]>);
+
+        return Object.keys(groupedData).map(key => ({
+            oeeId: Number(key),
+            lossResult: groupedData[key].sort((a, b) => new Date(a.timeslot).getTime() - new Date(b.timeslot).getTime()),
+        }));
+    }
+
+    async getOeeStatsByHour(ids: number[], from: Date, to: Date): Promise<any> {
+        if (!ids.length) {
+            return [];
+        }
+
+        const firstTimeslotLabel = dayjs(from).format('YYYY-MM-DD HH:mm:ss');
+        const firstPeriodEnd = dayjs(from).startOf('hour').add(1, 'hour').toDate();
+
+        const middleStart = dayjs(from).startOf('hour').add(1, 'hour').toDate();
+        const lastPeriodStart = dayjs(to).startOf('hour').toDate();
+
+        const lastTimeslotLabel = dayjs(to).startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+
+        const query = `
+          (
+            SELECT 
+              a.id, 
+              a.data, 
+              a.oeeId, 
+              a.oeeBatchId, 
+              a.productId, 
+              a.timestamp, 
+              ? AS timeslot
+            FROM oeeBatchStats a
+            INNER JOIN (
+              SELECT 
+                MAX(id) AS id, 
+                oeeBatchId
+              FROM oeeBatchStats
+              WHERE 
+                oeeId IN (${ids.join(', ')})
+                AND timestamp >= ? 
+                AND timestamp < ?
+              GROUP BY oeeBatchId
+            ) b ON a.id = b.id
+          )
+          UNION ALL
+          (
+            SELECT 
+              a.id, 
+              a.data, 
+              a.oeeId, 
+              a.oeeBatchId, 
+              a.productId, 
+              a.timestamp, 
+              (timestamp - INTERVAL MOD(UNIX_TIMESTAMP(timestamp), 3600) SECOND) AS timeslot
+            FROM oeeBatchStats a
+            INNER JOIN (
+              SELECT 
+                MAX(id) AS id, 
+                oeeBatchId, 
+                (timestamp - INTERVAL MOD(UNIX_TIMESTAMP(timestamp), 3600) SECOND) AS timeslot
+              FROM oeeBatchStats
+              WHERE 
+                oeeId IN (${ids.join(', ')})
+                AND timestamp >= ? 
+                AND timestamp < ?
+              GROUP BY oeeBatchId, timeslot
+            ) b ON a.id = b.id
+          )
+          UNION ALL
+          (
+            SELECT 
+              a.id, 
+              a.data, 
+              a.oeeId, 
+              a.oeeBatchId, 
+              a.productId, 
+              a.timestamp, 
+              ? AS timeslot
+            FROM oeeBatchStats a
+            INNER JOIN (
+              SELECT 
+                MAX(id) AS id, 
+                oeeBatchId
+              FROM oeeBatchStats
+              WHERE 
+                oeeId IN (${ids.join(', ')})
+                AND timestamp >= ? 
+                AND timestamp <= ?
+              GROUP BY oeeBatchId
+            ) b ON a.id = b.id
+          )
+          ORDER BY timestamp, oeeBatchId;
+        `;
+
+        const parameters = [
+            firstTimeslotLabel,
+            from,
+            firstPeriodEnd,
+
+
+            middleStart,
+            lastPeriodStart,
+
+
+            lastTimeslotLabel,
+            lastPeriodStart,
+            to
+        ];
+
+        try {
+            return await this.entityManager.query(query, parameters);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getOeeStats(oeeIds: number[], startDate: Date, endDate: Date): Promise<OeeStats[]> {
         if (!oeeIds.length) {
             throw new Error('oeeIds array cannot be empty.');
         }
