@@ -60,5 +60,5 @@ export enum RoleSubject {
   AlarmSettings = 'alarmSettings',
   SiteSettings = 'siteSettings',
   UserSettings = 'userSettings',
-  RoleSettings = 'roleSettings',
+  RoleSettings = 'roleSettings'
 }

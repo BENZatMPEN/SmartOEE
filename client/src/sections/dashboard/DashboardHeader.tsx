@@ -13,7 +13,11 @@ import {
   OEE_BATCH_STATUS_STANDBY,
 } from '../../constants';
 
-export default function DashboardHeader() {
+interface Props {
+  showTools? : boolean;
+}
+export default function DashboardHeader(props:Props) {
+  const { showTools } = props
   const theme = useTheme();
 
   const { oeeStatus } = useSelector((state: RootState) => state.oeeDashboard);
@@ -44,7 +48,9 @@ export default function DashboardHeader() {
         </Grid>
 
         <Grid item md={3.25} sm={12}>
-          <DashboardHeaderToolbar />
+          <DashboardHeaderToolbar showTools={showTools} />
+          
+          
         </Grid>
       </Grid>
     </Box>

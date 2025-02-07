@@ -6,7 +6,10 @@ import { RootState, useDispatch, useSelector } from '../../redux/store';
 import { fDate, fTime } from '../../utils/formatTime';
 import DashboardHeaderToolbarMoreMenu from './DashboardHeaderToolbarMoreMenu';
 
-export default function DashboardHeaderToolbar() {
+interface Props {
+  showTools?: boolean;
+}
+export default function DashboardHeaderToolbar({ showTools = true }: Props) {
   const theme = useTheme();
 
   const dispatch = useDispatch();
@@ -63,29 +66,31 @@ export default function DashboardHeaderToolbar() {
         </Card>
       </Box>
 
-      <DashboardHeaderToolbarMoreMenu
-        open={openMenu}
-        onOpen={handleOpenMenu}
-        onClose={handleCloseMenu}
-        actions={
-          <Stack spacing={2} sx={{ p: 1 }}>
-            <Box>
-              <FormControlLabel
-                label={'Gantt View'}
-                control={
-                  <Switch
-                    checked={ganttView}
-                    onChange={(event) => {
-                      handViewToggle();
-                      setOpenMenuActions(null);
-                    }}
-                  />
-                }
-              />
-            </Box>
-          </Stack>
-        }
-      />
+      {showTools && (
+        <DashboardHeaderToolbarMoreMenu
+          open={openMenu}
+          onOpen={handleOpenMenu}
+          onClose={handleCloseMenu}
+          actions={
+            <Stack spacing={2} sx={{ p: 1 }}>
+              <Box>
+                <FormControlLabel
+                  label={'Gantt View'}
+                  control={
+                    <Switch
+                      checked={ganttView}
+                      onChange={(event) => {
+                        handViewToggle();
+                        setOpenMenuActions(null);
+                      }}
+                    />
+                  }
+                />
+              </Box>
+            </Stack>
+          }
+        />
+      )}
     </Box>
   );
 }

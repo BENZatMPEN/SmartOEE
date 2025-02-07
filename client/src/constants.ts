@@ -368,3 +368,18 @@ export const PLANNING_END_TYPE = [
     key: 'EXTERNAL'
   }
 ]
+
+export const ADVANCED_TYPE = [
+  {
+    name : "OEE",
+    key  : "oee"
+  },
+  {
+    name : "TEEP",
+    key  : "teep"
+  },
+  {
+    name : "ANDON",
+    key  : "andon"
+  }
+]

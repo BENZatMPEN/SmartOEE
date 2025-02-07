@@ -24,7 +24,9 @@ export type Oee = {
   createdAt: Date;
   updatedAt: Date;
   operators: User[];
+  workShifts : WorkShiftsDetailAPIS[]
 };
+
 
 export interface EditOee {
   activeSecondUnit: boolean;
@@ -44,6 +46,7 @@ export interface EditOee {
   useSitePercentSettings: boolean;
   timeUnit: string;
   operators: User[];
+  workShifts : DayData[];
 }
 
 export type FilterOee = {
@@ -117,4 +120,47 @@ export type MachinePlanDownTime = {
   startDate: Date,
   endDate: Date,
   fixTime: boolean,
+}
+type Shift = {
+  name : string;
+  active: boolean;
+  start: Date; // e.g., "08:00"
+  end: Date; // e.g., "17:00"
+};
+
+// Type for a single day's data
+type DayData = {
+  day: string; // e.g., "Monday"
+  active: boolean; // Whether the entire day is active
+  shifts: {
+    day : Shift;
+    ot : Shift;
+    night: Shift;
+  }
+};
+export interface WorkShiftsDetailAPIS {
+  oeeId : number;
+  dayOfWeek: string;
+  shiftNumber: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  isDayActive: boolean;
+  isShiftActive: boolean;
+}
+
+export interface WorkShiftsDetail {
+  oeeId? : number;
+  dayOfWeek: string;
+  shiftNumber: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  isDayActive: boolean;
+  isShiftActive: boolean;
+}
+
+export interface ExportToAnotherOee {
+  workShifts : WorkShiftsDetail[]
+  oeeIds : number[]
 }

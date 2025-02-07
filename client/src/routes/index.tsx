@@ -78,6 +78,7 @@ export default function Router() {
           path: 'dashboard',
           children: [
             { element: <Dashboard />, index: true },
+            { path: 'advanced', element: <Advanced />, index: true},
             {
               path: ':id',
               element: (
@@ -302,6 +303,7 @@ const ChangePassword = Loadable(lazy(() => import('../pages/account/ChangePasswo
 
 // Dashboard
 const Dashboard = Loadable(lazy(() => import('../pages/dashboard/List')));
+const Advanced = Loadable(lazy(() => import('../pages/dashboard/Advanced')));
 const DashboardDetails = Loadable(lazy(() => import('../pages/dashboard/Details')));
 const DashboardDetailsOperating = Loadable(lazy(() => import('../pages/dashboard/details/Operating')));
 const DashboardDetailsMachine = Loadable(lazy(() => import('../pages/dashboard/details/Machine')));

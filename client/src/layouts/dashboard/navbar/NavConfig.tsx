@@ -28,7 +28,10 @@ const navConfig = [
         title: 'Dashboard',
         path: PATH_DASHBOARD.root,
         icon: <Iconify icon="ic:round-dashboard" />,
-        children: [{ title: 'Home', path: PATH_DASHBOARD.root }],
+        children: [
+          { title: 'Home', path: PATH_DASHBOARD.root },
+          { title: 'Advanced', path: PATH_DASHBOARD.item.advanced(':id') },
+        ],
         roleSubject: RoleSubject.Dashboard,
       },
     ],
@@ -54,7 +57,7 @@ const navConfig = [
         icon: <Iconify icon="bxs:report" />,
         children: [
           { title: 'oee', path: PATH_REPORT.oee },
-          { title: 'cause', path: PATH_REPORT.cause }
+          { title: 'cause', path: PATH_REPORT.cause },
         ],
         roleSubject: RoleSubject.Analytics,
       },

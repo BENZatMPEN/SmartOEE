@@ -13,8 +13,8 @@ export function getPercentSettingsByType(
   ).filter((item) => item.type === type)[0];
 
   return {
-    high: percentSetting.settings.high,
-    medium: percentSetting.settings.medium,
-    low: percentSetting.settings.low,
+    high: percentSetting?.settings.high,
+    medium: percentSetting?.settings.medium,
+    low: percentSetting?.settings.low,
   };
 }

@@ -54,6 +54,10 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }: Props)
   const { isCollapse, collapseClick, collapseHover, onToggleCollapse, onHoverEnter, onHoverLeave } =
     useCollapseDrawer();
 
+    useEffect(() => {
+      console.log('Updated navConfig:', navConfig);
+    }, []);
+
   useEffect(() => {
     const temp = [...navConfig];
     const idx = temp.findIndex((item) => item.subheader === 'Analytics');
@@ -74,7 +78,7 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }: Props)
     const temp = [...navConfig];
     const idx = temp.findIndex((item) => item.subheader === 'Dashboard');
     const item: any = temp[idx].items[0];
-    item.children.splice(1, item.children.length - 1);
+    item.children.splice(2, item.children.length - 1);
     item.children = [
       ...item.children,
       ...allDashboard.map((dashboard) => ({

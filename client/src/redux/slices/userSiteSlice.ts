@@ -9,6 +9,8 @@ export type SiteState = {
   selectedSite: Site | null;
   ganttView: boolean;
   allDashboard: Dashboard[];
+  modeView : string;
+  advancedType : string;
 };
 
 const initialState: SiteState = {
@@ -18,6 +20,8 @@ const initialState: SiteState = {
   selectedSite: null,
   ganttView: false,
   allDashboard: [],
+  modeView: 'mode1',
+  advancedType: 'oee'
 };
 
 const userSiteSlice = createSlice({
@@ -50,7 +54,8 @@ const userSiteSlice = createSlice({
     getAllDashboardsSuccess(state, action) {
       state.isLoading = false;
       state.allDashboard = action.payload;
-    },
+    }
+   
   },
 });
 

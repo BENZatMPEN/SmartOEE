@@ -1,14 +1,37 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Button, Card, CardContent, Grid, MenuItem, Stack, Autocomplete, TextField } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  MenuItem,
+  Stack,
+  Autocomplete,
+  TextField,
+  Box,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Checkbox,
+  FormControlLabel,
+  Switch,
+} from '@mui/material';
 import { AxiosError } from 'axios';
 import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
-import { EditOee, MachinePlanDownTime, OeeMachine, OeeProduct, OeeTag } from '../../../../@types/oee';
-import { User, UserPagedList } from '../../../../@types/user'
+import {
+  EditOee,
+  MachinePlanDownTime,
+  OeeMachine,
+  OeeProduct,
+  OeeTag,
+  WorkShiftsDetailAPIS,
+} from '../../../../@types/oee';
+import { User, UserPagedList } from '../../../../@types/user';
 import { PercentSetting } from '../../../../@types/percentSetting';
 import { EditorLabelStyle } from '../../../../components/EditorLabelStyle';
 import FormHeader from '../../../../components/FormHeader';
@@ -45,6 +68,15 @@ import { OeeTagList } from './OeeTagList';
 import { FilterUser } from '../../../../@types/user';
 import axios from '../../../../utils/axios';
 
+import OeeWorkScheduleDialog from './OeeWorkScheduleDialog';
+
+import WorkShiftSchedule from './WorkShiftSchedule';
+import dayjs from 'dayjs';
+
+interface ValuesScheduleProps {
+  workName: string;
+}
+
 type SelectedItem<T> = {
   index: number;
   item: T;
@@ -53,6 +85,99 @@ type SelectedItem<T> = {
 type Props = {
   isEdit: boolean;
 };
+
+type ShiftKey = 'day' | 'ot' | 'night';
+
+type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+type Shifts = {
+  [key: string]: Shift; // Allow any string key
+};
+type Shift = {
+  name: string;
+  active: boolean;
+  start: Date; // e.g., "08:00"
+  end: Date; // e.g., "17:00"
+};
+
+// Type for a single day's data
+type DayData = {
+  day: string; // e.g., "Monday"
+  active: boolean; // Whether the entire day is active
+  shifts: {
+    day : Shift
+    ot :  Shift
+    night :  Shift
+  };
+};
+
+const shiftKeys: ShiftKey[] = ['day', 'ot', 'night'];
+
+const initialDataWorkSchedule = [
+  {
+    day: 'Monday',
+    active: true,
+    shifts: {
+      day: { name: 'Dayxxx', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Tuesday',
+    active: true,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Wednesday',
+    active: true,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Thursday',
+    active: true,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Friday',
+    active: true,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Saturday',
+    active: false,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+  {
+    day: 'Sunday',
+    active: false,
+    shifts: {
+      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
+      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
+      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
+    },
+  },
+];
 
 export default function OeeForm({ isEdit }: Props) {
   const dispatch = useDispatch();
@@ -69,6 +194,8 @@ export default function OeeForm({ isEdit }: Props) {
 
   const { toggle: openTagForm, onOpen: onOpenTagForm, onClose: onCloseTagForm } = useToggle();
 
+  const { toggle: openWorkSchedule, onOpen: onOpenWorkScheduleForm, onClose: onCloseWorkScheduleForm } = useToggle();
+
   const [editingProduct, setEditingProduct] = useState<SelectedItem<OeeProduct> | null>(null);
 
   const [editingMachine, setEditingMachine] = useState<SelectedItem<OeeMachine> | null>(null);
@@ -82,6 +209,8 @@ export default function OeeForm({ isEdit }: Props) {
   const [pagedList, setPagedList] = useState<UserPagedList>({} as UserPagedList);
 
   const [machineId, setMachineId] = useState<number>(0);
+
+  const [workShift, setWorkShift] = useState<DayData[]>(initialDataWorkSchedule);
 
   const NewOeeSchema = Yup.object().shape({
     oeeCode: Yup.string().required('OEE Code is required'),
@@ -109,6 +238,7 @@ export default function OeeForm({ isEdit }: Props) {
       tags: initialOeeTags,
       image: null,
       operators: [],
+      workShifts: [],
     },
     values: {
       activeSecondUnit: currentOee?.activeSecondUnit || false,
@@ -122,23 +252,24 @@ export default function OeeForm({ isEdit }: Props) {
       oeeMachines: currentOee?.oeeMachines || [],
       oeeProducts: currentOee
         ? (currentOee.oeeProducts || []).map((item) => {
-          return {
-            ...item,
-            standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
-          };
-        })
+            return {
+              ...item,
+              standardSpeedSeconds: convertToUnit(item.standardSpeedSeconds, currentOee.timeUnit),
+            };
+          })
         : [],
       timeUnit: currentOee?.timeUnit || TIME_UNIT_OPTIONS[0],
       useSitePercentSettings: currentOee ? currentOee.useSitePercentSettings : true,
       percentSettings: currentOee?.percentSettings ? currentOee.percentSettings : initialPercentSettings,
       tags: currentOee?.tags
         ? [
-          ...currentOee.tags,
-          ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
-        ]
+            ...currentOee.tags,
+            ...initialOeeTags.filter((item) => currentOee.tags.findIndex((tag) => tag.key === item.key) < 0),
+          ]
         : initialOeeTags,
       image: null,
       operators: currentOee?.operators || [],
+      workShifts: initialDataWorkSchedule,
     },
   });
 
@@ -171,12 +302,38 @@ export default function OeeForm({ isEdit }: Props) {
         return item;
       });
     }
+
+    const shiftMapping = [
+      { key: 'day', shiftNumber: 1, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
+      { key: 'ot', shiftNumber: 2, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
+      { key: 'night', shiftNumber: 3, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
+    ];
+   
+    const transformed = workShift.flatMap(({ day, active, shifts }) =>
+      shiftMapping.map(({ key, shiftNumber, shiftName, startTime, endTime, oeeId }) => ({
+        dayOfWeek: day,
+        shiftNumber,
+        oeeId,
+        shiftName: shifts[key]?.name ,
+        startTime: dayjs(shifts[key]?.start).format('HH:mm'),
+        endTime: dayjs(shifts[key]?.end).format('HH:mm'),
+        isDayActive: active,
+        isShiftActive: shifts[key]?.active ?? false,
+      })),
+    );
+
+    // data.workShifts = transformed as WorkShiftsDetailAPIS[];
+    console.log('data =>', data);
+    // return;
     const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
+
     if (oee) {
       enqueueSnackbar(!isEdit ? 'Create success!' : 'Update success!');
       navigate(PATH_SETTINGS.oees.root);
     }
   };
+   
+
 
   useEffect(() => {
     if (saveError) {
@@ -276,7 +433,7 @@ export default function OeeForm({ isEdit }: Props) {
       enqueueSnackbar(`${oeeMachine.machine?.code} has been selected`, { variant: 'warning' });
       return;
     }
-    setMachineId(oeeMachine.machineId)
+    setMachineId(oeeMachine.machineId);
     if (editingMachine) {
       const temp = oeeMachines[editingMachine.index];
       oeeMachines[editingMachine.index] = {
@@ -291,8 +448,8 @@ export default function OeeForm({ isEdit }: Props) {
         startDate: new Date(),
         endDate: new Date(),
         fixTime: false,
-      }
-      oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime]
+      };
+      oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime];
       oeeMachines.push(oeeMachine);
     }
     setValue('oeeMachines', oeeMachines);
@@ -310,8 +467,8 @@ export default function OeeForm({ isEdit }: Props) {
           startDate: new Date(),
           endDate: new Date(),
           fixTime: false,
-        }
-        oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime]
+        };
+        oeeMachine.oeeMachinePlannedDowntime = [initOeeMachinePlannedDowntime];
       }
     }
   }, [isEdit]);
@@ -325,24 +482,29 @@ export default function OeeForm({ isEdit }: Props) {
       startDate: new Date(),
       endDate: new Date(),
       fixTime: false,
-    }
-    oeeMachines[index]?.oeeMachinePlannedDowntime?.push(initOeeMachinePlannedDowntime)
+    };
+    oeeMachines[index]?.oeeMachinePlannedDowntime?.push(initOeeMachinePlannedDowntime);
     setValue('oeeMachines', oeeMachines);
-  }
+  };
 
   const handleDeletePlanDowntime = (index: number, indexPlan: number) => {
     const oeeMachines = getValues('oeeMachines');
-    oeeMachines[index]?.oeeMachinePlannedDowntime?.splice(indexPlan, 1)
+    oeeMachines[index]?.oeeMachinePlannedDowntime?.splice(indexPlan, 1);
     setValue('oeeMachines', oeeMachines);
-  }
+  };
 
   const handleFixTimeChange = (indexPlan: number) => {
     const oeeMachines = getValues('oeeMachines');
-    if (oeeMachines[0] && oeeMachines[0].oeeMachinePlannedDowntime && oeeMachines[0].oeeMachinePlannedDowntime[indexPlan]) {
-      oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime = !oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime
+    if (
+      oeeMachines[0] &&
+      oeeMachines[0].oeeMachinePlannedDowntime &&
+      oeeMachines[0].oeeMachinePlannedDowntime[indexPlan]
+    ) {
+      oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime =
+        !oeeMachines[0].oeeMachinePlannedDowntime[indexPlan].fixTime;
     }
     setValue('oeeMachines', oeeMachines);
-  }
+  };
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -394,12 +556,38 @@ export default function OeeForm({ isEdit }: Props) {
     return response.data;
   };
 
+  const handleToggleDay = (index: number) => {
+   
+    const updatedRows = [...values.workShifts];
+    updatedRows[index].active = !updatedRows[index].active;
+
+    setValue('workShifts', updatedRows)
+  };
+
+  const handleToggleShift = (index: number, shift: ShiftKey) => {
+    const updatedRows = [...values.workShifts];
+    updatedRows[index].shifts[shift].active = !updatedRows[index].shifts[shift].active;
+    setValue('workShifts', updatedRows)
+  };
+
+  const handleTimeChange = (index: number, shift: ShiftKey, key: 'start' | 'end', value: Date) => {
+    const updatedRows = [...values.workShifts];
+    // console.log(updatedRows);
+    
+    // updatedRows[index].shifts[shift][key] = value;
+    // setWorkShift(updatedRows);
+  };
+  const handleSave = async () => {
+    // API call logic
+    console.log('Data saved successfully!', workShift);
+  };
+
   useEffect(() => {
     (async () => {
       await getOperatorData();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
     setOperators(currentOee?.operators || []);
@@ -447,7 +635,6 @@ export default function OeeForm({ isEdit }: Props) {
               <Card>
                 <CardContent>
                   <Grid container spacing={3}>
-
                     <Grid item xs={12}>
                       <RHFCheckbox name="activeSecondUnit" label="Second Unit Mode" />
                     </Grid>
@@ -520,14 +707,14 @@ export default function OeeForm({ isEdit }: Props) {
                     <Grid item xs={12}>
                       <Autocomplete
                         multiple
-                        id='operator'
+                        id="operator"
                         key={`oeeOpts_single`}
                         options={users}
                         value={operators}
                         getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
                         renderInput={(params) => <TextField {...params} label="Operator Name" />}
                         onChange={(event, value) => {
-                          setOperators(value)
+                          setOperators(value);
                         }}
                       />
                     </Grid>
@@ -590,6 +777,22 @@ export default function OeeForm({ isEdit }: Props) {
                 onDeletePlanDowntime={(index, indexPlan) => handleDeletePlanDowntime(index, indexPlan)}
                 onFixTimeChange={(indexPlan) => handleFixTimeChange(indexPlan)}
               />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <WorkShiftSchedule
+                workShift={values.workShifts}
+                onToggleDay={handleToggleDay}
+                onEditWorkShiftName={onOpenWorkScheduleForm}
+                onToggleWorkShift={handleToggleShift}
+                title={'Edit Work Name'}
+                open={openWorkSchedule}
+                onClose={onCloseWorkScheduleForm}
+              />
+              {/* <Button variant="contained" color="primary" onClick={handleSave} sx={{ mt: 2 }}>
+                Save Schedule
+              </Button> */}
             </CardContent>
           </Card>
         </Stack>

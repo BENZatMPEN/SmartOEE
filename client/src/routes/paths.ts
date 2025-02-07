@@ -27,6 +27,7 @@ export const PATH_DASHBOARD = {
   root: ROOTS_DASHBOARD,
   item: {
     root: (id: string) => path(ROOTS_DASHBOARD, `/${id}`),
+    advanced : (id:string) => path(ROOTS_DASHBOARD, `/advanced`),
     operating: (id: string) => path(ROOTS_DASHBOARD, `/${id}/operating`),
     machine: (id: string) => path(ROOTS_DASHBOARD, `/${id}/machine`),
     timeline: (id: string) => path(ROOTS_DASHBOARD, `/${id}/timeline`),

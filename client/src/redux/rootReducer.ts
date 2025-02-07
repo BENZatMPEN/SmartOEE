@@ -13,6 +13,7 @@ import faqReducer from './reducers/faqReducer';
 import machineReducer from './reducers/machineReducer';
 import oeeBatchReducer from './reducers/oeeBatchReducer';
 import oeeDashboardReducer from './reducers/oeeDashboardReducer';
+import oeeAdvancedReducer from './reducers/oeeAdvancedReducer';
 import oeeReducer from './reducers/oeeReducer';
 import plannedDowntimeReducer from './reducers/plannedDowntimeReducer';
 import problemSolutionReducer from './reducers/problemSolutionReducer';
@@ -90,6 +91,7 @@ const rootReducer = combineReducers({
   product: productReducer,
   machine: machineReducer,
   oeeDashboard: oeeDashboardReducer,
+  oeeAdvanced: oeeAdvancedReducer,
   problemSolution: problemSolutionReducer,
   faq: faqReducer,
   adminUser: adminUserReducer,
