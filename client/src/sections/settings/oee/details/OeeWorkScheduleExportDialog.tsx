@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import * as Yup from 'yup';
-import { ExportToAnotherOee, FilterOee, OeeTag } from '../../../../@types/oee';
+import { ExportToAnotherOee, FilterOee, OeeTag, WorkShiftsDetail } from '../../../../@types/oee';
 import Iconify from '../../../../components/Iconify';
 import { OptionItem } from '../../../../@types/option';
 import { RootState, useDispatch, useSelector } from '../../../../redux/store';
@@ -49,7 +49,7 @@ type Props = {
   title: string;
   open: boolean;
   onClose: VoidFunction;
-  workShift: DayData[];
+  workShift: WorkShiftsDetail[];
 };
 
 export default function OeeWorkScheduleExportDialog({ title, open, onClose, workShift }: Props) {
@@ -84,41 +84,24 @@ export default function OeeWorkScheduleExportDialog({ title, open, onClose, work
 
   const onSubmit = async () => {
     const getValue = getValues('oeeId');
-    const shiftMapping = [
-      { key: 'day', shiftNumber: 1, shiftName: '', startTime: '', endTime: ''},
-      { key: 'ot', shiftNumber: 2, shiftName: '', startTime: '', endTime: '' },
-      { key: 'night', shiftNumber: 3, shiftName: '', startTime: '', endTime: '' },
-    ];
+  
+    
     const mapSchedule = workShift.map((work) => {
       return {
-        dayOfWeek : work.day,
-        isDayActive : work.active,
-        shifts : [
-          {
-            shiftNumber: 1,
-            shiftName: work.shifts.day.name,
-            startTime: dayjs(work.shifts.day.start).format('HH:mm'),
-            endTime: dayjs(work.shifts.day.end).format('HH:mm'),
-            isShiftActive: work.shifts.day.active
-          }, 
-          {
-            shiftNumber: 2,
-            shiftName: work.shifts.ot.name,
-            startTime: dayjs(work.shifts.ot.start).format('HH:mm'),
-            endTime: dayjs(work.shifts.ot.end).format('HH:mm'),
-            isShiftActive: work.shifts.ot.active
-          },
-          {
-            shiftNumber: 3,
-            shiftName: work.shifts.night.name,
-            startTime: dayjs(work.shifts.night.start).format('HH:mm'),
-            endTime: dayjs(work.shifts.night.end).format('HH:mm'),
-            isShiftActive: work.shifts.night.active
-          },
-        ]
+        dayOfWeek : work.dayOfWeek,
+        isDayActive : work.isDayActive,
+        shifts : work.shifts.map((shift) => {
+          return {
+            shiftNumber : shift.shiftNumber,
+            shiftName: shift.shiftName,
+            startTime: dayjs(shift.startTime).format('HH:mm') as string,
+            endTime: dayjs(shift.endTime).format('HH:mm') as string,
+            isShiftActive: shift.isShiftActive
+          }
+        })
       }
-    })
-    
+    }) || []
+
     // const transformed = workShift.flatMap(({ day, active, shifts }) =>
     //   shiftMapping.map(({ key, shiftNumber, shiftName, startTime, endTime }) => ({
     //     dayOfWeek: day,
@@ -130,18 +113,22 @@ export default function OeeWorkScheduleExportDialog({ title, open, onClose, work
     //     isShiftActive: shifts[key]?.active ?? false,
     //   })),
     // );
-    const params:ExportToAnotherOee = {
-      workShifts : mapSchedule,
-      oeeIds : getValue
-    }
-    const callExport = await dispatch(exportWorkShiftToAnotherOee(params))
-    console.log(callExport);
-    if (callExport) {
-      enqueueSnackbar('Export to Another OEE success!');
-      onClose();
-    }
-   
-    reset();
+      const params:ExportToAnotherOee = {
+        workShifts : mapSchedule,
+        oeeIds : getValue
+      }
+
+      
+      const callExport = await dispatch(exportWorkShiftToAnotherOee(params))
+      console.log(callExport);
+      if (callExport) {
+        enqueueSnackbar('Export to Another OEE success!');
+        onClose();
+      }
+     
+      reset();
+    
+  
   };
 
   const refreshData = async () => {
@@ -150,7 +137,7 @@ export default function OeeWorkScheduleExportDialog({ title, open, onClose, work
       order: 'asc',
       orderBy: 'oeeCode',
       page: 0,
-      rowsPerPage: 25,
+      rowsPerPage: 1000,
     };
     await dispatch(getOeePagedList2(filter));
   };

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import * as Yup from 'yup';
-import { OeeTag } from '../../../../@types/oee';
+import { OeeTag, ShiftWork } from '../../../../@types/oee';
 import { FormProvider, RHFSelect, RHFTextField } from '../../../../components/hook-form';
 import Iconify from '../../../../components/Iconify';
 
@@ -33,7 +33,7 @@ type Props = {
   title: string;
   open: boolean;
   onClose: VoidFunction;
-  shiftName: Shift | null;
+  shiftName: ShiftWork | null;
 };
 
 export default function OeeWorkScheduleDialog({ title, open, onClose, shiftName }: Props) {
@@ -70,13 +70,13 @@ export default function OeeWorkScheduleDialog({ title, open, onClose, shiftName 
     const getValue = getValues('workName')
   
     if (shiftName) {
-      shiftName.name = getValue;
+      shiftName.shiftName = getValue;
     }
     onClose();
   };
 
   useEffect(() => {
-    setValue('workName', shiftName?.name || '');
+    setValue('workName', shiftName?.shiftName || '');
   },[shiftName])
 
   return (

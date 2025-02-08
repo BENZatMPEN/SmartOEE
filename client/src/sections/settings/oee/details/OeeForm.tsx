@@ -29,6 +29,8 @@ import {
   OeeMachine,
   OeeProduct,
   OeeTag,
+  ShiftWork,
+  WorkShiftsDetail,
   WorkShiftsDetailAPIS,
 } from '../../../../@types/oee';
 import { User, UserPagedList } from '../../../../@types/user';
@@ -105,77 +107,237 @@ type DayData = {
   day: string; // e.g., "Monday"
   active: boolean; // Whether the entire day is active
   shifts: {
-    day : Shift
-    ot :  Shift
-    night :  Shift
+    day: Shift;
+    ot: Shift;
+    night: Shift;
   };
 };
 
 const shiftKeys: ShiftKey[] = ['day', 'ot', 'night'];
+const startMorning = new Date(new Date().setHours(8, 0, 0, 0));
+const endMorning = new Date(new Date().setHours(17, 0, 0, 0));
+const startOt = new Date(new Date().setHours(17, 30, 0, 0));
+const endOt = new Date(new Date().setHours(20, 0, 0, 0));
+const startNight = new Date(new Date().setHours(20, 0, 0, 0));
+const endNight = new Date(new Date().setHours(8, 0, 0, 0));
 
 const initialDataWorkSchedule = [
   {
-    day: 'Monday',
-    active: true,
-    shifts: {
-      day: { name: 'Dayxxx', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Monday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Tuesday',
-    active: true,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Tuesday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Wednesday',
-    active: true,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Wednesday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Thursday',
-    active: true,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Thursday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Friday',
-    active: true,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Friday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Saturday',
-    active: false,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Saturday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
   {
-    day: 'Sunday',
-    active: false,
-    shifts: {
-      day: { name: 'Day', active: true, start: new Date(), end: new Date() },
-      ot: { name: 'Ot', active: true, start: new Date(), end: new Date() },
-      night: { name: 'Night', active: true, start: new Date(), end: new Date() },
-    },
+    dayOfWeek: 'Sunday',
+    isDayActive: true,
+    oeeId: null,
+    shifts: [
+      {
+        id: null,
+        shiftNumber: 1,
+        shiftName: 'Day Test 1',
+        startTime: startMorning,
+        endTime: endMorning,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 2,
+        shiftName: 'Ot Test 1',
+        startTime: startOt,
+        endTime: endOt,
+        isShiftActive: true,
+      },
+      {
+        id: null,
+        shiftNumber: 3,
+        shiftName: 'Night Test 1',
+        startTime: startNight,
+        endTime: endNight,
+        isShiftActive: true,
+      },
+    ],
   },
 ];
 
@@ -210,7 +372,7 @@ export default function OeeForm({ isEdit }: Props) {
 
   const [machineId, setMachineId] = useState<number>(0);
 
-  const [workShift, setWorkShift] = useState<DayData[]>(initialDataWorkSchedule);
+  // const [workShift, setWorkShift] = useState<DayData[]>(initialDataWorkSchedule);
 
   const NewOeeSchema = Yup.object().shape({
     oeeCode: Yup.string().required('OEE Code is required'),
@@ -218,6 +380,27 @@ export default function OeeForm({ isEdit }: Props) {
     location: Yup.string().required('Location is required'),
     productionName: Yup.string().required('Production Name is required'),
   });
+  function convertTimeToDate(timeStr: string): Date {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+
+    return date;
+  }
+  const formatDateWorkShift = (dataWorkShifts: WorkShiftsDetail[]) => {
+    const result = dataWorkShifts.map((item) => {
+      item.shifts.map((shift) => {
+        console.log(shift);
+        return {
+          ...shift,
+          startTime: convertTimeToDate(shift.startTime as string),
+          endTime: convertTimeToDate(shift.endTime as string),
+        };
+      });
+    });
+
+    return result;
+  };
 
   const methods = useForm<EditOee>({
     resolver: yupResolver(NewOeeSchema),
@@ -303,28 +486,23 @@ export default function OeeForm({ isEdit }: Props) {
       });
     }
 
-    const shiftMapping = [
-      { key: 'day', shiftNumber: 1, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
-      { key: 'ot', shiftNumber: 2, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
-      { key: 'night', shiftNumber: 3, shiftName: '', startTime: '', endTime: '', oeeId: 1 },
-    ];
+  const mapSchedule = data.workShifts.map((work) => {
+    
+      return {
+        ...work,
+        shifts : work.shifts.map((shift:ShiftWork) => {
+          return {
+            ...shift,
+            startTime: dayjs(shift.startTime).format('HH:mm') as string,
+            endTime: dayjs(shift.endTime).format('HH:mm') as string,
+           
+          }
+        })
+      }
+    }) || []
+    
+    data.workShifts = mapSchedule
    
-    const transformed = workShift.flatMap(({ day, active, shifts }) =>
-      shiftMapping.map(({ key, shiftNumber, shiftName, startTime, endTime, oeeId }) => ({
-        dayOfWeek: day,
-        shiftNumber,
-        oeeId,
-        shiftName: shifts[key]?.name ,
-        startTime: dayjs(shifts[key]?.start).format('HH:mm'),
-        endTime: dayjs(shifts[key]?.end).format('HH:mm'),
-        isDayActive: active,
-        isShiftActive: shifts[key]?.active ?? false,
-      })),
-    );
-
-    // data.workShifts = transformed as WorkShiftsDetailAPIS[];
-    console.log('data =>', data);
-    // return;
     const oee = isEdit && currentOee ? await dispatch(updateOee(currentOee.id, data)) : await dispatch(createOee(data));
 
     if (oee) {
@@ -332,8 +510,6 @@ export default function OeeForm({ isEdit }: Props) {
       navigate(PATH_SETTINGS.oees.root);
     }
   };
-   
-
 
   useEffect(() => {
     if (saveError) {
@@ -557,30 +733,39 @@ export default function OeeForm({ isEdit }: Props) {
   };
 
   const handleToggleDay = (index: number) => {
-   
     const updatedRows = [...values.workShifts];
-    updatedRows[index].active = !updatedRows[index].active;
+    updatedRows[index].isDayActive = !updatedRows[index].isDayActive;
 
-    setValue('workShifts', updatedRows)
+    setValue('workShifts', updatedRows);
   };
 
-  const handleToggleShift = (index: number, shift: ShiftKey) => {
+  const handleToggleShift = (index: number, shift: number) => {
     const updatedRows = [...values.workShifts];
-    updatedRows[index].shifts[shift].active = !updatedRows[index].shifts[shift].active;
-    setValue('workShifts', updatedRows)
+    updatedRows[index].shifts[shift].isShiftActive = !updatedRows[index].shifts[shift].isShiftActive;
+    setValue('workShifts', updatedRows);
   };
 
-  const handleTimeChange = (index: number, shift: ShiftKey, key: 'start' | 'end', value: Date) => {
-    const updatedRows = [...values.workShifts];
-    // console.log(updatedRows);
+  useEffect(() => {
+    if (currentOee && isEdit) {
+      // let updatedRows = [...values.workShifts];
+
+      const result = currentOee?.workShifts.map((item) => {
+        return {
+          ...item,
+          shifts: item.shifts.map((shift) => {
+         
+            return {
+              ...shift,
+              startTime: convertTimeToDate(shift.startTime as string),
+              endTime: convertTimeToDate(shift.endTime as string),
+            };
+          }),
+        };
+      });
     
-    // updatedRows[index].shifts[shift][key] = value;
-    // setWorkShift(updatedRows);
-  };
-  const handleSave = async () => {
-    // API call logic
-    console.log('Data saved successfully!', workShift);
-  };
+      setValue('workShifts', result);
+    }
+  }, [isEdit]);
 
   useEffect(() => {
     (async () => {

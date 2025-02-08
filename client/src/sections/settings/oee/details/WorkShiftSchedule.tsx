@@ -18,6 +18,7 @@ import Iconify from 'src/components/Iconify';
 import OeeWorkScheduleDialog from './OeeWorkScheduleDialog';
 import useToggle from 'src/hooks/useToggle';
 import OeeWorkScheduleExportDialog from './OeeWorkScheduleExportDialog';
+import { ShiftWork, WorkShiftsDetail } from 'src/@types/oee';
 
 
 type ShiftKey = 'day' | 'ot' | 'night';
@@ -41,17 +42,17 @@ type DayData = {
 };
 
 type Props = {
-  workShift: DayData[];
+  workShift: WorkShiftsDetail[];
   onToggleDay: (index: number) => void;
   onEditWorkShiftName: () => void;
-  onToggleWorkShift: (index: number, shift: ShiftKey) => void;
+  onToggleWorkShift: (index: number, shift: number) => void;
   title: string;
   open: boolean;
   onClose: VoidFunction;
 };
 
 const WorkShiftSchedule = ({ workShift, onToggleDay, onEditWorkShiftName, onToggleWorkShift, title, open, onClose }: Props) => {
-  const [ shiftName, setShiftName ] = useState<Shift | null>(null)
+  const [ shiftName, setShiftName ] = useState<ShiftWork | null>(null)
   const { toggle: openWorkScheduleExport, onOpen: onOpenWorkScheduleExport, onClose: onCloseWorkScheduleExport } = useToggle();
 
   return (
@@ -62,55 +63,55 @@ const WorkShiftSchedule = ({ workShift, onToggleDay, onEditWorkShiftName, onTogg
         </Typography>
         <Button startIcon={<Iconify icon="eva:cloud-upload-outline" fontSize={20} />} onClick={() => {onOpenWorkScheduleExport()}}  > Export </Button>
       </Box>
-      
       {workShift.map((row, index) => (
-        <Accordion key={row.day}>
+        <Accordion key={row?.dayOfWeek || index}>
           <AccordionSummary expandIcon={<ExpandLess />}>
-            <Typography variant="h6">{row.day}</Typography>
+            <Typography variant="h6">{row?.dayOfWeek}</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={2}>
-              <Grid item xs={12} key={index + 1}>
+              <Grid item xs={12} key={index}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <FormControlLabel
                     sx={{ margin: 0 }}
                     labelPlacement="start"
-                    label={<Typography>{row.day}</Typography>}
-                    control={<Switch checked={row.active} onClick={() => onToggleDay(index)} />}
+                    label={<Typography>{row?.dayOfWeek}</Typography>}
+                    control={<Switch checked={row?.isDayActive} onClick={() => onToggleDay(index)} />}
                   />
                 </Box>
               </Grid>
-              {shiftKeys.map((shift) => (
-                <Grid key={shift} item xs={12} md={4} sx={{ display: 'grid', gap: 1 }}>
+              
+              {row?.shifts.map((item,shiftIndex) => (
+                <Grid key={item.shiftName} item xs={12} md={4} sx={{ display: 'grid', gap: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="h6" >
-                      {row.shifts[shift].name}
+                      {row.shifts[shiftIndex].shiftName}
                     </Typography>
-                    <Button size="small" variant="text" onClick={() => {onEditWorkShiftName(); setShiftName(row.shifts[shift])}}>
+                    <Button size="small" variant="text" onClick={() => {onEditWorkShiftName(); setShiftName(row.shifts[shiftIndex])}}>
                       <Iconify icon="eva:edit-2-outline" fontSize={20} />
                     </Button>
                   </Box>
                   <FormControlLabel
-                    name={`workShifts[${index}].shifts.${shift}.active`}
+                    name={`workShifts[${index}].shifts.${shiftIndex}.active`}
                     control={
-                      <Checkbox checked={row.shifts[shift].active} onChange={() => onToggleWorkShift(index, shift)} />
+                      <Checkbox checked={row.shifts[shiftIndex].isShiftActive} onChange={() => onToggleWorkShift(index, shiftIndex)} />
                     }
                     label="Activate"
                   />
-                  
+                 
                   <RHFTimePickerCustom
                     label="Start Time"
-                    name={`workShifts[${index}].shifts.${shift}.start`}
-                    key={`start-${row.day}-${shift}-${row.shifts[shift].name}`}
+                    name={`workShifts[${index}].shifts.${shiftIndex}.startTime`}
+                    key={`start-${row.dayOfWeek}-${shiftIndex}-${row.shifts[shiftIndex].shiftName}`}
                     size="small"
-                    value={row.shifts[shift].start}
+                    value={row.shifts[shiftIndex].startTime as Date}
                   />
                   <RHFTimePickerCustom
                     label="End Time"
-                    name={`workShifts[${index}].shifts.${shift}.end`}
-                    key={`end-${row.day}-${shift}-${row.shifts[shift].name}`}
+                    name={`workShifts[${index}].shifts.${shiftIndex}.endTime`}
+                    key={`end-${row.dayOfWeek}-${shiftIndex}-${row.shifts[shiftIndex].shiftName}`}
                     size="small"
-                    value={row.shifts[shift].end}
+                    value={row.shifts[shiftIndex].endTime as Date}
                   />
                 </Grid>
               ))}
