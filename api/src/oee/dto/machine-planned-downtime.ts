@@ -21,4 +21,5 @@ export class OeeMachinePlannedDowntimeDto {
     @IsDate()
     @Type(() => Date)
     readonly endDate: Date;
+    deleted: boolean;
 }

@@ -20,6 +20,9 @@ export class OeeStatusItem {
   readonly plan: number;
   readonly target: number;
   readonly oeePercent: number;
+  readonly aPercent: number;
+  readonly qPercent: number;
+  readonly pPercent: number;
   readonly lotNumber: string;
   readonly batchStatus: string;
   readonly startDate: Date;

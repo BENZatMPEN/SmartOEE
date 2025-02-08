@@ -55,6 +55,18 @@ interface OeeLossGrouped {
     lossResult: OeeLossResult[];
 }
 
+interface CommonOeeData {
+    aggregatedData: any[];
+    oeeIds: number[];
+    running: number;
+    ended: number;
+    standby: number;
+    breakdown: number;
+    mcSetup: number;
+    user: any;
+    statsRows: OeeStats[];
+}
+
 @Injectable()
 export class AdvanceService {
     constructor(
@@ -72,161 +84,90 @@ export class AdvanceService {
     ) { }
 
     async findAllOeeMode1(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
-        // Retrieve the user along with the associated OEE relations
-        const user = await this.userRepository.findOne({
-            where: { id: advanceDto.userId },
-            relations: ['oees'],
-        });
+        const commonData = await this.getCommonOeeData(advanceDto, siteId);
 
-        // Get OEEs for the specified site that have not been deleted
-        const oees = await this.oeeRepository.find({
-            select: ['id'], // เลือกเฉพาะฟิลด์ id
-            where: { siteId, deleted: false },
-        });
-
-        const oeeIds = oees.map(oee => oee.id);
-
-        if (oeeIds.length === 0) {
-            return {} as OeeStatus;
-        }
-
-        // Retrieve OEE statistics within the date range
-        let statsRows: OeeStats[] = await this.getOeeStats(oeeIds, advanceDto.from, advanceDto.to);
-        const oeeNames = await this.getOeeNames(statsRows);
-        const lotNumbers = await this.getLotNumbers(statsRows);
-
-        // Group the stats rows by oeeId
-        const groupedStats = statsRows.reduce((acc: { [key: number]: OeeStats[] }, row) => {
-            if (!acc[row.oeeId]) {
-                acc[row.oeeId] = [];
-            }
-            acc[row.oeeId].push(row);
-            return acc;
-        }, {});
-
-        // Base SQL query for aggregated status counts
-        let sumRowsQuery = `
-            WITH cte AS (
-                SELECT DISTINCT b.oeeId,
-                       FIRST_VALUE(b.id) OVER (PARTITION BY b.oeeId ORDER BY b.id DESC) AS batchId
-                FROM oeeBatches AS b
-            )
-            SELECT IFNULL(SUM(IF(status = "running", 1, 0)), 0)   AS running,
-                   IFNULL(SUM(IF(status = "ended" OR status IS NULL, 1, 0)), 0) AS ended,
-                   IFNULL(SUM(IF(status = "standby" OR status = "planned", 1, 0)), 0) AS standby,
-                   IFNULL(SUM(IF(status = "mc_setup", 1, 0)), 0)  AS mcSetup,
-                   IFNULL(SUM(IF(status = "breakdown", 1, 0)), 0) AS breakdown
-            FROM oees o
-                 LEFT JOIN cte ON o.id = cte.oeeId
-                 LEFT JOIN oeeBatches ob ON cte.batchId = ob.id
-            WHERE o.siteId = ? AND o.deleted = 0
-        `;
-
-        const queryParams: any[] = [siteId];
-
-        // For non-admin users, filter the stats rows based on user-associated OEEs
-        if (user && user.isAdmin === false) {
-            statsRows = statsRows.filter(row =>
-                user.oees.some(userOee => userOee.id === row.oeeId)
-            );
-            const filteredOeeIds = statsRows.map(row => row.oeeId);
-
-            if (filteredOeeIds.length === 0) {
-                return {
-                    running: 0,
-                    breakdown: 0,
-                    ended: 0,
-                    standby: 0,
-                    mcSetup: 0,
-                    oees: [],
-                };
-            }
-
-            queryParams.push(filteredOeeIds);
-            sumRowsQuery += ' AND o.id IN (?)';
-        }
-
-        // Execute the aggregated SQL query
-        const sumRows: any[] = await this.entityManager.query(sumRowsQuery, queryParams);
-        const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
-
-        // Process each group of OEE stats concurrently
-        const aggregatedData = await Promise.all(
-            Object.keys(groupedStats).map(async (key) => {
-                const oeeId = parseInt(key, 10);
-                const oeeStats = groupedStats[oeeId];
-                // Sum and calculate OEE data based on grouped stats
-                const summedData = await this.sumOeeData(oeeStats, oeeNames, lotNumbers);
-                // Optionally remove fields you do not need in the final response
-                const { totalCountByBatch, ...filteredData } = summedData;
-                const calculatedOee = this.calculateOee(summedData);
-                return {
-                    id: oeeId,
-                    ...calculatedOee,
-                    ...filteredData,
-                };
-            })
-        );
-
-        // Map the aggregated data into the expected response format
-        const oeeStatusItems: OeeStatusItem[] = aggregatedData.map(item => ({
-            id: item.id,
-            oeeBatchId: 0,
-            oeeCode: '',
-            productionName: item.name,
-            actual: item.totalCount,
-            defect: item.totalAutoDefects + item.totalManualDefects,
-            plan: 0,
-            target: 0,
-            oeePercent: item.oeePercent,
-            lotNumber: '',
-            batchStatus: '',
-            startDate: new Date(),
-            endDate: new Date(),
-            useSitePercentSettings: 0, 
-            percentSettings: [],
-            standardSpeedSeconds: 0,
-            productName: '',
-            batchStartedDate: new Date(),
-            batchStoppedDate: new Date(),
-            activeSecondUnit: 0, 
-          }));
+        const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
 
         return {
-            running,
-            breakdown,
-            ended,
-            standby,
-            mcSetup,
+            running: commonData.running,
+            breakdown: commonData.breakdown,
+            ended: commonData.ended,
+            standby: commonData.standby,
+            mcSetup: commonData.mcSetup,
             oees: oeeStatusItems,
         } as OeeStatus;
     }
 
     async findAllOeeMode2(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
-        // Retrieve the user along with the associated OEE relations
+        const commonData = await this.getCommonOeeData(advanceDto, siteId);
+
+        const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
+
+        // ดึงข้อมูลสถิติแบบรายชั่วโมงและคำนวณ lossOees สำหรับ mode2
+        const rowsHourly: OeeRecord[] = await this.getOeeStatsByHour(commonData.oeeIds, advanceDto.from, advanceDto.to);
+        const lossOees = await this.getLossOee(rowsHourly);
+
+        return {
+            lossOees,
+            running: commonData.running,
+            breakdown: commonData.breakdown,
+            ended: commonData.ended,
+            standby: commonData.standby,
+            mcSetup: commonData.mcSetup,
+            oees: oeeStatusItems,
+        } as OeeStatus;
+    }
+
+    async findAllTeepMode2(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+        const commonData = await this.getCommonOeeData(advanceDto, siteId);
+
+        const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
+
+        return {
+            running: commonData.running,
+            breakdown: commonData.breakdown,
+            ended: commonData.ended,
+            standby: commonData.standby,
+            mcSetup: commonData.mcSetup,
+            oees: oeeStatusItems,
+        } as OeeStatus;
+    }
+
+    private async getCommonOeeData(advanceDto: AdvanceDto, siteId: number): Promise<CommonOeeData> {
+        // ดึงข้อมูลผู้ใช้งานพร้อมความสัมพันธ์ของ OEE
         const user = await this.userRepository.findOne({
             where: { id: advanceDto.userId },
             relations: ['oees'],
         });
 
-        // Get OEEs for the specified site that have not been deleted
+        // ดึงข้อมูล OEE ที่สังกัด site ที่ไม่ถูกลบ
         const oees = await this.oeeRepository.find({
             select: ['id'], // เลือกเฉพาะฟิลด์ id
             where: { siteId, deleted: false },
         });
-
         const oeeIds = oees.map(oee => oee.id);
 
+        // ถ้าไม่พบ OEE ให้คืนค่า default
         if (oeeIds.length === 0) {
-            return {} as OeeStatus;
+            return {
+                aggregatedData: [],
+                oeeIds: [],
+                running: 0,
+                ended: 0,
+                standby: 0,
+                breakdown: 0,
+                mcSetup: 0,
+                user,
+                statsRows: [],
+            };
         }
 
-        // Retrieve OEE statistics within the date range
+        // ดึงสถิติของ OEE ในช่วงวันที่ที่กำหนด
         let statsRows: OeeStats[] = await this.getOeeStats(oeeIds, advanceDto.from, advanceDto.to);
         const oeeNames = await this.getOeeNames(statsRows);
         const lotNumbers = await this.getLotNumbers(statsRows);
 
-        // Group the stats rows by oeeId
+        // จัดกลุ่ม stats ตาม oeeId
         const groupedStats = statsRows.reduce((acc: { [key: number]: OeeStats[] }, row) => {
             if (!acc[row.oeeId]) {
                 acc[row.oeeId] = [];
@@ -235,27 +176,27 @@ export class AdvanceService {
             return acc;
         }, {});
 
-        // Base SQL query for aggregated status counts
+        // สร้าง SQL query สำหรับการนับสถิติ status
         let sumRowsQuery = `
-            WITH cte AS (
-                SELECT DISTINCT b.oeeId,
-                       FIRST_VALUE(b.id) OVER (PARTITION BY b.oeeId ORDER BY b.id DESC) AS batchId
-                FROM oeeBatches AS b
-            )
-            SELECT IFNULL(SUM(IF(status = "running", 1, 0)), 0)   AS running,
-                   IFNULL(SUM(IF(status = "ended" OR status IS NULL, 1, 0)), 0) AS ended,
-                   IFNULL(SUM(IF(status = "standby" OR status = "planned", 1, 0)), 0) AS standby,
-                   IFNULL(SUM(IF(status = "mc_setup", 1, 0)), 0)  AS mcSetup,
-                   IFNULL(SUM(IF(status = "breakdown", 1, 0)), 0) AS breakdown
-            FROM oees o
-                 LEFT JOIN cte ON o.id = cte.oeeId
-                 LEFT JOIN oeeBatches ob ON cte.batchId = ob.id
-            WHERE o.siteId = ? AND o.deleted = 0
+          WITH cte AS (
+            SELECT DISTINCT b.oeeId,
+                   FIRST_VALUE(b.id) OVER (PARTITION BY b.oeeId ORDER BY b.id DESC) AS batchId
+            FROM oeeBatches AS b
+          )
+          SELECT IFNULL(SUM(IF(status = "running", 1, 0)), 0)   AS running,
+                 IFNULL(SUM(IF(status = "ended" OR status IS NULL, 1, 0)), 0) AS ended,
+                 IFNULL(SUM(IF(status = "standby" OR status = "planned", 1, 0)), 0) AS standby,
+                 IFNULL(SUM(IF(status = "mc_setup", 1, 0)), 0)  AS mcSetup,
+                 IFNULL(SUM(IF(status = "breakdown", 1, 0)), 0) AS breakdown
+          FROM oees o
+               LEFT JOIN cte ON o.id = cte.oeeId
+               LEFT JOIN oeeBatches ob ON cte.batchId = ob.id
+          WHERE o.siteId = ? AND o.deleted = 0
         `;
 
         const queryParams: any[] = [siteId];
 
-        // For non-admin users, filter the stats rows based on user-associated OEEs
+        // สำหรับผู้ใช้ที่ไม่ใช่ admin ให้กรอง stats ตาม OEE ที่ผู้ใช้เกี่ยวข้อง
         if (user && user.isAdmin === false) {
             statsRows = statsRows.filter(row =>
                 user.oees.some(userOee => userOee.id === row.oeeId)
@@ -264,12 +205,15 @@ export class AdvanceService {
 
             if (filteredOeeIds.length === 0) {
                 return {
+                    aggregatedData: [],
+                    oeeIds: [],
                     running: 0,
-                    breakdown: 0,
                     ended: 0,
                     standby: 0,
+                    breakdown: 0,
                     mcSetup: 0,
-                    oees: [],
+                    user,
+                    statsRows: [],
                 };
             }
 
@@ -277,18 +221,19 @@ export class AdvanceService {
             sumRowsQuery += ' AND o.id IN (?)';
         }
 
-        // Execute the aggregated SQL query
+        // ดำเนินการ query เพื่อดึงสถิติ status
         const sumRows: any[] = await this.entityManager.query(sumRowsQuery, queryParams);
         const { running, ended, standby, breakdown, mcSetup } = sumRows[0];
 
-        // Process each group of OEE stats concurrently
+        // ประมวลผลแต่ละกลุ่ม OEE stats แบบ concurrent
         const aggregatedData = await Promise.all(
             Object.keys(groupedStats).map(async (key) => {
                 const oeeId = parseInt(key, 10);
                 const oeeStats = groupedStats[oeeId];
-                // Sum and calculate OEE data based on grouped stats
+
+                // สรุปและคำนวณข้อมูล OEE จากกลุ่ม stats
                 const summedData = await this.sumOeeData(oeeStats, oeeNames, lotNumbers);
-                // Optionally remove fields you do not need in the final response
+                // สามารถตัด field ที่ไม่ต้องการออกได้
                 const { totalCountByBatch, ...filteredData } = summedData;
                 const calculatedOee = this.calculateOee(summedData);
                 return {
@@ -299,8 +244,14 @@ export class AdvanceService {
             })
         );
 
-        // Map the aggregated data into the expected response format
-        const oeeStatusItems: OeeStatusItem[] = aggregatedData.map(item => ({
+        return { aggregatedData, oeeIds, running, ended, standby, breakdown, mcSetup, user, statsRows };
+    }
+
+    /**
+     * แปลง aggregated data ที่ได้ให้เป็นรูปแบบของ OeeStatusItem
+     */
+    private mapToOeeStatusItems(aggregatedData: any[]): OeeStatusItem[] {
+        return aggregatedData.map(item => ({
             id: item.id,
             oeeBatchId: 0,
             oeeCode: '',
@@ -310,33 +261,21 @@ export class AdvanceService {
             plan: 0,
             target: 0,
             oeePercent: item.oeePercent,
+            aPercent: item.aPercent,
+            qPercent: item.qPercent,
+            pPercent: item.pPercent,
             lotNumber: '',
             batchStatus: '',
             startDate: new Date(),
             endDate: new Date(),
-            useSitePercentSettings: 0, // ใช้ 0 แทน false
+            useSitePercentSettings: 0,
             percentSettings: [],
             standardSpeedSeconds: 0,
             productName: '',
             batchStartedDate: new Date(),
             batchStoppedDate: new Date(),
-            activeSecondUnit: 0, // ใช้ 0 แทน false
-          }));
-
-        const rowsHourly: OeeRecord[] = await this.getOeeStatsByHour(oeeIds, advanceDto.from, advanceDto.to);
-
-        const lossOees = await this.getLossOee(rowsHourly);
-
-
-        return {
-            lossOees,
-            running,
-            breakdown,
-            ended,
-            standby,
-            mcSetup,
-            oees: oeeStatusItems,
-        } as OeeStatus;
+            activeSecondUnit: 0,
+        }));
     }
 
     async getLossOee(oeeRecords: OeeRecord[]): Promise<OeeLossGrouped[]> {

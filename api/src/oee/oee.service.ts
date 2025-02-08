@@ -608,18 +608,35 @@ export class OeeService {
               .execute();
           }
 
+          // ดึงรายการทั้งหมดจากฐานข้อมูลที่เกี่ยวข้องกับ oee และ oeeMachine
+          const existingPlannedDowntime = await this.oeeMachinePlannedDowntimeRepository.findBy({
+            oeeId: oee.id,
+            oeeMachineId: oeeMachine.id,
+          });
+
+          // สร้างเซ็ตของ ID จาก body request
+          const requestIds = new Set(oeeMachinePlannedDowntime.map(item => item.id).filter(id => id));
+
+          // ลบรายการที่ไม่มีอยู่ใน body request
+          for (const downtime of existingPlannedDowntime) {
+            if (!requestIds.has(downtime.id)) {
+              await this.oeeMachinePlannedDowntimeRepository.delete({ id: downtime.id });
+            }
+          }
+
+          // อัปเดตหรือลงทะเบียนรายการใหม่
           for (const item of oeeMachinePlannedDowntime) {
             if (item.id) {
+              item.deleted = false;
               const updatingPlanDowntime = await this.oeeMachinePlannedDowntimeRepository.findOneBy({ id: item.id });
               await this.oeeMachinePlannedDowntimeRepository.save({ ...updatingPlanDowntime, ...item, updatedAt: new Date() });
             } else {
-              //find planned downtime by id
-              const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.id });
+              const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.plannedDownTimeId });
               await this.oeeMachinePlannedDowntimeRepository.save({
                 oeeId: oee.id,
                 oeeMachineId: oeeMachine.id,
                 plannedDownTimeId: item.plannedDownTimeId,
-                plannedDownTimeName: plannedDowntime.name || '',
+                plannedDownTimeName: plannedDowntime?.name || '',
                 fixTime: item.fixTime,
                 startDate: item.startDate,
                 endDate: item.endDate,
