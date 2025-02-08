@@ -1,7 +1,10 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
+import { OeeStatusLossAdvancedItem } from 'src/@types/oee';
 
-// กำหนดชนิดข้อมูลสำหรับ options และ series
+type Props = {
+  oeeStatusItem: OeeStatusLossAdvancedItem;
+};
 interface ChartOptions {
   chart: {
     type: string;
@@ -10,12 +13,16 @@ interface ChartOptions {
   plotOptions: {
     bar: {
       horizontal: boolean;
+      columnWidth : string;
+      borderRadius : number
     };
   };
   xaxis: {
+    decimalsInFloat : boolean;
     categories: string[];
   };
   yaxis: {
+    show : boolean;
     title: {
       text: string;
     };
@@ -29,9 +36,15 @@ interface ChartOptions {
   dataLabels: {
     enabled: boolean;
   };
+  colors : string[]
 }
 
-const DashboardVerticalStackedBarChart: React.FC = () => {
+const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
+ 
+  const timeSlots = oeeStatusItem.lossResult.map((loss) => {
+    return loss.timeslot;
+  });
+ 
   const chartOptions: ChartOptions = {
     chart: {
       type: 'bar',
@@ -40,29 +53,21 @@ const DashboardVerticalStackedBarChart: React.FC = () => {
     plotOptions: {
       bar: {
         horizontal: false,
+        columnWidth: '95%',
+        borderRadius: 4
       },
     },
     xaxis: {
-      categories: [ 
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',],
+      decimalsInFloat : true,
+      categories: timeSlots,
     },
     yaxis: {
+      show:false,
       title: {
         text: '',
-        
       },
     },
+    colors: ['#00d000','#3091da', '#fffa00', '#ff0000'],
     legend: {
       position: 'top',
     },
@@ -75,25 +80,40 @@ const DashboardVerticalStackedBarChart: React.FC = () => {
   };
 
   const chartSeries = [
-    { name: 'Product A', data: [44, 55, 41, 67, 22, 43, 21, 49, 55, 62, 45, 58] },
-    { name: 'Product B', data: [13, 23, 20, 8, 13, 27, 33, 12, 19, 25, 18, 22] },
-    { name: 'Product C', data: [11, 17, 15, 15, 12, 13, 10, 19, 20, 21, 16, 14] },
-    { name: 'Product D', data: [21, 14, 25, 18, 32, 25, 24, 29, 30, 28, 23, 25] },
-    { name: 'Product E', data: [31, 22, 33, 19, 43, 35, 34, 21, 29, 36, 40, 38] },
-    { name: 'Product F', data: [23, 31, 17, 25, 18, 15, 20, 14, 22, 26, 19, 21] },
-    { name: 'Product G', data: [15, 19, 24, 11, 10, 9, 13, 20, 17, 15, 18, 16] },
-    { name: 'Product H', data: [20, 15, 21, 17, 25, 20, 22, 30, 27, 29, 28, 31] },
-    { name: 'Product I', data: [27, 32, 29, 24, 35, 31, 28, 22, 26, 34, 30, 33] },
-    { name: 'Product J', data: [34, 40, 35, 29, 43, 38, 36, 31, 40, 44, 39, 42] },
+    {
+      name: 'OEE',
+      data: oeeStatusItem.lossResult.map((loss) => {
+        return loss.oeePercent < 0 ? 0 : loss.oeePercent;
+      }),
+    },
+    {
+      name: 'ALoss',
+      data: oeeStatusItem.lossResult.map((loss) => {
+        return loss.ALoss < 0 ? 0 : loss.ALoss;
+      }),
+    },
+    {
+      name: 'PLoss',
+      data: oeeStatusItem.lossResult.map((loss) => {
+        return loss.PLoss < 0 ? 0 : loss.PLoss;
+      }),
+    },
+    {
+      name: 'QLoss',
+      data: oeeStatusItem.lossResult.map((loss) => {
+        return loss.QLoss < 0 ? 0 : loss.QLoss;
+      }),
+    },
   ];
 
   return (
-    <div>
+    <div style={{ overflowX: 'auto', width: '100%', maxWidth : 3500 }}>
       <ReactApexChart
         options={chartOptions as any} // ใช้ `as any` เพราะ ReactApexChart อาจไม่รู้จักชนิดข้อมูลที่กำหนด
         series={chartSeries}
         type="bar"
-        height={600}
+        height={300}
+        width={3500}
       />
     </div>
   );

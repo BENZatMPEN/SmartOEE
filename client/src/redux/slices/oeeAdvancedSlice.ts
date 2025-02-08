@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Oee, OeeStatus } from '../../@types/oee';
+import { Oee, OeeStatus, OeeStatusAdvanced } from '../../@types/oee';
 
 export type OeeAdvancedState = {
   selectedOee: Oee | null;
-  oeeStatus: OeeStatus;
+  oeeStatus: OeeStatusAdvanced;
   isLoading: boolean;
   error: any | null;
   modeView : string;
@@ -24,6 +24,7 @@ const initialState: OeeAdvancedState = {
     ended: 0,
     mcSetup: 0,
     oees: [],
+    lossOees : []
   },
   isLoading: false,
   error: null,

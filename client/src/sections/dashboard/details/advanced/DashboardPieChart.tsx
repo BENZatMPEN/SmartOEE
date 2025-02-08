@@ -89,7 +89,7 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent 
       },
     }),
   );
-  console.log(options);
+
   
   useEffect(() => {
     setSeries([fNumber1('59')]);

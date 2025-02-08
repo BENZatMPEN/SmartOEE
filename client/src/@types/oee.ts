@@ -24,7 +24,7 @@ export type Oee = {
   createdAt: Date;
   updatedAt: Date;
   operators: User[];
-  workShifts : WorkShiftsDetailAPIS[]
+  workShifts : WorkShiftsDetail[]
 };
 
 
@@ -46,7 +46,7 @@ export interface EditOee {
   useSitePercentSettings: boolean;
   timeUnit: string;
   operators: User[];
-  workShifts : DayData[];
+  workShifts : WorkShiftsDetail[];
 }
 
 export type FilterOee = {
@@ -121,7 +121,7 @@ export type MachinePlanDownTime = {
   endDate: Date,
   fixTime: boolean,
 }
-type Shift = {
+export type Shift = {
   name : string;
   active: boolean;
   start: Date; // e.g., "08:00"
@@ -129,7 +129,7 @@ type Shift = {
 };
 
 // Type for a single day's data
-type DayData = {
+export type DayData = {
   day: string; // e.g., "Monday"
   active: boolean; // Whether the entire day is active
   shifts: {
@@ -149,18 +149,73 @@ export interface WorkShiftsDetailAPIS {
   isShiftActive: boolean;
 }
 
-export interface WorkShiftsDetail {
-  oeeId? : number;
-  dayOfWeek: string;
+export interface ShiftWork {
+  id? : number | null | undefined;
   shiftNumber: number;
   shiftName: string;
-  startTime: string;
-  endTime: string;
-  isDayActive: boolean;
+  startTime: Date | string;
+  endTime: Date | string;
   isShiftActive: boolean;
+}
+export interface WorkShiftsDetail {
+  oeeId? : number | null | undefined,
+  dayOfWeek: string;
+  isDayActive: boolean;
+  shifts: ShiftWork[]
 }
 
 export interface ExportToAnotherOee {
   workShifts : WorkShiftsDetail[]
   oeeIds : number[]
+}
+
+export type OeeStatusAdvanced = {
+  running: number;
+  breakdown: number;
+  ended: number;
+  standby: number;
+  mcSetup: number;
+  oees: OeeStatusAdvancedItem[];
+  lossOees? : OeeStatusLossAdvancedItem[];
+};
+export type OeeStatusAdvancedItem = {
+  id: number;
+  oeeBatchId: number;
+  oeeCode: string;
+  productionName: string;
+  actual: number;
+  defect: number;
+  plan: number;
+  target: number;
+  oeePercent: number;
+  lotNumber: string;
+  batchStatus: string;
+  startDate: Date;
+  endDate: Date;
+  useSitePercentSettings: boolean;
+  percentSettings: PercentSetting[];
+  standardSpeedSeconds: number;
+  productName: string;
+  batchStartedDate: Date;
+  batchStoppedDate: Date;
+  activeSecondUnit: boolean;
+
+};
+
+export type OeeStatusLossAdvancedItem = {
+  lossResult : OeeStatusLossResultAdvancedItem[]
+  oeeId : number
+}
+
+export type OeeStatusLossResultAdvancedItem = { 
+  
+   oeeId: number,
+   id: string,
+   oeePercent: number,
+   ALoss: number,
+   PLoss: number,
+   QLoss: number,
+   timeslot: string,
+   timestamp: string
+
 }

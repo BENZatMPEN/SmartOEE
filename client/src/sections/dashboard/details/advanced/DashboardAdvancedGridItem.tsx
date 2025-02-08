@@ -1,7 +1,7 @@
 import { Box, Button, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { OeeStatusItem } from '../../../../@types/oee';
+import { OeeStatusAdvancedItem } from '../../../../@types/oee';
 import { OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_STANDBY, OEE_TYPE_OEE } from '../../../../constants';
 import { RootState, useSelector } from '../../../../redux/store';
 import { PATH_DASHBOARD } from '../../../../routes/paths';
@@ -24,7 +24,7 @@ type LegendUnitProps = {
 };
 
 type Props = {
-  oeeStatusItem: OeeStatusItem;
+  oeeStatusItem: OeeStatusAdvancedItem;
 };
 
 export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
@@ -68,7 +68,7 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
     <Card>
       <CardContent>
         <Stack spacing={1}>
-          <Link to={PATH_DASHBOARD.item.root(id.toString())} style={{ textDecoration: 'none' }}>
+          {/* <Link  style={{ textDecoration: 'none' }}> */}
             <Typography
               variant={'h6'}
               textAlign="center"
@@ -82,10 +82,10 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
                 overflow: 'hidden',
               }}
             >
-              {oeeCode ? `${oeeCode}` : ''}
-              {productionName ? `- ${productionName}` : ''}
+             
+              {productionName ? `${productionName}` : ''}
             </Typography>
-          </Link>
+          {/* </Link> */}
 
           <Stack direction="column" sx={{ p: 1 }}>
             <div>
@@ -146,7 +146,7 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
                         <Legend label="Actual" number={fNumber(actual)} />
                         <Legend label="Plan" number={fNumber(plan)} />
                         <Legend label="Target" number={fNumber(target)} />
-                        
+                        <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />
                       </>
                   }
 

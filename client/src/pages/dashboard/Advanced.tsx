@@ -33,6 +33,7 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
+import TimelineChart from 'src/sections/dashboard/details/advanced/TimelineChart';
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
@@ -57,11 +58,7 @@ export default function Advanced() {
 
   const { oeePercent } = oeeStats || initialOeeStats;
 
-  const { oees } = oeeStatus;
-
-  useEffect(() => {
-    console.log('formStreaming store =>', oees);
-  }, [oees]);
+  const { oees, lossOees } = oeeStatus;
 
   useEffect(() => {
     (async () => {
@@ -78,9 +75,10 @@ export default function Advanced() {
                 userProfile.id,
                 dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
                 dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
+                modeView,
               ),
             );
-          }, 5000);
+          }, 3500);
           // 180000
           // Clean up on component unmount or state change
           return () => {
@@ -95,11 +93,12 @@ export default function Advanced() {
             userProfile.id,
             dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
             dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
+            modeView,
           ),
         );
       }
     })();
-  }, [dispatch, userProfile, formStreaming]);
+  }, [dispatch, userProfile, formStreaming, modeView]);
 
   useEffect(() => {
     if (!socket || !selectedSite) {
@@ -161,10 +160,15 @@ export default function Advanced() {
         </Grid>
         <Grid container>
           <Grid item sm={6}>
-            <Typography fontSize={20}>Time : {dayjs(formStreaming.endDateTime).format('HH:mm:ss')}</Typography>
+            <Typography fontSize={20}>
+              Time : {formStreaming.endDateTime ? dayjs(formStreaming.endDateTime).format('HH:mm:ss') : '00:00:00'}
+            </Typography>
           </Grid>
         </Grid>
         <Divider sx={{ marginBottom: '18px' }} />
+        {/* <Card sx={{overflowX : 'auto'}}>
+          <TimelineChart />
+        </Card> */}
         {isLoading ? (
           <Card>
             <CardContent>Loading...</CardContent>
@@ -173,34 +177,38 @@ export default function Advanced() {
           <Card sx={{ mt: 3 }}>
             <CardContent>
               <Stack>
-                <Grid container spacing={2}>
-                  <Grid
-                    item
-                    xs={12}
-                    sm={2}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      gap: 4,
-                      pt: '20px !important',
-                    }}
-                  >
-                    <DashboardPieChart
-                      high={percents.high}
-                      medium={percents.medium}
-                      low={percents.low}
-                      oeeType={advancedType.toUpperCase()}
-                      percent={oeePercent}
-                    />
+                {lossOees?.map((item) => (
+                  <Grid container spacing={2} key={item.oeeId}>
+                    <>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={2}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          gap: 4,
+                          pt: '20px !important',
+                        }}
+                      >
+                        <DashboardPieChart
+                          high={percents.high}
+                          medium={percents.medium}
+                          low={percents.low}
+                          oeeType={advancedType.toUpperCase()}
+                          percent={oeePercent}
+                        />
 
-                    <DashboardAPQBar />
-                  </Grid>
-                  <Grid item xs={12} sm={10}>
-                    <DashboardVerticalStackedBarChart />
-                  </Grid>
-                </Grid>
+                        <DashboardAPQBar />
+                      </Grid>
 
+                      <Grid item xs={12} sm={10}>
+                        <DashboardVerticalStackedBarChart oeeStatusItem={item} />
+                      </Grid>
+                    </>
+                  </Grid>
+                ))}
                 {/* {oees.map((item) => (
                   <DashboardOeeTimelineItem key={item.id} oeeStatusItem={item} />
                 ))} */}
