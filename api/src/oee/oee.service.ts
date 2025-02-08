@@ -251,15 +251,28 @@ export class OeeService {
     // แปลงโครงสร้าง workShifts
     const transformedWorkShifts = this.transformWorkShifts(oee.workShifts);
 
-    // สร้าง DTO สำหรับ OEE details (ไม่เปลี่ยน type ใน entity เดิม)
     const oeeDetails: OeeDetailsDto = {
       id: oee.id,
+      oeeCode: oee.oeeCode,
+      oeeType: oee.oeeType,
+      location: oee.location,
+      productionName: oee.productionName,
+      remark: oee.remark,
+      imageName: oee.imageName,
+      minorStopSeconds: oee.minorStopSeconds,
+      breakdownSeconds: oee.breakdownSeconds,
+      siteId: oee.siteId,
+      tags: oee.tags,
       oeeProducts: oee.oeeProducts,
       oeeMachines: oee.oeeMachines,
       oeeMachinePlannedDowntime: oee.oeeMachinePlannedDowntime,
+      workShifts: transformedWorkShifts, // Ensure this is correctly transformed before assignment
       operators: oee.operators,
-      // เพิ่ม property อื่น ๆ ตามที่ต้องการ
-      workShifts: transformedWorkShifts,
+      updatedAt: oee.updatedAt,
+      useSitePercentSettings: oee.useSitePercentSettings,
+      percentSettings: oee.percentSettings,
+      timeUnit: oee.timeUnit,
+      activeSecondUnit: oee.activeSecondUnit,
     };
 
     return oeeDetails;
