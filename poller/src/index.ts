@@ -473,8 +473,11 @@ bootstrap()
             }
           })();
         });
-      } catch (readErr) {
-        console.log(readErr);
+      } catch (err) {
+        console.log('readJob', err);
+        if (err.statusCode !== undefined) {
+          throw err;
+        }
       }
     });
 
@@ -503,8 +506,11 @@ bootstrap()
         });
         await axios.put(`sites/${SITE_ID}/synced`);
         console.log('data synced');
-      } catch (requestErr) {
-        console.log(requestErr);
+      } catch (err) {
+        console.log('syncJob', err);
+        if (err.statusCode !== undefined) {
+          throw err;
+        }
       }
     });
   })
