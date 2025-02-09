@@ -3,15 +3,11 @@ import {
   CardContent,
   Container,
   Divider,
-  FormControlLabel,
   Grid,
-  MenuItem,
-  Select,
   Stack,
-  Switch,
   Typography,
 } from '@mui/material';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { OeeStatus } from '../../@types/oee';
 import { RoleAction, RoleSubject } from '../../@types/role';
 import { AbilityContext } from '../../caslContext';
@@ -22,7 +18,7 @@ import { RootState, useDispatch, useSelector } from '../../redux/store';
 import DashboardHeader from '../../sections/dashboard/DashboardHeader';
 
 import { PATH_PAGES } from '../../routes/paths';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import StreamingForm from 'src/sections/dashboard/details/advanced/StreamingForm';
 import AdvancedForm from 'src/sections/dashboard/details/advanced/AdvancedForm';
 import DashboardAdvancedGridItem from 'src/sections/dashboard/details/advanced/DashboardAdvancedGridItem';
@@ -33,7 +29,6 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
-import TimelineChart from 'src/sections/dashboard/details/advanced/TimelineChart';
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
