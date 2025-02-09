@@ -199,7 +199,9 @@ export type OeeStatusAdvancedItem = {
   batchStartedDate: Date;
   batchStoppedDate: Date;
   activeSecondUnit: boolean;
-
+  qPercent : number;
+  pPercent : number;
+  aPercent : number;
 };
 
 export type OeeStatusLossAdvancedItem = {

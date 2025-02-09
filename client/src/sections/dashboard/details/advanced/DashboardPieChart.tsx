@@ -79,7 +79,7 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent 
               formatter: (val: any) => fNumber(Number(val)),
             },
             total: {
-              label: 'OEE',
+              label: oeeType,
               fontSize: '22px',
               color: '#282828',
               fontWeight: 'bolder',
@@ -92,7 +92,8 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent 
 
   
   useEffect(() => {
-    setSeries([fNumber1('59')]);
+    
+    setSeries([fNumber1(percent)]);
 
     let colors = highColors;
     if (percent <= medium && percent > low) {

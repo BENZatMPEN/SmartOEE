@@ -4,16 +4,19 @@ import { useEffect, useState } from 'react';
 import { initialOeeStats, initialPercentSettings, OEE_TYPE_A, OEE_TYPE_P, OEE_TYPE_Q } from '../../../../constants';
 import { RootState, useSelector } from '../.././../../redux/store';
 import { fPercent } from '../../../../utils/formatNumber';
-
-export default function DashboardAPQBar() {
+import { OeeStatusAdvancedItem } from 'src/@types/oee';
+type Props = {
+  oeeStatusItem : OeeStatusAdvancedItem
+}
+export default function DashboardAPQBar({oeeStatusItem}:Props) {
   const theme = useTheme();
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
-  const { selectedOee } = useSelector((state: RootState) => state.oeeDashboard);
+  const { selectedOee, oeeStatus } = useSelector((state: RootState) => state.oeeAdvanced);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
-
+  
   const percentSettings =
     (selectedOee?.useSitePercentSettings || true
       ? selectedSite?.defaultPercentSettings
@@ -33,7 +36,7 @@ export default function DashboardAPQBar() {
   );
 
   const { oeeStats } = currentBatch || { oeeStats: initialOeeStats };
-  const { aPercent, pPercent, qPercent } = oeeStats;
+  const { aPercent, pPercent, qPercent } = oeeStatusItem;
 
   useEffect(() => {
     setAColor('success');

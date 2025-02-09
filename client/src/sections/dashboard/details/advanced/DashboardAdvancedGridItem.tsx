@@ -9,8 +9,8 @@ import { getColor } from '../../../../utils/colorHelper';
 import { fNumber, fNumber2 } from '../../../../utils/formatNumber';
 import { fTimeShort } from '../../../../utils/formatTime';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
-import DashboardPieChart from '../../DashboardPieChart';
-import DashboardOeePieChart from '../../DashboardOeePieChart';
+import DashboardPieChart from './DashboardPieChart';
+
 
 type LegendProps = {
   label: string;
@@ -25,9 +25,10 @@ type LegendUnitProps = {
 
 type Props = {
   oeeStatusItem: OeeStatusAdvancedItem;
+  oeeType : string;
 };
 
-export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
+export default function DashboardAdvancedGridItem({ oeeStatusItem, oeeType }: Props) {
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const {
@@ -120,12 +121,12 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
           <Box>
             <Grid container spacing={2} alignItems="center" sx={activeSecondUnit ? {} : { mt: 4, mb: 3 }}>
               <Grid item xs={6}>
-                <DashboardOeePieChart
+                <DashboardPieChart
                   high={percents.high}
                   medium={percents.medium}
                   low={percents.low}
                   percent={oeePercent}
-                  oeeType={OEE_TYPE_OEE}
+                  oeeType={oeeType}
                 />
               </Grid>
 
@@ -139,14 +140,14 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem }: Props) {
                         <LegendUnit label="NG" number={fNumber(defect)} unit="pcs" />
                         <LegendUnit label="Target" number={fNumber(target)} unit="pcs" />
                         <LegendUnit label="Plan" number={fNumber(plan)} unit="pcs" />
-                        <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />
+                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />}
                       </>
                       :
                       <>
                         <Legend label="Actual" number={fNumber(actual)} />
                         <Legend label="Plan" number={fNumber(plan)} />
                         <Legend label="Target" number={fNumber(target)} />
-                        <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />
+                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />}
                       </>
                   }
 

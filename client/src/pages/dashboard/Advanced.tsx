@@ -1,19 +1,11 @@
-import {
-  Card,
-  CardContent,
-  Container,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Card, CardContent, Container, Divider, Grid, Stack, Typography } from '@mui/material';
 import { useContext, useEffect, useMemo, useRef } from 'react';
 import { OeeStatus } from '../../@types/oee';
 import { RoleAction, RoleSubject } from '../../@types/role';
 import { AbilityContext } from '../../caslContext';
 import Page from '../../components/Page';
 import useWebSocket from '../../hooks/useWebSocket';
-import { getOeeStatus, updateOeeStatus } from '../../redux/actions/oeeAdvancedAction';
+import { emptySelectedOee, getOee, getOeeStatus, updateOeeStatus } from '../../redux/actions/oeeAdvancedAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import DashboardHeader from '../../sections/dashboard/DashboardHeader';
 
@@ -55,6 +47,7 @@ export default function Advanced() {
 
   const { oees, lossOees } = oeeStatus;
 
+ 
   useEffect(() => {
     (async () => {
       if (userProfile && formStreaming.startDateTime && formStreaming.endDateTime) {
@@ -73,7 +66,7 @@ export default function Advanced() {
                 modeView,
               ),
             );
-          }, 3500);
+          }, 180000);
           // 180000
           // Clean up on component unmount or state change
           return () => {
@@ -93,7 +86,7 @@ export default function Advanced() {
         );
       }
     })();
-  }, [dispatch, userProfile, formStreaming, modeView]);
+  }, [dispatch, userProfile, formStreaming, modeView, advancedType]);
 
   useEffect(() => {
     if (!socket || !selectedSite) {
@@ -124,7 +117,7 @@ export default function Advanced() {
         selectedSite,
         selectedOee?.percentSettings || [],
         selectedOee?.useSitePercentSettings || true,
-        OEE_TYPE_OEE,
+        advancedType,
       ),
     [selectedSite, selectedOee],
   );
@@ -172,7 +165,7 @@ export default function Advanced() {
           <Card sx={{ mt: 3 }}>
             <CardContent>
               <Stack>
-                {lossOees?.map((item) => (
+                {lossOees?.map((item, index) => (
                   <Grid container spacing={2} key={item.oeeId}>
                     <>
                       <Grid
@@ -192,10 +185,10 @@ export default function Advanced() {
                           medium={percents.medium}
                           low={percents.low}
                           oeeType={advancedType.toUpperCase()}
-                          percent={oeePercent}
+                          percent={oees[index].oeePercent}
                         />
 
-                        <DashboardAPQBar />
+                        <DashboardAPQBar oeeStatusItem={oees[index]} />
                       </Grid>
 
                       <Grid item xs={12} sm={10}>
@@ -214,7 +207,7 @@ export default function Advanced() {
           <Grid container spacing={3}>
             {oees.map((item) => (
               <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
-                <DashboardAdvancedGridItem oeeStatusItem={item} />
+                <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
               </Grid>
             ))}
           </Grid>
