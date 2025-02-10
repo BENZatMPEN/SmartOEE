@@ -11,5 +11,4 @@ RUN npm install
 
 COPY . .
 
-#CMD [ "/bin/sh", "./start.sh" ]
-CMD [ "npm", "start" ]
+CMD [ "/bin/sh", "./start.sh" ]
