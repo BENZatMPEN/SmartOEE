@@ -41,7 +41,7 @@ const AdvancedForm = (props: Props) => {
     handleSubmit,
     formState: { isSubmitting }, 
   } = methods
-
+  const watchValues = watch()
   const onModeChange = (valMode:string) => {
     setValue('mode',valMode)
     dispatch(setModeView(valMode));
@@ -107,7 +107,7 @@ const AdvancedForm = (props: Props) => {
               SelectProps={{ native: false }}
               size="small"
               onChange={(event) => onModeChange(event.target.value)}
-            
+              disabled={(watchValues.advancedType === 'andon')}
             >
               <MenuItem
                 value={-1}

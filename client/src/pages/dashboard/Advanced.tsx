@@ -21,6 +21,7 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
+import DashboardTableCustom from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableCustom';
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
@@ -47,7 +48,6 @@ export default function Advanced() {
 
   const { oees, lossOees } = oeeStatus;
 
- 
   useEffect(() => {
     (async () => {
       if (userProfile && formStreaming.startDateTime && formStreaming.endDateTime) {
@@ -157,60 +157,73 @@ export default function Advanced() {
         {/* <Card sx={{overflowX : 'auto'}}>
           <TimelineChart />
         </Card> */}
-        {isLoading ? (
+        {isLoading && (
           <Card>
             <CardContent>Loading...</CardContent>
           </Card>
-        ) : modeView === 'mode2' ? (
+        )}
+        {advancedType !== 'andon' ? (
+          modeView === 'mode2' ? (
+            <Card sx={{ mt: 3 }}>
+              <CardContent>
+                <Stack>
+                  {lossOees?.map((item, index) => (
+                    <Grid container spacing={2} key={item.oeeId}>
+                      <>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={2}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            gap: 4,
+                            pt: '20px !important',
+                          }}
+                        >
+                          <DashboardPieChart
+                            high={percents.high}
+                            medium={percents.medium}
+                            low={percents.low}
+                            oeeType={advancedType.toUpperCase()}
+                            percent={oees[index].oeePercent}
+                          />
+
+                          <DashboardAPQBar oeeStatusItem={oees[index]} />
+                        </Grid>
+
+                        <Grid item xs={12} sm={10}>
+                          <DashboardVerticalStackedBarChart oeeStatusItem={item} />
+                        </Grid>
+                      </>
+                    </Grid>
+                  ))}
+                  {/* {oees.map((item) => (
+                      <DashboardOeeTimelineItem key={item.id} oeeStatusItem={item} />
+                    ))} */}
+                </Stack>
+              </CardContent>
+            </Card>
+          ) : (
+            <Grid container spacing={3}>
+              {oees.map((item) => (
+                <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
+                  <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
+                </Grid>
+              ))}
+            </Grid>
+          )
+        ) : (
           <Card sx={{ mt: 3 }}>
             <CardContent>
               <Stack>
-                {lossOees?.map((item, index) => (
-                  <Grid container spacing={2} key={item.oeeId}>
-                    <>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={2}
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'center',
-                          gap: 4,
-                          pt: '20px !important',
-                        }}
-                      >
-                        <DashboardPieChart
-                          high={percents.high}
-                          medium={percents.medium}
-                          low={percents.low}
-                          oeeType={advancedType.toUpperCase()}
-                          percent={oees[index].oeePercent}
-                        />
-
-                        <DashboardAPQBar oeeStatusItem={oees[index]} />
-                      </Grid>
-
-                      <Grid item xs={12} sm={10}>
-                        <DashboardVerticalStackedBarChart oeeStatusItem={item} />
-                      </Grid>
-                    </>
-                  </Grid>
-                ))}
-                {/* {oees.map((item) => (
-                  <DashboardOeeTimelineItem key={item.id} oeeStatusItem={item} />
-                ))} */}
+                <Grid container spacing={2}>
+                  <DashboardTableCustom />
+                </Grid>
               </Stack>
             </CardContent>
           </Card>
-        ) : (
-          <Grid container spacing={3}>
-            {oees.map((item) => (
-              <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
-                <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
-              </Grid>
-            ))}
-          </Grid>
         )}
       </Container>
     </Page>

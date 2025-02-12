@@ -41,6 +41,6 @@ export type AnalyticViewType = 'object' | 'time';
 
 export type AnalyticComparisonType = 'oee' | 'product' | 'batch' | 'operator';
 
-export type AnalyticChartType = 'oee' | 'mc' | 'a' | 'p' | 'q';
+export type AnalyticChartType = 'oee' | 'mc' | 'a' | 'p' | 'q' | 'pd' | 'l';
 
 export type AnalyticDuration = 'hourly' | 'daily' | 'monthly';

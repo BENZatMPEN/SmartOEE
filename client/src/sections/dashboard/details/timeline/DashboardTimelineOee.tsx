@@ -17,7 +17,11 @@ type TimelineHour = {
   items: OeeTimeline[];
 };
 
-export default function DashboardTimelineOee() {
+type Props = {
+  handleClick: () => void;
+}
+
+export default function DashboardTimelineOee({handleClick} : Props) {
   const { batchTimeline } = useSelector((state: RootState) => state.oeeBatch);
 
   const [series, setSeries] = useState<any[]>([]);
@@ -35,6 +39,14 @@ export default function DashboardTimelineOee() {
         enabled: false,
       },
       toolbar: { show: false },
+      events: {
+        dataPointSelection: (event, chartContext, config) => {
+          const seriesIndex = config.seriesIndex;
+          const dataPointIndex = config.dataPointIndex;
+          handleClick?.()
+ 
+        },
+      },
     },
     plotOptions: {
       bar: {
@@ -158,5 +170,13 @@ export default function DashboardTimelineOee() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchTimeline]);
 
-  return <ReactApexChart options={options} series={series} type="rangeBar" height={chartHeight} />;
+  return (
+    <div
+      style={{
+        cursor: 'pointer',
+      }}
+    >
+      <ReactApexChart options={options} series={series} type="rangeBar" height={chartHeight} />
+    </div>
+  );
 }

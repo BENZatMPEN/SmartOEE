@@ -156,6 +156,10 @@ export function fAnalyticChartTypeText(type: AnalyticChartType) {
 
     case 'q':
       return 'Q - Defect';
+    case 'pd':
+      return 'Plan Downtime';
+    case 'l':
+      return 'Loading Loss';
   }
 }
 

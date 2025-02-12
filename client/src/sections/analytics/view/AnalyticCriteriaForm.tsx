@@ -63,7 +63,7 @@ import { AbilityContext } from '../../../caslContext';
 const VIEW_TYPES: AnalyticViewType[] = ['object', 'time'];
 
 
-const CHART_TYPES: AnalyticChartType[] = ['oee', 'mc', 'a', 'p', 'q'];
+const CHART_TYPES: AnalyticChartType[] = ['oee', 'mc', 'a', 'p', 'q', 'pd', 'l'];
 
 const DURATIONS: AnalyticDuration[] = ['hourly', 'daily', 'monthly'];
 
