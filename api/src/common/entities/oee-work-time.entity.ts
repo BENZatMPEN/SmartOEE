@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { OeeEntity } from './oee.entity';
 
-@Entity('oee_work_times')
+@Entity('oeeWorkTimes')
 @Unique(['oeeId', 'startDateTime'])
 export class OeeWorkTimeEntity {
   @PrimaryGeneratedColumn()

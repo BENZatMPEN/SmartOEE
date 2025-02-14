@@ -18,7 +18,7 @@ export enum DayOfWeek {
   Sunday = 'Sunday',
 }
 
-@Entity('work_shifts')
+@Entity('workShifts')
 @Unique(['dayOfWeek', 'shiftNumber', 'oeeId', 'isDayActive', 'isShiftActive'])
 @Check(`shift_number BETWEEN 1 AND 3`)
 export class WorkShiftEntity {
