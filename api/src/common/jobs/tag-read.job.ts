@@ -3,7 +3,7 @@ import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TagReadEntity } from '../entities/tag-read.entity';
 import { Repository } from 'typeorm';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { NotificationService } from '../services/notification.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SocketService } from '../services/socket.service';

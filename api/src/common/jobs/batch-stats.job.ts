@@ -5,7 +5,7 @@ import { OeeBatchJobEntity } from '../entities/oee-batch-job.entity';
 import { OeeBatchEntity } from '../entities/oee-batch.entity';
 import { OeeBatchMcState } from '../type/oee-status';
 import { OeeTag } from '../type/oee-tag';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import {
   OEE_TAG_OUT_A,
   OEE_TAG_OUT_BREAKING_TIME,

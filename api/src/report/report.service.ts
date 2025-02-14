@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SiteEntity } from "../common/entities/site.entity";
 import { Between, EntityManager, In, IsNull, LessThanOrEqual, MoreThan, MoreThanOrEqual, Not, Repository } from "typeorm";
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { AnalyticStatsParamEntity } from "../common/entities/analytic-stats-param.entity";
 import { AnalyticEntity } from "../common/entities/analytic.entity";
 import { OeeBatchAEntity } from "../common/entities/oee-batch-a.entity";

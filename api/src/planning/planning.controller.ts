@@ -29,7 +29,7 @@ import { ProductService } from '../product/product.service';
 import { OeeService } from '../oee/oee.service';
 import { ImportResultPlanningDto } from './dto/import-result-planning.dto';
 import { Response } from 'express';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { ImportErrorRowPlanningDto } from './dto/import-error-row-planning.dto';
 
 @UseGuards(JwtAuthGuard)

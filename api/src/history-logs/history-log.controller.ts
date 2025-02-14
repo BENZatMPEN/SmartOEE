@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { HistoryLogEntity } from '../common/entities/history-log.entity';
 import { Response } from 'express';
 import * as XLSX from 'xlsx';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)

@@ -3,7 +3,7 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { BatchMcStateUpdateEvent, BatchParamsUpdatedEvent, BatchTimelineUpdateEvent } from '../events/batch.event';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { SocketService } from '../services/socket.service';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { OeeStats } from '../type/oee-stats';
 import { BatchAEvent } from '../events/batch-a.event';
 import { BatchPEvent } from '../events/batch-p.event';

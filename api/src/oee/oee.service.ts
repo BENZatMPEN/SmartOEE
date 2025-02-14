@@ -15,7 +15,7 @@ import { OptionItem } from '../common/type/option-item';
 import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { PlanningEntity } from '../common/entities/planning.entity';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { FindLatestBatchOeeDto } from './dto/lastBatch-oee.dto';
 import { UserEntity } from 'src/common/entities/user.entity';
 import { OeeMachinePlannedDowntimeEntity } from 'src/common/entities/oee-machine-planned-downtime.entity';

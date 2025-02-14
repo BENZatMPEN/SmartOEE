@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { AlarmEntity } from '../entities/alarm.entity';
 import { ALARM_TYPE_EMAIL, ALARM_TYPE_LINE, defaultAlertTemplate } from '../constant';
 import { AlarmEmailDataItem, AlarmLineData } from '../type/alarm';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { LogService } from './log.service';
 import { OeeBatchService } from '../../oee-batch/oee-batch.service';
 import { SiteEntity } from '../entities/site.entity';

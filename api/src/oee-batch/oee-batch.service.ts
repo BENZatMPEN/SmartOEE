@@ -7,7 +7,7 @@ import { OeeEntity } from 'src/common/entities/oee.entity';
 import { OeeBatchEntity } from '../common/entities/oee-batch.entity';
 import { OeeMachineEntity } from '../common/entities/oee-machine.entity';
 import { OeeProductEntity } from '../common/entities/oee-product.entity';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { OeeBatchQEntity } from '../common/entities/oee-batch-q.entity';
 import { OeeBatchPlannedDowntimeEntity } from '../common/entities/oee-batch-planned-downtime.entity';
 import { OeeBatchAEntity } from '../common/entities/oee-batch-a.entity';

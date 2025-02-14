@@ -47,7 +47,7 @@ import { FaqService } from './faq/faq.service';
 import { ProblemSolutionService } from './problem-solution/problem-solution.service';
 import { OeeEntity } from './common/entities/oee.entity';
 import { OeeBatchService } from './oee-batch/oee-batch.service';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { AnalyticService } from './analytic/analytic.service';
 import { AdminUserService } from './admin-user/admin-user.service';
 import { AdminSiteService } from './admin-site/admin-site.service';

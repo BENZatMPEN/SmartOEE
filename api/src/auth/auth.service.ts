@@ -4,7 +4,7 @@ import { UserEntity } from '../common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { TokenDto } from './dto/token.dto';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { AuthUserDto } from './dto/auth-user.dto';
 import { LogService } from '../common/services/log.service';
 import { ChangePasswordDto } from '../user/dto/change-password.dto';

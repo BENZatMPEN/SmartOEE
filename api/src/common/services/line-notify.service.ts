@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import * as FormData from 'form-data';
 import configuration from '../../configuration';
 import { ConfigType } from '@nestjs/config';
 

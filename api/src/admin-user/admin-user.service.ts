@@ -6,7 +6,7 @@ import { FilterAdminUserDto } from './dto/filter-admin-user.dto';
 import { PagedLisDto } from '../common/dto/paged-list.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { SiteEntity } from '../common/entities/site.entity';
 import { FileService } from '../common/services/file.service';
 import { ChangePasswordDto } from '../user/dto/change-password.dto';

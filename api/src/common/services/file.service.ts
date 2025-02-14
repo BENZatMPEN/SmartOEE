@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { existsSync } from 'fs';
 import * as path from 'path';
-import * as sharp from 'sharp';
 import * as fsPromises from 'fs/promises';
 import { FileInfo } from '../type/file-info';
+import sharp from 'sharp';
 
 @Injectable()
 export class FileService {

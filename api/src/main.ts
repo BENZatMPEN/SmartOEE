@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as https from 'https';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
-import * as compression from 'compression';
+import compression from 'compression';
 import { ValidationPipe } from '@nestjs/common';
 import * as path from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';

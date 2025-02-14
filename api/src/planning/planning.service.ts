@@ -6,7 +6,7 @@ import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeo
 import { PlanningEntity } from '../common/entities/planning.entity';
 import { FilterPlanningDto } from './dto/filter-planning.dto';
 import { ImportPlanningDto } from './dto/import-planning.dto';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { StartType } from 'src/common/enums/batchTypes';
 
 @Injectable()

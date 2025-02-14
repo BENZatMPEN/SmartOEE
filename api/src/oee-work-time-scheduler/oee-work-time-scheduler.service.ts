@@ -6,7 +6,7 @@ import { OeeWorkTimeEntity } from 'src/common/entities/oee-work-time.entity';
 import { OeeEntity } from 'src/common/entities/oee.entity';
 import { WorkShiftEntity, DayOfWeek } from 'src/common/entities/work-shift.entity';
 // import dayjs from 'dayjs';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class OeeWorkTimeSchedulerService {
