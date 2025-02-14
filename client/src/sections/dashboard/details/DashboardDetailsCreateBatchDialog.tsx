@@ -59,7 +59,7 @@ export default function DashboardDetailsCreateBatchDialog({ open, onClose, oee }
       lotNumber: '',
       startDate: dayjs().startOf('day').toDate(),
       endDate: dayjs().endOf('day').toDate(),
-      startType: 'AUTO',
+      startType: 'MANUAL',
       endType: 'MANUAL',
       operatorId: 0
     },
