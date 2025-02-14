@@ -7,6 +7,9 @@ import { OeeEntity } from "src/common/entities/oee.entity";
 import { OeeBatchEntity } from "src/common/entities/oee-batch.entity";
 import { ProductEntity } from "src/common/entities/product.entity";
 import { UserEntity } from "src/common/entities/user.entity";
+import { OeeWorkTimeEntity } from "src/common/entities/oee-work-time.entity";
+import { OeeBatchStatsEntity } from "src/common/entities/oee-batch-stats.entity";
+import { AndonOeeEntity } from "src/common/entities/andon-oee.entity";
 
 @Module({
     imports: [
@@ -15,7 +18,10 @@ import { UserEntity } from "src/common/entities/user.entity";
             OeeEntity,
             ProductEntity,
             OeeBatchEntity,
-            UserEntity
+            UserEntity,
+            OeeWorkTimeEntity,
+            OeeBatchStatsEntity,
+            AndonOeeEntity
         ])
     ],
     controllers: [AdvanceController],
