@@ -109,11 +109,13 @@ import { PlanningService } from './planning/planning.service';
 import { OeeMachinePlannedDowntimeEntity } from './common/entities/oee-machine-planned-downtime.entity';
 import { AutoPlannedDowntimeJob } from './common/jobs/auto-planned-downtime.job';
 import { AdvanceService } from './advance/advance.service';
-import { AdvanceModule } from './advance/advance.modeulr';
+import { AdvanceModule } from './advance/advance.module';
 import { WorkShiftEntity } from './common/entities/work-shift.entity';
 import { OeeWorkTimeEntity } from './common/entities/oee-work-time.entity';
 import { OeeWorkTimeSchedulerService } from './oee-work-time-scheduler/oee-work-time-scheduler.service';
 import { OeeWorkTimeSchedulerModule } from './oee-work-time-scheduler/oee-work-time-scheduler.module';
+import { AndonOeeEntity } from './common/entities/andon-oee.entity';
+import { AndonColumnEntity } from './common/entities/andon-column.entity';
 
 @Module({
   imports: [
@@ -178,7 +180,9 @@ import { OeeWorkTimeSchedulerModule } from './oee-work-time-scheduler/oee-work-t
             AnalyticStatsParamEntity,
             DashboardEntity,
             WorkShiftEntity,
-            OeeWorkTimeEntity
+            OeeWorkTimeEntity,
+            AndonOeeEntity,
+            AndonColumnEntity,
           ],
           synchronize: true,
           // logging: 'all',
@@ -228,6 +232,8 @@ import { OeeWorkTimeSchedulerModule } from './oee-work-time-scheduler/oee-work-t
       DashboardEntity,
       PlanningEntity,
       WorkShiftEntity,
+      AndonOeeEntity,
+      AndonColumnEntity,
     ]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

@@ -1,7 +1,7 @@
 import { IsDate, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class AdvanceDto {
+export class AdvanceReqDto {
     @IsDate()
     @Type(() => Date)
     readonly from: Date;

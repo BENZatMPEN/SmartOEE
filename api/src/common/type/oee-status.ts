@@ -12,6 +12,8 @@ export class OeeStatus {
 
 export class OeeStatusItem {
   readonly id: number;
+  readonly groupId?: number;
+  groupName?: string;
   readonly oeeBatchId: number;
   readonly oeeCode: string;
   readonly productionName: string;

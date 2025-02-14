@@ -7,13 +7,16 @@ import { OeeBatchEntity } from "src/common/entities/oee-batch.entity";
 import { ProductEntity } from "src/common/entities/product.entity";
 import { UserEntity } from "src/common/entities/user.entity";
 import { OeeStatus, OeeStatusItem } from '../common/type/oee-status';
-import { AdvanceDto } from "./dto/advance.dto";
+import { AdvanceReqDto } from "./dto/advance-req.dto";
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Interval, OeeRecord } from "src/common/type/advance";
 import { OeeWorkTimeEntity } from "src/common/entities/oee-work-time.entity";
 import { OeeBatchStatsEntity } from "src/common/entities/oee-batch-stats.entity";
 import { AndonOeeEntity } from "src/common/entities/andon-oee.entity";
+import { AndonColumnEntity } from "src/common/entities/andon-column.entity";
+import { AndonResDto } from "./dto/andon-res.dto";
+import { AndonUpdateColumnReqDto } from "./dto/andon-column-req.dto";
 
 dayjs.extend(utc);
 
@@ -93,10 +96,12 @@ export class AdvanceService {
         private readonly workTimeRepository: Repository<OeeWorkTimeEntity>,
         @InjectRepository(AndonOeeEntity)
         private readonly andonOeeRepository: Repository<AndonOeeEntity>,
+        @InjectRepository(AndonColumnEntity)
+        private readonly andonColumnRepository: Repository<AndonColumnEntity>,
         private readonly entityManager: EntityManager,
     ) { }
 
-    async findAllOeeMode1(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+    async findAllOeeMode1(advanceDto: AdvanceReqDto, siteId: number): Promise<OeeStatus> {
         // Retrieve aggregated OEE data for the specified site.
         const commonData = await this.getCommonOeeData(advanceDto, siteId);
 
@@ -117,7 +122,7 @@ export class AdvanceService {
         };
     }
 
-    async findAllOeeMode2(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+    async findAllOeeMode2(advanceDto: AdvanceReqDto, siteId: number): Promise<OeeStatus> {
         const commonData = await this.getCommonOeeData(advanceDto, siteId);
 
         const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
@@ -138,7 +143,7 @@ export class AdvanceService {
         } as OeeStatus;
     }
 
-    async findAllTeepMode1(advanceDto: AdvanceDto, siteId: number): Promise<any> {
+    async findAllTeepMode1(advanceDto: AdvanceReqDto, siteId: number): Promise<any> {
         const commonData = await this.getCommonOeeData(advanceDto, siteId);
         const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
         const fromDate = dayjs(advanceDto.from).toDate();
@@ -202,7 +207,7 @@ export class AdvanceService {
         // } as OeeStatus;
     }
 
-    async findAllAndons(advanceDto: AdvanceDto, siteId: number): Promise<OeeStatus> {
+    async findAllAndons(advanceDto: AdvanceReqDto, siteId: number): Promise<AndonResDto> {
         // Retrieve common aggregated OEE data for the site.
         const commonData = await this.getCommonOeeData(advanceDto, siteId);
 
@@ -233,6 +238,9 @@ export class AdvanceService {
             });
         }
 
+        //find andon columns
+        const columns = await this.andonColumnRepository.find({ where: { siteId } });
+
         // Return the final aggregated OEE status.
         return {
             running: commonData.running,
@@ -241,10 +249,38 @@ export class AdvanceService {
             standby: commonData.standby,
             mcSetup: commonData.mcSetup,
             oees: oeeStatusItems,
+            columns: columns,
         };
     }
 
-    private async getCommonOeeData(advanceDto: AdvanceDto, siteId: number): Promise<CommonOeeData> {
+    async updateAndons(andonColumnDto: AndonUpdateColumnReqDto): Promise<AndonColumnEntity[]> {
+        const updatePromises = andonColumnDto.andonColumns.map(column =>
+            this.andonColumnRepository.update(
+                { id: column.id, siteId: andonColumnDto.siteId },
+                {
+                    columnName: column.columnName,
+                    columnValue: column.columnValue,
+                    columnOrder: column.columnOrder,
+                    deleted: column.deleted,
+                    updatedAt: new Date(),
+                }
+            )
+        );
+
+        await Promise.all(updatePromises);
+
+        const updatedEntities = await this.andonColumnRepository.find({
+            where: {
+                siteId: andonColumnDto.siteId,
+                deleted: false,
+            },
+            order: { columnOrder: "ASC" },
+        });
+
+        return updatedEntities;
+    }
+
+    private async getCommonOeeData(advanceDto: AdvanceReqDto, siteId: number): Promise<CommonOeeData> {
         // Retrieve the user along with its associated OEEs.
         const user = await this.userRepository.findOne({
             where: { id: advanceDto.userId },

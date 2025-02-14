@@ -8,6 +8,7 @@ import { OeeMachinePlannedDowntimeEntity } from './oee-machine-planned-downtime.
 import { UserEntity } from './user.entity';
 import { WorkShiftEntity } from './work-shift.entity';
 import { OeeWorkTimeEntity } from './oee-work-time.entity';
+import { AndonOeeEntity } from './andon-oee.entity';
 
 @Entity('oees')
 export class OeeEntity {
@@ -66,6 +67,9 @@ export class OeeEntity {
   @ManyToMany(() => UserEntity)
   @JoinTable({ name: 'userOees' })
   operators: UserEntity[];
+
+  @OneToMany(() => AndonOeeEntity, (andonOee) => andonOee.oee)
+  andonOee: AndonOeeEntity[];
 
   @Column({ type: 'datetime' })
   updatedAt: Date;

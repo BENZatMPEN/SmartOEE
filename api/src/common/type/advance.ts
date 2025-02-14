@@ -27,14 +27,19 @@ export class OeeData {
     plannedDowntimeSeconds: number;
 }
 
+export class Interval {
+    start: Date;
+    end: Date;
+  }
+
 export class OeeRecord {
     id: string;
     data: OeeData;
     oeeId: number;
     oeeBatchId: number;
     productId: number;
-    timestamp: Date;
-    timeslot: string;
+    intervalLabel: string;
+    interval: Interval;
 }
 
 export interface OeeLossResult {
