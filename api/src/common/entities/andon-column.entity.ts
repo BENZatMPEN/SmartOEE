@@ -1,33 +1,29 @@
-import { Exclude } from "class-transformer";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
-import { SiteEntity } from "./site.entity";
-import { OeeEntity } from "./oee.entity";
-
+import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 @Entity('andonColumns')
-@Unique(['siteId', 'columnOrder']) 
+@Unique(['siteId', 'columnOrder'])
 export class AndonColumnEntity {
-    @PrimaryGeneratedColumn()
-    id: number;
-  
-    @Column({ unique: true })
-    columnName: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ unique: true })
-    columnValue: string;
-  
-    @Column({ type: 'int' })
-    columnOrder: number;
+  @Column({ unique: true })
+  columnName: string;
 
-    @Column({ default: false })
-    deleted: boolean;
+  @Column({ unique: true })
+  columnValue: string;
 
-    @Column({ type: 'int' })
-    siteId: number;
+  @Column({ type: 'int' })
+  columnOrder: number;
 
-    @Column({ type: 'datetime' })
-    createdAt: Date;
+  @Column({ default: false })
+  deleted: boolean;
 
-    @Column({ type: 'datetime' })
-    updatedAt: Date;
+  @Column({ type: 'int' })
+  siteId: number;
+
+  @Column({ type: 'datetime' })
+  createdAt: Date;
+
+  @Column({ type: 'datetime' })
+  updatedAt: Date;
 }

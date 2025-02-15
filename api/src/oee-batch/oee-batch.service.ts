@@ -92,7 +92,7 @@ export class OeeBatchService {
     private readonly eventEmitter: EventEmitter2,
     private readonly entityManager: EntityManager,
     private readonly socketService: SocketService,
-  ) { }
+  ) {}
 
   async findPagedList(filterDto: FilterOeeBatchDto): Promise<PagedLisDto<OeeBatchEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
@@ -150,7 +150,7 @@ export class OeeBatchService {
       where: {
         planningId: planingId,
         status: Not(OEE_BATCH_STATUS_UNKNOWN),
-      }
+      },
     });
   }
 
@@ -177,7 +177,8 @@ export class OeeBatchService {
   }
 
   async create(oeeId: number, createDto: CreateOeeBatchDto, userEmail: string): Promise<OeeBatchEntity> {
-    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId, startType, endType, operatorId } = createDto;
+    const { startDate, endDate, plannedQuantity, productId, lotNumber, planningId, startType, endType, operatorId } =
+      createDto;
     const activeBatch = await this.oeeBatchRepository.findOneBy({ oeeId: oeeId, batchStoppedDate: IsNull() });
     if (activeBatch) {
       throw new BadRequestException('There is an active batch. Please refresh the page.');
@@ -799,15 +800,15 @@ export class OeeBatchService {
   async findBatchStatsByBatchId(batchId: number, samplingSeconds: number): Promise<OeeBatchStatsEntity[]> {
     const rows = await this.entityManager.query(
       'select a.id, a.data, a.oeeId, a.oeeBatchId, a.productId, b.timeSlot as timestamp\n' +
-      'from oeeBatchStats a\n' +
-      '         inner join (select oeeBatchId,\n' +
-      '                            max(timestamp) as maxTime,\n' +
-      `                            (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second) as timeSlot\n` +
-      '                     from oeeBatchStats\n' +
-      `                     where oeeBatchId = ${batchId}\n` +
-      `                     group by oeeBatchId, (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second)) b\n` +
-      '                    on a.timestamp = b.maxTime\n' +
-      `where a.oeeBatchId = ${batchId};`,
+        'from oeeBatchStats a\n' +
+        '         inner join (select oeeBatchId,\n' +
+        '                            max(timestamp) as maxTime,\n' +
+        `                            (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second) as timeSlot\n` +
+        '                     from oeeBatchStats\n' +
+        `                     where oeeBatchId = ${batchId}\n` +
+        `                     group by oeeBatchId, (timestamp - interval MOD(UNIX_TIMESTAMP(timestamp), ${samplingSeconds}) second)) b\n` +
+        '                    on a.timestamp = b.maxTime\n' +
+        `where a.oeeBatchId = ${batchId};`,
     );
 
     return rows;

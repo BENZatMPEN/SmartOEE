@@ -21,7 +21,7 @@ export class OeeWorkTimeSchedulerService {
 
     @InjectRepository(OeeEntity)
     private readonly oeeRepository: Repository<OeeEntity>,
-  ) { }
+  ) {}
 
   /**
    * Scheduled Task that runs daily at 00:10 to pre-schedule work time for the day.
@@ -48,8 +48,14 @@ export class OeeWorkTimeSchedulerService {
       });
 
       for (const shift of workShifts) {
-        const workStart = today.hour(Number(shift.startTime.split(':')[0])).minute(Number(shift.startTime.split(':')[1])).second(0);
-        let workEnd = today.hour(Number(shift.endTime.split(':')[0])).minute(Number(shift.endTime.split(':')[1])).second(0);
+        const workStart = today
+          .hour(Number(shift.startTime.split(':')[0]))
+          .minute(Number(shift.startTime.split(':')[1]))
+          .second(0);
+        let workEnd = today
+          .hour(Number(shift.endTime.split(':')[0]))
+          .minute(Number(shift.endTime.split(':')[1]))
+          .second(0);
 
         if (workEnd.isBefore(workStart)) {
           workEnd = workEnd.add(1, 'day');
@@ -76,12 +82,22 @@ export class OeeWorkTimeSchedulerService {
             endDateTime: workEnd.toDate(),
             totalHours,
             totalMinutes: remainingMinutes,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           });
 
           await this.workTimeRepository.save(workTime);
-          this.logger.debug(`Recorded work time for OEE ID: ${shift.oeeId}, Start: ${workStart.format('YYYY-MM-DD HH:mm')}, End: ${workEnd.format('YYYY-MM-DD HH:mm')}`);
+          this.logger.debug(
+            `Recorded work time for OEE ID: ${shift.oeeId}, Start: ${workStart.format(
+              'YYYY-MM-DD HH:mm',
+            )}, End: ${workEnd.format('YYYY-MM-DD HH:mm')}`,
+          );
         } else {
-          this.logger.debug(`Work time already exists for OEE ID: ${shift.oeeId}, Start: ${workStart.format('YYYY-MM-DD HH:mm')}, End: ${workEnd.format('YYYY-MM-DD HH:mm')}`);
+          this.logger.debug(
+            `Work time already exists for OEE ID: ${shift.oeeId}, Start: ${workStart.format(
+              'YYYY-MM-DD HH:mm',
+            )}, End: ${workEnd.format('YYYY-MM-DD HH:mm')}`,
+          );
         }
       }
 

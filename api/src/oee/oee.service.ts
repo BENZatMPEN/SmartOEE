@@ -64,7 +64,7 @@ export class OeeService {
     private readonly entityManager: EntityManager,
     private readonly fileService: FileService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   async findPagedList(filterDto: FilterOeeDto): Promise<PagedLisDto<OeeEntity>> {
     const offset = filterDto.page == 0 ? 0 : filterDto.page * filterDto.rowsPerPage;
@@ -109,34 +109,35 @@ export class OeeService {
 
     let rows = await this.entityManager.query(
       'WITH cte AS (SELECT distinct b.oeeId,\n' +
-      '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
-      '             FROM oeeBatches AS b)\n' +
-      'select o.id,\n' +
-      '       o.oeeCode,\n' +
-      '       o.productionName,\n' +
-      '       o.useSitePercentSettings,\n' +
-      '       o.percentSettings,\n' +
-      '       ob.startDate,\n' +
-      '       ob.endDate,\n' +
-      '       ob.lotNumber,\n' +
-      '       ob.plannedQuantity,\n' +
-      '       ob.standardSpeedSeconds,\n' +
-      '       ob.oeeStats,\n' +
-      '       ob.status,\n' +
-      '       ob.id as oeeBatchId,\n' +
-      '       ob.product,\n' +
-      '       ob.batchStartedDate,\n' +
-      '       ob.batchStoppedDate,\n' +
-      '       o.activeSecondUnit\n' +
-      'from oees o\n' +
-      '         left join cte on o.id = cte.oeeId\n' +
-      '         left join oeeBatches ob\n' +
-      '                   on cte.batchId = ob.id\n' +
-      'where o.siteId = ? and o.deleted = false',
+        '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
+        '             FROM oeeBatches AS b)\n' +
+        'select o.id,\n' +
+        '       o.oeeCode,\n' +
+        '       o.productionName,\n' +
+        '       o.useSitePercentSettings,\n' +
+        '       o.percentSettings,\n' +
+        '       ob.startDate,\n' +
+        '       ob.endDate,\n' +
+        '       ob.lotNumber,\n' +
+        '       ob.plannedQuantity,\n' +
+        '       ob.standardSpeedSeconds,\n' +
+        '       ob.oeeStats,\n' +
+        '       ob.status,\n' +
+        '       ob.id as oeeBatchId,\n' +
+        '       ob.product,\n' +
+        '       ob.batchStartedDate,\n' +
+        '       ob.batchStoppedDate,\n' +
+        '       o.activeSecondUnit\n' +
+        'from oees o\n' +
+        '         left join cte on o.id = cte.oeeId\n' +
+        '         left join oeeBatches ob\n' +
+        '                   on cte.batchId = ob.id\n' +
+        'where o.siteId = ? and o.deleted = false',
       [siteId],
     );
     let sumRows = [];
-    const sumRowsQuery = 'WITH cte AS (SELECT distinct b.oeeId,\n' +
+    const sumRowsQuery =
+      'WITH cte AS (SELECT distinct b.oeeId,\n' +
       '                             first_value(b.id) over (partition by b.oeeId order by b.id desc) as batchId\n' +
       '             FROM oeeBatches AS b)\n' +
       'select ifnull(sum(if(status = "running", 1, 0)), 0)                       as running,\n' +
@@ -185,7 +186,8 @@ export class OeeService {
           batchStoppedDate,
           activeSecondUnit,
         } = row;
-        const { oeePercent, totalCount, target, totalAutoDefects, totalManualDefects } = oeeStats || initialOeeBatchStats;
+        const { oeePercent, totalCount, target, totalAutoDefects, totalManualDefects } =
+          oeeStats || initialOeeBatchStats;
 
         return {
           id: id,
@@ -325,7 +327,10 @@ export class OeeService {
   }
 
   async findLatestBatch(id: number, siteId: number): Promise<FindLatestBatchOeeDto> {
-    const oeeBatch: OeeBatchEntity = await this.oeeBatchRepository.findOne({ where: { oeeId: id, siteId: siteId }, order: { createdAt: 'DESC' } });
+    const oeeBatch: OeeBatchEntity = await this.oeeBatchRepository.findOne({
+      where: { oeeId: id, siteId: siteId },
+      order: { createdAt: 'DESC' },
+    });
     if (!oeeBatch) {
       return null;
     }
@@ -362,7 +367,9 @@ export class OeeService {
       throw new BadRequestException(`Number of M/C has reached the limit (${site.mcLimit})`);
     }
     //find operators by ids
-    const operators = await this.userRepository.findBy({ id: In(createDto.operators?.map((item: any) => item.id) || []) });
+    const operators = await this.userRepository.findBy({
+      id: In(createDto.operators?.map((item: any) => item.id) || []),
+    });
 
     const oee = await this.oeeRepository.save({
       ...dto,
@@ -381,9 +388,9 @@ export class OeeService {
           for (const shift of shifts) {
             // สร้าง work shift ใหม่โดยรวมข้อมูลจากระดับวันและระดับกะ
             const newWorkShift = this.workShiftRepository.create({
-              ...shift,            // shiftNumber, shiftName, startTime, endTime, isShiftActive
-              dayOfWeek,           // ข้อมูลจาก dayWorkShift
-              isDayActive,         // ข้อมูลจาก dayWorkShift
+              ...shift, // shiftNumber, shiftName, startTime, endTime, isShiftActive
+              dayOfWeek, // ข้อมูลจาก dayWorkShift
+              isDayActive, // ข้อมูลจาก dayWorkShift
               oeeId: oee.id,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -450,7 +457,9 @@ export class OeeService {
     }
 
     //find operators by ids
-    const operators = await this.userRepository.findBy({ id: In(updateDto.operators?.map((item: any) => item.id) || []) });
+    const operators = await this.userRepository.findBy({
+      id: In(updateDto.operators?.map((item: any) => item.id) || []),
+    });
 
     const oee = await this.oeeRepository.save({
       ...updatingOee,
@@ -473,7 +482,7 @@ export class OeeService {
               await this.workShiftRepository.save({
                 ...updatingWorkShift,
                 ...shift,
-                dayOfWeek,   // ใช้ข้อมูลวันจาก dayWorkShift
+                dayOfWeek, // ใช้ข้อมูลวันจาก dayWorkShift
                 isDayActive, // ใช้ข้อมูล isDayActive จาก dayWorkShift
                 updatedAt: new Date(),
               });
@@ -497,7 +506,7 @@ export class OeeService {
                 // ถ้าไม่พบ record ที่มีอยู่ ให้สร้าง work shift ใหม่
                 const newWorkShift = this.workShiftRepository.create({
                   ...shift,
-                  dayOfWeek,   // ใช้ข้อมูลวันจาก dayWorkShift
+                  dayOfWeek, // ใช้ข้อมูลวันจาก dayWorkShift
                   isDayActive, // ใช้ข้อมูล isDayActive จาก dayWorkShift
                   oeeId: oee.id, // กำหนดค่า oeeId ให้เป็น oee.id จาก entity ที่สร้างขึ้นแล้ว
                   createdAt: new Date(),
@@ -594,7 +603,10 @@ export class OeeService {
           const updatingMachine = await this.oeeProductRepository.findOneBy({ id: oeeMachine.id });
           await this.oeeMachineRepository.save({ ...updatingMachine, ...oeeMachineDto, updatedAt: new Date() });
 
-          const oeeMachinePlannedDowntimes = await this.oeeMachinePlannedDowntimeRepository.findBy({ oeeId: oee.id, oeeMachineId: oeeMachine.id });
+          const oeeMachinePlannedDowntimes = await this.oeeMachinePlannedDowntimeRepository.findBy({
+            oeeId: oee.id,
+            oeeMachineId: oeeMachine.id,
+          });
           //update delete planned downtime
           const deletingPlanDowntimeIds = oeeMachinePlannedDowntimes
             .filter((item) => !oeeMachinePlannedDowntime.some((downtime) => downtime.id === item.id))
@@ -615,7 +627,7 @@ export class OeeService {
           });
 
           // สร้างเซ็ตของ ID จาก body request
-          const requestIds = new Set(oeeMachinePlannedDowntime.map(item => item.id).filter(id => id));
+          const requestIds = new Set(oeeMachinePlannedDowntime.map((item) => item.id).filter((id) => id));
 
           // ลบรายการที่ไม่มีอยู่ใน body request
           for (const downtime of existingPlannedDowntime) {
@@ -629,9 +641,15 @@ export class OeeService {
             if (item.id) {
               item.deleted = false;
               const updatingPlanDowntime = await this.oeeMachinePlannedDowntimeRepository.findOneBy({ id: item.id });
-              await this.oeeMachinePlannedDowntimeRepository.save({ ...updatingPlanDowntime, ...item, updatedAt: new Date() });
+              await this.oeeMachinePlannedDowntimeRepository.save({
+                ...updatingPlanDowntime,
+                ...item,
+                updatedAt: new Date(),
+              });
             } else {
-              const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({ id: item.plannedDownTimeId });
+              const plannedDowntime = await this.oeeBatchPlannedDowntimeRepository.findOneBy({
+                id: item.plannedDownTimeId,
+              });
               await this.oeeMachinePlannedDowntimeRepository.save({
                 oeeId: oee.id,
                 oeeMachineId: oeeMachine.id,
@@ -849,7 +867,7 @@ export class OeeService {
                 oeeId,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-              })
+              }),
             );
           }
         }
