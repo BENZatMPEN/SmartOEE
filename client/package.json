@@ -36,6 +36,7 @@
     "@mui/icons-material": "^5.5.1",
     "@mui/lab": "^5.0.0-alpha.74",
     "@mui/material": "^5.5.2",
+    "@mui/x-data-grid": "^6.20.4",
     "@mui/x-date-pickers": "^5.0.0-beta.2",
     "@reduxjs/toolkit": "^1.8.0",
     "@types/google-map-react": "^2.1.7",
