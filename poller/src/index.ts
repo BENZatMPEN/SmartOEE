@@ -475,7 +475,7 @@ bootstrap()
         });
       } catch (err) {
         console.log('readJob', err);
-        if (err.statusCode !== undefined) {
+        if (err.statusCode === 401) {
           throw err;
         }
       }
@@ -508,7 +508,7 @@ bootstrap()
         console.log('data synced');
       } catch (err) {
         console.log('syncJob', err);
-        if (err.statusCode !== undefined) {
+        if (err.statusCode === 401) {
           throw err;
         }
       }
