@@ -1,7 +1,16 @@
-version: "3.8"
 services:
+  dbbackup:
+    image: mpensmartoee/smartoee-db-backup
+    container_name: smartoee-db-backup
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./db_backup:/db_backup
   db:
     image: mysql:8
+    container_name: smartoee-db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: admin
@@ -19,6 +28,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin
+    container_name: smartoee-myadmin
     restart: always
     environment:
       PMA_HOST: db
@@ -27,6 +37,7 @@ services:
 
   api:
     image: mpensmartoee/smartoee-api
+    container_name: smartoee-api
     restart: always
     depends_on:
       - db

@@ -1,7 +1,7 @@
-version: "3.8"
 services:
   poller:
-    image: mpensmartoee/smartoee-poller
+    image: mpensmartoee/smartoee-poller-standalone
+    container_name: smartoee-poller-standalone
     restart: always
     environment:
       SITE_ID: 1

@@ -1,9 +1,9 @@
-version: "3.8"
 services:
   poller:
     build:
       dockerfile: Dockerfile_standalone
       context: ./poller
+    container_name: smartoee-poller-standalone
     restart: always
     environment:
       SITE_ID: 1

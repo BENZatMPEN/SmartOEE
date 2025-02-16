@@ -1,0 +1,1 @@
+0 1 * * * docker exec smartoee-db /usr/bin/mysqldump -u root -padmin smartoee | gzip > /db_backup/smartoee_backup_$(date +'%Y-%m-%d_%H%M%S').sql.gz
