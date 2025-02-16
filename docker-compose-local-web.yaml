@@ -11,7 +11,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./db_backup:/db_backup
   db:
-    image: mysql:8.0-debian
+    image: mysql:8.0.39
     container_name: smartoee-db
     restart: always
     environment:
