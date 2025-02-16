@@ -27,7 +27,7 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
-// import DashboardTableCustom from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableCustom';
+
 import DashboardTableAndon from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableAndon';
 
 export default function Advanced() {
@@ -216,8 +216,6 @@ export default function Advanced() {
                     {
                       <DashboardTableAndon valueForm={formStreaming} userId={userProfile?.id} />
                     }
-                    
-                    {/* <DashboardTableCustom itemsColumns={columns} /> */}
                   </Grid>
                 </Stack>
               </CardContent>
