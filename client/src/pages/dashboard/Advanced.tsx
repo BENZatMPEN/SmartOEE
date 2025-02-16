@@ -5,7 +5,13 @@ import { RoleAction, RoleSubject } from '../../@types/role';
 import { AbilityContext } from '../../caslContext';
 import Page from '../../components/Page';
 import useWebSocket from '../../hooks/useWebSocket';
-import { emptySelectedOee, getOee, getOeeStatus, updateOeeStatus } from '../../redux/actions/oeeAdvancedAction';
+import {
+  emptySelectedOee,
+  getAndonStatus,
+  getOee,
+  getOeeStatus,
+  updateOeeStatus,
+} from '../../redux/actions/oeeAdvancedAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
 import DashboardHeader from '../../sections/dashboard/DashboardHeader';
 
@@ -21,7 +27,8 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
-import DashboardTableCustom from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableCustom';
+// import DashboardTableCustom from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableCustom';
+import DashboardTableAndon from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableAndon';
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
@@ -46,7 +53,9 @@ export default function Advanced() {
 
   const { oeePercent } = oeeStats || initialOeeStats;
 
-  const { oees, lossOees } = oeeStatus;
+  const { oees, lossOees, columns, oeeGroups } = oeeStatus;
+
+  
 
   useEffect(() => {
     (async () => {
@@ -76,40 +85,30 @@ export default function Advanced() {
           };
         }
         clearInterval(intervalRef.current);
-        await dispatch(
-          getOeeStatus(
-            userProfile.id,
-            dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
-            dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
-            modeView,
-          ),
-        );
+        if (advancedType === 'oee') {
+          await dispatch(
+            getOeeStatus(
+              userProfile.id,
+              dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
+              dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
+              modeView,
+            ),
+          );
+        }
+        if (advancedType === 'andon') {
+          await dispatch(
+            getAndonStatus(
+              userProfile.id,
+              dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
+              dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
+            ),
+          );
+        }
       }
     })();
   }, [dispatch, userProfile, formStreaming, modeView, advancedType]);
 
-  useEffect(() => {
-    if (!socket || !selectedSite) {
-      return;
-    }
 
-    const updateDashboard = (data: OeeStatus) => {
-      dispatch(updateOeeStatus(data));
-    };
-    if (userProfile?.isAdmin) {
-      socket.on(`dashboard_${selectedSite.id}`, updateDashboard);
-
-      return () => {
-        socket.off(`dashboard_${selectedSite.id}`, updateDashboard);
-      };
-    } else {
-      socket.on(`dashboard_${selectedSite.id}_${userProfile?.id}`, updateDashboard);
-
-      return () => {
-        socket.off(`dashboard_${selectedSite.id}_${userProfile?.id}`, updateDashboard);
-      };
-    }
-  }, [dispatch, socket, selectedSite, userProfile]);
 
   const percents = useMemo(
     () =>
@@ -132,11 +131,7 @@ export default function Advanced() {
     <Page title="Advanced">
       <Container maxWidth={false}>
         <DashboardHeader showTools={false} />
-        {/* <Grid container>
-          <Grid item sm={6}>
-            <Typography fontSize={20}>Advanced Dashboard</Typography>
-          </Grid>
-        </Grid> */}
+        
         <Divider sx={{ marginBottom: '18px' }} />
         <Grid container>
           <Grid item xs={12} sm={6} sx={{ marginBottom: 2 }}>
@@ -154,9 +149,7 @@ export default function Advanced() {
           </Grid>
         </Grid>
         <Divider sx={{ marginBottom: '18px' }} />
-        {/* <Card sx={{overflowX : 'auto'}}>
-          <TimelineChart />
-        </Card> */}
+       
         {isLoading && (
           <Card>
             <CardContent>Loading...</CardContent>
@@ -207,7 +200,7 @@ export default function Advanced() {
             </Card>
           ) : (
             <Grid container spacing={3}>
-              {oees.map((item) => (
+              {oees && oees.map((item) => (
                 <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
                   <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
                 </Grid>
@@ -215,15 +208,21 @@ export default function Advanced() {
             </Grid>
           )
         ) : (
-          <Card sx={{ mt: 3 }}>
-            <CardContent>
-              <Stack>
-                <Grid container spacing={2}>
-                  <DashboardTableCustom />
-                </Grid>
-              </Stack>
-            </CardContent>
-          </Card>
+         
+            <Card sx={{ mt: 3 }}>
+              <CardContent>
+                <Stack>
+                  <Grid container spacing={2}>
+                    {
+                      <DashboardTableAndon valueForm={formStreaming} userId={userProfile?.id} />
+                    }
+                    
+                    {/* <DashboardTableCustom itemsColumns={columns} /> */}
+                  </Grid>
+                </Stack>
+              </CardContent>
+            </Card>
+   
         )}
       </Container>
     </Page>

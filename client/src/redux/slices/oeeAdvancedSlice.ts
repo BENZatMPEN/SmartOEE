@@ -24,7 +24,9 @@ const initialState: OeeAdvancedState = {
     ended: 0,
     mcSetup: 0,
     oees: [],
-    lossOees : []
+    lossOees : [],
+    columns : [],
+    oeeGroups : []
   },
   isLoading: false,
   error: null,
@@ -51,6 +53,10 @@ const oeeAdvancedSlice = createSlice({
     },
     startLoading(state) {
       state.isLoading = true;
+      state.error = null;
+    },
+    stopLoading(state) {
+      state.isLoading = false;
       state.error = null;
     },
     hasError(state, action) {

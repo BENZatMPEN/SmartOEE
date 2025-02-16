@@ -24,9 +24,8 @@ export type Oee = {
   createdAt: Date;
   updatedAt: Date;
   operators: User[];
-  workShifts : WorkShiftsDetail[]
+  workShifts: WorkShiftsDetail[];
 };
-
 
 export interface EditOee {
   activeSecondUnit: boolean;
@@ -46,7 +45,7 @@ export interface EditOee {
   useSitePercentSettings: boolean;
   timeUnit: string;
   operators: User[];
-  workShifts : WorkShiftsDetail[];
+  workShifts: WorkShiftsDetail[];
 }
 
 export type FilterOee = {
@@ -66,7 +65,7 @@ export type OeeProduct = {
 export type OeeMachine = {
   machineId: number;
   machine?: Machine;
-  oeeMachinePlannedDowntime?: MachinePlanDownTime[]
+  oeeMachinePlannedDowntime?: MachinePlanDownTime[];
 };
 
 export type OeeTag = {
@@ -114,15 +113,15 @@ export type OeePagedList = {
 };
 
 export type MachinePlanDownTime = {
-  machineId: number,
-  plannedDownTimeId: number,
-  namePlannedDownTime: string,
-  startDate: Date,
-  endDate: Date,
-  fixTime: boolean,
-}
+  machineId: number;
+  plannedDownTimeId: number;
+  namePlannedDownTime: string;
+  startDate: Date;
+  endDate: Date;
+  fixTime: boolean;
+};
 export type Shift = {
-  name : string;
+  name: string;
   active: boolean;
   start: Date; // e.g., "08:00"
   end: Date; // e.g., "17:00"
@@ -133,13 +132,13 @@ export type DayData = {
   day: string; // e.g., "Monday"
   active: boolean; // Whether the entire day is active
   shifts: {
-    day : Shift;
-    ot : Shift;
+    day: Shift;
+    ot: Shift;
     night: Shift;
-  }
+  };
 };
 export interface WorkShiftsDetailAPIS {
-  oeeId : number;
+  oeeId: number;
   dayOfWeek: string;
   shiftNumber: number;
   shiftName: string;
@@ -150,7 +149,7 @@ export interface WorkShiftsDetailAPIS {
 }
 
 export interface ShiftWork {
-  id? : number | null | undefined;
+  id?: number | null | undefined;
   shiftNumber: number;
   shiftName: string;
   startTime: Date | string;
@@ -158,15 +157,15 @@ export interface ShiftWork {
   isShiftActive: boolean;
 }
 export interface WorkShiftsDetail {
-  oeeId? : number | null | undefined,
+  oeeId?: number | null | undefined;
   dayOfWeek: string;
   isDayActive: boolean;
-  shifts: ShiftWork[]
+  shifts: ShiftWork[];
 }
 
 export interface ExportToAnotherOee {
-  workShifts : WorkShiftsDetail[]
-  oeeIds : number[]
+  workShifts: WorkShiftsDetail[];
+  oeeIds: number[];
 }
 
 export type OeeStatusAdvanced = {
@@ -176,8 +175,32 @@ export type OeeStatusAdvanced = {
   standby: number;
   mcSetup: number;
   oees: OeeStatusAdvancedItem[];
-  lossOees? : OeeStatusLossAdvancedItem[];
+  lossOees?: OeeStatusLossAdvancedItem[];
+  columns?: AndonStatusAdvancedItem[];
+  oeeGroups?: AndonGroupAdvancedItem[];
 };
+
+export type AndonGroupAdvancedItem = {
+  groupName: string;
+  oees: OeeStatusAdvancedItem[];
+};
+
+export type AndonStatusAdvancedItem = {
+  id: number;
+  columnName: string;
+  columnValue: string;
+  columnOrder: number;
+  deleted: boolean;
+  siteId: number;
+};
+
+export type AndonColumns = Omit<AndonStatusAdvancedItem, 'siteId'>;
+
+export type updateColumnsReq = {
+  siteId: number;
+  andonColumns: AndonColumns[];
+};
+
 export type OeeStatusAdvancedItem = {
   id: number;
   oeeBatchId: number;
@@ -199,25 +222,23 @@ export type OeeStatusAdvancedItem = {
   batchStartedDate: Date;
   batchStoppedDate: Date;
   activeSecondUnit: boolean;
-  qPercent : number;
-  pPercent : number;
-  aPercent : number;
+  qPercent: number;
+  pPercent: number;
+  aPercent: number;
 };
 
 export type OeeStatusLossAdvancedItem = {
-  lossResult : OeeStatusLossResultAdvancedItem[]
-  oeeId : number
-}
+  lossResult: OeeStatusLossResultAdvancedItem[];
+  oeeId: number;
+};
 
-export type OeeStatusLossResultAdvancedItem = { 
-  
-   oeeId: number,
-   id: string,
-   oeePercent: number,
-   ALoss: number,
-   PLoss: number,
-   QLoss: number,
-   timeslot: string,
-   timestamp: string
-
-}
+export type OeeStatusLossResultAdvancedItem = {
+  oeeId: number;
+  id: string;
+  oeePercent: number;
+  ALoss: number;
+  PLoss: number;
+  QLoss: number;
+  timeslot: string;
+  timestamp: string;
+};

@@ -12,15 +12,16 @@ import {
   OEE_BATCH_STATUS_RUNNING,
   OEE_BATCH_STATUS_STANDBY,
 } from '../../constants';
+import { useLocation } from 'react-router';
 
 interface Props {
   showTools? : boolean;
 }
 export default function DashboardHeader(props:Props) {
   const { showTools } = props
-  const theme = useTheme();
-
-  const { oeeStatus } = useSelector((state: RootState) => state.oeeDashboard);
+  let location = useLocation();
+  let pathName = location.pathname
+  const { oeeStatus } = useSelector((state: RootState) => pathName === '/dashboard/advanced' ? state.oeeAdvanced : state.oeeDashboard);
 
   const { running, ended, standby, breakdown, mcSetup } = oeeStatus;
 
