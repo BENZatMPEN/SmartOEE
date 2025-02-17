@@ -143,21 +143,23 @@ export class UserService {
   }
 
   async delete(id: number, siteId: number): Promise<void> {
-    await this.userRepository
+    const user = await this.userRepository
       .createQueryBuilder('u')
       .innerJoin('u.sites', 'us', ':siteId is null or us.id = :siteId', { siteId })
-      .delete()
       .where('u.id = :id', { id })
-      .execute();
+      .andWhere('u.email not in (:emails)', { emails: ['admin@user.com', 'poller@user.com'] })
+      .getOne();
+    await this.userRepository.delete(user.id);
   }
 
   async deleteMany(ids: number[], siteId: number): Promise<void> {
-    await this.userRepository
+    const users = await this.userRepository
       .createQueryBuilder('u')
       .innerJoin('u.sites', 'us', ':siteId is null or us.id = :siteId', { siteId })
-      .delete()
       .where('u.id in (:ids)', { ids })
-      .execute();
+      .andWhere('u.email not in (:emails)', { emails: ['admin@user.com', 'poller@user.com'] })
+      .getMany();
+    await this.userRepository.delete({ id: In(users.map((item) => item.id)) });
   }
 
   // async findAll(): Promise<User[]> {

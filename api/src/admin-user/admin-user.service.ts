@@ -102,10 +102,20 @@ export class AdminUserService {
   }
 
   async delete(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+    await this.userRepository
+      .createQueryBuilder()
+      .delete()
+      .where('id = :id', { id })
+      .andWhere('email not in (:emails)', { emails: ['admin@user.com', 'poller@user.com'] })
+      .execute();
   }
 
   async deleteMany(ids: number[]): Promise<void> {
-    await this.userRepository.delete(ids);
+    await this.userRepository
+      .createQueryBuilder()
+      .delete()
+      .where('id in (:ids)', { ids })
+      .andWhere('email not in (:emails)', { emails: ['admin@user.com', 'poller@user.com'] })
+      .execute();
   }
 }
