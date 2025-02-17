@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { OeeStatusLossAdvancedItem } from 'src/@types/oee';
@@ -14,7 +15,7 @@ interface ChartOptions {
     bar: {
       horizontal: boolean;
       columnWidth : string;
-      borderRadius : number
+      borderRadius? : number;
     };
   };
   xaxis: {
@@ -42,7 +43,7 @@ interface ChartOptions {
 const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
 
   const timeSlots = oeeStatusItem.lossResult.map((loss) => {
-    return loss.timeslot;
+    return dayjs(loss.timeslot).format('DD/MM/YYYY HH:mm:ss');
   });
 
   const chartOptions: ChartOptions = {
@@ -53,8 +54,9 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: '95%',
-        borderRadius: 4
+        columnWidth: '25%',
+        borderRadius: 0,
+        
       },
     },
     xaxis: {
@@ -107,13 +109,13 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
   ];
 
   return (
-    <div style={{ overflowX: 'auto', width: '100%', maxWidth : 3500 }}>
+    <div style={{ overflowX: 'auto', width: '100%', maxWidth : 'calc(100% + 80px)' }}>
       <ReactApexChart
         options={chartOptions as any} // ใช้ `as any` เพราะ ReactApexChart อาจไม่รู้จักชนิดข้อมูลที่กำหนด
         series={chartSeries}
         type="bar"
         height={300}
-        width={3500}
+        // width={3500}
       />
     </div>
   );
