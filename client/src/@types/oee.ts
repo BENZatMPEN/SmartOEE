@@ -236,9 +236,9 @@ export type OeeStatusLossResultAdvancedItem = {
   oeeId: number;
   id: string;
   oeePercent: number;
-  ALoss: number;
-  PLoss: number;
-  QLoss: number;
+  aLoss: number;
+  pLoss: number;
+  qLoss: number;
   timeslot: string;
   timestamp: string;
 };

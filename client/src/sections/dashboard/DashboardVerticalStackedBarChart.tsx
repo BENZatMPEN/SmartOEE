@@ -40,11 +40,11 @@ interface ChartOptions {
 }
 
 const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
- 
+
   const timeSlots = oeeStatusItem.lossResult.map((loss) => {
     return loss.timeslot;
   });
- 
+
   const chartOptions: ChartOptions = {
     chart: {
       type: 'bar',
@@ -89,19 +89,19 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
     {
       name: 'ALoss',
       data: oeeStatusItem.lossResult.map((loss) => {
-        return loss.ALoss < 0 ? 0 : loss.ALoss;
+        return loss.aLoss < 0 ? 0 : loss.aLoss;
       }),
     },
     {
       name: 'PLoss',
       data: oeeStatusItem.lossResult.map((loss) => {
-        return loss.PLoss < 0 ? 0 : loss.PLoss;
+        return loss.pLoss < 0 ? 0 : loss.pLoss;
       }),
     },
     {
       name: 'QLoss',
       data: oeeStatusItem.lossResult.map((loss) => {
-        return loss.QLoss < 0 ? 0 : loss.QLoss;
+        return loss.qLoss < 0 ? 0 : loss.qLoss;
       }),
     },
   ];
