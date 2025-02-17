@@ -37,9 +37,8 @@ export default function Details() {
   const query = useQuery();
 
   const batchId = query.get('batchId') ? Number(query.get('batchId')) : null;
-  console.log(`batchId:${batchId}`)
+  
   const params = batchId ? `?batchId=${batchId}` : '';
-
 
   const navConfig = [
     {

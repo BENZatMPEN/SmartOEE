@@ -22,6 +22,7 @@ import ColumnSettingsModal from './modal/ColumnSetting';
 import { RootState, useDispatch, useSelector } from 'src/redux/store';
 import { getAndonStatus, updateColumns } from 'src/redux/actions/oeeAdvancedAction';
 import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -51,6 +52,7 @@ const getStatusStyle = (status: string) => {
   }
 };
 const DashboardTableAndon = ({ valueForm, userId }: Props) => {
+  const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const { oeeStatus, isLoading } = useSelector((state: RootState) => state.oeeAdvanced);
   const { columns, oeeGroups } = oeeStatus;
@@ -83,8 +85,13 @@ const DashboardTableAndon = ({ valueForm, userId }: Props) => {
             dayjs(valueForm.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
           ),
         );
+        enqueueSnackbar('Update columns success.', {
+          variant: 'success',
+          anchorOrigin: { vertical: 'top', horizontal: 'center' },
+        })
       }
     }
+
   };
   return (
     <Scrollbar>

@@ -3,7 +3,7 @@ import axios from '../../utils/axios';
 import oeeDashboardSlice from '../slices/oeeDashboardSlice';
 import { dispatch } from '../store';
 
-export const { updateOeeStatus, emptySelectedOee } = oeeDashboardSlice.actions;
+export const { updateOeeStatus, emptySelectedOee, setFormTimeline } = oeeDashboardSlice.actions;
 
 export function getOee(id: number) {
   return async () => {

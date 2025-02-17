@@ -6,6 +6,11 @@ export type OeeDashboardState = {
   oeeStatus: OeeStatus;
   isLoading: boolean;
   error: any | null;
+  formTimeline : {
+    start : string;
+    end : string;
+    periodTime : number;
+  }
 };
 
 const initialState: OeeDashboardState = {
@@ -20,6 +25,11 @@ const initialState: OeeDashboardState = {
   },
   isLoading: false,
   error: null,
+  formTimeline : {
+    start : '',
+    end : '',
+    periodTime : 0
+  }
 };
 
 const oeeDashboardSlice = createSlice({
@@ -48,6 +58,9 @@ const oeeDashboardSlice = createSlice({
     },
     emptySelectedOee(state) {
       state.selectedOee = null;
+    },
+    setFormTimeline(state, action) {
+      state.formTimeline = action.payload;;
     },
   },
 });

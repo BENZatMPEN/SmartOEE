@@ -1,3 +1,4 @@
+import { ApexOptions } from 'apexcharts';
 import dayjs from 'dayjs';
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
@@ -19,8 +20,9 @@ interface ChartOptions {
     };
   };
   xaxis: {
-    decimalsInFloat : boolean;
+    decimalsInFloat : number;
     categories: string[];
+    stepSize : number;
   };
   yaxis: {
     show : boolean;
@@ -60,8 +62,10 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
       },
     },
     xaxis: {
-      decimalsInFloat : true,
+      decimalsInFloat : 2,
       categories: timeSlots,
+      stepSize : 0
+      
     },
     yaxis: {
       show:false,
