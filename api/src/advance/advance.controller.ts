@@ -38,6 +38,11 @@ export class AdvanceController {
     return this.advanceService.findAllTeepMode1(advanceDto, siteId);
   }
 
+  @Get('teep/mode2')
+  findAllTeepMode2(@Query() advanceDto: AdvanceTeep, @Query('siteId') siteId: number): Promise<OeeStatus> {
+    return this.advanceService.findAllTeepMode2(advanceDto, siteId);
+  }
+
   @Get('andons/all')
   findAllAndons(@Query() advanceDto: AdvanceOee, @Query('siteId') siteId: number): Promise<AndonResponse> {
     return this.advanceService.findAllAndons(advanceDto, siteId);

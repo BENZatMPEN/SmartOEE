@@ -10,7 +10,15 @@ import { OeeStatus, OeeStatusItem } from '../common/type/oee-status';
 import { AdvanceOee } from './dto/advance-oee.dto';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { Interval, OeeRecord } from 'src/common/type/advance';
+import {
+  AggregatedData,
+  CommonOeeData,
+  OeeLossGrouped,
+  OeeLossResult,
+  OeeRecord,
+  OeeStats,
+  OeeSumData,
+} from 'src/common/type/advance';
 import { OeeWorkTimeEntity } from 'src/common/entities/oee-work-time.entity';
 import { OeeBatchStatsEntity } from 'src/common/entities/oee-batch-stats.entity';
 import { AndonOeeEntity } from 'src/common/entities/andon-oee.entity';
@@ -20,63 +28,6 @@ import { AndonUpdateColumn } from './dto/andon-update-column.dto';
 import { AndonResponse } from './dto/andon-response.dto';
 
 dayjs.extend(utc);
-
-type OeeSumData = {
-  name: string;
-  runningSeconds: number;
-  operatingSeconds: number;
-  totalBreakdownSeconds: number;
-  plannedDowntimeSeconds: number;
-  machineSetupSeconds: number;
-  totalCount: number;
-  totalAutoDefects: number;
-  totalManualDefects: number;
-  totalOtherDefects: number;
-  totalCountByBatch: {
-    [key: string]: {
-      lotNumber: string;
-      standardSpeedSeconds: number;
-      totalCount: number;
-    };
-  };
-};
-
-type OeeStats = {
-  oeeBatchId: number;
-  oeeId: number;
-  productId: number;
-  timestamp: string;
-  data: any;
-};
-
-interface OeeLossResult {
-  oeeId: number;
-  id: string;
-  oeePercent: number;
-  ALoss: number;
-  PLoss: number;
-  QLoss: number;
-  intervalLabel: string;
-  interval: Interval;
-  timeslot: string;
-}
-
-interface OeeLossGrouped {
-  oeeId: number;
-  lossResult: OeeLossResult[];
-}
-
-interface CommonOeeData {
-  aggregatedData: any[];
-  oeeIds: number[];
-  running: number;
-  ended: number;
-  standby: number;
-  breakdown: number;
-  mcSetup: number;
-  user: any;
-  statsRows: OeeStats[];
-}
 
 @Injectable()
 export class AdvanceService {
@@ -148,68 +99,103 @@ export class AdvanceService {
     } as OeeStatus;
   }
 
-  async findAllTeepMode1(advanceDto: AdvanceOee, siteId: number): Promise<any> {
+  async findAllTeepMode1(advanceDto: AdvanceOee, siteId: number): Promise<OeeStatus> {
     const commonData = await this.getCommonOeeData(advanceDto, siteId);
     // const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
     const fromDate = dayjs(advanceDto.from).toDate();
     const toDate = dayjs(advanceDto.to).toDate();
+    const diffInSeconds = (toDate.getTime() - fromDate.getTime()) / 1000;
 
-    console.log(`fromDate: ${fromDate}`);
-    console.log(`toDate: ${toDate}`);
-    console.log(`-------------------------`);
+    // Destructure to extract necessary properties.
+    const { running, breakdown, ended, standby, mcSetup, aggregatedData } = commonData;
+    const oeeItems: OeeStatusItem[] = this.calculateLoadingLoss(aggregatedData, diffInSeconds);
 
-    // ใช้ TypeORM `find()` ค้นหาข้อมูล
-    const oeeWorkTimes = await this.workTimeRepository.find({
-      where: [
-        { oeeId: 1, startDateTime: Between(fromDate, toDate) },
-        { oeeId: 1, endDateTime: Between(fromDate, toDate) },
-        { oeeId: 1, startDateTime: LessThan(fromDate), endDateTime: MoreThan(toDate) }, // กรณีครอบคลุมทั้งช่วง
-      ],
-    });
+    // console.log(`fromDate: ${fromDate}`);
+    // console.log(`toDate: ${toDate}`);
+    // console.log(`-------------------------`);
 
-    const from = dayjs(advanceDto.from).utc();
-    const to = dayjs(advanceDto.to).utc();
+    // const oeeWorkTimes = await this.workTimeRepository.find({
+    //   where: [
+    //     { oeeId: 1, startDateTime: Between(fromDate, toDate) },
+    //     { oeeId: 1, endDateTime: Between(fromDate, toDate) },
+    //     { oeeId: 1, startDateTime: LessThan(fromDate), endDateTime: MoreThan(toDate) }, // กรณีครอบคลุมทั้งช่วง
+    //   ],
+    // });
 
-    console.log(`from: ${from}`);
-    console.log(`to: ${to}`);
+    // const from = dayjs(advanceDto.from).utc();
+    // const to = dayjs(advanceDto.to).utc();
 
-    let totalMinutes = 0;
+    // console.log(`from: ${from}`);
+    // console.log(`to: ${to}`);
 
-    for (const work of oeeWorkTimes) {
-      // แปลงเป็น Dayjs Object
-      const start = dayjs(work.startDateTime);
-      const end = dayjs(work.endDateTime);
+    // let totalMinutes = 0;
 
-      // หาช่วงเวลาทำงานที่อยู่ในกรอบเวลา
-      const validStart = start.isBefore(from) ? from : start;
-      const validEnd = end.isAfter(to) ? to : end;
+    // for (const work of oeeWorkTimes) {
+    //   // แปลงเป็น Dayjs Object
+    //   const start = dayjs(work.startDateTime);
+    //   const end = dayjs(work.endDateTime);
 
-      // คำนวณเฉพาะช่วงที่อยู่ในกรอบเวลา
-      if (validStart.isBefore(validEnd)) {
-        totalMinutes += validEnd.diff(validStart, 'minute');
-      }
-    }
+    //   // หาช่วงเวลาทำงานที่อยู่ในกรอบเวลา
+    //   const validStart = start.isBefore(from) ? from : start;
+    //   const validEnd = end.isAfter(to) ? to : end;
 
-    // แปลงนาทีเป็น ชั่วโมง และ นาที
-    const totalHours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
+    //   // คำนวณเฉพาะช่วงที่อยู่ในกรอบเวลา
+    //   if (validStart.isBefore(validEnd)) {
+    //     totalMinutes += validEnd.diff(validStart, 'minute');
+    //   }
+    // }
 
-    console.log(`เวลาทำงานทั้งหมด: ${totalHours} ชั่วโมง ${remainingMinutes} นาที`);
+    // // แปลงนาทีเป็น ชั่วโมง และ นาที
+    // const totalHours = Math.floor(totalMinutes / 60);
+    // const remainingMinutes = totalMinutes % 60;
 
-    //Calculate TEEP
+    // console.log(`เวลาทำงานทั้งหมด: ${totalHours} ชั่วโมง ${remainingMinutes} นาที`);
 
-    const minutesDiff = to.diff(from, 'minute');
-    console.log('Minutes difference:', minutesDiff);
+    // //Calculate TEEP
 
-    return oeeWorkTimes;
-    // return {
-    //     running: commonData.running,
-    //     breakdown: commonData.breakdown,
-    //     ended: commonData.ended,
-    //     standby: commonData.standby,
-    //     mcSetup: commonData.mcSetup,
-    //     oees: oeeStatusItems,
-    // } as OeeStatus;
+    // const minutesDiff = to.diff(from, 'minute');
+    // console.log('Minutes difference:', minutesDiff);
+
+    return {
+      running,
+      breakdown,
+      ended,
+      standby,
+      mcSetup,
+      oees: oeeItems,
+    };
+  }
+
+  async findAllTeepMode2(advanceDto: AdvanceOee, siteId: number): Promise<any> {
+    const commonData = await this.getCommonOeeData(advanceDto, siteId);
+    const fromDate = dayjs(advanceDto.from).toDate();
+    const toDate = dayjs(advanceDto.to).toDate();
+    const diffInSeconds = (toDate.getTime() - fromDate.getTime()) / 1000;
+
+    // Destructure to extract necessary properties.
+    const { running, breakdown, ended, standby, mcSetup, aggregatedData } = commonData;
+
+    const oeeItems: OeeStatusItem[] = this.calculateLoadingLoss(aggregatedData, diffInSeconds);
+
+    // ดึงข้อมูลสถิติแบบรายชั่วโมงและคำนวณ lossOees สำหรับ mode2
+    // const rowsHourly: OeeRecord[] = await this.getOeeStatsByCustomIntervals(commonData.oeeIds, advanceDto.from, advanceDto.to);
+    const rowsHourly: OeeRecord[] = await this.getOeeStatsByCustomIntervals2(
+      commonData.oeeIds,
+      advanceDto.from,
+      advanceDto.to,
+    );
+
+    const lossHourly = this.calculateLoadingLossHourly(rowsHourly);
+
+    return {
+      running,
+      breakdown,
+      ended,
+      standby,
+      mcSetup,
+      oees: oeeItems,
+      lossHourly: lossHourly,
+    };
   }
 
   async findAllAndons(advanceDto: AdvanceOee, siteId: number): Promise<AndonResponse> {
@@ -219,7 +205,7 @@ export class AdvanceService {
     // 2. Convert aggregated data into an array of OeeStatusItem
     const oeeStatusItems: OeeStatusItem[] = this.mapToOeeStatusItems(commonData.aggregatedData);
 
-    let groupedOees = [];
+    const groupedOees = [];
 
     if (oeeStatusItems.length > 0) {
       // 3. Retrieve andonOees using the oeeIds obtained from oeeStatusItems
@@ -228,26 +214,27 @@ export class AdvanceService {
         where: { oeeId: In(oeeIds) },
       });
 
-      // 4. Match and group data using reduce()
-      groupedOees = andonOees.reduce((acc, andon) => {
+      // 4. Match and group data using for...of loop
+      for (const andon of andonOees) {
         // Find the corresponding oeeStatusItem that matches the oeeId of andonOees
         const matchedOee = oeeStatusItems.find((oee) => oee.id === andon.oeeId);
-        if (matchedOee) {
-          // Look for an existing group in acc based on groupName
-          const existingGroup = acc.find((group) => group.groupName === andon.groupName);
-          if (existingGroup) {
-            // If the group exists, add the matchedOee to the oees array
-            existingGroup.oees.push(matchedOee);
-          } else {
-            // If the group does not exist, create a new group
-            acc.push({
-              groupName: andon.groupName,
-              oees: [matchedOee],
-            });
-          }
+        if (!matchedOee) continue;
+
+        // Look for an existing group in groupedOees based on groupName
+        let group = groupedOees.find((grp) => grp.groupName === andon.groupName);
+
+        if (group) {
+          // If the group exists, add the matchedOee to the oees array
+          group.oees.push(matchedOee);
+        } else {
+          // If the group does not exist, create a new group and add matchedOee
+          group = {
+            groupName: andon.groupName,
+            oees: [matchedOee],
+          };
+          groupedOees.push(group);
         }
-        return acc;
-      }, []);
+      }
     }
 
     // 5. Retrieve column data from andonColumnRepository
@@ -266,30 +253,43 @@ export class AdvanceService {
   }
 
   async updateAndons(andonColumnDto: AndonUpdateColumn): Promise<AndonColumnEntity[]> {
-    const updatePromises = andonColumnDto.andonColumns.map((column) =>
-      this.andonColumnRepository.update(
-        { id: column.id, siteId: andonColumnDto.siteId },
-        {
-          columnName: column.columnName,
-          columnValue: column.columnValue,
-          columnOrder: column.columnOrder,
-          deleted: column.deleted,
-          updatedAt: new Date(),
-        },
-      ),
-    );
+    // ตรวจสอบความซ้ำของ columnOrder ใน input
+    const uniqueColumnOrders = new Set(andonColumnDto.andonColumns.map((col) => col.columnOrder));
+    if (uniqueColumnOrders.size !== andonColumnDto.andonColumns.length) {
+      throw new Error('พบค่า columnOrder ซ้ำกันใน input กรุณาตรวจสอบข้อมูล');
+    }
 
-    await Promise.all(updatePromises);
+    // เก็บ array ของ id ที่จะอัปเดต
+    const ids = andonColumnDto.andonColumns.map((col) => col.id);
 
-    const updatedEntities = await this.andonColumnRepository.find({
-      where: {
-        siteId: andonColumnDto.siteId,
-        deleted: false,
-      },
-      order: { columnOrder: 'ASC' },
+    // ใช้ transaction เพื่ออัปเดตข้อมูลทั้งหมดใน Transaction เดียว
+    await this.andonColumnRepository.manager.transaction(async (manager) => {
+      // Step 1: อัปเดต columnOrder ด้วย offset ชั่วคราว (เพิ่ม 1000) เพื่อลดการชนกันของค่าเดิม
+      await manager
+        .createQueryBuilder()
+        .update(AndonColumnEntity)
+        .set({ columnOrder: () => 'columnOrder + 1000' })
+        .where('siteId = :siteId AND id IN (:...ids)', { siteId: andonColumnDto.siteId, ids })
+        .execute();
+
+      // Step 2: อัปเดต columnOrder ให้เป็นค่าที่ต้องการตาม input
+      for (const column of andonColumnDto.andonColumns) {
+        await manager.update(
+          AndonColumnEntity,
+          { id: column.id, siteId: andonColumnDto.siteId },
+          {
+            columnOrder: column.columnOrder,
+            updatedAt: new Date(),
+          },
+        );
+      }
     });
 
-    return updatedEntities;
+    // ดึงข้อมูลที่อัปเดตแล้วออกมาเรียงตาม columnOrder
+    return this.andonColumnRepository.find({
+      where: { siteId: andonColumnDto.siteId, deleted: false },
+      order: { columnOrder: 'ASC' },
+    });
   }
 
   private async getCommonOeeData(advanceDto: AdvanceOee, siteId: number): Promise<CommonOeeData> {
@@ -427,6 +427,88 @@ export class AdvanceService {
         `;
   }
 
+  private calculateLoadingLossHourly(rowsHourly: OeeRecord[]): any {
+    const groupedData: Record<number, OeeLossResult[]> = {};
+
+    for (const record of rowsHourly) {
+      const { aPercent, pPercent, qPercent, oeePercent } = record.data;
+      const { id, intervalLabel, interval } = record;
+      const diffInSeconds = (interval.end.getTime() - interval.start.getTime()) / 1000;
+      const loadingFactorPercent = (record.data.runningSeconds / diffInSeconds) * 100;
+      const aLoss = (1 - aPercent / 100) * 100;
+      const pLoss = (aPercent / 100 - (aPercent / 100) * (pPercent / 100)) * 100;
+      const qLoss =
+        ((aPercent / 100) * (pPercent / 100) - (aPercent / 100) * (pPercent / 100) * (qPercent / 100)) * 100;
+      const lLoss =
+        ((aPercent / 100) * (pPercent / 100) * (qPercent / 100) -
+          (aPercent / 100) * (pPercent / 100) * (qPercent / 100) * (loadingFactorPercent / 100)) *
+        100;
+
+      if (!groupedData[id]) {
+        groupedData[id] = [];
+      }
+
+      groupedData[id].push({
+        id: record.id,
+        oeePercent,
+        aLoss,
+        pLoss,
+        qLoss,
+        lLoss,
+        intervalLabel,
+        timeslot: interval.start,
+      });
+    }
+
+    const result: OeeLossGrouped[] = Object.keys(groupedData).map((key) => {
+      const oeeId = Number(key);
+      const lossResult = groupedData[oeeId].sort(
+        (a, b) => new Date(a.timeslot).getTime() - new Date(b.timeslot).getTime(),
+      );
+
+      return {
+        oeeId,
+        lossResult,
+      };
+    });
+
+    return result;
+  }
+
+  private calculateLoadingLoss(aggregatedData: AggregatedData[], diffInSeconds: number): OeeStatusItem[] {
+    const result: any[] = [];
+    for (const item of aggregatedData) {
+      result.push({
+        id: item.id,
+        oeeBatchId: 0,
+        oeeCode: '',
+        productionName: item.name,
+        actual: item.totalCount,
+        defect: item.totalAutoDefects + item.totalManualDefects,
+        plan: 0,
+        target: 0,
+        oeePercent: item.oeePercent,
+        loadingFactorPercent: (item.runningSeconds / diffInSeconds) * 100,
+        aPercent: item.aPercent,
+        qPercent: item.qPercent,
+        pPercent: item.pPercent,
+        lotNumber: '',
+        batchStatus: '',
+        startDate: new Date(),
+        endDate: new Date(),
+        useSitePercentSettings: 0,
+        percentSettings: [],
+        standardSpeedSeconds: 0,
+        productName: '',
+        batchStartedDate: new Date(),
+        batchStoppedDate: new Date(),
+        activeSecondUnit: 0,
+      });
+    }
+
+    return result;
+  }
+
   private mapToOeeStatusItems(aggregatedData: any[]): OeeStatusItem[] {
     return aggregatedData.map((item) => ({
       id: item.id,
@@ -466,9 +548,9 @@ export class AdvanceService {
       const { id, intervalLabel, interval } = record;
 
       // คำนวณ Loss ตามสูตร
-      const ALoss = (1 - aPercent / 100) * 100;
-      const PLoss = (aPercent / 100 - (aPercent / 100) * (pPercent / 100)) * 100;
-      const QLoss =
+      const aLoss = (1 - aPercent / 100) * 100;
+      const pLoss = (aPercent / 100 - (aPercent / 100) * (pPercent / 100)) * 100;
+      const qLoss =
         ((aPercent / 100) * (pPercent / 100) - (aPercent / 100) * (pPercent / 100) * (qPercent / 100)) * 100;
 
       // ตรวจสอบว่ามีข้อมูลสำหรับ oeeId นี้อยู่แล้วหรือไม่ ถ้ายังไม่มีให้สร้าง array ใหม่
@@ -480,9 +562,9 @@ export class AdvanceService {
       groupedData[id].push({
         id: record.id,
         oeePercent,
-        ALoss,
-        PLoss,
-        QLoss,
+        aLoss,
+        pLoss,
+        qLoss,
         intervalLabel,
         timeslot: interval.start, // ใช้เวลาที่เริ่มต้นของ interval สำหรับจัดเรียง
       });

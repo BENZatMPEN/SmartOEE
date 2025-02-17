@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Entity, Unique, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('andonColumns')
 @Unique(['siteId', 'columnOrder'])
@@ -6,10 +6,10 @@ export class AndonColumnEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   columnName: string;
 
-  @Column({ unique: true })
+  @Column()
   columnValue: string;
 
   @Column({ type: 'int' })
@@ -21,9 +21,9 @@ export class AndonColumnEntity {
   @Column({ type: 'int' })
   siteId: number;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }
