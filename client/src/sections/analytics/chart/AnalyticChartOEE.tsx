@@ -143,7 +143,8 @@ export default function AnalyticChartOEE({ criteria, group }: Props) {
 
   const refresh = async (criteria: AnalyticCriteria) => {
     setIsLoading(true);
-
+    console.log(criteria);
+    
     try {
       const response = await axios.get<any>(`/oee-analytics/oee`, {
         params: {

@@ -9,7 +9,6 @@ export type OeeDashboardState = {
   formTimeline : {
     start : string;
     end : string;
-    periodTime : number;
   }
 };
 
@@ -28,7 +27,6 @@ const initialState: OeeDashboardState = {
   formTimeline : {
     start : '',
     end : '',
-    periodTime : 0
   }
 };
 

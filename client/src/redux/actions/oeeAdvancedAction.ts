@@ -2,6 +2,11 @@ import { Oee, OeeStatus, OeeStatusAdvanced, updateColumnsReq } from '../../@type
 import axios from '../../utils/axios';
 import oeeAdvancedSlice from '../slices/oeeAdvancedSlice';
 import { dispatch } from '../store';
+import dayjs from 'dayjs';
+import utc from "dayjs/plugin/utc"
+dayjs.extend(utc);
+
+const formatUTC = "YYYY-MM-DD[T]HH:mm:00.SSS[Z]"
 
 export const { updateOeeStatus, emptySelectedOee, setModeView, setAdvancedType, setFormStreaming } = oeeAdvancedSlice.actions;
 
@@ -22,7 +27,32 @@ export function getOeeStatus(userId: number, startDate : string, endDate :string
   return async () => {
     dispatch(oeeAdvancedSlice.actions.startLoading());
     try {
-      const response = await axios.get<OeeStatusAdvanced>(`/advances/oee/${mode}?from=${startDate}&to=${endDate}&userId=${userId}`);
+     
+      const response = await axios.get<OeeStatusAdvanced>(`/advances/oee/${mode}`, {
+        params : {
+          from : dayjs(startDate).utc().format(formatUTC),
+          to: dayjs(endDate).utc().format(formatUTC),
+          userId:userId
+        }
+      });
+      dispatch(oeeAdvancedSlice.actions.getOeeStatusSuccess(response.data));
+    } catch (error) {
+      dispatch(oeeAdvancedSlice.actions.hasError(error));
+    }
+  };
+}
+
+export function getTeepStatus(userId: number, startDate : string, endDate :string, mode:string) {
+  return async () => {
+    dispatch(oeeAdvancedSlice.actions.startLoading());
+    try {
+      const response = await axios.get<OeeStatusAdvanced>(`/advances/teep/${mode}`, {
+        params : {
+          from : dayjs(startDate).utc().format(formatUTC),
+          to: dayjs(endDate).utc().format(formatUTC),
+          userId:userId
+        }
+      });
       dispatch(oeeAdvancedSlice.actions.getOeeStatusSuccess(response.data));
     } catch (error) {
       dispatch(oeeAdvancedSlice.actions.hasError(error));
@@ -34,7 +64,13 @@ export function getAndonStatus(userId: number, startDate : string, endDate :stri
   return async () => {
     dispatch(oeeAdvancedSlice.actions.startLoading());
     try {
-      const response = await axios.get<OeeStatusAdvanced>(`/advances/andons/all?from=${startDate}&to=${endDate}&userId=${userId}`);
+      const response = await axios.get<OeeStatusAdvanced>(`/advances/andons/all`, {
+        params : {
+          from : dayjs(startDate).utc().format(formatUTC),
+          to: dayjs(endDate).utc().format(formatUTC),
+          userId:userId
+        }
+      });
       
       dispatch(oeeAdvancedSlice.actions.getOeeStatusSuccess(response.data));
     } catch (error) {

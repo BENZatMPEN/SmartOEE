@@ -1,14 +1,21 @@
 import { Box, Grid, LinearProgress, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { initialOeeStats, initialPercentSettings, OEE_TYPE_A, OEE_TYPE_P, OEE_TYPE_Q } from '../../../../constants';
+import {
+  initialOeeStats,
+  initialPercentSettings,
+  OEE_TYPE_A,
+  OEE_TYPE_L,
+  OEE_TYPE_P,
+  OEE_TYPE_Q,
+} from '../../../../constants';
 import { RootState, useSelector } from '../.././../../redux/store';
 import { fPercent } from '../../../../utils/formatNumber';
 import { OeeStatusAdvancedItem } from 'src/@types/oee';
 type Props = {
-  oeeStatusItem : OeeStatusAdvancedItem
-}
-export default function DashboardAPQBar({oeeStatusItem}:Props) {
+  oeeStatusItem: OeeStatusAdvancedItem;
+};
+export default function DashboardAPQBar({ oeeStatusItem }: Props) {
   const theme = useTheme();
 
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
@@ -16,7 +23,7 @@ export default function DashboardAPQBar({oeeStatusItem}:Props) {
   const { selectedOee, oeeStatus } = useSelector((state: RootState) => state.oeeAdvanced);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
-  
+
   const percentSettings =
     (selectedOee?.useSitePercentSettings || true
       ? selectedSite?.defaultPercentSettings
@@ -24,6 +31,7 @@ export default function DashboardAPQBar({oeeStatusItem}:Props) {
   const aPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_A)[0];
   const pPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_P)[0];
   const qPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_Q)[0];
+  const lPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_L)[0];
 
   const [aColor, setAColor] = useState<'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | 'inherit'>(
     'success',
@@ -35,8 +43,12 @@ export default function DashboardAPQBar({oeeStatusItem}:Props) {
     'success',
   );
 
+  const [lColor, setLColor] = useState<'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | 'inherit'>(
+    'success',
+  );
+
   const { oeeStats } = currentBatch || { oeeStats: initialOeeStats };
-  const { aPercent, pPercent, qPercent } = oeeStatusItem;
+  const { aPercent, pPercent, qPercent, loadingFactorPercent: lPercent } = oeeStatusItem;
 
   useEffect(() => {
     setAColor('success');
@@ -68,6 +80,20 @@ export default function DashboardAPQBar({oeeStatusItem}:Props) {
     }
   }, [qPercent, qPercentSetting]);
 
+  useEffect(() => {
+    if (lPercent) {
+      console.log(lPercent);
+
+      setLColor('success');
+
+      if (lPercent <= lPercentSetting.settings.medium && lPercent > lPercentSetting.settings.low) {
+        setLColor('warning');
+      } else if (qPercent <= lPercentSetting.settings.low) {
+        setLColor('error');
+      }
+    }
+  }, [lPercent, lPercentSetting]);
+
   return (
     <Stack spacing={theme.spacing(3)}>
       <ProgressItem label="A" value={aPercent} color={aColor} />
@@ -75,6 +101,8 @@ export default function DashboardAPQBar({oeeStatusItem}:Props) {
       <ProgressItem label="P" value={pPercent} color={pColor} />
 
       <ProgressItem label="Q" value={qPercent} color={qColor} />
+
+      {lPercent && <ProgressItem label="L" value={lPercent} color={lColor} />}
     </Stack>
   );
 }

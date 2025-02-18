@@ -29,8 +29,8 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 type Props = {
   userId?: number;
   valueForm: {
-    startDateTime: string;
-    endDateTime: string;
+    startDateTime: Date;
+    endDateTime: Date;
     isStreaming: boolean;
   };
 };

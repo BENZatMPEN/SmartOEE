@@ -8,9 +8,14 @@ export function isExternalLink(path: string) {
 }
 
 export function getActive(path: string, pathname: string) {
+  
+  if (pathname === '/dashboard/advanced' && path === '/dashboard') {
+    return path ? !!matchPath({ path: path, end: true }, pathname) : false;
+  }
   return path ? !!matchPath({ path: path, end: false }, pathname) : false;
 }
 
 export function getActiveParent(path: string, pathname: string) {
   return path ? !!matchPath({ path: path, end: false }, pathname) : false;
 }
+

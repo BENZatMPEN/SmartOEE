@@ -9,8 +9,8 @@ export type OeeAdvancedState = {
   modeView : string;
   advancedType : string;
   formStreaming : {
-    startDateTime: string;
-    endDateTime:string;
+    startDateTime: Date;
+    endDateTime:Date;
     isStreaming : boolean;
   }
 };
@@ -33,8 +33,8 @@ const initialState: OeeAdvancedState = {
   modeView: 'mode1',
   advancedType: 'oee',
   formStreaming : {
-    startDateTime: "",
-    endDateTime:"",
+    startDateTime: new Date,
+    endDateTime: new Date,
     isStreaming : false
   }
 };

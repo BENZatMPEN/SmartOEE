@@ -6,7 +6,7 @@ import { OEE_BATCH_STATUS_ENDED, OEE_BATCH_STATUS_STANDBY, OEE_TYPE_OEE } from '
 import { RootState, useSelector } from '../../../../redux/store';
 import { PATH_DASHBOARD } from '../../../../routes/paths';
 import { getColor } from '../../../../utils/colorHelper';
-import { fNumber, fNumber2 } from '../../../../utils/formatNumber';
+import { fNumber, fNumber1, fNumber2 } from '../../../../utils/formatNumber';
 import { fTimeShort } from '../../../../utils/formatTime';
 import { getPercentSettingsByType } from '../../../../utils/percentSettingHelper';
 import DashboardPieChart from './DashboardPieChart';
@@ -48,6 +48,7 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem, oeeType }: Pr
     percentSettings,
     productName,
     activeSecondUnit ,
+    loadingFactorPercent
   } = oeeStatusItem;
 
   const percents = useMemo(() => { 
@@ -140,14 +141,14 @@ export default function DashboardAdvancedGridItem({ oeeStatusItem, oeeType }: Pr
                         <LegendUnit label="NG" number={fNumber(defect)} unit="pcs" />
                         <LegendUnit label="Target" number={fNumber(target)} unit="pcs" />
                         <LegendUnit label="Plan" number={fNumber(plan)} unit="pcs" />
-                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />}
+                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber(loadingFactorPercent)} unit="%" />}
                       </>
                       :
                       <>
                         <Legend label="Actual" number={fNumber(actual)} />
                         <Legend label="Plan" number={fNumber(plan)} />
                         <Legend label="Target" number={fNumber(target)} />
-                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber(70)} unit="pcs" />}
+                        { oeeType === 'TEEP' && <LegendUnit label="Loading Loss" number={fNumber1(loadingFactorPercent)} unit="%" />}
                       </>
                   }
 

@@ -24,8 +24,8 @@ const streamingScheme = Yup.object().shape({
   isStreaming: Yup.boolean().optional(),
 });
 const initDateCriteria: StreamingForm = {
-  startDateTime: new Date(),
-  endDateTime: new Date(),
+  startDateTime: new Date,
+  endDateTime: new Date,
   isStreaming: false,
 };
 const StreamingForm = (props: Props) => {

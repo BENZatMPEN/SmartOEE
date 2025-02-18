@@ -56,7 +56,7 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: '25%',
+        columnWidth: oeeStatusItem.lossResult.length > 10 ? '75%' : '40%',
         borderRadius: 0,
         
       },
@@ -118,7 +118,7 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
         options={chartOptions as any} // ใช้ `as any` เพราะ ReactApexChart อาจไม่รู้จักชนิดข้อมูลที่กำหนด
         series={chartSeries}
         type="bar"
-        height={300}
+        height={370}
         // width={3500}
       />
     </div>

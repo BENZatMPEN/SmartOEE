@@ -10,6 +10,7 @@ import {
   getAndonStatus,
   getOee,
   getOeeStatus,
+  getTeepStatus,
   updateOeeStatus,
 } from '../../redux/actions/oeeAdvancedAction';
 import { RootState, useDispatch, useSelector } from '../../redux/store';
@@ -27,8 +28,12 @@ import { getPercentSettingsByType } from 'src/utils/percentSettingHelper';
 import DashboardAPQBar from 'src/sections/dashboard/details/advanced/DashboardAPQBar';
 import DashboardPieChart from 'src/sections/dashboard/details/advanced/DashboardPieChart';
 import dayjs from 'dayjs';
+// import utc from "dayjs/plugin/utc"
 
 import DashboardTableAndon from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableAndon';
+// dayjs.extend(utc);
+  
+
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
@@ -55,7 +60,7 @@ export default function Advanced() {
 
   const { oees, lossOees, columns, oeeGroups } = oeeStatus;
 
-  
+
 
   useEffect(() => {
     (async () => {
@@ -95,6 +100,17 @@ export default function Advanced() {
             ),
           );
         }
+        if (advancedType === 'teep') {
+          await dispatch(
+            getTeepStatus(
+              userProfile.id,
+              dayjs(formStreaming.startDateTime).format('YYYY-MM-DD HH:mm:ss'),
+              dayjs(formStreaming.endDateTime).format('YYYY-MM-DD HH:mm:ss'),
+              modeView,
+            ),
+          );
+        }
+        
         if (advancedType === 'andon') {
           await dispatch(
             getAndonStatus(

@@ -28,6 +28,7 @@ export const OEE_TYPE_OEE = 'oee';
 export const OEE_TYPE_A = 'a';
 export const OEE_TYPE_P = 'p';
 export const OEE_TYPE_Q = 'q';
+export const OEE_TYPE_L = 'l';
 
 export const OEE_TAG_MC_STATE = 'mc_state';
 export const OEE_TAG_TOTAL = 'total';
@@ -234,6 +235,10 @@ export const initialPercentSettings: PercentSetting[] = [
   },
   {
     type: OEE_TYPE_Q,
+    settings: { high: 80, medium: 60, low: 50 },
+  },
+  {
+    type: OEE_TYPE_L,
     settings: { high: 80, medium: 60, low: 50 },
   },
 ];

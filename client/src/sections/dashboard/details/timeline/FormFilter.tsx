@@ -16,34 +16,18 @@ type Props = {};
 interface StreamingForm {
   startDateTime: Date;
   endDateTime: Date;
-  periodTime: number;
 }
 
 const timelineScheme = Yup.object().shape({
   startDateTime: Yup.string().required('Start date time is required'),
   endDateTime: Yup.string().required('End date time is required'),
-  periodTime: Yup.number().optional(),
 });
 const initForm: StreamingForm = {
   startDateTime: new Date(),
   endDateTime: new Date(),
-  periodTime: 0,
 };
 
-const periodTime = [
-  {
-    name: '15 Sec',
-    key: '1',
-  },
-  {
-    name: '30 Sec',
-    key: '2',
-  },
-  {
-    name: '1 min',
-    key: '3',
-  },
-];
+
 
 const FormFilter = (props: Props) => {
   const { formTimeline } = useSelector((state: RootState) => state.oeeDashboard);
@@ -82,10 +66,7 @@ const FormFilter = (props: Props) => {
     // setCheckStreamingMode(formData.isStreaming);
     // dispatch(setFormStreaming(formData));
   };
-  const onPeriodChange = (val: string) => {
-    setValue('periodTime', Number(val));
-    dispatch(setFormTimeline({ ...formTimeline, periodTime: val }));
-  };
+
   useEffect(() => {
     if (values.startDateTime) {
       dispatch(setFormTimeline({ ...formTimeline, start: values.startDateTime }));
@@ -98,49 +79,12 @@ const FormFilter = (props: Props) => {
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'column', gap: '1.2em' }}>
+        <Grid item xs={12} sm={12} sx={{ display: 'flex', flexDirection: 'row', gap: '1.2em', alignItems: 'end'  }}>
           <RHFDateTimePicker key="fromDateStart" name="startDateTime" label="Start Date Time" size="small" />
 
           <RHFDateTimePicker key="fromDateEnd" name="endDateTime" label="End Date Time" size="small" />
         </Grid>
-        <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'column', gap: '1.5em', alignItems: 'start' }}>
-          <RHFSelect
-            name="periodTime"
-            label="Period Time"
-            InputLabelProps={{ shrink: true }}
-            SelectProps={{ native: false }}
-            size="small"
-            onChange={(event) => onPeriodChange(event.target.value)}
-          >
-            <MenuItem
-              value={0}
-              sx={{
-                mx: 1,
-                borderRadius: 0.75,
-                typography: 'body1',
-                fontStyle: 'italic',
-                color: 'text.secondary',
-              }}
-            >
-              None
-            </MenuItem>
-            <Divider />
-            {periodTime.map((item) => (
-              <MenuItem
-                key={item.key}
-                value={item.key}
-                sx={{
-                  mx: 1,
-                  my: 0.5,
-                  borderRadius: 0.75,
-                  typography: 'body1',
-                }}
-              >
-                {item.name}
-              </MenuItem>
-            ))}
-          </RHFSelect>
-        </Grid>
+     
       </Grid>
     </FormProvider>
   );

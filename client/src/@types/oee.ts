@@ -216,6 +216,7 @@ export type OeeStatusAdvancedItem = {
   startDate: Date;
   endDate: Date;
   useSitePercentSettings: boolean;
+  loadingFactorPercent : number;
   percentSettings: PercentSetting[];
   standardSpeedSeconds: number;
   productName: string;
