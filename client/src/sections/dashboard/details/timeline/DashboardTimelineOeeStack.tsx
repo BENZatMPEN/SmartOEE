@@ -37,8 +37,7 @@ interface ChartOptions {
 
 const DashboardTimelineOeeStack = () => {
   const { batchTimeline } = useSelector((state: RootState) => state.oeeBatch);
-  console.log(batchTimeline);
-  
+ 
   const chartOptions = {
     chart: {
       type: 'bar',
@@ -142,9 +141,9 @@ const DashboardTimelineOeeStack = () => {
     const startDate = dayjs(startItem.fromDate);
     const endDate = dayjs(endItem.toDate);
     const hours = endDate.add(1, 'h').startOf('h').diff(startDate.startOf('h'), 'h');
-    console.log('startItem =>' ,startItem);
-    console.log('endItem =>',endItem);
-    console.log('hours =>',hours);
+    // console.log('startItem =>' ,startItem);
+    // console.log('endItem =>',endItem);
+    // console.log('hours =>',hours);
     
   },[])
 

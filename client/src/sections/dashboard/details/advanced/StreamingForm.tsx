@@ -2,12 +2,12 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Alert, AlertTitle, Button, FormControlLabel, Grid, Switch } from '@mui/material';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SubmitHandler, useForm, UseFormReturn } from 'react-hook-form';
 import { FormProvider } from 'src/components/hook-form';
 import { RHFDateTimePicker } from 'src/components/hook-form/RHFDateTimePicker';
 import { setFormStreaming } from 'src/redux/actions/oeeAdvancedAction';
-import { useDispatch } from 'src/redux/store';
+import { RootState, useDispatch, useSelector } from 'src/redux/store';
 import * as Yup from 'yup';
 
 type Props = {};
@@ -31,6 +31,7 @@ const initDateCriteria: StreamingForm = {
 const StreamingForm = (props: Props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
+  const { formStreaming } = useSelector((state: RootState) => state.oeeAdvanced);
   const methods = useForm({
     resolver: yupResolver(streamingScheme),
     defaultValues: initDateCriteria,
@@ -40,6 +41,7 @@ const StreamingForm = (props: Props) => {
     setValue,
     handleSubmit,
     setError,
+    reset,
     formState: { isSubmitting },
   } = methods;
   const [streamingMode, setStreamingMode] = useState<boolean>(false);
@@ -75,6 +77,15 @@ const StreamingForm = (props: Props) => {
    
     dispatch(setFormStreaming(formData));
   };
+
+  useEffect(() => {
+    reset({
+      startDateTime : formStreaming?.startDateTime,
+      endDateTime : formStreaming?.endDateTime,
+      isStreaming : formStreaming?.isStreaming,
+    })
+  }, [formStreaming])
+  
 
   return (
     <>

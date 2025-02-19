@@ -178,6 +178,7 @@ export type OeeStatusAdvanced = {
   lossOees?: OeeStatusLossAdvancedItem[];
   columns?: AndonStatusAdvancedItem[];
   oeeGroups?: AndonGroupAdvancedItem[];
+  lossHourly? : OeeStatusLossAdvancedItem[]
 };
 
 export type AndonGroupAdvancedItem = {
@@ -240,6 +241,7 @@ export type OeeStatusLossResultAdvancedItem = {
   aLoss: number;
   pLoss: number;
   qLoss: number;
+  lLoss?: number;
   timeslot: string;
   timestamp: string;
 };

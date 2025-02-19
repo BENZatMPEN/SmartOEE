@@ -26,7 +26,8 @@ const initialState: OeeAdvancedState = {
     oees: [],
     lossOees : [],
     columns : [],
-    oeeGroups : []
+    oeeGroups : [],
+    lossHourly : []
   },
   isLoading: false,
   error: null,

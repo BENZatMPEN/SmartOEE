@@ -39,15 +39,6 @@ export default function Timeline() {
           <DashboardTimelineOee />
         ) : (
           <div>
-            <Grid container justifyContent={'flex-end'}>
-              <Grid item xs={12} sm={6} sx={{ marginBottom: 2 }}>
-                <FormFilter />
-              </Grid>
-            </Grid>
-
-            {/* <IconButton onClick={() => handleClickDetailTimeLine()} >
-          <Iconify icon="eva:arrow-circle-left-fill" />
-        </IconButton> */}
             <DashboardTimelineOeeStack />
           </div>
         )}

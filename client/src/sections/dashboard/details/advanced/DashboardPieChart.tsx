@@ -102,6 +102,7 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent 
       colors = lowColors;
     }
 
+
     setOptions({
       ...options,
       fill: {
@@ -110,18 +111,6 @@ export default function DashboardPieChart({ high, medium, low, oeeType, percent 
           colorStops: colors,
         },
       },
-      plotOptions : {
-        ...options.plotOptions,
-        ...options.plotOptions.radialBar,
-        dataLabels : {
-            total: {
-              label: oeeType
-            }
-        }
-
-        
-        
-      }
 
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,10 +2,11 @@ import { ApexOptions } from 'apexcharts';
 import dayjs from 'dayjs';
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
-import { OeeStatusLossAdvancedItem } from 'src/@types/oee';
+import { OeeStatusLossAdvancedItem, OeeStatusLossResultAdvancedItem } from 'src/@types/oee';
 
 type Props = {
   oeeStatusItem: OeeStatusLossAdvancedItem;
+  // teepStatusItem? : OeeStatusLossResultAdvancedItem;
 };
 interface ChartOptions {
   chart: {
@@ -43,8 +44,8 @@ interface ChartOptions {
 }
 
 const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
-
-  const timeSlots = oeeStatusItem.lossResult.map((loss) => {
+  // let statusItem = teepStatusItem ? teepStatusItem?.lossHourly : oeeStatusItem?.lossResult
+  const timeSlots = oeeStatusItem?.lossResult?.map((loss) => {
     return dayjs(loss.timeslot).format('DD/MM/YYYY HH:mm:ss');
   });
 
@@ -56,7 +57,7 @@ const DashboardVerticalStackedBarChart = ({ oeeStatusItem }: Props) => {
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: oeeStatusItem.lossResult.length > 10 ? '75%' : '40%',
+        columnWidth: oeeStatusItem?.lossResult.length > 10 ? '75%' : '40%',
         borderRadius: 0,
         
       },

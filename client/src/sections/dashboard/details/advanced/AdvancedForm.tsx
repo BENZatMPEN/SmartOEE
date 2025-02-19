@@ -1,11 +1,11 @@
 import { Divider, FormControlLabel, Grid, MenuItem, Switch } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormProvider, RHFSelect } from 'src/components/hook-form';
 import { ADVANCED_TYPE } from 'src/constants';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
-import { useDispatch } from 'src/redux/store';
+import { RootState, useDispatch, useSelector } from 'src/redux/store';
 import { setAdvancedType, setModeView } from 'src/redux/actions/oeeAdvancedAction';
 type Props = {};
 const modeList = [
@@ -30,6 +30,7 @@ interface bodyReq {
 
 const AdvancedForm = (props: Props) => {
   const dispatch = useDispatch();
+  const { modeView, advancedType } = useSelector((state: RootState) => state.oeeAdvanced);
   const methods = useForm({
     resolver: yupResolver(criteriaScheme),
     defaultValues: { advancedType : 'oee', mode : 'mode1'},
@@ -39,6 +40,7 @@ const AdvancedForm = (props: Props) => {
     watch,
     setValue,
     handleSubmit,
+    reset,
     formState: { isSubmitting }, 
   } = methods
   const watchValues = watch()
@@ -56,6 +58,12 @@ const AdvancedForm = (props: Props) => {
     console.log('values=>',values);
 
   }
+  useEffect(() => {
+    reset({
+      advancedType : advancedType,
+      mode : modeView
+    })
+  },[advancedType, modeView])
 
   return (
     <>

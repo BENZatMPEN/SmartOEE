@@ -32,8 +32,6 @@ import dayjs from 'dayjs';
 
 import DashboardTableAndon from 'src/sections/dashboard/details/advanced/table-andon/DashboardTableAndon';
 // dayjs.extend(utc);
-  
-
 
 export default function Advanced() {
   const intervalRef: any = useRef(null);
@@ -58,10 +56,8 @@ export default function Advanced() {
 
   const { oeePercent } = oeeStats || initialOeeStats;
 
-  const { oees, lossOees, columns, oeeGroups } = oeeStatus;
-
-
-
+  const { oees, lossOees, columns, oeeGroups, lossHourly } = oeeStatus;
+  
   useEffect(() => {
     (async () => {
       if (userProfile && formStreaming.startDateTime && formStreaming.endDateTime) {
@@ -110,7 +106,7 @@ export default function Advanced() {
             ),
           );
         }
-        
+
         if (advancedType === 'andon') {
           await dispatch(
             getAndonStatus(
@@ -123,8 +119,6 @@ export default function Advanced() {
       }
     })();
   }, [dispatch, userProfile, formStreaming, modeView, advancedType]);
-
-
 
   const percents = useMemo(
     () =>
@@ -142,12 +136,12 @@ export default function Advanced() {
   if (!ability.can(RoleAction.Read, RoleSubject.Dashboard)) {
     return <Navigate to={PATH_PAGES.forbidden} />;
   }
-
+  
   return (
     <Page title="Advanced">
       <Container maxWidth={false}>
         <DashboardHeader showTools={false} />
-        
+
         <Divider sx={{ marginBottom: '18px' }} />
         <Grid container>
           <Grid item xs={12} sm={6} sx={{ marginBottom: 2 }}>
@@ -165,17 +159,51 @@ export default function Advanced() {
           </Grid>
         </Grid>
         <Divider sx={{ marginBottom: '18px' }} />
-       
+
         {isLoading && (
           <Card>
             <CardContent>Loading...</CardContent>
           </Card>
         )}
-        {advancedType !== 'andon' ? (
-          modeView === 'mode2' ? (
+        {!isLoading && advancedType !== 'andon' ? (
+          !isLoading && modeView === 'mode2' ? (
             <Card sx={{ mt: 3 }}>
               <CardContent>
                 <Stack>
+                  {advancedType === 'teep' &&
+                    lossHourly?.map((item, index) => (
+                      <Grid container spacing={2} key={item.oeeId}>
+                        <>
+                          <Grid
+                            item
+                            xs={12}
+                            sm={2}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'center',
+                              gap: 4,
+                              pt: '20px !important',
+                            }}
+                          >
+                            <DashboardPieChart
+                              high={percents.high}
+                              medium={percents.medium}
+                              low={percents.low}
+                              oeeType={advancedType.toUpperCase()}
+                              percent={oees[index].oeePercent}
+                            />
+
+                            {/* <DashboardAPQBar oeeStatusItem={oees[index]} /> */}
+                          </Grid>
+
+                          <Grid item xs={12} sm={10}>
+                            <DashboardVerticalStackedBarChart oeeStatusItem={item} />
+                          </Grid>
+                        </>
+                      </Grid>
+                    ))
+                    }
                   {lossOees?.map((item, index) => (
                     <Grid container spacing={2} key={item.oeeId}>
                       <>
@@ -208,35 +236,31 @@ export default function Advanced() {
                       </>
                     </Grid>
                   ))}
-                  {/* {oees.map((item) => (
-                      <DashboardOeeTimelineItem key={item.id} oeeStatusItem={item} />
-                    ))} */}
                 </Stack>
               </CardContent>
             </Card>
           ) : (
             <Grid container spacing={3}>
-              {oees && oees.map((item) => (
-                <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
-                  <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
-                </Grid>
-              ))}
+              {oees &&
+                oees.map((item) => (
+                  <Grid key={item.id} item sm={6} md={4} sx={{ p: 2 }}>
+                    <DashboardAdvancedGridItem oeeStatusItem={item} oeeType={advancedType.toUpperCase()} />
+                  </Grid>
+                ))}
             </Grid>
           )
         ) : (
-         
+          !isLoading && (
             <Card sx={{ mt: 3 }}>
               <CardContent>
                 <Stack>
                   <Grid container spacing={2}>
-                    {
-                      <DashboardTableAndon valueForm={formStreaming} userId={userProfile?.id} />
-                    }
+                    {<DashboardTableAndon valueForm={formStreaming} userId={userProfile?.id} />}
                   </Grid>
                 </Stack>
               </CardContent>
             </Card>
-   
+          )
         )}
       </Container>
     </Page>

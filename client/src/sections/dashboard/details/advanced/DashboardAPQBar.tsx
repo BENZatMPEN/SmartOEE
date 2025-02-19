@@ -17,22 +17,27 @@ type Props = {
 };
 export default function DashboardAPQBar({ oeeStatusItem }: Props) {
   const theme = useTheme();
-
+  
   const { selectedSite } = useSelector((state: RootState) => state.userSite);
 
   const { selectedOee, oeeStatus } = useSelector((state: RootState) => state.oeeAdvanced);
 
   const { currentBatch } = useSelector((state: RootState) => state.oeeBatch);
-
+  // console.log('selectedOee?.useSitePercentSettings =>',selectedOee?.useSitePercentSettings);
+  // console.log('selectedSite?.defaultPercentSettings =>',selectedSite?.defaultPercentSettings);
+  // console.log('selectedOee?.percentSettings =>',selectedOee?.percentSettings); 
+  // console.log('initialPercentSettings =>',initialPercentSettings);
   const percentSettings =
     (selectedOee?.useSitePercentSettings || true
       ? selectedSite?.defaultPercentSettings
       : selectedOee?.percentSettings) || initialPercentSettings;
+
+      
   const aPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_A)[0];
   const pPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_P)[0];
   const qPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_Q)[0];
   const lPercentSetting = percentSettings.filter((item) => item.type === OEE_TYPE_L)[0];
-
+   
   const [aColor, setAColor] = useState<'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | 'inherit'>(
     'success',
   );
@@ -82,16 +87,16 @@ export default function DashboardAPQBar({ oeeStatusItem }: Props) {
 
   useEffect(() => {
     if (lPercent) {
-      console.log(lPercent);
-
       setLColor('success');
 
       if (lPercent <= lPercentSetting.settings.medium && lPercent > lPercentSetting.settings.low) {
         setLColor('warning');
-      } else if (qPercent <= lPercentSetting.settings.low) {
+      } else if (lPercent <= lPercentSetting.settings.low) {
         setLColor('error');
       }
     }
+   
+    
   }, [lPercent, lPercentSetting]);
 
   return (
