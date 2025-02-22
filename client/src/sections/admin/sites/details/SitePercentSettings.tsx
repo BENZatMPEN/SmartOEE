@@ -24,6 +24,8 @@ export default function SitePercentSettings({ percentSetting, onEdit }: IProps) 
         return 'Performance Percent';
       case 'q':
         return 'Quality Percent';
+      case 'l':
+        return 'Loss Percent';
     }
   };
 
