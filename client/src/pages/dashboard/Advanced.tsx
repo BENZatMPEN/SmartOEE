@@ -194,7 +194,7 @@ export default function Advanced() {
                               percent={oees[index].oeePercent}
                             />
 
-                            {/* <DashboardAPQBar oeeStatusItem={oees[index]} /> */}
+                            <DashboardAPQBar oeeStatusItem={oees[index]} />
                           </Grid>
 
                           <Grid item xs={12} sm={10}>

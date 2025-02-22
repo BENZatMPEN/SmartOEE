@@ -89,9 +89,9 @@ export default function DashboardAPQBar({ oeeStatusItem }: Props) {
     if (lPercent) {
       setLColor('success');
 
-      if (lPercent <= lPercentSetting.settings.medium && lPercent > lPercentSetting.settings.low) {
+      if (lPercent <= lPercentSetting?.settings?.medium && lPercent > lPercentSetting?.settings?.low) {
         setLColor('warning');
-      } else if (lPercent <= lPercentSetting.settings.low) {
+      } else if (lPercent <= lPercentSetting?.settings?.low) {
         setLColor('error');
       }
     }
