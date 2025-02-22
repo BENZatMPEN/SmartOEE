@@ -725,14 +725,31 @@ export class OeeBatchService {
     });
   }
 
-  findBatchTimelinesByBatchId(batchId: number): Promise<OeeBatchStatsTimelineEntity[]> {
-    return this.oeeBatchStatsTimelineRepository.find({
-      where: {
-        oeeBatchId: batchId,
-      },
+  async findBatchTimelinesByBatchId(batchId: number): Promise<OeeBatchStatsTimelineEntity[]> {
+    const statusTimeline = await this.oeeBatchStatsTimelineRepository.find({
+      where: { oeeBatchId: batchId },
       order: { toDate: 'ASC' },
-      select: ['status', 'fromDate', 'toDate'],
     });
+
+    const batchPlandowntime = await this.oeeBatchPlannedDowntimeRepository.find({
+      where: { oeeBatchId: batchId },
+    });
+
+    const toleranceMs = 5000;
+
+    const updatedTimelines = statusTimeline.map((timeline) => {
+      if (timeline.status === 'planned') {
+        const matchingPlanned = batchPlandowntime.find((planned) => {
+          if (!planned.createdAt || !planned.expiredAt) return false;
+          const diffCreated = Math.abs(timeline.fromDate.getTime() - planned.createdAt.getTime());
+          const diffExpired = Math.abs(timeline.toDate.getTime() - planned.expiredAt.getTime());
+          return diffCreated <= toleranceMs && diffExpired <= toleranceMs;
+        });
+        return { ...timeline, planedDownTime: matchingPlanned };
+      }
+      return timeline;
+    });
+    return updatedTimelines;
   }
 
   async saveBatchStats(oeeId: number, productId: number, oeeBatchId: number, oeeStats: OeeStats, timestamp: Date) {
