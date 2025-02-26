@@ -8,7 +8,6 @@ import { OeeOperatorDto } from './oee-operator.dto';
 import { CreateDayWorkShiftDto, CreateWorkShiftDto } from './create-work-shift.dto';
 
 export class UpdateOeeDto {
-
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   readonly activeSecondUnit: boolean;
@@ -56,7 +55,6 @@ export class UpdateOeeDto {
   readonly percentSettings: PercentSetting[];
 
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
   readonly useSitePercentSettings: boolean;
 
   @IsString()

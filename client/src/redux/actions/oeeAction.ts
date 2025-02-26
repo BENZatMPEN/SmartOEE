@@ -69,7 +69,7 @@ export function updateOee(id: number, dto: EditOee) {
     try {
       const response = await axios.put<Oee>(`/oees/${id}`, dto, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       });
       return response.data;
