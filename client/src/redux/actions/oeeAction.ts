@@ -69,7 +69,7 @@ export function updateOee(id: number, dto: EditOee) {
     try {
       const response = await axios.put<Oee>(`/oees/${id}`, dto, {
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
       return response.data;
@@ -119,7 +119,7 @@ export function exportWorkShiftToAnotherOee(dto: ExportToAnotherOee) {
           'Content-Type': 'application/json',
         },
       });
-     
+
       return response.data;
     } catch (error) {
       dispatch(oeeSlice.actions.hasSaveError(error));
